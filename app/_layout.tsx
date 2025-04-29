@@ -1,39 +1,50 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
+// app/_layout.tsx
+import { Stack, useRouter } from 'expo-router';
+import { View, StyleSheet } from 'react-native';
 import { useEffect } from 'react';
-import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+export default function Layout() {
+  const router = useRouter();
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    console.log('Forcing navigation to splash');
+    router.replace('/splash');
+  }, []);
 
-  if (!loaded) {
-    return null;
-  }
-
+  console.log('Rendering Layout component');
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+    <View style={styles.container}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          gestureEnabled: true,
+        }}
+      >
+        <Stack.Screen
+          name="splash"
+          options={{ gestureEnabled: false }}
+          redirect={false}
+        />
+        <Stack.Screen
+          name="princess"
+          redirect={false}
+        />
+        <Stack.Screen
+          name="gameplay"
+          redirect={false}
+        />
+        <Stack.Screen
+          name="index"
+          redirect={false}
+        />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+});
