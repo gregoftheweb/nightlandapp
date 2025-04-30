@@ -1,63 +1,87 @@
-// app/princess/index.tsx
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { STRINGS } from "../../resources/strings";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function PrincessScreen() {
   const router = useRouter();
 
   const handlePress = () => {
-    console.log('Navigating to gameplay');
-    router.push('../gameplay');
+    console.log("Navigating to gameplay");
+    router.push("../gameplay");
   };
 
-  console.log('Rendering PrincessScreen component');
+  console.log("Rendering PrincessScreen component");
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../../assets/images/sadprincess.png')}
-        style={styles.princessImage}
-        resizeMode="contain"
-        onError={(error) => console.log('Image load error:', error.nativeEvent)}
-        onLoad={() => console.log('Image loaded successfully')}
-      />
-      <Text style={styles.title}>The Princess Awaits</Text>
-      <TouchableOpacity style={styles.button} onPress={handlePress}>
-        <Text style={styles.buttonText}>Start Game</Text>
-      </TouchableOpacity>
-    </View>
+    <ImageBackground
+      source={require("../../assets/images/sadprincess.png")} // Adjust path if needed
+      resizeMode="cover"
+      style={styles.backgroundImage}
+    >
+        <View style={styles.container}>
+        <View style={styles.textContainer}>
+          <Text style={styles.text}>{STRINGS.princessScreen.text}</Text>
+        </View>
+
+        <View style={styles.overlay}>
+          <TouchableOpacity style={styles.button} onPress={handlePress}>
+            <Text style={styles.buttonText}>
+              {STRINGS.princessScreen.buttonText}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: SCREEN_WIDTH,
+    height: "100%",
+  },
   container: {
     flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 10,
-    borderColor: 'green',
+    justifyContent: "space-between",
+    padding: 20,
   },
-  princessImage: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
+  textContainer: {
     borderWidth: 2,
-    borderColor: 'red',
-    backgroundColor: '#fff',
+    borderColor: "red",
+    borderRadius: 8,
+    padding: 16,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
-  title: {
-    color: '#fff',
-    fontSize: 28,
-    marginBottom: 20,
+  text: {
+    color: "red",
+    fontSize: 22,
+    fontFamily: 'Gabrielle',
+  },
+  overlay: {
+    alignItems: "center",
+    paddingBottom: 60,
   },
   button: {
-    backgroundColor: '#444',
-    padding: 15,
-    borderRadius: 5,
+    backgroundColor: "transparent",
+    borderColor: "red",
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
+    color: "red",
+    fontSize: 26,
+    fontFamily: 'Gabrielle',
   },
 });

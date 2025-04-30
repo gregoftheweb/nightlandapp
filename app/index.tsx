@@ -1,27 +1,54 @@
-// app/index.tsx
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+import { STRINGS } from '../resources/strings';
 
-export default function Home() {
-  console.log('Rendering Home component');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+export default function SplashScreen() {
+  const router = useRouter();
+
+  const handlePress = () => {
+    router.replace('/princess');
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Home Screen</Text>
-    </View>
+    <ImageBackground
+      source={require('../assets/images/splashscreen.png')} // Adjust path if needed
+      resizeMode="cover"
+      style={styles.backgroundImage}
+    >
+      <View style={styles.overlay}>
+        <TouchableOpacity style={styles.button} onPress={handlePress}>
+          <Text style={styles.buttonText}>{STRINGS.splashScreen.buttonText}</Text>
+        </TouchableOpacity>
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  backgroundImage: {
     flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 10,
-    borderColor: 'purple',
+    width: SCREEN_WIDTH,
+    height: "100%",
   },
-  text: {
-    color: '#fff',
-    fontSize: 24,
+  overlay: {
+    flex: 1,
+    justifyContent: "center", // center vertically
+    alignItems: "center",     // center horizontally
+  },
+  button: {
+    backgroundColor: "transparent",
+    borderColor: "red",
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  buttonText: {
+    color: "red",
+    fontSize: 26,
+    fontFamily: 'Gabrielle',
   },
 });

@@ -1,19 +1,34 @@
 // app/_layout.tsx
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
-import { useEffect } from 'react';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useCallback } from 'react';
+
+SplashScreen.preventAutoHideAsync();
 
 export default function Layout() {
-  const router = useRouter();
+  const [fontsLoaded] = useFonts({
+    Gabrielle: require('../assets/fonts/Gabrielle.ttf'),
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
   useEffect(() => {
-    console.log('Forcing navigation to splash');
-    router.replace('/splash');
-  }, []);
+    onLayoutRootView();
+  }, [fontsLoaded, onLayoutRootView]);
 
-  console.log('Rendering Layout component');
+  if (!fontsLoaded) {
+    // Render nothing (or a simple fallback) until font is loaded
+    return null;
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={onLayoutRootView}>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -21,22 +36,11 @@ export default function Layout() {
         }}
       >
         <Stack.Screen
-          name="splash"
+          name="index" // Home / splash screen
           options={{ gestureEnabled: false }}
-          redirect={false}
         />
-        <Stack.Screen
-          name="princess"
-          redirect={false}
-        />
-        <Stack.Screen
-          name="gameplay"
-          redirect={false}
-        />
-        <Stack.Screen
-          name="index"
-          redirect={false}
-        />
+        <Stack.Screen name="princess" />
+        <Stack.Screen name="gameplay" />
       </Stack>
     </View>
   );
