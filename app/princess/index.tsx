@@ -1,3 +1,4 @@
+// app/princess/index.tsx
 import React from "react";
 import {
   View,
@@ -17,17 +18,17 @@ export default function PrincessScreen() {
 
   const handlePress = () => {
     console.log("Navigating to gameplay");
-    router.push("../gameplay");
+    router.push("/game"); // Updated to match route
   };
 
   console.log("Rendering PrincessScreen component");
   return (
     <ImageBackground
-      source={require("../../assets/images/sadprincess.png")} // Adjust path if needed
+      source={require("../../assets/images/sadprincess.png")}
       resizeMode="cover"
       style={styles.backgroundImage}
     >
-        <View style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.textContainer}>
           <Text style={styles.text}>{STRINGS.princessScreen.text}</Text>
         </View>
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
   text: {
     color: "red",
     fontSize: 22,
-    fontFamily: 'Gabrielle',
+    fontFamily: "Gabrielle",
   },
   overlay: {
     alignItems: "center",
@@ -82,6 +83,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "red",
     fontSize: 26,
-    fontFamily: 'Gabrielle',
+    fontFamily: "Gabrielle",
   },
 });

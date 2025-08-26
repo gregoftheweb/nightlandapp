@@ -68,7 +68,7 @@ export const getInitialState = (levelId: number = 1) => {
     objects: levelConfig.objects,
     items: levelConfig.items,
     pools: levelConfig.pools,
-    poolsTemplate: levelConfig.poolsTemplate,
+    poolsTemplate: levelConfig.poolTemplates,
     footsteps: levelConfig.footsteps,
     footstepsTemplate: levelConfig.footstepsTemplate,
     activeMonsters: [],
@@ -103,7 +103,7 @@ export const reducer = (state: any = initialState, action: any) => {
         greatPowers: newLevelConfig.greatPowers,
         objects: newLevelConfig.objects,
         pools: newLevelConfig.pools,
-        poolsTemplate: newLevelConfig.poolsTemplate,
+        poolsTemplate: newLevelConfig.poolTemplates,
         footsteps: newLevelConfig.footsteps,
         footstepsTemplate: newLevelConfig.footstepsTemplate,
         activeMonsters: [],
@@ -162,6 +162,8 @@ export const reducer = (state: any = initialState, action: any) => {
         items: [...state.items, newItem],
       };
     case "MOVE_PLAYER":
+      console.log("MOVE_PLAYER payload:", action.payload);
+      console.log("Before move, position:", state.player.position);
       return {
         ...state,
         player: { ...state.player, position: action.payload.position },
@@ -258,10 +260,19 @@ export const reducer = (state: any = initialState, action: any) => {
       const { effect, position } = action.payload;
       switch (effect.type) {
         case "swarm":
-          const newMonsters = [];
-          const monsterTemplate = state.monsters.find(
+          const newMonsters: any[] = [];
+
+          // Safe access to monsters array
+          const monstersArray = state.monsters ?? [];
+          const monsterTemplate = monstersArray.find(
             (m: any) => m.name === effect.monsterType
           );
+
+          if (!monsterTemplate) {
+            console.warn("Monster template not found:", effect.monsterType);
+            return state;
+          }
+
           for (let i = 0; i < effect.count; i++) {
             const spawnRow = Math.max(
               0,
@@ -289,6 +300,7 @@ export const reducer = (state: any = initialState, action: any) => {
               active: true,
             });
           }
+
           return {
             ...state,
             activeMonsters: [...state.activeMonsters, ...newMonsters],
@@ -307,10 +319,7 @@ export const reducer = (state: any = initialState, action: any) => {
             ...state,
             player: {
               ...state.player,
-              hp: Math.min(
-                state.player.maxHP,
-                state.player.hp + effect.amount
-              ),
+              hp: Math.min(state.player.maxHP, state.player.hp + effect.amount),
             },
           };
         default:
