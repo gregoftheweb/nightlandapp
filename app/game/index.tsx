@@ -1,220 +1,146 @@
-// app/game/index.tsx
-import React, { useState, useEffect, useReducer } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableWithoutFeedback,
-  Dimensions,
-} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, StyleSheet, Dimensions } from "react-native";
 import { handleMovePlayer } from "../../modules/playerUtils";
-import {
-  GameState,
-  createInitialGameState,
-  deserializeGameState,
-} from "../../config/gameState";
-import { Monster } from "@/config/types";
-import { PositionDisplay } from "../../components/PositionDisplay"; // adjust path if needed
-import { useGameContext } from "../context/GameContext";
+import { PositionDisplay } from "../../components/PositionDisplay";
+import { useGameContext } from "../../context/GameContext";
+import GameBoard, { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE } from "./GameBoard";
 
 const { width, height } = Dimensions.get("window");
-const VIEWPORT_SIZE = 10;
-const CELL_SIZE = Math.min(width, height) / VIEWPORT_SIZE;
 
-interface GameplayScreenProps {
-  // No props needed since initialGameState comes from context
-}
-
-// Move deserializeState function here to avoid hoisting issues
-const deserializeState = (stateString: string): GameState => {
-  const state = deserializeGameState(stateString);
-  return state || createInitialGameState(); // Fallback to default state if deserialization fails
-};
-
-const gameReducer = (state: GameState, action: any): GameState => {
-  console.log("Reducer processing action:", action); // Debug: Log the action
-  switch (action.type) {
-    case "MOVE_PLAYER":
-      const newState = {
-        ...state,
-        player: {
-          ...state.player,
-          position: { ...action.payload.position }, // Explicitly set the new position
-        },
-      };
-      console.log("Reducer new state:", newState.player.position); // Debug: Log new position
-      return newState;
-    default:
-      return state;
-  }
-};
+// Configuration for long-press behavior
+const LONG_PRESS_DELAY = 300; // Time to hold before long-press starts (ms)
+const MOVEMENT_INTERVAL = 1000; // Time between repeated moves during long-press (ms)
 
 export default function Game() {
-  const { dispatch: contextDispatch, showDialog, setOverlay, setDeathMessage, initialGameState } = useGameContext();
-  const [state, localDispatch] = useReducer(gameReducer, initialGameState ? deserializeState(initialGameState) : createInitialGameState());
+  const { state, dispatch, showDialog, setOverlay, setDeathMessage } = useGameContext();
 
-  // Override dispatch to sync with local state
-  const dispatch = (action: any) => {
-    console.log("Dispatch called with action:", action); // Debug: Log dispatch call
-    contextDispatch(action); // Propagate to context
-    localDispatch(action); // Update local state
+  // Long-press state management - simplified for debugging
+  const longPressInterval = useRef<number | null>(null);
+  const longPressTimeout = useRef<number | null>(null);
+
+  // Add a ref to track current state
+  const stateRef = useRef(state);
+  
+  // Keep the ref updated
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  const stopLongPress = () => {
+    // Clear both timeout and interval
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+      longPressTimeout.current = null;
+    }
+    
+    if (longPressInterval.current) {
+      clearInterval(longPressInterval.current);
+      longPressInterval.current = null;
+    }
   };
 
-  // Camera offsets
   const calculateCameraOffset = (playerPos: { row: number; col: number }) => {
-    const halfViewport = Math.floor(VIEWPORT_SIZE / 2);
+    const halfViewportCols = Math.floor(VIEWPORT_COLS / 2);
+    const halfViewportRows = Math.floor(VIEWPORT_ROWS / 2);
     return {
-      offsetX: Math.max(
-        0,
-        Math.min(state.gridWidth - VIEWPORT_SIZE, playerPos.col - halfViewport)
-      ),
-      offsetY: Math.max(
-        0,
-        Math.min(state.gridHeight - VIEWPORT_SIZE, playerPos.row - halfViewport)
-      ),
+      offsetX: Math.max(0, Math.min(state.gridWidth - VIEWPORT_COLS, playerPos.col - halfViewportCols)),
+      offsetY: Math.max(0, Math.min(state.gridHeight - VIEWPORT_ROWS, playerPos.row - halfViewportRows)),
     };
   };
 
-  const [cameraOffset, setCameraOffset] = useState(
-    calculateCameraOffset(state.player.position)
-  );
-
+  const [cameraOffset, setCameraOffset] = useState(calculateCameraOffset(state.player.position));
+  
   useEffect(() => {
-    console.log("useEffect triggered, updating camera offset:", state.player.position); // Debug: Log position update
     setCameraOffset(calculateCameraOffset(state.player.position));
   }, [state.player.position]);
 
-  // Calculate tap direction
-  const calculateDirection = (
-    tapRow: number,
-    tapCol: number,
-    playerRow: number,
-    playerCol: number
-  ): "up" | "down" | "left" | "right" | null => {
-    const rowDiff = tapRow - playerRow;
-    const colDiff = tapCol - playerCol;
+  // Cleanup intervals on unmount or combat state change
+  useEffect(() => {
+    if (state.inCombat) {
+      stopLongPress();
+    }
+  }, [state.inCombat]);
 
-    if (Math.abs(rowDiff) > Math.abs(colDiff))
-      return rowDiff < 0 ? "up" : "down";
-    if (Math.abs(colDiff) > 0) return colDiff < 0 ? "left" : "right";
+  useEffect(() => {
+    return () => {
+      stopLongPress();
+    };
+  }, []);
+
+  const getMovementDirection = (tapRow: number, tapCol: number, playerRow: number, playerCol: number) => {
+    const rowDiff = Math.abs(tapRow - playerRow);
+    const colDiff = Math.abs(tapCol - playerCol);
+    
+    if (rowDiff > colDiff) {
+      return tapRow < playerRow ? "up" : "down";
+    } else if (tapCol !== playerCol) {
+      return tapCol < playerCol ? "left" : "right";
+    }
     return null;
   };
 
-  const handlePress = (event: any) => {
-    if (state.inCombat) return;
-
-    const { pageX, pageY } = event.nativeEvent;
-    const gridLeft = (width - VIEWPORT_SIZE * CELL_SIZE) / 2;
-    const gridTop = (height - VIEWPORT_SIZE * CELL_SIZE) / 2;
+  const calculateTapPosition = (pageX: number, pageY: number) => {
+    const gridLeft = (width - VIEWPORT_COLS * CELL_SIZE) / 2;
+    const gridTop = (height - VIEWPORT_ROWS * CELL_SIZE) / 2;
+    
     const rawCol = (pageX - gridLeft) / CELL_SIZE + cameraOffset.offsetX;
     const rawRow = (pageY - gridTop) / CELL_SIZE + cameraOffset.offsetY;
-    const tapCol = Math.floor(rawCol);
-    const tapRow = Math.floor(rawRow);
+    
+    return {
+      tapCol: Math.floor(rawCol),
+      tapRow: Math.floor(rawRow)
+    };
+  };
+
+  const startLongPress = (direction: string) => {
+    if (state.inCombat) return;
+    
+    // Start the repeated movement using current state ref
+    longPressInterval.current = setInterval(() => {
+      handleMovePlayer(stateRef.current, dispatch, direction, setOverlay, showDialog, setDeathMessage);
+    }, MOVEMENT_INTERVAL);
+  };
+
+  const handlePressIn = (event: any) => {
+    if (state.inCombat) return;
+    
+    const { pageX, pageY } = event.nativeEvent;
+    const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
     const { row: playerRow, col: playerCol } = state.player.position;
 
-    const direction = calculateDirection(tapRow, tapCol, playerRow, playerCol);
-    console.log("Tap detected at:", { tapRow, tapCol }, "Direction:", direction); // Debug: Log tap and direction
-
+    const direction = getMovementDirection(tapRow, tapCol, playerRow, playerCol);
+    
     if (direction) {
-      handleMovePlayer(
-        state,
-        dispatch,
-        direction,
-        setOverlay,
-        showDialog,
-        setDeathMessage
-      );
+      // Execute immediate movement
+      handleMovePlayer(state, dispatch, direction, setOverlay, showDialog, setDeathMessage);
+      
+      // Set up long-press timer
+      longPressTimeout.current = setTimeout(() => {
+        startLongPress(direction);
+      }, LONG_PRESS_DELAY);
     }
   };
 
-  const renderGrid = () => {
-    console.log("Rendering grid with player at:", state.player.position); // Debug: Log rendering position
-    const tiles = [];
-    for (let row = 0; row < VIEWPORT_SIZE; row++) {
-      for (let col = 0; col < VIEWPORT_SIZE; col++) {
-        const worldRow = row + cameraOffset.offsetY;
-        const worldCol = col + cameraOffset.offsetX;
-        const isPlayer =
-          worldRow === state.player.position.row &&
-          worldCol === state.player.position.col;
-
-        const monsterAtPosition = state.activeMonsters.find(
-          (monster: Monster) =>
-            monster.position?.row === worldRow &&
-            monster.position.col === worldCol
-        );
-
-        tiles.push(
-          <View
-            key={`${worldRow}-${worldCol}`}
-            style={[
-              styles.cell,
-              {
-                left: col * CELL_SIZE,
-                top: row * CELL_SIZE,
-                backgroundColor: getCellBackgroundColor(
-                  worldRow,
-                  worldCol,
-                  isPlayer,
-                  monsterAtPosition
-                ),
-              },
-            ]}
-          >
-            {isPlayer && (
-              <Image
-                source={require("../../assets/images/christos.png")}
-                style={styles.character}
-                resizeMode="contain"
-              />
-            )}
-            {monsterAtPosition && !isPlayer && (
-              <Image
-                source={getMonsterImage(monsterAtPosition.shortName)}
-                style={styles.character}
-                resizeMode="contain"
-              />
-            )}
-          </View>
-        );
-      }
-    }
-    return tiles;
-  };
-
-  const getCellBackgroundColor = (
-    row: number,
-    col: number,
-    isPlayer: boolean,
-    hasMonster: any
-  ) => {
-    if (isPlayer) return "#444";
-    if (hasMonster) return "#622";
-    if (state.inCombat) return "#331";
-    return "#111";
-  };
-
-  const getMonsterImage = (shortName: string) => {
-    const monsterImages: { [key: string]: any } = {
-      abhuman: require("../../assets/images/abhuman.png"),
-      night_hound: require("../../assets/images/nighthound.png"),
-    };
-    return monsterImages[shortName] || require("../../assets/images/abhuman.png");
+  const handlePressOut = () => {
+    stopLongPress();
   };
 
   return (
-    <TouchableWithoutFeedback onPress={handlePress}>
-      <View style={{ flex: 1 }}>
-        <View style={styles.container}>
-          <View style={styles.gridContainer}>{renderGrid()}</View>
-          <PositionDisplay position={state.player.position} />
-          {state.inCombat && (
-            <View style={styles.combatOverlay}>{/* Combat UI */}</View>
-          )}
-        </View>
+    <View
+      style={styles.container}
+      onTouchStart={handlePressIn}
+      onTouchEnd={handlePressOut}
+    >
+      <View style={styles.gameContainer}>
+        <GameBoard state={state} cameraOffset={cameraOffset} />
+        <PositionDisplay position={state.player.position} />
+        {state.inCombat && (
+          <View style={styles.combatOverlay}>
+            {/* Combat UI */}
+          </View>
+        )}
       </View>
-    </TouchableWithoutFeedback>
+    </View>
   );
 }
 
@@ -222,29 +148,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+  },
+  gameContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  gridContainer: {
-    width: VIEWPORT_SIZE * CELL_SIZE,
-    height: VIEWPORT_SIZE * CELL_SIZE,
-    position: "relative",
-    borderWidth: 2,
-    borderColor: "#444",
-  },
-  cell: {
-    width: CELL_SIZE,
-    height: CELL_SIZE,
-    position: "absolute",
-    borderWidth: 0.5,
-    borderColor: "#222",
-  },
-  character: {
-    width: CELL_SIZE * 0.8,
-    height: CELL_SIZE * 0.8,
-    position: "absolute",
-    left: CELL_SIZE * 0.1,
-    top: CELL_SIZE * 0.1,
   },
   combatOverlay: {
     position: "absolute",

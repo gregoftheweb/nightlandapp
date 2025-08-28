@@ -5,7 +5,7 @@ import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useCallback, useState } from "react";
 import { createInitialGameState, serializeGameState } from "../config/gameState";
-import { GameProvider } from "./context/GameContext";
+import { GameProvider } from "../context/GameContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -43,7 +43,7 @@ export default function Layout() {
             name="index"
             options={{ gestureEnabled: false }}
           />
-          <Stack.Screen name="princess" />
+          <Stack.Screen name="princess/index" />
           <Stack.Screen name="game/index" />
         </Stack>
       </GameProvider>
