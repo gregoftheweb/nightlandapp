@@ -3,11 +3,7 @@ export interface Position {
   row: number;
   col: number;
 }
-// config/types.ts - Shared type definitions
-export interface Position {
-  row: number;
-  col: number;
-}
+
 
 export type GameObject = {
   shortName: string;
@@ -31,6 +27,7 @@ export type GameObject = {
     monsterType?: string;
     count?: number;
     range?: number;
+    value?: number;
   }>;
   collisionMask?: Array<{
     row: number;
@@ -91,6 +88,7 @@ export interface Effect {
   type: "heal" | "hide" | "damage" | "buff" | "debuff"; // extend as needed
   amount?: number;
   duration?: number;
+  value?: number;
 }
 
 // --- Pool Template (the blueprint) ---

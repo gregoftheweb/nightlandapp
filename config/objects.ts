@@ -26,10 +26,10 @@ export const buildings: Record<number, GameObject> = {
     name: "The Last Redoubt",
     description:
       "The great pyramid, the fortress of all remaining mankind, rising high into the eternal night.",
-    width: 2,
-    height: 2,
-    image: "/assets/images/redoubt.png",
-    position: { row: 0, col: 0 }, // Default position, overridden by level
+    width: 4,
+    height: 4,
+    image: "@assets/images/redoubt.png",
+    position: { row: 396, col: 198 }, // Default position, overridden by level
     active: true, // Building is active by default
   },
 };

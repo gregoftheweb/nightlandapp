@@ -1,5 +1,5 @@
 // modules/gameInput.ts
-import { handleMovePlayer } from './gameLoop';
+import { handleMovePlayer } from './playerUtils';
 
 export interface TapHandlerCallbacks {
   dispatch: (action: any) => void;
@@ -24,24 +24,97 @@ export interface TapContext {
 
 export class GameInputHandler {
   private callbacks: TapHandlerCallbacks;
+  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  private continuousMovementTimer: ReturnType<typeof setInterval> | null = null;
+  private currentDirection: 'up' | 'down' | 'left' | 'right' | null = null;
+  private isLongPressing = false;
+  private longPressThreshold = 500; // milliseconds
+  private continuousMovementInterval = 200; // milliseconds between moves
 
   constructor(callbacks: TapHandlerCallbacks) {
     this.callbacks = callbacks;
   }
 
-  handleGridTap(context: TapContext): void {
+  handleGridTouchStart(context: TapContext): void {
     const { tapPosition, playerPosition, gameState } = context;
     
-    // Check what was tapped
+    // Clear any existing timers
+    this.clearTimers();
+    
+    // Check what was touched
     const tappedPlayer = this.isSamePosition(tapPosition, playerPosition);
     const tappedMonster = this.findMonsterAtPosition(tapPosition, gameState);
 
     if (tappedPlayer) {
+      // Handle player tap immediately (no long press for player)
       this.handlePlayerTap(gameState);
+      return;
     } else if (tappedMonster) {
+      // Handle monster tap immediately (no long press for monsters)
       this.handleMonsterTap(tappedMonster, gameState);
+      return;
     } else if (!gameState.inCombat) {
-      this.handleMovementTap(tapPosition, playerPosition, gameState);
+      // Calculate direction for potential movement
+      const direction = this.calculateDirection(tapPosition, playerPosition);
+      
+      if (direction) {
+        this.currentDirection = direction;
+        
+        // Perform immediate movement
+        this.performMovement(gameState);
+        
+        // Start long press timer
+        this.longPressTimer = setTimeout(() => {
+          this.startContinuousMovement(gameState);
+        }, this.longPressThreshold);
+      }
+    }
+  }
+
+  handleGridTouchEnd(): void {
+    this.clearTimers();
+    this.currentDirection = null;
+    this.isLongPressing = false;
+  }
+
+  // Legacy method for backward compatibility
+  handleGridTap(context: TapContext): void {
+    this.handleGridTouchStart(context);
+  }
+
+  private startContinuousMovement(gameState: any): void {
+    this.isLongPressing = true;
+    
+    // Start continuous movement
+    this.continuousMovementTimer = setInterval(() => {
+      if (this.currentDirection && this.isLongPressing) {
+        this.performMovement(gameState);
+      }
+    }, this.continuousMovementInterval);
+  }
+
+  private performMovement(gameState: any): void {
+    if (this.currentDirection) {
+      handleMovePlayer(
+        gameState,
+        this.callbacks.dispatch,
+        this.currentDirection,
+        this.callbacks.setOverlay,
+        this.callbacks.showDialog,
+        this.callbacks.setDeathMessage
+      );
+    }
+  }
+
+  private clearTimers(): void {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+    
+    if (this.continuousMovementTimer) {
+      clearInterval(this.continuousMovementTimer);
+      this.continuousMovementTimer = null;
     }
   }
 
@@ -76,25 +149,6 @@ export class GameInputHandler {
     }
   }
 
-  private handleMovementTap(
-    tapPosition: GridCoordinates, 
-    playerPosition: GridCoordinates, 
-    gameState: any
-  ): void {
-    const direction = this.calculateDirection(tapPosition, playerPosition);
-    
-    if (direction) {
-      handleMovePlayer(
-        gameState,
-        this.callbacks.dispatch,
-        direction,
-        this.callbacks.setOverlay,
-        this.callbacks.showDialog,
-        this.callbacks.setDeathMessage
-      );
-    }
-  }
-
   private calculateDirection(
     tapPosition: GridCoordinates,
     playerPosition: GridCoordinates
@@ -102,7 +156,7 @@ export class GameInputHandler {
     const rowDiff = Math.abs(tapPosition.row - playerPosition.row);
     const colDiff = Math.abs(tapPosition.col - playerPosition.col);
 
-    // Only allow movement to adjacent cells
+    // Only allow movement to adjacent cells for initial tap
     if (rowDiff > 1 || colDiff > 1) return null;
     
     // Prioritize the larger difference for diagonal taps
@@ -123,5 +177,19 @@ export class GameInputHandler {
     return gameState.activeMonsters?.find((monster: any) => 
       monster.position.row === position.row && monster.position.col === position.col
     );
+  }
+
+  // Configuration methods
+  setLongPressThreshold(threshold: number): void {
+    this.longPressThreshold = threshold;
+  }
+
+  setContinuousMovementInterval(interval: number): void {
+    this.continuousMovementInterval = interval;
+  }
+
+  // Cleanup method to call when component unmounts
+  cleanup(): void {
+    this.clearTimers();
   }
 }

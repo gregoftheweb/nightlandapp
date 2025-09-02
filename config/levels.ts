@@ -1,5 +1,4 @@
-// config/levels.ts
-import { Level, Position, Monster } from './types';
+import { Level, Position, Monster, FootstepTemplate, FootstepInstance, PoolTemplate } from './types';
 import { buildings, weapons } from './objects';
 import { monsters } from './monsters';
 
@@ -12,7 +11,7 @@ export const levels: Record<string, Level> = {
     items: [
       {
         shortName: "healthPotion",
-        category: "consumable", // Added
+        category: "consumable",
         name: "Health Potion",
         image: "potion.png",
         position: { row: 350, col: 180 },
@@ -23,7 +22,7 @@ export const levels: Record<string, Level> = {
       },
       {
         shortName: "ironSword",
-        category: "weapon", // Added
+        category: "weapon",
         name: "Iron Sword",
         image: "sword.png",
         position: { row: 300, col: 250 },
@@ -36,7 +35,7 @@ export const levels: Record<string, Level> = {
     ],
     monsters: [
       {
-        ...monsters.find(m => m.shortName === "abhuman") || {}, // Changed from "orc" to "abhuman"
+        ...monsters.find(m => m.shortName === "abhuman") || {},
         id: "abhuman-1",
         position: { row: 0, col: 0 },
         active: false,
@@ -44,7 +43,7 @@ export const levels: Record<string, Level> = {
     ],
     objects: [
       {
-        ...buildings[100], // Changed from buildings.redoubt to buildings[100]
+        ...buildings[100],
         shortName: "redoubt",
         position: { row: 390, col: 195 },
         active: true,
@@ -59,10 +58,21 @@ export const levels: Record<string, Level> = {
         ],
       },
     ],
+    poolTemplates: [], // Placeholder: empty array if not used
+    footsteps: [], // Placeholder: empty array if not used
+    footstepsTemplate: {
+      name: "defaultFootstep",
+      shortName: "defaultFootstep",
+      size: { width: 1, height: 1 },
+      description: "Default footstep template",
+      active: true,
+      type: "trail",
+      maxInstances: 100,
+    },
     greatPowers: [
       {
         shortName: "watcherse",
-        category: "greatPower", // Added
+        category: "greatPower",
         name: "The Watcher of the South East",
         image: "watcher.png",
         position: { row: 100, col: 350 },

@@ -1,0 +1,93 @@
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  Image,
+  NativeSyntheticEvent,
+  NativeTouchEvent,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const { width } = Dimensions.get("window");
+
+interface PlayerHUDProps {
+  hp: number;
+  maxHP: number;
+  onGearPress?: () => void;
+}
+
+const PlayerHUD: React.FC<PlayerHUDProps> = ({ hp, maxHP, onGearPress }) => {
+  const insets = useSafeAreaInsets();
+
+  const handleGearPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    event.stopPropagation(); // Prevent event from bubbling up
+    onGearPress?.(); // Call the onGearPress callback
+  };
+
+  return (
+    <View
+      style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
+      pointerEvents="box-none"
+    >
+      <View style={styles.statusBar} pointerEvents="box-none">
+        <Text style={styles.hpText}>HP: {hp}</Text>
+        <TouchableOpacity
+          style={styles.gearButton}
+          onPress={handleGearPress}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={require("@assets/images/gear.png")}
+            style={styles.gearIcon}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 1000,
+    pointerEvents: "box-none",
+  },
+  statusBar: {
+    width: width * 0.45,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: "#990000",
+  },
+  hpText: {
+    color: "#990000",
+    fontSize: 14,
+    fontWeight: "bold",
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  gearButton: {
+    padding: 4,
+    borderRadius: 12,
+  },
+  gearIcon: {
+    width: 20,
+    height: 20,
+    tintColor: "#990000",
+  },
+});
+
+export default PlayerHUD;
