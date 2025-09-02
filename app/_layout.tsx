@@ -15,7 +15,11 @@ export default function Layout() {
     Gabrielle: require("../assets/fonts/Gabrielle.ttf"),
   });
 
-  const [gameState] = useState(createInitialGameState());
+const [gameState] = useState(() => {
+  const gs = createInitialGameState();
+  console.log("Initial game state:", gs);
+  return gs;
+});
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {

@@ -173,6 +173,15 @@ export default function Game() {
     setSettingsVisible(false);
   }, []);
 
+
+  // Debug: log objects before rendering
+  useEffect(() => {
+    console.log("Objects in current level:", state.objects);
+    state.objects.forEach(obj => {
+      console.log("Rendering object:", obj.id, "Image:", obj.image, "Position:", obj.position);
+    });
+  }, [state.objects]);
+
   return (
     <View
       style={styles.container}
@@ -182,7 +191,7 @@ export default function Game() {
     >
       <View style={styles.gameContainer}>
         <GameBoard state={state} cameraOffset={cameraOffset} />
-        <PositionDisplay position={state.player.position} />
+<PositionDisplay position={state.player.position} level={state.level} />
         {state.inCombat && (
           <View style={styles.combatOverlay}>
             {/* Combat UI */}

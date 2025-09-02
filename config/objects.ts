@@ -1,6 +1,8 @@
 // config/objects.ts
 import { GameObject } from './types';
 
+import redoubtImg from "@assets/images/redoubt.png";
+
 // Weapons
 export const weapons: Record<number, GameObject> = {
   1: {
@@ -13,23 +15,24 @@ export const weapons: Record<number, GameObject> = {
     hitBonus: 2,
     type: "melee",
     range: 1,
-    image: null, // No image since it can never be dropped
+   
     active: true, // Weapon is active by default
   },
 };
 
 // Buildings
+
 export const buildings: Record<number, GameObject> = {
   100: {
     shortName: "redoubt",
     category: "building",
     name: "The Last Redoubt",
-    description:
-      "The great pyramid, the fortress of all remaining mankind, rising high into the eternal night.",
+    description: "The Last home of the remnant of Mankind.",
     width: 4,
     height: 4,
-    image: "@assets/images/redoubt.png",
-    position: { row: 396, col: 198 }, // Default position, overridden by level
-    active: true, // Building is active by default
+    image: redoubtImg, // ✅ pass the imported image
+    position: { row: 396, col: 198 },
+    active: true,
+    zIndex: 0,
   },
 };

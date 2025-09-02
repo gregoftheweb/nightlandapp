@@ -1,26 +1,66 @@
-import React from "react";
-import { View, Image, StyleSheet, Dimensions } from "react-native";
-import { Monster } from "@/config/types";
+import React, { useState } from "react";
+import { View, Image, StyleSheet, Dimensions, ImageSourcePropType, Text, TouchableOpacity } from "react-native";
+import { Monster, LevelObjectInstance, Player } from "@/config/types";
+import { GameState } from "@/config/gameState";
+import { InfoBox } from "../../components/InfoBox";
 
 const { width, height } = Dimensions.get("window");
 
-// Calculate how many cells actually fit on screen
-const CELL_SIZE = 32; // Fixed cell size - adjust this to your preference
+const CELL_SIZE = 32;
 const VIEWPORT_COLS = Math.floor(width / CELL_SIZE);
 const VIEWPORT_ROWS = Math.floor(height / CELL_SIZE);
 
 interface GameBoardProps {
-  state: any;
+  state: GameState;
   cameraOffset: { offsetX: number; offsetY: number };
 }
 
 export default function GameBoard({ state, cameraOffset }: GameBoardProps) {
+  const [infoVisible, setInfoVisible] = useState(false);
+  const [infoData, setInfoData] = useState({ name: '', description: '' });
+
+  if (!state.level || !state.level.objects) {
+    console.warn("GameBoard: state.level is undefined or missing objects!");
+    return <View style={styles.gridContainer} />;
+  }
+
+  const showInfo = (name: string, description: string) => {
+    setInfoData({ name, description });
+    setInfoVisible(true);
+  };
+
+  const handlePlayerTap = () => {
+    const player = state.player;
+    const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : "";
+showInfo(
+  player.name || "Player",
+  `${player.description}\n\nHP: ${player.hp}/${player.maxHP}\nAC: ${player.ac}\nAttack: ${player.attack}${weaponInfo}`
+);
+  };
+
+  const handleMonsterTap = (monster: Monster) => {
+    showInfo(
+      monster.name || monster.shortName || "Monster",
+      monster.description || `A dangerous creature. HP: ${monster.hp || "Unknown"}`
+    );
+  };
+
+  const handleBuildingTap = (building: LevelObjectInstance) => {
+    showInfo(
+      building.name || building.shortName || "Building",
+      building.description || "An interesting structure in the world."
+    );
+  };
+
   const renderGrid = () => {
-    const tiles = [];
+    const tiles: React.ReactNode[] = [];
+
+    // --- Render grid cells first ---
     for (let row = 0; row < VIEWPORT_ROWS; row++) {
       for (let col = 0; col < VIEWPORT_COLS; col++) {
         const worldRow = row + cameraOffset.offsetY;
         const worldCol = col + cameraOffset.offsetX;
+
         const isPlayer =
           worldRow === state.player.position.row &&
           worldCol === state.player.position.col;
@@ -28,54 +68,122 @@ export default function GameBoard({ state, cameraOffset }: GameBoardProps) {
         const monsterAtPosition = state.activeMonsters.find(
           (monster: Monster) =>
             monster.position?.row === worldRow &&
-            monster.position.col === worldCol
+            monster.position?.col === worldCol
         );
 
         tiles.push(
           <View
-            key={`${worldRow}-${worldCol}`}
+            key={`cell-${worldRow}-${worldCol}`}
             style={[
               styles.cell,
               {
                 left: col * CELL_SIZE,
                 top: row * CELL_SIZE,
-                backgroundColor: getCellBackgroundColor(
-                  isPlayer,
-                  monsterAtPosition,
-                  state.inCombat
-                ),
+                backgroundColor: getCellBackgroundColor(isPlayer, monsterAtPosition, state.inCombat),
               },
             ]}
           >
             {isPlayer && (
-              <Image
-                source={require("../../assets/images/christos.png")}
-                style={styles.character}
-                resizeMode="contain"
-              />
+              <TouchableOpacity 
+                onPress={handlePlayerTap}
+                style={styles.tappableArea}
+                activeOpacity={0.7}
+              >
+                <Image
+                  source={require("../../assets/images/christos.png")}
+                  style={[styles.character, { zIndex: 2 }]}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             )}
             {monsterAtPosition && !isPlayer && (
-              <Image
-                source={getMonsterImage(monsterAtPosition.shortName)}
-                style={styles.character}
-                resizeMode="contain"
-              />
+              <TouchableOpacity 
+                onPress={() => handleMonsterTap(monsterAtPosition)}
+                style={styles.tappableArea}
+                activeOpacity={0.7}
+              >
+                <Image
+                  source={getMonsterImage(monsterAtPosition.shortName)}
+                  style={[styles.character, { zIndex: 1 }]}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             )}
           </View>
         );
       }
     }
-    return tiles;
+
+    // --- Render buildings AFTER grid cells so they appear on top ---
+    const buildingsRendered = state.level.objects.map((obj: LevelObjectInstance) => {
+      if (!obj.position || !obj.image) return null;
+
+      const screenRow = obj.position.row - cameraOffset.offsetY;
+      const screenCol = obj.position.col - cameraOffset.offsetX;
+      const objWidth = obj.size?.width ?? 1;
+      const objHeight = obj.size?.height ?? 1;
+
+      const inView =
+        screenRow + objHeight > 0 &&
+        screenRow < VIEWPORT_ROWS &&
+        screenCol + objWidth > 0 &&
+        screenCol < VIEWPORT_COLS;
+
+      if (!inView) return null;
+
+      console.log(
+        `Rendering building ${obj.id} at screen(${screenCol},${screenRow}) px(${screenCol * CELL_SIZE},${screenRow * CELL_SIZE}) size(${objWidth * CELL_SIZE},${objHeight * CELL_SIZE})`
+      );
+
+      return (
+        <TouchableOpacity
+          key={`building-${obj.id}`}
+          onPress={() => handleBuildingTap(obj)}
+          activeOpacity={0.8}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: objWidth * CELL_SIZE,
+            height: objHeight * CELL_SIZE,
+            zIndex: 10, // higher than player or monsters
+          }}
+        >
+          <Image
+            source={obj.image as ImageSourcePropType}
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      );
+    }).filter((item): item is React.ReactElement => item !== null);
+
+    return [...tiles, ...buildingsRendered]; // grid cells first, buildings on top
   };
 
-  return <View style={styles.gridContainer}>{renderGrid()}</View>;
+  console.log("Camera offset:", cameraOffset);
+  console.log("Objects in current level:", state.level.objects);
+
+  return (
+    <View style={styles.gridContainer}>
+      {renderGrid()}
+      
+      {/* InfoBox Dialog */}
+      <InfoBox
+        visible={infoVisible}
+        name={infoData.name}
+        description={infoData.description}
+        onClose={() => setInfoVisible(false)}
+      />
+    </View>
+  );
 }
 
-const getCellBackgroundColor = (
-  isPlayer: boolean,
-  hasMonster: any,
-  inCombat: boolean
-) => {
+// --- Helpers ---
+const getCellBackgroundColor = (isPlayer: boolean, hasMonster: any, inCombat: boolean) => {
   if (isPlayer) return "#444";
   if (hasMonster) return "#622";
   if (inCombat) return "#331";
@@ -90,10 +198,11 @@ const getMonsterImage = (shortName: string) => {
   return monsterImages[shortName] || require("../../assets/images/abhuman.png");
 };
 
+// --- Styles ---
 const styles = StyleSheet.create({
   gridContainer: {
-    width: width,
-    height: height,
+    width,
+    height,
     position: "relative",
     backgroundColor: "#111",
   },
@@ -110,6 +219,15 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: CELL_SIZE * 0.1,
     top: CELL_SIZE * 0.1,
+  },
+  building: {
+    position: "absolute",
+  },
+  tappableArea: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

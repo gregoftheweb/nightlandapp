@@ -1,13 +1,17 @@
 // config/monsters.ts
 import { Monster, Position } from './types';
 
+import abhumanIMG from "@assets/images/abhuman.png";
+import night_houndIMG from "@assets/images/nighthound4.png";
+import watcher_seIMG from "@assets/images/watcherse.png";
+
 export const monsters: Monster[] = [
   {
     shortName: 'abhuman',
     category: 'regular',
     name: 'Abhuman',
     description: 'Mutated humanoid with brute strength.',
-    image: '../../assets/images/abhuman.png',
+    image: abhumanIMG,
     position: { row: 0, col: 0 },
     active: true,
     hp: 50,
@@ -25,7 +29,7 @@ export const monsters: Monster[] = [
     category: 'regular',
     name: 'Night Hound',
     description: 'Swift, feral beast that hunts in packs.',
-    image: '../../assets/images/night_hound.png',
+    image: night_houndIMG,
     position: { row: 0, col: 0 },
     active: true,
     hp: 30,
@@ -43,7 +47,7 @@ export const monsters: Monster[] = [
     category: 'greatPower',
     name: 'Watcher of the South East',
     description: 'An ancient guardian with mystical powers.',
-    image: '../../assets/images/watcher_se.png',
+    image: watcher_seIMG,
     position: { row: 0, col: 0 },
     active: true,
     hp: 150,
@@ -56,19 +60,5 @@ export const monsters: Monster[] = [
     maxInstances: 1,
     soulKey: 'str:18,dex:12,con:16,int:14,wis:14,cha:12',
   },
-  {
-    shortName: 'king_kong',
-    category: 'boss',
-    name: 'King Kong',
-    description: 'A colossal beast of unparalleled strength.',
-    image: '../../assets/images/king_kong.png',
-    position: { row: 0, col: 0 },
-    active: true,
-    hp: 300,
-    maxHP: 300,
-    attack: 20,
-    ac: 18,
-    moveRate: 1,
-    soulKey: 'str:20,dex:10,con:18,int:8,wis:10,cha:14',
-  },
+
 ];

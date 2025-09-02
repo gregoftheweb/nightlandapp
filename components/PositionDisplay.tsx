@@ -1,14 +1,17 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { Level } from "@/config/types"; // import your Level type
 
 interface PositionDisplayProps {
   position: { row: number; col: number };
+  level: Level; // added
 }
 
-export const PositionDisplay: React.FC<PositionDisplayProps> = ({ position }) => {
+export const PositionDisplay: React.FC<PositionDisplayProps> = ({ position, level }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
+        Level: {level.name || level.id} {"\n"}
         ({position.row},{position.col})
       </Text>
     </View>

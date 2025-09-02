@@ -49,9 +49,18 @@ export const calculateCameraOffset = (playerPos: { row: number; col: number }, g
     return { offsetX, offsetY };
 };
 
+// nightland/src/modules/utils.ts
 export function initializeEntityStyles(state: any) {
     const tileSize = state.tileSize;
-  
+    
+    console.log("===== Initializing Entity Styles =====");
+    console.log("Tile size:", tileSize);
+    console.log("Player:", state.player);
+    console.log("Objects array:", state.objects);
+    console.log("Active Monsters array:", state.activeMonsters);
+    console.log("Pools array:", state.pools);
+    console.log("Great Powers array:", state.greatPowers);
+
     // Player
     const player = document.querySelector(`#${state.player?.shortName}`);
     if (player && state.player?.position) {
@@ -60,13 +69,15 @@ export function initializeEntityStyles(state: any) {
       (player as HTMLElement).style.transform = "none";
       (player as HTMLElement).style.visibility = "visible";
       (player as HTMLElement).style.opacity = "1";
+      console.log("Player positioned at:", state.player.position);
     } else {
       console.warn("Player element or position missing:", state.player);
     }
-  
+
     // Objects (including Redoubt)
     (state.objects || []).forEach((object: any) => {
-      const element = document.querySelector(`#${object.shortName}`);
+      const element = document.querySelector(`#${object.id}`);
+      console.log("Object:", object.shortName, "id:", object.id, "DOM element found?", !!element);
       if (element && object.position) {
         (element as HTMLElement).style.left = `${object.position.col * tileSize}px`;
         (element as HTMLElement).style.top = `${object.position.row * tileSize}px`;
@@ -76,14 +87,16 @@ export function initializeEntityStyles(state: any) {
         (element as HTMLElement).style.transformOrigin = "center center";
         (element as HTMLElement).style.visibility = "visible";
         (element as HTMLElement).style.opacity = "1";
+        console.log("Positioned object:", object.shortName, "at row:", object.position.row, "col:", object.position.col);
       } else {
         console.warn("Object element or position missing:", object);
       }
     });
-  
+
     // Great Powers
     (state.greatPowers || []).forEach((power: any) => {
       const element = document.querySelector(`#${power.shortName}`);
+      console.log("GreatPower:", power.shortName, "DOM element found?", !!element);
       if (element && power.position) {
         (element as HTMLElement).style.left = `${power.position.col * tileSize}px`;
         (element as HTMLElement).style.top = `${power.position.row * tileSize}px`;
@@ -93,15 +106,16 @@ export function initializeEntityStyles(state: any) {
         (element as HTMLElement).style.visibility = "visible";
         (element as HTMLElement).style.opacity = "1";
       } else {
-        console.warn("Great Power element or position missing:", power);
+        console.warn("GreatPower element or position missing:", power);
       }
     });
-  
+
     // Active Monsters
     (state.activeMonsters || []).forEach((monster: any) => {
       const element =
-        document.querySelector(`#${monster.id}`) || // Normal state
-        document.querySelector(`#combat-${monster.id}`); // Combat state
+        document.querySelector(`#${monster.id}`) || 
+        document.querySelector(`#combat-${monster.id}`);
+      console.log("Monster:", monster.name, "id:", monster.id, "DOM element found?", !!element);
       if (element && monster.position) {
         (element as HTMLElement).style.left = `${monster.position.col * tileSize}px`;
         (element as HTMLElement).style.top = `${monster.position.row * tileSize}px`;
@@ -112,10 +126,11 @@ export function initializeEntityStyles(state: any) {
         console.warn("Monster element or position missing:", monster);
       }
     });
-  
+
     // Pools
     (state.pools || []).forEach((pool: any) => {
       const element = document.querySelector(`#poolOfPeace-${pool.id}`);
+      console.log("Pool:", pool.shortName, "id:", pool.id, "DOM element found?", !!element);
       if (element && pool.position) {
         const template = state.poolsTemplate;
         (element as HTMLElement).style.left = `${pool.position.col * tileSize}px`;
@@ -129,25 +144,10 @@ export function initializeEntityStyles(state: any) {
         console.warn("Pool element or position missing:", pool);
       }
     });
-  
-    // Footsteps
-    (state.footsteps || []).forEach((step: any) => {
-      const element = document.querySelector(`#footstepsPersius-${step.id}`);
-      if (element && step.position) {
-        const template = state.footstepsTemplate;
-        (element as HTMLElement).style.left = `${step.position.col * tileSize}px`;
-        (element as HTMLElement).style.top = `${step.position.row * tileSize}px`;
-        (element as HTMLElement).style.width = `${(template.size?.width || 1) * tileSize}px`;
-        (element as HTMLElement).style.height = `${(template.size?.height || 1) * tileSize}px`;
-        (element as HTMLElement).style.transform = `rotate(${step.direction || 0}deg)`;
-        (element as HTMLElement).style.transformOrigin = "center center";
-        (element as HTMLElement).style.visibility = "visible";
-        (element as HTMLElement).style.opacity = "1";
-      } else {
-        console.warn("Footstep element or position missing:", step);
-      }
-    });
+
+    console.log("===== Entity Styles Initialization Complete =====");
 }
+
 
 export function updateViewport(state: any) {
     const viewportWidth = window.innerWidth;

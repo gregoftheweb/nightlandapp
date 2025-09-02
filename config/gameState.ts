@@ -1,4 +1,3 @@
-
 // config/gameState.ts - Runtime game state structure
 import { Player, Level } from './types';
 import { playerConfig } from './player';
@@ -7,6 +6,7 @@ import { gameConfig } from './gameConfig';
 
 export interface GameState {
   // Core game data
+  level: Level; // Added: current level object
   currentLevelId: string;
   player: Player;
   
@@ -48,6 +48,7 @@ export const createInitialGameState = (levelId: string = "1"): GameState => {
   }
 
   return {
+    level, // Added here
     currentLevelId: levelId,
     player: {
       ...playerConfig,
@@ -65,7 +66,7 @@ export const createInitialGameState = (levelId: string = "1"): GameState => {
     pools: level.pools || [],
     greatPowers: level.greatPowers || [],
     levels: levels,
-    weapons: [], // Load from weapons config
+    weapons: [], // Load from weapons config if needed
     monsters: level.monsters,
     gridWidth: gameConfig.grid.width,
     gridHeight: gameConfig.grid.height,

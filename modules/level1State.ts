@@ -1,5 +1,17 @@
 // modules/level1State.ts
 import { Level } from "../config/types";
+import redoubtIMG from "@assets/images/redoubt.png";
+import riverIMG from "@assets/images/river1.png";
+import cursedTotemIMG from "@assets/images/cursedtotem.png";
+import petrifiedWillowIMG from  "@assets/images/petrifiedWillow.png";
+import maguffinRockIMG  from "@assets/images/maguffinRock.png";
+import shortSwordIMG from "@assets/images/shortSword.png";
+import watcherImg from "@assets/images/watcherse.png";
+import sanctuaryPoolImg from "@assets/images/poolofpeace.png";
+import poisonPoolImg from "@assets/images/poolofpeace.png";
+import abhumanIMG from "@assets/images/abhuman.png";
+import night_houndIMG from "@assets/images/nighthound4.png";
+import watcher_seIMG from "@assets/images/watcherse.png";
 
 export const level1State: Level = {
   id: "1",
@@ -11,12 +23,15 @@ export const level1State: Level = {
     {
       name: "Abhuman",
       shortName: "abhuman",
+      id: "abhuman",
+      templateId: "abhuman",
       category: "monster",
       description:
         "Abhuman. Created from corrupted human stock forgotten eons ago. Their hatred of humans is bone deep and drives them to kill.",
-      image: "@assets/images/abhuman.png",
+      image: abhumanIMG,
       hp: 20,
-      maxHP:20,
+      maxHP: 20,
+      currentHP: 20,
       position: { row: 0, col: 0 },
       active: false,
       type: "regular",
@@ -33,11 +48,14 @@ export const level1State: Level = {
       name: "Night Hound",
       shortName: "nighthound",
       category: "monster",
+      id: "nighthound",
+      templateId: "nighthound",
       description:
         "Night Hound. Voracious hunters of the Night Land. They savor the taste of human flesh.",
-      image: "@assets/images/nighthound4.png",
+      image: night_houndIMG,
       hp: 20,
-      maxHP:20,
+      maxHP: 20,
+      currentHP: 20,
       position: { row: 0, col: 0 },
       active: false,
       type: "regular",
@@ -53,34 +71,32 @@ export const level1State: Level = {
   ],
   greatPowers: [
     {
-      name: "Watcher of the Southeast",
       shortName: "watcherse",
-      category: "Great Watcher",
-      image: "@assets/images/watcherse.png",
-      hp: 200,
-      maxHP:200,
-      ac: 19,
-      position: { row: 350, col: 198 },
-      size: { width: 4, height: 4 },
-      description:
-        "One of the great powers and a source of great evil. It watches the Last Redoubt, silent, for Aeons.",
-      active: true,
-      type: "greatPower",
-      initiative: 5,
-      maxInstances: 1,
+      name: "The Watcher of the South East",
+      category: "GreatPower",
+      image: watcher_seIMG,
+      hp: 1000,
+      maxHP: 1000,
+      attack: 50,
+      ac: 25,
       moveRate: 0,
-      spawnRate: 0,
-      spawnChance: 0,
-      attack: 5,
-      soulKey: "tbd",
+      soulKey: "str:25,dex:10,con:25,int:20,wis:20,cha:25",
+      awakened: false,
+
+      position: { row: 100, col: 350 },
+      awakenRange: 10,
+      awakenCondition: "player_within_range",
     },
   ],
+
   objects: [
     {
       name: "The Last Redoubt",
       shortName: "redoubt",
       category: "building",
-      image: "@assets/images/redoubt.png",
+      id: "redoubt",
+      templateId: "redoubt",
+      image: redoubtIMG,
       position: { row: 395, col: 198 },
       size: { width: 4, height: 4 },
       description:
@@ -92,7 +108,9 @@ export const level1State: Level = {
       name: "River of Shadows",
       shortName: "river",
       category: "building",
-      image: "@assets/images/river1.png",
+      id: "river",
+      templateId: "river",
+      image:  riverIMG,
       position: { row: 330, col: 175 },
       size: { width: 20, height: 20 },
       description:
@@ -125,7 +143,9 @@ export const level1State: Level = {
       name: "Cursed Totem",
       shortName: "cursedTotem",
       category: "building",
-      image: "@assets/images/cursedtotem.png",
+      id: "cursedTotem",
+templateId: "cursedTotem",
+      image: cursedTotemIMG,
       position: { row: 340, col: 60 },
       size: { width: 4, height: 4 },
       description:
@@ -147,7 +167,9 @@ export const level1State: Level = {
       name: "Petrified Willow",
       shortName: "petWillow",
       category: "building",
-      image: "@assets/images/petrifiedWillow.png",
+      id: "petWillow",
+templateId: "petWillow",
+      image: petrifiedWillowIMG,
       position: { row: 385, col: 195 },
       size: { width: 4, height: 4 },
       description:
@@ -168,7 +190,7 @@ export const level1State: Level = {
       name: "Maguffin Rock",
       shortName: "maguffinRock",
       category: "item",
-      image: "@assets/images/maguffinRock.png",
+      image: maguffinRockIMG,
       position: { row: 388, col: 200 },
       description: "A peculiar stone that hums with an unknown energy.",
       active: true,
@@ -183,7 +205,7 @@ export const level1State: Level = {
       name: "Short Sword",
       shortName: "shortsword",
       category: "item",
-      image: "@assets/images/shortSword.png",
+      image: shortSwordIMG,
       position: { row: 387, col: 202 },
       description:
         "A simple blade forged in the Last Redoubt, sharp and reliable against the lesser horrors.",
@@ -197,7 +219,7 @@ export const level1State: Level = {
   ],
   pools: [
     {
-      templateId: "poolOfPeace", // ✅ matches PoolInstance
+      shortName: "poolOfPeace",
       position: { row: 380, col: 5 },
       effects: [], // required by PoolInstance
     },
@@ -211,6 +233,7 @@ export const level1State: Level = {
       active: true,
       type: "object",
       maxInstances: 5,
+      image:"@/assets/images/poolofpeace.png",
       effects: [
         { type: "heal", amount: 20 },
         { type: "hide", duration: 10 },
