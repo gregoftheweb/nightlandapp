@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Image, StyleSheet, Dimensions, ImageSourcePropType, Text, TouchableOpacity } from "react-native";
 import { Monster, LevelObjectInstance, Player } from "@/config/types";
-import { GameState } from "@/config/gameState";
+import { GameState } from "@/config/types";
 import { InfoBox } from "../../components/InfoBox";
 
 const { width, height } = Dimensions.get("window");
@@ -65,54 +65,85 @@ showInfo(
           worldRow === state.player.position.row &&
           worldCol === state.player.position.col;
 
-        const monsterAtPosition = state.activeMonsters.find(
+     
+      // ✅ FIX 1: Check BOTH activeMonsters AND level.monsters
+      const monsterAtPosition = 
+        state.activeMonsters.find(
           (monster: Monster) =>
             monster.position?.row === worldRow &&
             monster.position?.col === worldCol
+        ) || 
+        state.level.monsters?.find(
+          (monster: any) =>
+            monster.position?.row === worldRow &&
+            monster.position?.col === worldCol &&
+            monster.active !== false
+        );
+
+
+      // ✅ FIX 2: Also check for items from level
+      const itemAtPosition = 
+        state.items?.find((item: any) => 
+          item.active && item.position.row === worldRow && item.position.col === worldCol
+        ) || 
+        state.level.items?.find((item: any) => 
+          item.active && item.position.row === worldRow && item.position.col === worldCol
         );
 
         tiles.push(
-          <View
-            key={`cell-${worldRow}-${worldCol}`}
-            style={[
-              styles.cell,
-              {
-                left: col * CELL_SIZE,
-                top: row * CELL_SIZE,
-                backgroundColor: getCellBackgroundColor(isPlayer, monsterAtPosition, state.inCombat),
-              },
-            ]}
-          >
-            {isPlayer && (
-              <TouchableOpacity 
-                onPress={handlePlayerTap}
-                style={styles.tappableArea}
-                activeOpacity={0.7}
-              >
-                <Image
-                  source={require("../../assets/images/christos.png")}
-                  style={[styles.character, { zIndex: 2 }]}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            )}
-            {monsterAtPosition && !isPlayer && (
-              <TouchableOpacity 
-                onPress={() => handleMonsterTap(monsterAtPosition)}
-                style={styles.tappableArea}
-                activeOpacity={0.7}
-              >
-                <Image
-                  source={getMonsterImage(monsterAtPosition.shortName)}
-                  style={[styles.character, { zIndex: 1 }]}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        );
-      }
+        <View
+          key={`cell-${worldRow}-${worldCol}`}
+          style={[
+            styles.cell,
+            {
+              left: col * CELL_SIZE,
+              top: row * CELL_SIZE,
+              backgroundColor: getCellBackgroundColor(isPlayer, monsterAtPosition, state.inCombat),
+            },
+          ]}
+        >
+          {/* ✅ FIX 3: Render items first (bottom layer) */}
+          {itemAtPosition && (
+            <Image
+              source={getItemImage(itemAtPosition.shortName)}
+              style={[styles.item, { zIndex: 0 }]}
+              resizeMode="contain"
+            />
+          )}
+
+          {/* ✅ FIX 4: Render monsters with proper images */}
+          {monsterAtPosition && !isPlayer && (
+            <TouchableOpacity 
+              onPress={() => handleMonsterTap(monsterAtPosition)}
+              style={styles.tappableArea}
+              activeOpacity={0.7}
+            >
+              <Image
+                source={getMonsterImage(monsterAtPosition)}
+                style={[styles.character, { zIndex: 1 }]}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          )}
+
+          {/* Player on top */}
+          {isPlayer && (
+            <TouchableOpacity 
+              onPress={handlePlayerTap}
+              style={styles.tappableArea}
+              activeOpacity={0.7}
+            >
+              <Image
+                source={require("../../assets/images/christos.png")}
+                style={[styles.character, { zIndex: 2 }]}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      );
     }
+  }
 
     // --- Render buildings AFTER grid cells so they appear on top ---
     const buildingsRendered = state.level.objects.map((obj: LevelObjectInstance) => {
@@ -190,13 +221,35 @@ const getCellBackgroundColor = (isPlayer: boolean, hasMonster: any, inCombat: bo
   return "#111";
 };
 
-const getMonsterImage = (shortName: string) => {
+const getMonsterImage = (monster: any) => {
+  // First try to use the image directly from the monster data
+  if (monster.image) {
+    return monster.image;
+  }
+  
+  // Fallback to shortName mapping
   const monsterImages: { [key: string]: any } = {
-    abhuman: require("../../assets/images/abhuman.png"),
-    night_hound: require("../../assets/images/nighthound.png"),
+    'abhuman': require("../../assets/images/abhuman.png"),
+    'night_hound': require("../../assets/images/nighthound4.png"), // Match your levels.ts
+    'watcher_se': require("../../assets/images/watcherse.png"),
   };
-  return monsterImages[shortName] || require("../../assets/images/abhuman.png");
+  
+  return monsterImages[monster.shortName] || require("../../assets/images/abhuman.png");
 };
+
+
+
+// ✅ FIX 6: Add item style and getItemImage function
+const getItemImage = (shortName: string) => {
+  const itemImages: { [key: string]: any } = {
+    'healthPotion': require("../../assets/images/potion.png"),
+    'ironSword': require("../../assets/images/shortSword.png"),
+  };
+  return itemImages[shortName] || require("../../assets/images/potion.png");
+};
+
+
+
 
 // --- Styles ---
 const styles = StyleSheet.create({
@@ -228,6 +281,13 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
+  },
+    item: {
+    width: CELL_SIZE * 0.6,
+    height: CELL_SIZE * 0.6,
+    position: "absolute",
+    left: CELL_SIZE * 0.2,
+    top: CELL_SIZE * 0.2,
   },
 });
 

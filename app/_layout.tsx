@@ -4,7 +4,7 @@ import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import * as NavigationBar from "expo-navigation-bar";
 import { useEffect, useCallback, useState } from "react";
-import { createInitialGameState, serializeGameState } from "../config/gameState";
+import { createInitialGameState, serializeGameState } from "../modules/gameState";
 import { GameProvider } from "../context/GameContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 

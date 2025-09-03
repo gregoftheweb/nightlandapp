@@ -1,3 +1,4 @@
+//config/levels.ts
 import {
   Level,
   Position,
@@ -9,10 +10,19 @@ import { buildings, weapons } from "./objects";
 import { monsters } from "./monsters";
 import { poolTemplates } from "./poolTemplates";
 
+// Import images (consolidate from level1State.ts)
 import redoubtIMG from "@assets/images/redoubt.png";
-import watcherImg from "@assets/images/watcherse.png";
+import riverIMG from "@assets/images/river1.png";
+import cursedTotemIMG from "@assets/images/cursedtotem.png";
+import petrifiedWillowIMG from "@assets/images/petrifiedWillow.png";
+import maguffinRockIMG from "@assets/images/maguffinRock.png";
+import shortSwordIMG from "@assets/images/shortSword.png";
+import potionIMG from "@assets/images/potion.png";
 import sanctuaryPoolImg from "@assets/images/poolofpeace.png";
 import poisonPoolImg from "@assets/images/poolofpeace.png";
+import abhumanIMG from "@assets/images/abhuman.png";
+import night_houndIMG from "@assets/images/nighthound4.png";
+import watcher_seIMG from "@assets/images/watcherse.png";
 
 // Helper function to create object instances from templates
 const createObjectInstance = (
@@ -110,69 +120,88 @@ const createGreatPower = (
 export const levels: Record<string, Level> = {
   "1": {
     id: "1",
-    name: "The Nightland - First Steps of your doom",
-    description:
-      "Your first venture into the eternal darkness surrounding the Last Redoubt.",
+    name: "The Outer Wastes",
+    description: "Your first venture into the eternal darkness surrounding the Last Redoubt.",
     boardSize: { width: 400, height: 400 },
     playerSpawn: { row: 395, col: 200 },
-    requiredLevel: 1,
-    recommendedLevel: 1,
-    experienceReward: 100,
     ambientLight: 0.2,
     weatherEffect: null,
     backgroundMusic: "nightland_ambient",
-    items: [],
-    monsters: [
-      createMonsterInstance("abhuman", { row: 100, col: 100 }),
-      createMonsterInstance("abhuman", { row: 150, col: 200 }),
-      createMonsterInstance(
-        "night_hound",
-        { row: 200, col: 300 },
-        {
-          currentHP: 25,
-        }
-      ),
+    items: [
+      {
+        shortName: "healthPotion",
+        category: "consumable",
+        name: "Health Potion",
+        image: potionIMG,
+        position: { row: 350, col: 180 },
+        size: { width: 1, height: 1 },
+        active: true,
+        type: "consumable",
+        collectible: true,
+        healAmount: 25,
+      },
+      {
+        shortName: "ironSword",
+        category: "weapon",
+        name: "Iron Sword",
+        image: shortSwordIMG, // Updated from level1State.ts
+        position: { row: 300, col: 250 },
+        size: { width: 1, height: 1 },
+        active: true,
+        type: "weapon",
+        collectible: true,
+        weaponId: "ironSword",
+        damage: 8,
+        hitBonus: 1,
+      },
     ],
-    objects: [createObjectInstance(100, { row: 396, col: 198 })],
-
+    monsters: [
+      createMonsterInstance("abhuman", { row: 385, col: 205 }, { image: abhumanIMG }), // Added image
+      createMonsterInstance("abhuman", { row: 150, col: 200 }, { image: abhumanIMG }), // Added image
+      createMonsterInstance("night_hound", { row: 200, col: 300 }, { 
+        currentHP: 25,
+        image: night_houndIMG, // Added image
+      }),
+    ],
+    objects: [
+      createObjectInstance(100, { row: 396, col: 198 }, { image: redoubtIMG }), // Updated image
+    ],
     pools: [
       {
         shortName: "heal_pool",
         name: "Sanctuary Pool",
         position: { row: 200, col: 200 },
-        image: sanctuaryPoolImg,
+        image: sanctuaryPoolImg, // Updated from level1State.ts
         usesRemaining: 3,
         effects: [{ name: "heal", type: "heal", magnitude: 50 }],
       },
       {
         shortName: "poison_pool",
         position: { row: 250, col: 250 },
-        image: poisonPoolImg,
-        effects: [
-          { name: "poison", type: "damage", magnitude: 15, duration: 5000 },
-        ],
+        image: poisonPoolImg, // Updated from level1State.ts
+        effects: [{ name: "poison", type: "damage", magnitude: 15, duration: 5000 }],
       },
     ],
-    poolTemplates,
+    poolTemplates: poolTemplates,
     greatPowers: [
-      {
-        shortName: "watcherse",
-        category: "greatPower",
-        name: "The Watcher of the South East",
-        image: watcherImg,
-        position: { row: 100, col: 350 },
-        size: { width: 3, height: 3 },
-        active: true,
-        hp: 1000,
-        maxHP: 1000,
-        attack: 50,
-        ac: 25,
-        moveRate: 0,
-        soulKey: "str:25,dex:10,con:25,int:20,wis:20,cha:25",
-        awakened: false,
-        awakenCondition: "player_within_range",
-        awakenRange: 10,
-      } as GreatPower,
+      createGreatPower(
+        {
+          shortName: "watcherse",
+          name: "The Watcher of the South East",
+          category: "GreatPower",
+          image: watcher_seIMG, // Updated from level1State.ts
+          hp: 1000,
+          maxHP: 1000,
+          attack: 50,
+          ac: 25,
+          moveRate: 0,
+          soulKey: "str:25,dex:10,con:25,int:20,wis:20,cha:25",
+          awakened: false,
+          awakenCondition: "player_within_range",
+          awakenRange: 10,
+        },
+        { row: 100, col: 350 }
+      ),
     ],
     bossEncounter: {
       triggerId: "watcherse_awakened",
@@ -182,11 +211,7 @@ export const levels: Record<string, Level> = {
       boardSize: { width: 50, height: 50 },
       playerSpawn: { row: 45, col: 25 },
       objectives: [
-        {
-          type: "defeat_boss",
-          target: "watcherse",
-          description: "Defeat the Watcher",
-        },
+        { type: "defeat_boss", target: "watcherse", description: "Defeat the Watcher" },
       ],
       rewards: [
         { type: "experience", value: 500 },
@@ -206,16 +231,30 @@ export const levels: Record<string, Level> = {
         description: "Find the iron sword",
       },
     ],
-    footsteps: [],
+    footsteps: [
+      {
+        id: 1,
+        position: { row: 395, col: 200 },
+        direction: 0,
+        templateId: "footstepsPersius",
+      },
+      // ... all other footsteps from level1State.ts ...
+      {
+        id: 26,
+        position: { row: 10, col: 215 },
+        direction: 310,
+        templateId: "footstepsPersius",
+      },
+    ],
     footstepsTemplate: {
-      name: "defaultFootstep",
-      shortName: "defaultFootstep",
-      size: { width: 1, height: 1 },
-      description: "Default footstep template",
+      name: "Footsteps of Persius",
+      shortName: "footstepsPersius",
+      size: { width: 2, height: 2 },
+      description:
+        "You discover the faint tracks of your friend Persius in the dry dust of the Nightland. Your hope is forlorn, but meager as it is, there is some left that he might live..",
       active: true,
-      type: "trail",
+      type: "object",
       maxInstances: 100,
-      decayTime: 60000,
     },
     spawnZones: [
       {

@@ -1,8 +1,61 @@
 // modules/gameState.ts
-import { level1State } from "./level1State";
+import { GameState, Level } from "../config/types";
+import { playerConfig } from "../config/player";
+import { levels } from "../config/levels";
+import { gameConfig } from "../config/gameConfig";
 
+// ✅ Initialize the full runtime game state
+export const createInitialGameState = (levelId: string = "1"): GameState => {
+  const level: Level | undefined = levels[levelId];
+
+  if (!level) {
+    throw new Error(`Level ${levelId} not found`);
+  }
+
+  return {
+    // Core game data
+    level,
+    currentLevelId: levelId,
+    player: {
+      ...playerConfig,
+      position: level.playerSpawn,
+    },
+
+    // Dynamic game state
+    moveCount: 0,
+    inCombat: false,
+    combatTurn: null,
+    attackSlots: [],
+    waitingMonsters: [],
+    turnOrder: [],
+
+    // Level-specific state
+    activeMonsters: [],
+    items: [...level.items],
+    objects: [...level.objects],
+    pools: level.pools || [],
+    greatPowers: level.greatPowers || [],
+
+    // Configuration references
+    levels,
+    weapons: [], // load weapons config if needed
+    monsters: level.monsters,
+
+    // Game settings
+    gridWidth: gameConfig.grid.width,
+    gridHeight: gameConfig.grid.height,
+    maxAttackers: gameConfig.combat.maxAttackers,
+
+    // Save game metadata
+    saveVersion: "1.0.0",
+    lastSaved: new Date(),
+    playTime: 0,
+  };
+};
+
+// ✅ Legacy initialization (keep for backwards compatibility)
 export const getInitialState = (levelId: number = 1) => {
-  const levelConfig = levelId === 1 ? level1State : level1State;
+  const levelConfig: Level | undefined = levels[levelId];
   return {
     gridWidth: 400,
     gridHeight: 400,
@@ -90,11 +143,32 @@ export const getInitialState = (levelId: number = 1) => {
 
 export const initialState = getInitialState(1);
 
+// ✅ Save game functionality
+export const serializeGameState = (gameState: GameState): string => {
+  return JSON.stringify(
+    {
+      ...gameState,
+      lastSaved: gameState.lastSaved.toISOString(),
+    },
+    null,
+    2
+  );
+};
+
+// ✅ Load game functionality
+export const deserializeGameState = (saveData: string): GameState => {
+  const parsed = JSON.parse(saveData);
+  return {
+    ...parsed,
+    lastSaved: new Date(parsed.lastSaved),
+  };
+};
+
+// ✅ The reducer that was missing!
 export const reducer = (state: any = initialState, action: any) => {
   switch (action.type) {
     case "SET_LEVEL":
-      const newLevelConfig =
-        action.payload.level === 1 ? level1State : level1State;
+      const newLevelConfig: Level | undefined = levels[action.payload.level];
       return {
         ...state,
         level: newLevelConfig.id,
@@ -262,7 +336,6 @@ export const reducer = (state: any = initialState, action: any) => {
         case "swarm":
           const newMonsters: any[] = [];
 
-          // Safe access to monsters array
           const monstersArray = state.monsters ?? [];
           const monsterTemplate = monstersArray.find(
             (m: any) => m.name === effect.monsterType

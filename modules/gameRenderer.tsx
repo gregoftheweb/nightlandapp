@@ -2,8 +2,7 @@
 import React from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import { gameConfig } from '../config/gameConfig';
-import { GameState } from '../config/gameState';
-import { Position } from '../config/types';
+import { Position, GameState } from '../config/types';
 
 const { width, height } = Dimensions.get('window');
 

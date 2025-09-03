@@ -1,7 +1,8 @@
 // /context/GameContext.tsx
 import React, { createContext, useContext, ReactNode, useReducer } from "react";
-import { deserializeGameState, createInitialGameState, GameState } from "../config/gameState";
+import { deserializeGameState, createInitialGameState } from "../modules/gameState";
 import { reducer as gameReducer } from "../modules/gameState";
+import { GameState } from '../config/types';
 
 interface GameContextType {
   state: GameState;
