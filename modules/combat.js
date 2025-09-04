@@ -1,4 +1,4 @@
-// nightland/src/modules/combat.js
+// /modules/combat.ts
 import { moveMonsters, checkMonsterSpawn } from "./gameLoop";
 import * as textContent from "../assets/copy/textcontent";
 import { initialState } from "./gameState";

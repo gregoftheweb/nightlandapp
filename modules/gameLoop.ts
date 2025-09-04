@@ -1,9 +1,9 @@
 // modules/gameLoop.ts
-import { GameState } from '../config/types';
-import { handleMoveMonsters } from './monsterUtils';
-import { checkItemInteractions } from './playerUtils';
+import { GameState } from "../config/types";
+import { handleMoveMonsters } from "./monsterUtils";
+import { checkItemInteractions } from "./playerUtils";
 import { calculateCameraOffset } from "./utils";
-import { MovementHandler, Direction } from './movement';
+import { MovementHandler, Direction } from "./movement";
 
 export class GameLoop {
   private isRunning = false;
@@ -23,7 +23,7 @@ export class GameLoop {
     this.showDialog = showDialog;
     this.setOverlay = setOverlay;
     this.setDeathMessage = setDeathMessage;
-    
+
     // Initialize MovementHandler
     this.movementHandler = new MovementHandler(
       this.dispatch,
@@ -49,15 +49,19 @@ export class GameLoop {
   }
 
   // Process a single turn based on player action
-  processTurn(state: GameState, actionType: string, actionPayload?: any): GameState {
+  processTurn(
+    state: GameState,
+    actionType: string,
+    actionPayload?: any
+  ): GameState {
     let newState = { ...state };
 
     switch (actionType) {
-      case 'MOVE_PLAYER':
+      case "MOVE_PLAYER":
         if (newState.inCombat) return newState; // No movement during combat
         newState = this.handlePlayerMove(newState, actionPayload.direction);
         break;
-      case 'START_COMBAT':
+      case "START_COMBAT":
         newState = this.handleCombatStart(newState, actionPayload.monster);
         break;
       // Add other action types as needed (e.g., ATTACK, USE_ITEM)
@@ -87,14 +91,22 @@ export class GameLoop {
   private handleCombatStart(state: GameState, monster: any): GameState {
     if (!this.dispatch) return state;
 
-    this.dispatch({ type: 'START_COMBAT', payload: { monster } });
+    this.dispatch({ type: "START_COMBAT", payload: { monster } });
     this.showDialog(`${monster.name} has engaged in combat!`, 2000);
     return { ...state, inCombat: true }; // Return updated state
   }
 
   // Update world state (monsters, items) on player turn
   private updateWorld(state: GameState): void {
+    console.log("Before spawning:", state.activeMonsters.length);
     handleMoveMonsters(state, this.dispatch, this.showDialog);
-    checkItemInteractions(state, this.dispatch, this.showDialog, this.setOverlay);
+    console.log("After spawning:", state.activeMonsters.length);
+
+    checkItemInteractions(
+      state,
+      this.dispatch,
+      this.showDialog,
+      this.setOverlay
+    );
   }
 }

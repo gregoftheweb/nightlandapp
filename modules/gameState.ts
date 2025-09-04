@@ -10,7 +10,10 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     // Core game data
     level: levelConfig,
     currentLevelId: levelId,
-    player: { ...playerConfig, position: playerConfig.position || { row: 0, col: 0 } },
+    player: {
+      ...playerConfig,
+      position: playerConfig.position || { row: 0, col: 0 },
+    },
     // Dynamic game state
     moveCount: 0,
     inCombat: false,
@@ -63,7 +66,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     saveVersion: "1.0", // Initial version
     lastSaved: new Date(),
     playTime: 0, // Initial playtime in milliseconds
-    lastAction: '',
+    lastAction: "",
   };
 };
 
@@ -176,66 +179,62 @@ export const reducer = (state: any = initialState, action: any) => {
         items: [...state.items, newItem],
       };
 
-      
+    case "MOVE_PLAYER":
+      console.log("MOVE_PLAYER payload:", action.payload);
+      console.log("Before move, position:", state.player.position);
 
-case "MOVE_PLAYER":
-  console.log("MOVE_PLAYER payload:", action.payload);
-  console.log("Before move, position:", state.player.position);
-  
-  let newPosition;
-  
-  // Handle direct position update (from MovementHandler)
-  if (action.payload.position) {
-    newPosition = action.payload.position;
-  }
-  // Handle direction-based movement (legacy/direct calls)
-  else if (action.payload.direction) {
-    const currentPos = state.player.position;
-    if (!currentPos) {
-      console.error("Player position is undefined!");
-      return state;
-    }
-    
-    let newRow = currentPos.row;
-    let newCol = currentPos.col;
-    
-    switch (action.payload.direction) {
-      case "up":
-        newRow = Math.max(0, currentPos.row - 1);
-        break;
-      case "down":
-        newRow = Math.min(state.gridHeight - 1, currentPos.row + 1);
-        break;
-      case "left":
-        newCol = Math.max(0, currentPos.col - 1);
-        break;
-      case "right":
-        newCol = Math.min(state.gridWidth - 1, currentPos.col + 1);
-        break;
-      default:
-        console.warn("Unknown direction:", action.payload.direction);
+      let newPosition;
+
+      // Handle direct position update (from MovementHandler)
+      if (action.payload.position) {
+        newPosition = action.payload.position;
+      }
+      // Handle direction-based movement (legacy/direct calls)
+      else if (action.payload.direction) {
+        const currentPos = state.player.position;
+        if (!currentPos) {
+          console.error("Player position is undefined!");
+          return state;
+        }
+
+        let newRow = currentPos.row;
+        let newCol = currentPos.col;
+
+        switch (action.payload.direction) {
+          case "up":
+            newRow = Math.max(0, currentPos.row - 1);
+            break;
+          case "down":
+            newRow = Math.min(state.gridHeight - 1, currentPos.row + 1);
+            break;
+          case "left":
+            newCol = Math.max(0, currentPos.col - 1);
+            break;
+          case "right":
+            newCol = Math.min(state.gridWidth - 1, currentPos.col + 1);
+            break;
+          default:
+            console.warn("Unknown direction:", action.payload.direction);
+            return state;
+        }
+
+        newPosition = { row: newRow, col: newCol };
+      } else {
+        console.error(
+          "MOVE_PLAYER: No position or direction provided in payload"
+        );
         return state;
-    }
-    
-    newPosition = { row: newRow, col: newCol };
-  }
-  else {
-    console.error("MOVE_PLAYER: No position or direction provided in payload");
-    return state;
-  }
-  
-  console.log("After move, position:", newPosition);
-  
-  return {
-    ...state,
-    player: { 
-      ...state.player, 
-      position: newPosition 
-    },
-  };
+      }
 
+      console.log("After move, position:", newPosition);
 
-
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          position: newPosition,
+        },
+      };
 
     case "MOVE_MONSTER":
       return {
@@ -266,9 +265,11 @@ case "MOVE_PLAYER":
         player: { ...state.player, hp: action.payload.hp },
       };
     case "SPAWN_MONSTER":
+      const newMonster = action.payload.monster;
+      console.log("Spawning monster:", newMonster.name);
       return {
         ...state,
-        activeMonsters: [...state.activeMonsters, action.payload.monster],
+        activeMonsters: [...state.activeMonsters, newMonster],
       };
     case "SET_COMBAT":
       return {
