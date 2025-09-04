@@ -16,7 +16,7 @@ export interface GameState {
   turnOrder: any[];
 
   // Level-specific state
-  activeMonsters: any[];
+  activeMonsters: Monster[];
   items: any[];
   objects: any[];
   pools: any[];
@@ -36,6 +36,7 @@ export interface GameState {
   saveVersion: string;
   lastSaved: Date;
   playTime: number; // milliseconds
+  lastAction: string;
 }
 
 export interface Position {
@@ -130,8 +131,10 @@ export interface LevelObjectInstance extends GameObject {
 
 export interface Player {
   name: string;
+  shortName: string;
   id: string;
   description: string;
+  lastComment: string;
   image: string;
   position: Position;
   hp: number;
@@ -142,7 +145,9 @@ export interface Player {
   isHidden: boolean;
   hideTurns: number;
   inventory: Item[];
+  maxInventorySize: number;
   weapons: Array<{ id: string; equipped: boolean }>;
+  maxWeaponsSize: number;
   soulKey: string;
   moveSpeed: number;
   level?: number; // Player level

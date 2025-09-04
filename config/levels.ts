@@ -133,7 +133,7 @@ export const levels: Record<string, Level> = {
         category: "consumable",
         name: "Health Potion",
         image: potionIMG,
-        position: { row: 350, col: 180 },
+        position: { row: 375, col: 195 },
         size: { width: 1, height: 1 },
         active: true,
         type: "consumable",
@@ -145,7 +145,7 @@ export const levels: Record<string, Level> = {
         category: "weapon",
         name: "Iron Sword",
         image: shortSwordIMG, // Updated from level1State.ts
-        position: { row: 300, col: 250 },
+        position: { row: 380, col: 200 },
         size: { width: 1, height: 1 },
         active: true,
         type: "weapon",

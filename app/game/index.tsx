@@ -1,33 +1,77 @@
+// app/game/index.tsx - Refactored to focus on presentation
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, StyleSheet, Dimensions } from "react-native";
-import { handleMovePlayer } from "../../modules/playerUtils";
 import { PositionDisplay } from "../../components/PositionDisplay";
 import { useGameContext } from "../../context/GameContext";
 import GameBoard, { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE } from "./GameBoard";
 import PlayerHUD from "../../components/PlayerHUD";
 import Settings from "../../components/Settings";
+import { GameLoop } from "../../modules/gameLoop";
+import { calculateCameraOffset } from "../../modules/utils";
+
+import { MovementHandler } from "../../modules/movement";
 
 const { width, height } = Dimensions.get("window");
 
-// Configuration for long-press behavior
-const LONG_PRESS_DELAY = 300; // Time to hold before long-press starts (ms)
-const MOVEMENT_INTERVAL = 200; // Time between repeated moves during long-press (ms)
-const MIN_MOVE_DISTANCE = 1; // Minimum distance to trigger movement
-const HUD_HEIGHT = 60; // Approximate HUD height (adjust based on PlayerHUD styles)
+// Configuration constants
+const LONG_PRESS_DELAY = 300;
+const MOVEMENT_INTERVAL = 200;
+const MIN_MOVE_DISTANCE = 1;
+const HUD_HEIGHT = 60;
 
 export default function Game() {
   const { state, dispatch, showDialog, setOverlay, setDeathMessage } = useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
+  
+  // Game loop and movement handlers
+  const gameLoopRef = useRef<GameLoop | null>(null);
+  const movementHandlerRef = useRef<MovementHandler | null>(null);
+  
+  // Touch handling state
   const longPressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const longPressTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentDirection = useRef<string | null>(null);
   const isLongPressing = useRef(false);
-  const stateRef = useRef(state);
 
+  // Camera state
+  const [cameraOffset, setCameraOffset] = useState(() => 
+    calculateCameraOffset(state.player.position, VIEWPORT_COLS, VIEWPORT_ROWS, state.gridWidth, state.gridHeight)
+  );
+
+  // Initialize handlers
   useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+    if (!gameLoopRef.current) {
+      gameLoopRef.current = new GameLoop(dispatch, showDialog, setOverlay, setDeathMessage);
+      gameLoopRef.current.start();
+    }
 
+    if (!movementHandlerRef.current) {
+      movementHandlerRef.current = new MovementHandler(dispatch, showDialog, setOverlay, setDeathMessage);
+    }
+
+    return () => {
+      if (gameLoopRef.current) {
+        gameLoopRef.current.cleanup();
+        gameLoopRef.current = null;
+      }
+    };
+  }, [dispatch, showDialog, setOverlay, setDeathMessage]);
+
+  // Update camera when player moves
+  useEffect(() => {
+    setCameraOffset(
+      calculateCameraOffset(state.player.position, VIEWPORT_COLS, VIEWPORT_ROWS, state.gridWidth, state.gridHeight)
+    );
+  }, [state.player.position, state.gridWidth, state.gridHeight]);
+
+  // Stop combat-sensitive operations when in combat
+  useEffect(() => {
+    if (state.inCombat) {
+      stopLongPress();
+    }
+  }, [state.inCombat]);
+
+  // Touch handling utilities
   const stopLongPress = useCallback(() => {
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
@@ -41,55 +85,9 @@ export default function Game() {
     currentDirection.current = null;
   }, []);
 
-  const calculateCameraOffset = useCallback((playerPos: { row: number; col: number }) => {
-    const halfViewportCols = Math.floor(VIEWPORT_COLS / 2);
-    const halfViewportRows = Math.floor(VIEWPORT_ROWS / 2);
-    return {
-      offsetX: Math.max(0, Math.min(state.gridWidth - VIEWPORT_COLS, playerPos.col - halfViewportCols)),
-      offsetY: Math.max(0, Math.min(state.gridHeight - VIEWPORT_ROWS, playerPos.row - halfViewportRows)),
-    };
-  }, [state.gridWidth]);
-
-  const [cameraOffset, setCameraOffset] = useState(() => calculateCameraOffset(state.player.position));
-
-  useEffect(() => {
-    setCameraOffset(calculateCameraOffset(state.player.position));
-  }, [state.player.position, calculateCameraOffset]);
-
-  useEffect(() => {
-    if (state.inCombat) {
-      stopLongPress();
-    }
-  }, [state.inCombat, stopLongPress]);
-
-  useEffect(() => {
-    return () => {
-      stopLongPress();
-    };
-  }, [stopLongPress]);
-
-  const getMovementDirection = useCallback((tapRow: number, tapCol: number, playerRow: number, playerCol: number) => {
-    const rowDiff = tapRow - playerRow;
-    const colDiff = tapCol - playerCol;
-    const absRowDiff = Math.abs(rowDiff);
-    const absColDiff = Math.abs(colDiff);
-
-    if (absRowDiff < MIN_MOVE_DISTANCE && absColDiff < MIN_MOVE_DISTANCE) {
-      return null;
-    }
-
-    if (absRowDiff > absColDiff) {
-      return rowDiff < 0 ? "up" : "down";
-    } else if (absColDiff > absRowDiff) {
-      return colDiff < 0 ? "left" : "right";
-    } else {
-      return absRowDiff >= absColDiff ? (rowDiff < 0 ? "up" : "down") : (colDiff < 0 ? "left" : "right");
-    }
-  }, []);
-
   const calculateTapPosition = useCallback((pageX: number, pageY: number) => {
     const gridLeft = (width - VIEWPORT_COLS * CELL_SIZE) / 2;
-    const gridTop = (height - VIEWPORT_ROWS * CELL_SIZE) / 2;
+    const gridTop = (height - VIEWPORT_ROWS * CELL_SIZE) / 2; // Fixed typo: VIEWPORT_COLS -> VIEWPORT_ROWS
 
     const rawCol = (pageX - gridLeft) / CELL_SIZE + cameraOffset.offsetX;
     const rawRow = (pageY - gridTop) / CELL_SIZE + cameraOffset.offsetY;
@@ -100,58 +98,75 @@ export default function Game() {
     };
   }, [cameraOffset]);
 
-  const performMovement = useCallback((direction: string) => {
-    const currentState = stateRef.current;
-    if (currentState.inCombat) {
+  // const performMovement = useCallback((direction: string) => {
+  //   if (state.inCombat || !movementHandlerRef.current || !gameLoopRef.current) return;
+  //   movementHandlerRef.current.movePlayer(state, direction as any);
+  //   gameLoopRef.current.processTurn(state, 'MOVE_PLAYER', { direction });
+  //   stopLongPress();
+  // }, [state.inCombat, stopLongPress]);
+
+
+
+const startLongPress = useCallback((direction: string) => {
+  if (state.inCombat || !gameLoopRef.current) return;
+
+  isLongPressing.current = true;
+  currentDirection.current = direction;
+
+  longPressInterval.current = setInterval(() => {
+    if (isLongPressing.current && currentDirection.current && gameLoopRef.current) {
+      // Only call GameLoop - it handles MovementHandler internally
+      gameLoopRef.current.processTurn(state, 'MOVE_PLAYER', { direction: currentDirection.current });
+    } else {
       stopLongPress();
-      return;
     }
-    handleMovePlayer(currentState, dispatch, direction, setOverlay, showDialog, setDeathMessage);
-  }, [dispatch, setOverlay, showDialog, setDeathMessage, stopLongPress]);
+  }, MOVEMENT_INTERVAL);
+}, [state.inCombat, stopLongPress]);
 
-  const startLongPress = useCallback((direction: string) => {
-    if (stateRef.current.inCombat) return;
 
-    isLongPressing.current = true;
+
+  // Touch event handlers
+ const handlePressIn = useCallback((event: any) => {
+  if (state.inCombat || settingsVisible || !movementHandlerRef.current || !gameLoopRef.current) {
+    return;
+  }
+
+  const { pageY, pageX } = event.nativeEvent;
+  if (pageY > height - HUD_HEIGHT) {
+    return; // Ignore HUD area
+  }
+
+  stopLongPress();
+
+  const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
+  const { row: playerRow, col: playerCol } = state.player.position;
+
+  const direction = movementHandlerRef.current.getMovementDirectionFromTap(
+    tapRow, tapCol, playerRow, playerCol, MIN_MOVE_DISTANCE
+  );
+
+  console.log(`TAP DEBUG: direction=${direction}, tapRow=${tapRow}, tapCol=${tapCol}, playerRow=${playerRow}, playerCol=${playerCol}`);
+
+  if (direction) {
     currentDirection.current = direction;
+    // Only call GameLoop once - it handles everything
+    gameLoopRef.current.processTurn(state, 'MOVE_PLAYER', { direction });
+    
+    longPressTimeout.current = setTimeout(() => {
+      startLongPress(direction);
+    }, LONG_PRESS_DELAY);
+  }
+}, [
+  state.inCombat,
+  settingsVisible,
+  state.player.position,
+  stopLongPress,
+  calculateTapPosition,
+  startLongPress
+]);
 
-    longPressInterval.current = setInterval(() => {
-      if (isLongPressing.current && currentDirection.current) {
-        performMovement(currentDirection.current);
-      } else {
-        stopLongPress();
-      }
-    }, MOVEMENT_INTERVAL);
-  }, [performMovement, stopLongPress]);
 
-  const handlePressIn = useCallback((event: any) => {
-    if (state.inCombat || settingsVisible) {
-      console.log("Touch ignored: in combat or settings visible");
-      return;
-    }
 
-    const { pageY } = event.nativeEvent;
-    if (pageY > height - HUD_HEIGHT) {
-      console.log("Touch in HUD area, ignoring for movement");
-      return;
-    }
-
-    stopLongPress();
-
-    const { pageX } = event.nativeEvent;
-    const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
-    const { row: playerRow, col: playerCol } = state.player.position;
-
-    const direction = getMovementDirection(tapRow, tapCol, playerRow, playerCol);
-
-    if (direction) {
-      currentDirection.current = direction;
-      performMovement(direction);
-      longPressTimeout.current = setTimeout(() => {
-        startLongPress(direction);
-      }, LONG_PRESS_DELAY);
-    }
-  }, [state.inCombat, settingsVisible, state.player.position, stopLongPress, calculateTapPosition, getMovementDirection, performMovement, startLongPress]);
 
   const handlePressOut = useCallback(() => {
     stopLongPress();
@@ -161,6 +176,7 @@ export default function Game() {
     stopLongPress();
   }, [stopLongPress]);
 
+  // UI event handlers
   const handleGearPress = useCallback(() => {
     if (state.inCombat) {
       showDialog("Cannot access settings during combat", 1500);
@@ -173,14 +189,12 @@ export default function Game() {
     setSettingsVisible(false);
   }, []);
 
-
-  // Debug: log objects before rendering
+  // Cleanup on unmount
   useEffect(() => {
-    console.log("Objects in current level:", state.objects);
-    state.objects.forEach(obj => {
-      console.log("Rendering object:", obj.id, "Image:", obj.image, "Position:", obj.position);
-    });
-  }, [state.objects]);
+    return () => {
+      stopLongPress();
+    };
+  }, [stopLongPress]);
 
   return (
     <View
@@ -191,17 +205,20 @@ export default function Game() {
     >
       <View style={styles.gameContainer}>
         <GameBoard state={state} cameraOffset={cameraOffset} />
-<PositionDisplay position={state.player.position} level={state.level} />
+        <PositionDisplay position={state.player.position} level={state.level} />
+        
         {state.inCombat && (
           <View style={styles.combatOverlay}>
-            {/* Combat UI */}
+            {/* Combat UI components can be added here */}
           </View>
         )}
+        
         <PlayerHUD
           hp={state.player.hp}
           maxHP={state.player.maxHP}
           onGearPress={handleGearPress}
         />
+        
         <Settings
           visible={settingsVisible}
           onClose={handleCloseSettings}

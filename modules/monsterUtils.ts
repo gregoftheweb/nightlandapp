@@ -1,6 +1,8 @@
-import { GameState } from '../config/gameState';
+// modules/monsterUtils.ts - Refactored without movement logic
+import { GameState } from '../config/types';
 import { Monster, Position } from '../config/types';
 import { monsters } from '../config/monsters';
+import { MovementHandler, checkCollision } from './movement';
 
 export const checkMonsterSpawn = (
   state: GameState,
@@ -25,7 +27,7 @@ export const checkMonsterSpawn = (
     if (spawnRoll < monsterTemplate.spawnRate * monsterTemplate.spawnChance) {
       const newMonster: Monster = {
         ...monsterTemplate,
-        id: `${monsterTemplate.shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        id: `${monsterTemplate.shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`, // Ensure id is set
         position: getSpawnPosition(state),
         active: true,
         hp: monsterTemplate.hp,
@@ -73,10 +75,6 @@ export const getSpawnPosition = (state: GameState): Position => {
   } while (attempts < maxAttempts);
 
   return { row: Math.floor(gridHeight / 2), col: Math.floor(gridWidth / 2) }; // Fallback
-};
-
-export const checkCollision = (monsterPos: Position, playerPos: Position): boolean => {
-  return monsterPos.row === playerPos.row && monsterPos.col === playerPos.col;
 };
 
 export const setupCombat = (
@@ -146,47 +144,9 @@ export const setupCombat = (
     type: 'UPDATE_ACTIVE_MONSTERS',
     payload: { activeMonsters: updatedActiveMonsters },
   });
-};
 
-export const handleMoveMonster = (
-  state: GameState,
-  dispatch: (action: any) => void,
-  monsterShortName: string,
-  direction: string
-) => {
-  const monster = state.activeMonsters.find((m: Monster) => m.shortName === monsterShortName);
-  if (!monster || state.inCombat) return;
-
-  const newPosition = { ...monster.position };
-  const moveDistance = monster.moveRate || 1;
-  switch (direction) {
-    case 'up':
-      newPosition.row = Math.max(0, newPosition.row - moveDistance);
-      break;
-    case 'down':
-      newPosition.row = Math.min(state.gridHeight - 1, newPosition.row + moveDistance);
-      break;
-    case 'left':
-      newPosition.col = Math.max(0, newPosition.col - moveDistance);
-      break;
-    case 'right':
-      newPosition.col = Math.min(state.gridWidth - 1, newPosition.col + moveDistance);
-      break;
-    default:
-      break;
-  }
-
-  // Check for collision with other monsters
-  const isOccupied = state.activeMonsters.some(
-    (m: Monster) => m.shortName !== monsterShortName && m.position.row === newPosition.row && m.position.col === newPosition.col
-  );
-
-  if (!isOccupied) {
-    dispatch({
-      type: 'MOVE_MONSTER',
-      payload: { shortName: monsterShortName, position: newPosition },
-    });
-  }
+  const monsterName = monster.name || monster.shortName || "Unknown Monster";
+  showDialog(`${monsterName} has engaged in combat!`, 2000);
 };
 
 export const handleMoveMonsters = (
@@ -199,23 +159,29 @@ export const handleMoveMonsters = (
   // Check for spawning new monsters
   checkMonsterSpawn(state, dispatch, showDialog);
 
+  // Create movement handler
+  const movementHandler = new MovementHandler(dispatch, showDialog, () => {}, () => {});
+
   // Move each monster toward the player
   const updatedMonsters = state.activeMonsters.map((monster: Monster) => {
-    const rowDiff = state.player.position.row - monster.position.row;
-    const colDiff = state.player.position.col - monster.position.col;
-    let direction: string | undefined;
-
-    if (Math.abs(rowDiff) > Math.abs(colDiff)) {
-      direction = rowDiff > 0 ? 'down' : 'up';
-    } else if (colDiff !== 0) {
-      direction = colDiff > 0 ? 'right' : 'left';
-    }
+    const direction = movementHandler.calculateDirectionToTarget(
+      monster.position,
+      state.player.position
+    );
 
     if (direction) {
-      handleMoveMonster(state, dispatch, monster.shortName, direction);
+      // Ensure monster.id is defined before calling moveMonster
+      if (!monster.id) {
+        console.warn(`Monster missing id: ${JSON.stringify(monster)}`);
+        return monster; // Skip movement for this monster
+      }
+      movementHandler.moveMonster(state, monster.id, direction);
     }
 
+    // Get updated monster position after potential movement
     const updatedMonster = state.activeMonsters.find((m: Monster) => m.id === monster.id) || monster;
+    
+    // Check for collision with player
     if (checkCollision(updatedMonster.position, state.player.position)) {
       setupCombat(state, dispatch, updatedMonster, showDialog);
     }

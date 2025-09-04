@@ -1,7 +1,7 @@
+// app/game/GameBoard.tsx - Refactored to focus on presentation
 import React, { useState } from "react";
-import { View, Image, StyleSheet, Dimensions, ImageSourcePropType, Text, TouchableOpacity } from "react-native";
-import { Monster, LevelObjectInstance, Player } from "@/config/types";
-import { GameState } from "@/config/types";
+import { View, Image, StyleSheet, Dimensions, ImageSourcePropType, TouchableOpacity } from "react-native";
+import { Monster, LevelObjectInstance, Player, GameState } from "@/config/types";
 import { InfoBox } from "../../components/InfoBox";
 
 const { width, height } = Dimensions.get("window");
@@ -13,9 +13,18 @@ const VIEWPORT_ROWS = Math.floor(height / CELL_SIZE);
 interface GameBoardProps {
   state: GameState;
   cameraOffset: { offsetX: number; offsetY: number };
+  onPlayerTap?: () => void;
+  onMonsterTap?: (monster: Monster) => void;
+  onBuildingTap?: (building: LevelObjectInstance) => void;
 }
 
-export default function GameBoard({ state, cameraOffset }: GameBoardProps) {
+export default function GameBoard({ 
+  state, 
+  cameraOffset, 
+  onPlayerTap, 
+  onMonsterTap, 
+  onBuildingTap 
+}: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoData, setInfoData] = useState({ name: '', description: '' });
 
@@ -30,67 +39,86 @@ export default function GameBoard({ state, cameraOffset }: GameBoardProps) {
   };
 
   const handlePlayerTap = () => {
-    const player = state.player;
-    const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : "";
-showInfo(
-  player.name || "Player",
-  `${player.description}\n\nHP: ${player.hp}/${player.maxHP}\nAC: ${player.ac}\nAttack: ${player.attack}${weaponInfo}`
-);
+    if (onPlayerTap) {
+      onPlayerTap();
+    } else {
+      // Default behavior
+      const player = state.player;
+      const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : "";
+      showInfo(
+        player.name || "Player",
+        `${player.description}\n\nHP: ${player.hp}/${player.maxHP}\nAC: ${player.ac}\nAttack: ${player.attack}${weaponInfo}`
+      );
+    }
   };
 
   const handleMonsterTap = (monster: Monster) => {
-    showInfo(
-      monster.name || monster.shortName || "Monster",
-      monster.description || `A dangerous creature. HP: ${monster.hp || "Unknown"}`
-    );
+    if (onMonsterTap) {
+      onMonsterTap(monster);
+    } else {
+      // Default behavior
+      showInfo(
+        monster.name || monster.shortName || "Monster",
+        monster.description || `A dangerous creature. HP: ${monster.hp || "Unknown"}`
+      );
+    }
   };
 
   const handleBuildingTap = (building: LevelObjectInstance) => {
-    showInfo(
-      building.name || building.shortName || "Building",
-      building.description || "An interesting structure in the world."
+    if (onBuildingTap) {
+      onBuildingTap(building);
+    } else {
+      // Default behavior
+      showInfo(
+        building.name || building.shortName || "Building",
+        building.description || "An interesting structure in the world."
+      );
+    }
+  };
+
+  const findMonsterAtPosition = (worldRow: number, worldCol: number): Monster | undefined => {
+    return state.activeMonsters.find(
+      (monster: Monster) =>
+        monster.position?.row === worldRow &&
+        monster.position?.col === worldCol
+    ) || 
+    state.level.monsters?.find(
+      (monster: any) =>
+        monster.position?.row === worldRow &&
+        monster.position?.col === worldCol &&
+        monster.active !== false
     );
   };
 
-  const renderGrid = () => {
-    const tiles: React.ReactNode[] = [];
-
-    // --- Render grid cells first ---
-    for (let row = 0; row < VIEWPORT_ROWS; row++) {
-      for (let col = 0; col < VIEWPORT_COLS; col++) {
-        const worldRow = row + cameraOffset.offsetY;
-        const worldCol = col + cameraOffset.offsetX;
-
-        const isPlayer =
-          worldRow === state.player.position.row &&
-          worldCol === state.player.position.col;
-
-     
-      // ✅ FIX 1: Check BOTH activeMonsters AND level.monsters
-      const monsterAtPosition = 
-        state.activeMonsters.find(
-          (monster: Monster) =>
-            monster.position?.row === worldRow &&
-            monster.position?.col === worldCol
-        ) || 
-        state.level.monsters?.find(
-          (monster: any) =>
-            monster.position?.row === worldRow &&
-            monster.position?.col === worldCol &&
-            monster.active !== false
-        );
+  const findItemAtPosition = (worldRow: number, worldCol: number): any => {
+    return state.items?.find((item: any) => 
+      item.active && item.position.row === worldRow && item.position.col === worldCol
+    ) || 
+    state.level.items?.find((item: any) => 
+      item.active && item.position.row === worldRow && item.position.col === worldCol
+    );
+  };
 
 
-      // ✅ FIX 2: Also check for items from level
-      const itemAtPosition = 
-        state.items?.find((item: any) => 
-          item.active && item.position.row === worldRow && item.position.col === worldCol
-        ) || 
-        state.level.items?.find((item: any) => 
-          item.active && item.position.row === worldRow && item.position.col === worldCol
-        );
 
-        tiles.push(
+
+  const renderGridCells = (): React.ReactNode[] => {
+  const tiles: React.ReactNode[] = [];
+
+  for (let row = 0; row < VIEWPORT_ROWS; row++) {
+    for (let col = 0; col < VIEWPORT_COLS; col++) {
+      const worldRow = row + cameraOffset.offsetY;
+      const worldCol = col + cameraOffset.offsetX;
+
+      const isPlayer =
+        !!state.player?.position &&
+        worldRow === state.player.position.row &&
+        worldCol === state.player.position.col;
+
+      const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
+      const itemAtPosition = findItemAtPosition(worldRow, worldCol);
+
+      tiles.push(
         <View
           key={`cell-${worldRow}-${worldCol}`}
           style={[
@@ -102,7 +130,7 @@ showInfo(
             },
           ]}
         >
-          {/* ✅ FIX 3: Render items first (bottom layer) */}
+          {/* Items layer */}
           {itemAtPosition && (
             <Image
               source={getItemImage(itemAtPosition.shortName)}
@@ -111,9 +139,9 @@ showInfo(
             />
           )}
 
-          {/* ✅ FIX 4: Render monsters with proper images */}
+          {/* Monsters layer */}
           {monsterAtPosition && !isPlayer && (
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => handleMonsterTap(monsterAtPosition)}
               style={styles.tappableArea}
               activeOpacity={0.7}
@@ -126,9 +154,9 @@ showInfo(
             </TouchableOpacity>
           )}
 
-          {/* Player on top */}
+          {/* Player layer */}
           {isPlayer && (
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handlePlayerTap}
               style={styles.tappableArea}
               activeOpacity={0.7}
@@ -145,8 +173,15 @@ showInfo(
     }
   }
 
-    // --- Render buildings AFTER grid cells so they appear on top ---
-    const buildingsRendered = state.level.objects.map((obj: LevelObjectInstance) => {
+  return tiles;
+};
+
+
+
+
+
+  const renderBuildings = (): React.ReactNode[] => {
+    return state.level.objects.map((obj: LevelObjectInstance) => {
       if (!obj.position || !obj.image) return null;
 
       const screenRow = obj.position.row - cameraOffset.offsetY;
@@ -154,6 +189,7 @@ showInfo(
       const objWidth = obj.size?.width ?? 1;
       const objHeight = obj.size?.height ?? 1;
 
+      // Check if building is in viewport
       const inView =
         screenRow + objHeight > 0 &&
         screenRow < VIEWPORT_ROWS &&
@@ -161,10 +197,6 @@ showInfo(
         screenCol < VIEWPORT_COLS;
 
       if (!inView) return null;
-
-      console.log(
-        `Rendering building ${obj.id} at screen(${screenCol},${screenRow}) px(${screenCol * CELL_SIZE},${screenRow * CELL_SIZE}) size(${objWidth * CELL_SIZE},${objHeight * CELL_SIZE})`
-      );
 
       return (
         <TouchableOpacity
@@ -177,7 +209,7 @@ showInfo(
             top: screenRow * CELL_SIZE,
             width: objWidth * CELL_SIZE,
             height: objHeight * CELL_SIZE,
-            zIndex: 10, // higher than player or monsters
+            zIndex: 10, // Buildings appear above everything else
           }}
         >
           <Image
@@ -191,12 +223,14 @@ showInfo(
         </TouchableOpacity>
       );
     }).filter((item): item is React.ReactElement => item !== null);
-
-    return [...tiles, ...buildingsRendered]; // grid cells first, buildings on top
   };
 
-  console.log("Camera offset:", cameraOffset);
-  console.log("Objects in current level:", state.level.objects);
+  const renderGrid = () => {
+    const gridCells = renderGridCells();
+    const buildings = renderBuildings();
+    
+    return [...gridCells, ...buildings]; // Grid cells first, buildings on top
+  };
 
   return (
     <View style={styles.gridContainer}>
@@ -213,7 +247,7 @@ showInfo(
   );
 }
 
-// --- Helpers ---
+// Utility functions
 const getCellBackgroundColor = (isPlayer: boolean, hasMonster: any, inCombat: boolean) => {
   if (isPlayer) return "#444";
   if (hasMonster) return "#622";
@@ -230,16 +264,13 @@ const getMonsterImage = (monster: any) => {
   // Fallback to shortName mapping
   const monsterImages: { [key: string]: any } = {
     'abhuman': require("../../assets/images/abhuman.png"),
-    'night_hound': require("../../assets/images/nighthound4.png"), // Match your levels.ts
+    'night_hound': require("../../assets/images/nighthound4.png"),
     'watcher_se': require("../../assets/images/watcherse.png"),
   };
   
   return monsterImages[monster.shortName] || require("../../assets/images/abhuman.png");
 };
 
-
-
-// ✅ FIX 6: Add item style and getItemImage function
 const getItemImage = (shortName: string) => {
   const itemImages: { [key: string]: any } = {
     'healthPotion': require("../../assets/images/potion.png"),
@@ -248,10 +279,7 @@ const getItemImage = (shortName: string) => {
   return itemImages[shortName] || require("../../assets/images/potion.png");
 };
 
-
-
-
-// --- Styles ---
+// Styles
 const styles = StyleSheet.create({
   gridContainer: {
     width,
@@ -273,16 +301,13 @@ const styles = StyleSheet.create({
     left: CELL_SIZE * 0.1,
     top: CELL_SIZE * 0.1,
   },
-  building: {
-    position: "absolute",
-  },
   tappableArea: {
     width: "100%",
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
   },
-    item: {
+  item: {
     width: CELL_SIZE * 0.6,
     height: CELL_SIZE * 0.6,
     position: "absolute",

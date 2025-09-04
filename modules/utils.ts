@@ -1,4 +1,5 @@
-// nightland/src/modules/utils.ts
+// /modules/utils.ts
+import { Position } from "../config/types";
 export function moveToward(entity: any, targetRow: number, targetCol: number, speed: number = 1, gridWidth: number = 49, gridHeight: number = 49) {
     let dRow = targetRow - entity.position.row;
     let dCol = targetCol - entity.position.col;
@@ -31,23 +32,33 @@ export const disappearFarMonsters = (monsters: any[], playerPosition: { row: num
     });
 };
 
-export const calculateCameraOffset = (playerPos: { row: number; col: number }, gridSize: { rows: number; cols: number }) => {
-    const viewportSize = { width: 10, height: 10 }; // 10x10 grid visible
+// Fixed calculateCameraOffset function
+export function calculateCameraOffset(
+  playerPosition: Position,
+  viewportCols: number,
+  viewportRows: number,
+  gridWidth: number,
+  gridHeight: number
+) {
+  // Add null/undefined check for playerPosition
+  if (!playerPosition) {
+    console.warn('playerPosition is undefined, returning default camera offset');
+    return { offsetX: 0, offsetY: 0 };
+  }
 
-    // Center camera on player, but clamp to grid edges
-    const offsetX = Math.max(
-        0,
-        Math.min(gridSize.cols - viewportSize.width, playerPos.col - Math.floor(viewportSize.width / 2))
-    );
-    const offsetY = Math.max(
-        0,
-        Math.min(gridSize.rows - viewportSize.height, playerPos.row - Math.floor(viewportSize.height / 2))
-    );
+  const offsetX = Math.min(
+    Math.max(playerPosition.col - Math.floor(viewportCols / 2), 0),
+    gridWidth - viewportCols
+  );
+  const offsetY = Math.min(
+    Math.max(playerPosition.row - Math.floor(viewportRows / 2), 0),
+    gridHeight - viewportRows
+  );
 
-    console.log(`Calculate camera: playerPos.row=${playerPos.row}, playerPos.col=${playerPos.col}, rows=${gridSize.rows}, cols=${gridSize.cols}, offsetX=${offsetX}, offsetY=${offsetY}`);
+  return { offsetX, offsetY };
+}
 
-    return { offsetX, offsetY };
-};
+
 
 // nightland/src/modules/utils.ts
 export function initializeEntityStyles(state: any) {
@@ -277,3 +288,5 @@ export function decodeSoulKey(soulKey: string) {
 export function getAttributeModifier(value: number) {
   return Math.floor((value - 10) / 2);
 }
+
+

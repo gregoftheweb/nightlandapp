@@ -1,22 +1,32 @@
 // config/player.ts
-import { Player } from './types';
-import { weapons } from './objects';
+import { Player } from "./types";
+import { weapons } from "./objects";
+import christosIMG from "@assets/images/christos.png";
 
 export const playerConfig: Player = {
   name: "Christos",
+  shortName: "christos",
   id: "christos",
-  description: "One of the remaining humans in the Universe.",
-  image: "christos.png",
-  position: { row: 395, col: 200 }, // Default spawn, overridden by level
+  description: "One of the humans from the Last Redoubt.",
+  lastComment: "",
+  image: christosIMG,
   hp: 100,
   maxHP: 100,
-  ac: 10, // Base AC before DEX modifier
-  attack: 4, // Unarmed attack
+  position: { row: 395, col: 200 },
+  moveSpeed: 1,
+  initiative: 10,
+  attack: 4,
+  ac: 14,
+  inventory: [],
+  maxInventorySize: 10,
+  weapons: [
+    {
+      id: "weapon-discos-001",
+      equipped: true,
+    },
+  ],
+  maxWeaponsSize: 4,
   isHidden: false,
   hideTurns: 0,
-  inventory: [],
-  weapons: weapons[1] ? [{ id: weapons[1].shortName, equipped: true }] : [],
-  soulKey: "str:15,dex:14,con:13,int:12,wis:11,cha:10", // D&D style attributes
-  moveSpeed: 1,
-  initiative: 5,
+  soulKey: "7C6368627E64",
 };

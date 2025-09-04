@@ -3,11 +3,15 @@ import { View, Text, StyleSheet } from "react-native";
 import { Level } from "@/config/types"; // import your Level type
 
 interface PositionDisplayProps {
-  position: { row: number; col: number };
-  level: Level; // added
+  position?: { row: number; col: number };
+  level?: Level;
 }
 
 export const PositionDisplay: React.FC<PositionDisplayProps> = ({ position, level }) => {
+  if (!position || !level) {
+    return null; // or render "Loading..."
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
@@ -17,6 +21,7 @@ export const PositionDisplay: React.FC<PositionDisplayProps> = ({ position, leve
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

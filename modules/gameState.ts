@@ -1,26 +1,16 @@
 // modules/gameState.ts
-import { GameState, Level } from "../config/types";
-import { playerConfig } from "../config/player";
 import { levels } from "../config/levels";
-import { gameConfig } from "../config/gameConfig";
+import { GameState, Level } from "../config/types"; // Adjust import based on where Level is defined
+import christosIMG from "@assets/images/christos.png";
+import { playerConfig } from "../config/player";
 
-// ✅ Initialize the full runtime game state
-export const createInitialGameState = (levelId: string = "1"): GameState => {
-  const level: Level | undefined = levels[levelId];
-
-  if (!level) {
-    throw new Error(`Level ${levelId} not found`);
-  }
-
+export const getInitialState = (levelId: string = "1"): GameState => {
+  const levelConfig = levels[levelId] as Level; // Cast to Level type
   return {
     // Core game data
-    level,
+    level: levelConfig,
     currentLevelId: levelId,
-    player: {
-      ...playerConfig,
-      position: level.playerSpawn,
-    },
-
+    player: { ...playerConfig, position: playerConfig.position || { row: 0, col: 0 } },
     // Dynamic game state
     moveCount: 0,
     inCombat: false,
@@ -31,67 +21,13 @@ export const createInitialGameState = (levelId: string = "1"): GameState => {
 
     // Level-specific state
     activeMonsters: [],
-    items: [...level.items],
-    objects: [...level.objects],
-    pools: level.pools || [],
-    greatPowers: level.greatPowers || [],
+    items: levelConfig.items || [],
+    objects: levelConfig.objects || [],
+    pools: levelConfig.pools || [],
+    greatPowers: levelConfig.greatPowers || [],
 
     // Configuration references
-    levels,
-    weapons: [], // load weapons config if needed
-    monsters: level.monsters,
-
-    // Game settings
-    gridWidth: gameConfig.grid.width,
-    gridHeight: gameConfig.grid.height,
-    maxAttackers: gameConfig.combat.maxAttackers,
-
-    // Save game metadata
-    saveVersion: "1.0.0",
-    lastSaved: new Date(),
-    playTime: 0,
-  };
-};
-
-// ✅ Legacy initialization (keep for backwards compatibility)
-export const getInitialState = (levelId: number = 1) => {
-  const levelConfig: Level | undefined = levels[levelId];
-  return {
-    gridWidth: 400,
-    gridHeight: 400,
-    tileSize: 40,
-    viewHeight: 800,
-    map: Array(400)
-      .fill(null)
-      .map(() => Array(400).fill(".")),
-    level: levelConfig.id,
-    levels: [levelConfig],
-    showInventory: false,
-    showWeaponsInventory: false,
-    player: {
-      name: "Christos",
-      shortName: "christos",
-      hp: 100,
-      maxHP: 100,
-      position: { row: 395, col: 200 },
-      description: "One of the humans from the Last Redoubt.",
-      initiative: 10,
-      lastComment: "",
-      attack: 4,
-      ac: 14,
-      inventory: [],
-      maxInventorySize: 10,
-      weapons: [
-        {
-          id: "weapon-discos-001",
-          equipped: true,
-        },
-      ],
-      maxWeaponsSize: 2,
-      isHidden: false,
-      hideTurns: 0,
-      soulKey: "7C6368627E64",
-    },
+    levels: { [levelId]: levelConfig }, // Initialize as Record<string, Level>
     weapons: [
       {
         id: "weapon-discos-001",
@@ -116,59 +52,63 @@ export const getInitialState = (levelId: number = 1) => {
         effects: [],
       },
     ],
-    monsters: levelConfig.monsters,
-    greatPowers: levelConfig.greatPowers,
-    objects: levelConfig.objects,
-    items: levelConfig.items,
-    pools: levelConfig.pools,
-    poolsTemplate: levelConfig.poolTemplates,
-    footsteps: levelConfig.footsteps,
-    footstepsTemplate: levelConfig.footstepsTemplate,
-    activeMonsters: [],
-    attackSlots: [],
-    waitingMonsters: [],
-    inCombat: false,
-    turnOrder: [],
-    combatTurn: null,
-    dialogData: {
-      player: { name: "Christos", hp: 100, comment: "" },
-      enemies: [],
-    },
-    moveCount: 0,
-    spawnThreshold: Math.floor(Math.random() * 7) + 4,
+    monsters: levelConfig.monsters || [],
+
+    // Game settings
+    gridWidth: 400,
+    gridHeight: 400,
     maxAttackers: 4,
-    audioStarted: false,
+
+    // Save game metadata
+    saveVersion: "1.0", // Initial version
+    lastSaved: new Date(),
+    playTime: 0, // Initial playtime in milliseconds
+    lastAction: '',
   };
 };
 
-export const initialState = getInitialState(1);
+// modules/gameState.ts
+// ... (other imports and functions)
 
-// ✅ Save game functionality
-export const serializeGameState = (gameState: GameState): string => {
-  return JSON.stringify(
-    {
-      ...gameState,
-      lastSaved: gameState.lastSaved.toISOString(),
-    },
-    null,
-    2
-  );
+export const serializeGameState = (state: GameState): string => {
+  // Convert to JSON, excluding non-serializable properties if needed
+  return JSON.stringify(state);
 };
 
-// ✅ Load game functionality
-export const deserializeGameState = (saveData: string): GameState => {
-  const parsed = JSON.parse(saveData);
-  return {
-    ...parsed,
-    lastSaved: new Date(parsed.lastSaved),
-  };
+// Ensure this is at the end to avoid redefinition
+export const initialState = getInitialState("1");
+
+// Add the new functions as before
+export const createInitialGameState = (levelId: string = "1"): GameState => {
+  return getInitialState(levelId);
 };
 
-// ✅ The reducer that was missing!
+export const deserializeGameState = (serializedState: string): GameState => {
+  try {
+    const parsedState = JSON.parse(serializedState);
+    return {
+      ...initialState, // Use initialState as a fallback structure
+      ...parsedState,
+      level: parsedState.level || initialState.level,
+      player: {
+        ...initialState.player,
+        ...parsedState.player,
+      },
+      levels: {
+        ...initialState.levels,
+        ...parsedState.levels,
+      },
+    };
+  } catch (e) {
+    console.error("Failed to deserialize game state:", e);
+    return initialState;
+  }
+};
+
 export const reducer = (state: any = initialState, action: any) => {
   switch (action.type) {
     case "SET_LEVEL":
-      const newLevelConfig: Level | undefined = levels[action.payload.level];
+      const newLevelConfig = levels[String(action.levelId)];
       return {
         ...state,
         level: newLevelConfig.id,
@@ -235,13 +175,68 @@ export const reducer = (state: any = initialState, action: any) => {
         },
         items: [...state.items, newItem],
       };
-    case "MOVE_PLAYER":
-      console.log("MOVE_PLAYER payload:", action.payload);
-      console.log("Before move, position:", state.player.position);
-      return {
-        ...state,
-        player: { ...state.player, position: action.payload.position },
-      };
+
+      
+
+case "MOVE_PLAYER":
+  console.log("MOVE_PLAYER payload:", action.payload);
+  console.log("Before move, position:", state.player.position);
+  
+  let newPosition;
+  
+  // Handle direct position update (from MovementHandler)
+  if (action.payload.position) {
+    newPosition = action.payload.position;
+  }
+  // Handle direction-based movement (legacy/direct calls)
+  else if (action.payload.direction) {
+    const currentPos = state.player.position;
+    if (!currentPos) {
+      console.error("Player position is undefined!");
+      return state;
+    }
+    
+    let newRow = currentPos.row;
+    let newCol = currentPos.col;
+    
+    switch (action.payload.direction) {
+      case "up":
+        newRow = Math.max(0, currentPos.row - 1);
+        break;
+      case "down":
+        newRow = Math.min(state.gridHeight - 1, currentPos.row + 1);
+        break;
+      case "left":
+        newCol = Math.max(0, currentPos.col - 1);
+        break;
+      case "right":
+        newCol = Math.min(state.gridWidth - 1, currentPos.col + 1);
+        break;
+      default:
+        console.warn("Unknown direction:", action.payload.direction);
+        return state;
+    }
+    
+    newPosition = { row: newRow, col: newCol };
+  }
+  else {
+    console.error("MOVE_PLAYER: No position or direction provided in payload");
+    return state;
+  }
+  
+  console.log("After move, position:", newPosition);
+  
+  return {
+    ...state,
+    player: { 
+      ...state.player, 
+      position: newPosition 
+    },
+  };
+
+
+
+
     case "MOVE_MONSTER":
       return {
         ...state,
@@ -336,6 +331,7 @@ export const reducer = (state: any = initialState, action: any) => {
         case "swarm":
           const newMonsters: any[] = [];
 
+          // Safe access to monsters array
           const monstersArray = state.monsters ?? [];
           const monsterTemplate = monstersArray.find(
             (m: any) => m.name === effect.monsterType
