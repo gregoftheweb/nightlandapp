@@ -34,9 +34,11 @@ export default function Game() {
     if (!gameLoopRef.current) {
       gameLoopRef.current = new GameLoop(dispatch, showDialog, setOverlay, setDeathMessage);
       gameLoopRef.current.start();
+      console.log("Game: GameLoop initialized");
     }
     if (!movementHandlerRef.current) {
       movementHandlerRef.current = new MovementHandler(dispatch, showDialog, setOverlay, setDeathMessage);
+      console.log("Game: MovementHandler initialized");
     }
   }, [dispatch, showDialog, setOverlay, setDeathMessage]);
 
@@ -59,7 +61,11 @@ export default function Game() {
   }, [cameraOffset]);
 
   const performMove = useCallback((direction: Direction) => {
-    if (!gameLoopRef.current || !direction || state.inCombat) return;
+    if (!gameLoopRef.current || !direction || state.inCombat) {
+      console.log("performMove: Blocked", { direction, inCombat: state.inCombat });
+      return;
+    }
+    console.log("performMove: Dispatching MOVE_PLAYER", { direction });
     gameLoopRef.current.processTurn(stateRef.current, "MOVE_PLAYER", { direction });
   }, [state.inCombat]);
 
@@ -131,6 +137,15 @@ export default function Game() {
 
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
 
+  const handleTurnPress = useCallback(() => {
+    if (state.inCombat) {
+      console.log("Game.handleTurnPress: Blocked due to inCombat");
+      return;
+    }
+    console.log("Game.handleTurnPress: Dispatching PASS_TURN");
+    gameLoopRef.current?.processTurn(stateRef.current, "PASS_TURN");
+  }, [state.inCombat]);
+
   // -------------------
   // Render
   // -------------------
@@ -144,9 +159,13 @@ export default function Game() {
       <View style={styles.gameContainer}>
         <GameBoard state={state} cameraOffset={cameraOffset} />
         <PositionDisplay position={state.player.position} level={state.level} />
-
         {state.inCombat && <View style={styles.combatOverlay} />}
-        <PlayerHUD hp={state.player.hp} maxHP={state.player.maxHP} onGearPress={handleGearPress} />
+        <PlayerHUD
+          hp={state.player.hp}
+          maxHP={state.player.maxHP}
+          onGearPress={handleGearPress}
+          onTurnPress={handleTurnPress}
+        />
         <Settings visible={settingsVisible} onClose={handleCloseSettings} />
       </View>
     </Pressable>

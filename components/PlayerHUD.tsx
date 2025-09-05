@@ -1,3 +1,4 @@
+//components/playerHUD.tsx
 import React from "react";
 import {
   View,
@@ -10,6 +11,7 @@ import {
   NativeTouchEvent,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import turnButtonIMG from "@assets/images/turnButton.png";
 
 const { width } = Dimensions.get("window");
 
@@ -17,14 +19,26 @@ interface PlayerHUDProps {
   hp: number;
   maxHP: number;
   onGearPress?: () => void;
+  onTurnPress?: () => void;
 }
 
-const PlayerHUD: React.FC<PlayerHUDProps> = ({ hp, maxHP, onGearPress }) => {
+const PlayerHUD: React.FC<PlayerHUDProps> = ({
+  hp,
+  maxHP,
+  onGearPress,
+  onTurnPress,
+}) => {
   const insets = useSafeAreaInsets();
 
   const handleGearPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
-    event.stopPropagation(); // Prevent event from bubbling up
-    onGearPress?.(); // Call the onGearPress callback
+    event.stopPropagation();
+    onGearPress?.();
+  };
+
+  const handleTurnPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    console.log("Turn button tapped, calling onTurnPress");
+    event.stopPropagation();
+    onTurnPress?.();
   };
 
   return (
@@ -45,6 +59,13 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({ hp, maxHP, onGearPress }) => {
           />
         </TouchableOpacity>
       </View>
+      <TouchableOpacity
+        style={styles.turnButton}
+        onPress={handleTurnPress}
+        activeOpacity={0.7}
+      >
+        <Image source={turnButtonIMG} style={styles.turnButtonImage} />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -60,7 +81,7 @@ const styles = StyleSheet.create({
     pointerEvents: "box-none",
   },
   statusBar: {
-    width: width * 0.45,
+    width: width * 0.55,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -87,6 +108,16 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     tintColor: "#990000",
+  },
+  turnButton: {
+    position: "absolute",
+    bottom: 5,
+    alignSelf: "center",
+  },
+  turnButtonImage: {
+    width: 60,
+    height: 60,
+    resizeMode: "contain",
   },
 });
 

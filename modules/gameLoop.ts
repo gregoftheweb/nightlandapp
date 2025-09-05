@@ -1,3 +1,4 @@
+
 // modules/gameLoop.ts
 import { GameState } from "../config/types";
 import { handleMoveMonsters } from "./monsterUtils";
@@ -56,6 +57,8 @@ export class GameLoop {
   ): GameState {
     let newState = { ...state };
 
+    console.log("in gameLoop.processTurn", actionType);
+
     switch (actionType) {
       case "MOVE_PLAYER":
         if (newState.inCombat) return newState; // No movement during combat
@@ -64,7 +67,9 @@ export class GameLoop {
       case "START_COMBAT":
         newState = this.handleCombatStart(newState, actionPayload.monster);
         break;
-      // Add other action types as needed (e.g., ATTACK, USE_ITEM)
+      case "PASS_TURN":
+        newState = this.handlePassTurn(newState);
+        break;
       default:
         return newState;
     }
@@ -74,7 +79,7 @@ export class GameLoop {
     return newState;
   }
 
-  // Handle player movement and trigger world updates - NOW USING MovementHandler
+  // Handle player movement and trigger world updates
   private handlePlayerMove(state: GameState, direction: string): GameState {
     if (!this.dispatch) return state; // Safety check
 
@@ -83,6 +88,16 @@ export class GameLoop {
     this.movementHandler.movePlayer(state, direction as Direction);
 
     // Process world updates on player turn
+    this.updateWorld(state);
+    return state; // Return current state since updates are dispatched
+  }
+
+  // Handle a turn where player stays in place
+  private handlePassTurn(state: GameState): GameState {
+    if (!this.dispatch) return state; // Safety check
+
+    console.log("GameLoop handling pass turn");
+    // Process world updates without moving player
     this.updateWorld(state);
     return state; // Return current state since updates are dispatched
   }

@@ -1,5 +1,12 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# my files
+package.json.working
+*.working
+*.bak
+package-lock.json
+
+
 # dependencies
 node_modules/
 

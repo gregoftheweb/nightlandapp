@@ -469,6 +469,12 @@ export const reducer = (state: any = initialState, action: any) => {
         items: [...state.items, newWeaponItem],
         dropSuccess: true,
       };
+    case "PASS_TURN":
+      return {
+        ...state,
+        moveCount: state.moveCount + 1,
+        lastAction: "PASS_TURN",
+      };
     default:
       console.warn(`Unhandled action type: ${action.type}`);
       return state || initialState;
