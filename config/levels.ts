@@ -155,14 +155,7 @@ export const levels: Record<string, Level> = {
         hitBonus: 1,
       },
     ],
-    monsters: [
-      createMonsterInstance("abhuman", { row: 385, col: 205 }, { image: abhumanIMG }), // Added image
-      createMonsterInstance("abhuman", { row: 150, col: 200 }, { image: abhumanIMG }), // Added image
-      createMonsterInstance("night_hound", { row: 200, col: 300 }, { 
-        currentHP: 25,
-        image: night_houndIMG, // Added image
-      }),
-    ],
+    monsters: [],
     objects: [
       createObjectInstance(100, { row: 396, col: 198 }, { image: redoubtIMG }), // Updated image
     ],

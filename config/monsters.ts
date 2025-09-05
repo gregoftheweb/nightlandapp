@@ -18,10 +18,10 @@ export const monsters: Monster[] = [
     maxHP: 50,
     attack: 8,
     ac: 12,
-    moveRate: 1,
+    moveRate: 2,
     spawnRate: 1,
     spawnChance: 1,
-    maxInstances: 10,
+    maxInstances: 1,
     soulKey: 'str:16,dex:10,con:14,int:8,wis:8,cha:6',
   },
   {

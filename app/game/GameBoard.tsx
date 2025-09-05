@@ -251,7 +251,7 @@ export default function GameBoard({
 const getCellBackgroundColor = (isPlayer: boolean, hasMonster: any, inCombat: boolean) => {
   if (isPlayer) return "#444";
   if (hasMonster) return "#622";
-  if (inCombat) return "#331";
+  //if (inCombat) return "#331";
   return "#111";
 };
 

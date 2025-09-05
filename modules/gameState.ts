@@ -183,13 +183,19 @@ export const reducer = (state: any = initialState, action: any) => {
       console.log("MOVE_PLAYER payload:", action.payload);
       console.log("Before move, position:", state.player.position);
 
-      let newPosition;
-
-      // Handle direct position update (from MovementHandler)
-      if (action.payload.position) {
-        newPosition = action.payload.position;
+      // Prevent player movement during combat
+      if (state.inCombat) {
+        console.log("Player cannot move while in combat");
+        return state;
       }
-      // Handle direction-based movement (legacy/direct calls)
+
+      let newPlayerPos;
+
+      // Use direct position if provided (from MovementHandler)
+      if (action.payload.position) {
+        newPlayerPos = action.payload.position;
+      }
+      // Otherwise, calculate new position from direction
       else if (action.payload.direction) {
         const currentPos = state.player.position;
         if (!currentPos) {
@@ -218,7 +224,7 @@ export const reducer = (state: any = initialState, action: any) => {
             return state;
         }
 
-        newPosition = { row: newRow, col: newCol };
+        newPlayerPos = { row: newRow, col: newCol };
       } else {
         console.error(
           "MOVE_PLAYER: No position or direction provided in payload"
@@ -226,25 +232,36 @@ export const reducer = (state: any = initialState, action: any) => {
         return state;
       }
 
-      console.log("After move, position:", newPosition);
+      console.log("After move, position:", newPlayerPos);
 
       return {
         ...state,
         player: {
           ...state.player,
-          position: newPosition,
+          position: newPlayerPos,
         },
       };
 
     case "MOVE_MONSTER":
+      // Prevent monster movement if combat is active and the monster is in a combat slot
       return {
         ...state,
-        activeMonsters: state.activeMonsters.map((monster: any) =>
-          monster.id === action.payload.id
+        activeMonsters: state.activeMonsters.map((monster: any) => {
+          if (
+            state.inCombat &&
+            state.attackSlots.some((slot: any) => slot.id === monster.id)
+          ) {
+            console.log(
+              `Monster ${monster.name} in combat slot, skipping movement`
+            );
+            return monster;
+          }
+          return monster.id === action.payload.id
             ? { ...monster, position: action.payload.position }
-            : monster
-        ),
+            : monster;
+        }),
       };
+
     case "UPDATE_MONSTER_HP":
       return {
         ...state,
@@ -279,6 +296,15 @@ export const reducer = (state: any = initialState, action: any) => {
         waitingMonsters: action.payload.waitingMonsters || [],
         turnOrder: action.payload.turnOrder,
         combatTurn: action.payload.combatTurn,
+      };
+
+    case "START_COMBAT":
+      return {
+        ...state,
+        inCombat: true,
+        attackSlots: [action.payload.monster], // Slot 1
+        combatTurn: 0,
+        waitingMonsters: [], // Optional
       };
     case "UPDATE_TURN":
       return {

@@ -1,4 +1,4 @@
-//components/playerHUD.tsx
+// components/playerHUD.tsx
 import React from "react";
 import {
   View,
@@ -11,22 +11,27 @@ import {
   NativeTouchEvent,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import turnButtonIMG from "@assets/images/turnButton.png";
+import turnButtonIMG from "@assets/images/buttonTurn.png";
+import attackButtonIMG from "@assets/images/buttonAttack.png";
 
 const { width } = Dimensions.get("window");
 
 interface PlayerHUDProps {
   hp: number;
   maxHP: number;
+  inCombat: boolean; // added
   onGearPress?: () => void;
   onTurnPress?: () => void;
+  onAttackPress?: () => void; // added
 }
 
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
   hp,
   maxHP,
+  inCombat,        // destructure inCombat
   onGearPress,
   onTurnPress,
+  onAttackPress,   // destructure onAttackPress
 }) => {
   const insets = useSafeAreaInsets();
 
@@ -35,10 +40,13 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
     onGearPress?.();
   };
 
-  const handleTurnPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
-    console.log("Turn button tapped, calling onTurnPress");
+  const handleActionPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
     event.stopPropagation();
-    onTurnPress?.();
+    if (inCombat) {
+      onAttackPress?.();
+    } else {
+      onTurnPress?.();
+    }
   };
 
   return (
@@ -59,12 +67,17 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
           />
         </TouchableOpacity>
       </View>
+
+      {/* Dynamic Turn/Attack Button */}
       <TouchableOpacity
         style={styles.turnButton}
-        onPress={handleTurnPress}
+        onPress={handleActionPress}
         activeOpacity={0.7}
       >
-        <Image source={turnButtonIMG} style={styles.turnButtonImage} />
+        <Image
+          source={inCombat ? attackButtonIMG : turnButtonIMG}
+          style={styles.turnButtonImage}
+        />
       </TouchableOpacity>
     </View>
   );
