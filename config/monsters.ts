@@ -21,7 +21,7 @@ export const monsters: Monster[] = [
     moveRate: 2,
     spawnRate: 1,
     spawnChance: 1,
-    maxInstances: 1,
+    maxInstances: 4,
     soulKey: 'str:16,dex:10,con:14,int:8,wis:8,cha:6',
   },
   {

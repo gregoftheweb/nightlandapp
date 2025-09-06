@@ -54,6 +54,7 @@ export class GameLoop {
 
 
   // Process a single turn based on player action
+// Process a single turn based on player action
 processTurn(
   state: GameState,
   actionType: string,
@@ -64,10 +65,10 @@ processTurn(
   console.log("GameLoop.processTurn:", actionType, actionPayload);
 
   switch (actionType) {
-    case "MOVE_PLAYER":
+    case "MOVE_PLAYER": {
       // Check adjacency before player moves
       const adjacentMonster = newState.activeMonsters.find(
-        m =>
+        (m) =>
           Math.abs(m.position.row - newState.player.position.row) <= 1 &&
           Math.abs(m.position.col - newState.player.position.col) <= 1
       );
@@ -79,14 +80,25 @@ processTurn(
 
       newState = this.handlePlayerMove(newState, actionPayload.direction);
       break;
+    }
 
-    case "START_COMBAT":
+    case "START_COMBAT": {
       newState = this.handleCombatStart(newState, actionPayload.monster);
       break;
+    }
 
-    case "PASS_TURN":
+    case "PASS_TURN": {
       newState = this.handlePassTurn(newState);
       break;
+    }
+
+    case "PLAYER_ATTACK": {
+      console.log("GameLoop: Player attacks!");
+      // TODO: damage calculation, animations, etc.
+      // After the attack, monsters still act
+      this.updateWorld(newState);
+      break;
+    }
 
     default:
       return newState;
@@ -95,6 +107,7 @@ processTurn(
   newState.lastAction = actionType;
   return newState;
 }
+
 
 
 
@@ -135,6 +148,7 @@ private handlePlayerMove(state: GameState, direction: string): GameState {
   }
 
   // Start combat with a monster
+// Start combat with a monster
 private handleCombatStart(state: GameState, monster: any): GameState {
   if (!this.dispatch || state.inCombat) return state; // Already in combat, ignore
 
@@ -160,8 +174,11 @@ private handleCombatStart(state: GameState, monster: any): GameState {
     }
   }
 
-  // Mark combat active **before moving the monster**
+  // Mark combat active
   state.inCombat = true;
+
+  // ✅ Mark monster as being in a combat slot
+  monster.inCombatSlot = true;
 
   // Move monster into combat slot
   this.dispatch({
@@ -178,27 +195,21 @@ private handleCombatStart(state: GameState, monster: any): GameState {
 
 
 
-  // Update world state (monsters, items) on player turn
+
+// Update world state (monsters, items) on player turn
+
 private updateWorld(state: GameState): void {
   console.log(`Updating world - Active monsters: ${state.activeMonsters.length}`);
-  
-  // Only move monsters if not in combat
-  if (!state.inCombat) {
-    handleMoveMonsters(state, this.dispatch, this.showDialog);
-  } else {
-    console.log("Combat in progress: monsters do not move");
-  }
 
-  // Still check item interactions
-  checkItemInteractions(
-    state,
-    this.dispatch,
-    this.showDialog,
-    this.setOverlay
-  );
+  // Move all monsters, letting monsterUtils skip those in combat slots
+  handleMoveMonsters(state, this.dispatch, this.showDialog);
+
+  // Check item interactions as usual
+  checkItemInteractions(state, this.dispatch, this.showDialog, this.setOverlay);
 
   console.log(`World update complete - Active monsters: ${state.activeMonsters.length}`);
 }
+
 
 
   // Expose movement handler for external use

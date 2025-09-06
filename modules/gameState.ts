@@ -107,7 +107,6 @@ export const deserializeGameState = (serializedState: string): GameState => {
     return initialState;
   }
 };
-
 export const reducer = (state: any = initialState, action: any) => {
   switch (action.type) {
     case "SET_LEVEL":
@@ -136,6 +135,7 @@ export const reducer = (state: any = initialState, action: any) => {
           position: { row: 395, col: 200 },
         },
       };
+
     case "ADD_TO_INVENTORY":
       const { item } = action.payload;
       if (state.player.inventory.length >= state.player.maxInventorySize) {
@@ -148,6 +148,7 @@ export const reducer = (state: any = initialState, action: any) => {
           inventory: [...state.player.inventory, item],
         },
       };
+
     case "UPDATE_ITEM":
       return {
         ...state,
@@ -157,6 +158,7 @@ export const reducer = (state: any = initialState, action: any) => {
             : item
         ),
       };
+
     case "DROP_ITEM":
       const { itemId } = action.payload;
       const droppedItem = state.player.inventory.find(
@@ -242,24 +244,48 @@ export const reducer = (state: any = initialState, action: any) => {
         },
       };
 
+    // ✅ FIXED: Simplified MOVE_MONSTER case
     case "MOVE_MONSTER":
-      // Prevent monster movement if combat is active and the monster is in a combat slot
       return {
         ...state,
-        activeMonsters: state.activeMonsters.map((monster: any) => {
-          if (
-            state.inCombat &&
-            state.attackSlots.some((slot: any) => slot.id === monster.id)
-          ) {
-            console.log(
-              `Monster ${monster.name} in combat slot, skipping movement`
-            );
-            return monster;
-          }
-          return monster.id === action.payload.id
+        activeMonsters: state.activeMonsters.map((monster: any) =>
+          monster.id === action.payload.id
             ? { ...monster, position: action.payload.position }
-            : monster;
-        }),
+            : monster
+        ),
+      };
+
+    // ✅ NEW: Set combat slot flag for individual monsters
+    // Add this debugging to your SET_MONSTER_COMBAT_SLOT case:
+
+    case "SET_MONSTER_COMBAT_SLOT":
+      console.log(
+        "🔥 SET_MONSTER_COMBAT_SLOT action received:",
+        action.payload
+      );
+      const updatedMonsters = state.activeMonsters.map((monster: any) => {
+        if (monster.id === action.payload.id) {
+          console.log(
+            `🔥 Setting ${monster.name} inCombatSlot to ${action.payload.inCombatSlot}`
+          );
+          return { ...monster, inCombatSlot: action.payload.inCombatSlot };
+        }
+        return monster;
+      });
+      console.log(
+        "🔥 Updated monsters:",
+        updatedMonsters.map((m: any) => `${m.name}: ${m.inCombatSlot}`)
+      );
+      return {
+        ...state,
+        activeMonsters: updatedMonsters,
+      };
+
+    // ✅ NEW: Set global combat state
+    case "SET_COMBAT_STATE":
+      return {
+        ...state,
+        inCombat: action.payload.inCombat,
       };
 
     case "UPDATE_MONSTER_HP":
@@ -276,11 +302,13 @@ export const reducer = (state: any = initialState, action: any) => {
             : slot
         ),
       };
+
     case "UPDATE_PLAYER_HP":
       return {
         ...state,
         player: { ...state.player, hp: action.payload.hp },
       };
+
     case "SPAWN_MONSTER":
       const newMonster = action.payload.monster;
       console.log("Spawning monster:", newMonster.name);
@@ -288,6 +316,7 @@ export const reducer = (state: any = initialState, action: any) => {
         ...state,
         activeMonsters: [...state.activeMonsters, newMonster],
       };
+
     case "SET_COMBAT":
       return {
         ...state,
@@ -302,26 +331,35 @@ export const reducer = (state: any = initialState, action: any) => {
       return {
         ...state,
         inCombat: true,
-        attackSlots: [action.payload.monster], // Slot 1
-        combatTurn: 0,
-        waitingMonsters: [], // Optional
+        activeMonsters: state.activeMonsters.map((monster: any) =>
+          monster.id === action.payload.id
+            ? { ...monster, inCombatSlot: true }
+            : monster
+        ),
       };
+
     case "UPDATE_TURN":
       return {
         ...state,
         turnOrder: action.payload.turnOrder,
         combatTurn: action.payload.combatTurn,
       };
+
     case "UPDATE_DIALOG":
       return { ...state, dialogData: action.payload.dialogData };
+
     case "UPDATE_MOVE_COUNT":
       return { ...state, moveCount: action.payload.moveCount };
+
     case "UPDATE_WAITING_MONSTERS":
       return { ...state, waitingMonsters: action.payload.waitingMonsters };
+
     case "UPDATE_ACTIVE_MONSTERS":
       return { ...state, activeMonsters: action.payload.activeMonsters };
+
     case "SET_AUDIO_STARTED":
       return { ...state, audioStarted: action.payload };
+
     case "ADD_FOOTSTEPS":
       const newFootsteps = {
         id: state.footsteps.length + 1,
@@ -335,6 +373,7 @@ export const reducer = (state: any = initialState, action: any) => {
           state.footstepsTemplate.maxInstances
         ),
       };
+
     case "ADD_POOL":
       const newPool = {
         id: state.pools.length + 1,
@@ -347,11 +386,13 @@ export const reducer = (state: any = initialState, action: any) => {
           state.poolsTemplate.maxInstances
         ),
       };
+
     case "RESET_HP":
       return {
         ...state,
         player: { ...state.player, hp: state.player.maxHP },
       };
+
     case "TRIGGER_EFFECT":
       const { effect, position } = action.payload;
       switch (effect.type) {
@@ -421,6 +462,7 @@ export const reducer = (state: any = initialState, action: any) => {
         default:
           return state;
       }
+
     case "DECREMENT_HIDE_TURNS":
       const newHideTurns = Math.max(0, state.player.hideTurns - 1);
       return {
@@ -431,6 +473,7 @@ export const reducer = (state: any = initialState, action: any) => {
           isHidden: newHideTurns > 0,
         },
       };
+
     case "UPDATE_OBJECT":
       return {
         ...state,
@@ -440,18 +483,21 @@ export const reducer = (state: any = initialState, action: any) => {
             : obj
         ),
       };
+
     case "TOGGLE_INVENTORY":
       return {
         ...state,
         showInventory: !state.showInventory,
         showWeaponsInventory: false,
       };
+
     case "TOGGLE_WEAPONS_INVENTORY":
       return {
         ...state,
         showWeaponsInventory: !state.showWeaponsInventory,
         showInventory: false,
       };
+
     case "ADD_TO_WEAPONS":
       const { weapon } = action.payload;
       if (state.player.weapons.length >= state.player.maxWeaponsSize) {
@@ -465,6 +511,7 @@ export const reducer = (state: any = initialState, action: any) => {
           weapons: [...state.player.weapons, weapon],
         },
       };
+
     case "DROP_WEAPON":
       const { weaponId } = action.payload;
       const droppedWeapon = state.player.weapons.find(
@@ -495,12 +542,14 @@ export const reducer = (state: any = initialState, action: any) => {
         items: [...state.items, newWeaponItem],
         dropSuccess: true,
       };
+
     case "PASS_TURN":
       return {
         ...state,
         moveCount: state.moveCount + 1,
         lastAction: "PASS_TURN",
       };
+
     default:
       console.warn(`Unhandled action type: ${action.type}`);
       return state || initialState;

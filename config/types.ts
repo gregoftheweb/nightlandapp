@@ -97,6 +97,7 @@ export interface Monster extends GameObject {
   maxInstances?: number;
   soulKey: string;
   uiSlot?: number; // Added for combat slot assignment
+  inCombatSlot?: boolean;
 }
 
 // Extended Monster interface for level instances
