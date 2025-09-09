@@ -1,7 +1,7 @@
 // modules/monsterUtils.ts - Fixed version with proper combat handling
 import { GameState, Monster, Position } from "../config/types";
 import { monsters } from "../config/monsters";
-import { MovementHandler } from "./movement";
+import { MovementHandler } from "./movement.blech";
 
 // Global movement handler instance for monster AI
 let globalMovementHandler: MovementHandler | null = null;

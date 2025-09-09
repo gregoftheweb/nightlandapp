@@ -1,6 +1,6 @@
 // modules/playerUtils.ts - Refactored without movement logic
 import { GameState, Position } from '../config/types';
-import { MovementHandler } from './movement';
+import { MovementHandler } from './movement.blech';
 
 export const handleMovePlayer = (
   state: GameState,

@@ -10,28 +10,36 @@ import GameBoard, {
 } from "./GameBoard";
 import PlayerHUD from "../../components/PlayerHUD";
 import Settings from "../../components/Settings";
-import { GameLoop } from "../../modules/gameLoop";
 import { calculateCameraOffset } from "../../modules/utils";
-import { MovementHandler, Direction } from "../../modules/movement";
+import { handleMovePlayer, initializeStartingMonsters } from "../../modules/gameLoop";
+
 
 const { width, height } = Dimensions.get("window");
 const MIN_MOVE_DISTANCE = 1;
 const HUD_HEIGHT = 60;
 const MOVEMENT_INTERVAL = 150;
 
+// Define Direction type locally since we removed movement.ts
+type Direction = "up" | "down" | "left" | "right" | "stay" | null;
+
 export default function Game() {
   const { state, dispatch, showDialog, setOverlay, setDeathMessage } =
     useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
 
-  const gameLoopRef = useRef<GameLoop | null>(null);
-  const movementHandlerRef = useRef<MovementHandler | null>(null);
   const stateRef = useRef(state);
 
   // Keep latest state for callbacks
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+  // Initialize starting monsters on first load
+  if (state.activeMonsters.length === 0 && state.moveCount === 0) {
+    initializeStartingMonsters(state, dispatch);
+  }
+}, [state.activeMonsters.length, state.moveCount, state, dispatch]);
 
   // Long press movement
   const longPressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -47,24 +55,6 @@ export default function Game() {
       state.gridHeight
     )
   );
-
-  useEffect(() => {
-    if (!gameLoopRef.current) {
-      gameLoopRef.current = new GameLoop(
-        dispatch,
-        showDialog,
-        setOverlay,
-        setDeathMessage
-      );
-      gameLoopRef.current.start();
-      console.log("Game: GameLoop initialized");
-    }
-
-    if (!movementHandlerRef.current && gameLoopRef.current) {
-      movementHandlerRef.current = gameLoopRef.current.getMovementHandler();
-      console.log("Game: MovementHandler retrieved from GameLoop");
-    }
-  }, [dispatch, showDialog, setOverlay, setDeathMessage]);
 
   useEffect(() => {
     setCameraOffset(
@@ -93,12 +83,49 @@ export default function Game() {
     [cameraOffset]
   );
 
+  const getMovementDirectionFromTap = useCallback(
+    (tapRow: number, tapCol: number, playerRow: number, playerCol: number, minDistance: number): Direction => {
+      const deltaRow = tapRow - playerRow;
+      const deltaCol = tapCol - playerCol;
+      const absRow = Math.abs(deltaRow);
+      const absCol = Math.abs(deltaCol);
+
+      // Check if tap is too close to player
+      if (absRow < minDistance && absCol < minDistance) {
+        return null;
+      }
+
+      // Determine primary direction based on larger delta
+      if (absRow > absCol) {
+        return deltaRow > 0 ? "down" : "up";
+      } else if (absCol > absRow) {
+        return deltaCol > 0 ? "right" : "left";
+      } else {
+        // Equal deltas, choose based on sign
+        if (deltaRow !== 0) {
+          return deltaRow > 0 ? "down" : "up";
+        } else if (deltaCol !== 0) {
+          return deltaCol > 0 ? "right" : "left";
+        }
+      }
+      
+      return null;
+    },
+    []
+  );
+
   const performMove = useCallback((direction: Direction) => {
-    if (!gameLoopRef.current || !direction || stateRef.current.inCombat) return;
-    gameLoopRef.current.processTurn(stateRef.current, "MOVE_PLAYER", {
+    if (!direction || stateRef.current.inCombat) return;
+    
+    handleMovePlayer(
+      stateRef.current,
+      dispatch,
       direction,
-    });
-  }, []);
+      setOverlay,
+      showDialog,
+      setDeathMessage
+    );
+  }, [dispatch, setOverlay, showDialog, setDeathMessage]);
 
   const startLongPressInterval = useCallback(
     (direction: Direction) => {
@@ -134,7 +161,7 @@ export default function Game() {
       const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
       const { row: playerRow, col: playerCol } = state.player.position;
 
-      const direction = movementHandlerRef.current?.getMovementDirectionFromTap(
+      const direction = getMovementDirectionFromTap(
         tapRow,
         tapCol,
         playerRow,
@@ -145,7 +172,7 @@ export default function Game() {
       if (!direction) return;
       performMove(direction);
     },
-    [state.inCombat, settingsVisible, calculateTapPosition, performMove]
+    [state.inCombat, settingsVisible, calculateTapPosition, getMovementDirectionFromTap, performMove]
   );
 
   const handleLongPress = useCallback(
@@ -157,7 +184,7 @@ export default function Game() {
       const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
       const { row: playerRow, col: playerCol } = state.player.position;
 
-      const direction = movementHandlerRef.current?.getMovementDirectionFromTap(
+      const direction = getMovementDirectionFromTap(
         tapRow,
         tapCol,
         playerRow,
@@ -172,6 +199,7 @@ export default function Game() {
       state.inCombat,
       settingsVisible,
       calculateTapPosition,
+      getMovementDirectionFromTap,
       startLongPressInterval,
     ]
   );
@@ -194,15 +222,14 @@ export default function Game() {
 
   const handleTurnPress = useCallback(() => {
     if (state.inCombat) return;
-    gameLoopRef.current?.processTurn(stateRef.current, "PASS_TURN");
-  }, []);
+    dispatch({ type: "PASS_TURN" });
+  }, [dispatch, state.inCombat]);
 
   const handleAttackPress = useCallback(() => {
-  if (!gameLoopRef.current) return;
-
-  // Example: queue an attack action for the player
-  gameLoopRef.current.processTurn(stateRef.current, "PLAYER_ATTACK");
-}, []);
+    if (!state.inCombat) return;
+    // TODO: Implement player attack logic
+    console.log("Player attack pressed");
+  }, [state.inCombat]);
 
   const handleMonsterTap = useCallback(
     (monster: any) => {
