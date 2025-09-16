@@ -3,49 +3,41 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, StyleSheet, Dimensions, Pressable, Text } from "react-native";
 import { PositionDisplay } from "../../components/PositionDisplay";
 import { useGameContext } from "../../context/GameContext";
-import GameBoard, {
-  VIEWPORT_ROWS,
-  VIEWPORT_COLS,
-  CELL_SIZE,
-} from "./GameBoard";
+import GameBoard, { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE } from "./GameBoard";
 import PlayerHUD from "../../components/PlayerHUD";
 import Settings from "../../components/Settings";
 import { calculateCameraOffset } from "../../modules/utils";
-import { handleMovePlayer, initializeStartingMonsters } from "../../modules/gameLoop";
-
+import { handleMovePlayer, initializeStartingMonsters, handleCombatTurn } from "../../modules/gameLoop";
+import { handleMoveMonsters } from "../../modules/monsterUtils";
 
 const { width, height } = Dimensions.get("window");
 const MIN_MOVE_DISTANCE = 1;
 const HUD_HEIGHT = 60;
 const MOVEMENT_INTERVAL = 150;
 
-// Define Direction type locally since we removed movement.ts
 type Direction = "up" | "down" | "left" | "right" | "stay" | null;
 
 export default function Game() {
-  const { state, dispatch, showDialog, setOverlay, setDeathMessage } =
-    useGameContext();
+  const { state, dispatch, showDialog, setOverlay, setDeathMessage } = useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [targetId, setTargetId] = useState<string | undefined>(); // Add for dynamic targeting
 
   const stateRef = useRef(state);
 
-  // Keep latest state for callbacks
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
 
   useEffect(() => {
-  // Initialize starting monsters on first load
-  if (state.activeMonsters.length === 0 && state.moveCount === 0) {
-    initializeStartingMonsters(state, dispatch);
-  }
-}, [state.activeMonsters.length, state.moveCount, state, dispatch]);
+    if (state.activeMonsters.length === 0 && state.moveCount === 0) {
+      console.log("Initializing starting monsters");
+      initializeStartingMonsters(state, dispatch);
+    }
+  }, [state.activeMonsters.length, state.moveCount, state, dispatch]);
 
-  // Long press movement
   const longPressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentDirection = useRef<Direction>(null);
 
-  // Camera offset
   const [cameraOffset, setCameraOffset] = useState(() =>
     calculateCameraOffset(
       state.player.position,
@@ -68,9 +60,6 @@ export default function Game() {
     );
   }, [state.player.position, state.gridWidth, state.gridHeight]);
 
-  // -------------------
-  // Movement helpers
-  // -------------------
   const calculateTapPosition = useCallback(
     (pageX: number, pageY: number) => {
       const gridLeft = (width - VIEWPORT_COLS * CELL_SIZE) / 2;
@@ -90,42 +79,42 @@ export default function Game() {
       const absRow = Math.abs(deltaRow);
       const absCol = Math.abs(deltaCol);
 
-      // Check if tap is too close to player
       if (absRow < minDistance && absCol < minDistance) {
         return null;
       }
 
-      // Determine primary direction based on larger delta
       if (absRow > absCol) {
         return deltaRow > 0 ? "down" : "up";
       } else if (absCol > absRow) {
         return deltaCol > 0 ? "right" : "left";
       } else {
-        // Equal deltas, choose based on sign
         if (deltaRow !== 0) {
           return deltaRow > 0 ? "down" : "up";
         } else if (deltaCol !== 0) {
           return deltaCol > 0 ? "right" : "left";
         }
       }
-      
+
       return null;
     },
     []
   );
 
-  const performMove = useCallback((direction: Direction) => {
-    if (!direction || stateRef.current.inCombat) return;
-    
-    handleMovePlayer(
-      stateRef.current,
-      dispatch,
-      direction,
-      setOverlay,
-      showDialog,
-      setDeathMessage
-    );
-  }, [dispatch, setOverlay, showDialog, setDeathMessage]);
+  const performMove = useCallback(
+    (direction: Direction) => {
+      if (!direction || stateRef.current.inCombat) return;
+
+      handleMovePlayer(
+        stateRef.current,
+        dispatch,
+        direction,
+        setOverlay,
+        showDialog,
+        setDeathMessage
+      );
+    },
+    [dispatch, setOverlay, showDialog, setDeathMessage]
+  );
 
   const startLongPressInterval = useCallback(
     (direction: Direction) => {
@@ -204,38 +193,50 @@ export default function Game() {
     ]
   );
 
-  const handlePressOut = useCallback(
-    () => stopLongPressInterval(),
-    [stopLongPressInterval]
-  );
+  const handlePressOut = useCallback(() => stopLongPressInterval(), [stopLongPressInterval]);
 
-  // -------------------
-  // UI handlers
-  // -------------------
   const handleGearPress = useCallback(() => {
-    if (state.inCombat)
-      showDialog("Cannot access settings during combat", 1500);
+    if (state.inCombat) showDialog("Cannot access settings during combat", 1500);
     else setSettingsVisible(true);
   }, [state.inCombat, showDialog]);
 
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
 
   const handleTurnPress = useCallback(() => {
-    if (state.inCombat) return;
+    console.log("\n🎮 handleTurnPress called, inCombat:", state.inCombat);
+    if (state.inCombat) {
+      console.log("Blocked: Cannot pass turn while in combat");
+      return;
+    }
+    console.log("Dispatching PASS_TURN, current moveCount:", state.moveCount);
     dispatch({ type: "PASS_TURN" });
-  }, [dispatch, state.inCombat]);
+    console.log("Calling handleMoveMonsters, activeMonsters:", state.activeMonsters.length);
+    handleMoveMonsters(state, dispatch, showDialog);
+    console.log("handleTurnPress completed");
+  }, [dispatch, state.inCombat, state, showDialog]);
 
   const handleAttackPress = useCallback(() => {
-    if (!state.inCombat) return;
-    // TODO: Implement player attack logic
-    console.log("Player attack pressed");
-  }, [state.inCombat]);
+    console.log("\n⚔️ handleAttackPress called, inCombat:", state.inCombat);
+    if (!state.inCombat) {
+      console.log("Blocked: Not in combat");
+      return;
+    }
+    const targetMonster = targetId
+      ? state.attackSlots?.find((m) => m.id === targetId)
+      : state.attackSlots?.[0];
+    if (!targetMonster) {
+      console.warn("No target monster in attack slots");
+      return;
+    }
+    console.log("Player attack pressed, targeting:", targetMonster.name, "ID:", targetMonster.id);
+    handleCombatTurn(state, dispatch, "attack", targetMonster.id, showDialog);
+  }, [state.inCombat, state.attackSlots, dispatch, showDialog, targetId]);
 
   const handleMonsterTap = useCallback(
     (monster: any) => {
       if (state.inCombat) {
-        // TODO: Queue player action / attack for this monster when combat.ts is implemented
-        console.log("Monster tapped during combat:", monster.name);
+        console.log("Monster tapped during combat:", monster.name, "ID:", monster.id);
+        setTargetId(monster.id); // Set target for attack
       }
     },
     [state.inCombat]
@@ -249,9 +250,6 @@ export default function Game() {
     // Could implement info or interaction
   }, []);
 
-  // -------------------
-  // Render
-  // -------------------
   return (
     <Pressable
       style={styles.container}
@@ -271,12 +269,9 @@ export default function Game() {
 
         {state.inCombat && (
           <View style={styles.combatOverlay}>
-            <Text style={styles.dialogText}>
-              this will be combat textthis will be combat textthis will be
-              combat textthis will be combat textthis will be combat textthis
-              will be combat textthis will be combat textthis will be combat
-              text
-            </Text>
+            {/* <Text style={styles.dialogText}>
+              In Combat: {state.attackSlots?.map((m: any) => m.name).join(", ") || "No enemies"}
+            </Text> */}
           </View>
         )}
 
@@ -284,9 +279,9 @@ export default function Game() {
           hp={state.player.hp}
           maxHP={state.player.maxHP}
           onGearPress={handleGearPress}
-          onTurnPress={handleTurnPress} // non-combat
-          onAttackPress={handleAttackPress} // combat
-          inCombat={state.inCombat} // dynamic
+          onTurnPress={handleTurnPress}
+          onAttackPress={handleAttackPress}
+          inCombat={state.inCombat}
         />
 
         <Settings visible={settingsVisible} onClose={handleCloseSettings} />
@@ -301,13 +296,13 @@ const styles = StyleSheet.create({
   gameContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   combatOverlay: {
     position: "absolute",
-    top: 25, // 5 pixels from top
-    left: 5, // 5 pixels from left
-    backgroundColor: "rgba(0,0,0,0.7)", // 70% transparent black
+    top: 25,
+    left: 5,
+    backgroundColor: "rgba(0,0,0,0.7)",
     borderWidth: 2,
-    borderColor: "#990000", // red border
+    borderColor: "#990000",
     padding: 10,
     borderRadius: 8,
-    maxWidth: "50%", // optional: prevent it from stretching too wide
+    maxWidth: "50%",
   },
 });

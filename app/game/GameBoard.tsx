@@ -1,7 +1,14 @@
-// app/game/GameBoard.tsx - Refactored to focus on presentation
-import React, { useState } from "react";
-import { View, Image, StyleSheet, Dimensions, ImageSourcePropType, TouchableOpacity } from "react-native";
-import { Monster, LevelObjectInstance, Player, GameState } from "@/config/types";
+// app/game/GameBoard.tsx
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ImageSourcePropType,
+  TouchableOpacity,
+} from "react-native";
+import { Monster, LevelObjectInstance, Player, GameState, CombatLogEntry } from "@/config/types";
 import { InfoBox } from "../../components/InfoBox";
 
 const { width, height } = Dimensions.get("window");
@@ -18,15 +25,28 @@ interface GameBoardProps {
   onBuildingTap?: (building: LevelObjectInstance) => void;
 }
 
-export default function GameBoard({ 
-  state, 
-  cameraOffset, 
-  onPlayerTap, 
-  onMonsterTap, 
-  onBuildingTap 
+export default function GameBoard({
+  state,
+  cameraOffset,
+  onPlayerTap,
+  onMonsterTap,
+  onBuildingTap,
 }: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
-  const [infoData, setInfoData] = useState({ name: '', description: '' });
+  const [infoData, setInfoData] = useState({ name: "", description: "" });
+  const [combatInfoVisible, setCombatInfoVisible] = useState(false);
+  const [combatMessage, setCombatMessage] = useState("");
+
+  // Handle combat log updates
+  useEffect(() => {
+    if (state.inCombat && state.combatLog && state.combatLog.length > 0) {
+      const latestLog = state.combatLog[state.combatLog.length - 1];
+      setCombatMessage(latestLog.message);
+      setCombatInfoVisible(true);
+    } else {
+      setCombatInfoVisible(false);
+    }
+  }, [state.combatLog, state.inCombat]);
 
   if (!state.level || !state.level.objects) {
     console.warn("GameBoard: state.level is undefined or missing objects!");
@@ -42,7 +62,6 @@ export default function GameBoard({
     if (onPlayerTap) {
       onPlayerTap();
     } else {
-      // Default behavior
       const player = state.player;
       const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : "";
       showInfo(
@@ -56,7 +75,6 @@ export default function GameBoard({
     if (onMonsterTap) {
       onMonsterTap(monster);
     } else {
-      // Default behavior
       showInfo(
         monster.name || monster.shortName || "Monster",
         monster.description || `A dangerous creature. HP: ${monster.hp || "Unknown"}`
@@ -68,7 +86,6 @@ export default function GameBoard({
     if (onBuildingTap) {
       onBuildingTap(building);
     } else {
-      // Default behavior
       showInfo(
         building.name || building.shortName || "Building",
         building.description || "An interesting structure in the world."
@@ -77,108 +94,139 @@ export default function GameBoard({
   };
 
   const findMonsterAtPosition = (worldRow: number, worldCol: number): Monster | undefined => {
-    return state.activeMonsters.find(
-      (monster: Monster) =>
-        monster.position?.row === worldRow &&
-        monster.position?.col === worldCol
-    ) || 
-    state.level.monsters?.find(
-      (monster: any) =>
-        monster.position?.row === worldRow &&
-        monster.position?.col === worldCol &&
-        monster.active !== false
+    return (
+      state.activeMonsters.find(
+        (monster: Monster) =>
+          monster.position?.row === worldRow &&
+          monster.position?.col === worldCol &&
+          !monster.inCombatSlot
+      ) ||
+      state.level.monsters?.find(
+        (monster: any) =>
+          monster.position?.row === worldRow &&
+          monster.position?.col === worldCol &&
+          monster.active !== false &&
+          !monster.inCombatSlot
+      )
     );
   };
 
   const findItemAtPosition = (worldRow: number, worldCol: number): any => {
-    return state.items?.find((item: any) => 
-      item.active && item.position.row === worldRow && item.position.col === worldCol
-    ) || 
-    state.level.items?.find((item: any) => 
-      item.active && item.position.row === worldRow && item.position.col === worldCol
+    return (
+      state.items?.find((item: any) => item.active && item.position.row === worldRow && item.position.col === worldCol) ||
+      state.level.items?.find((item: any) => item.active && item.position.row === worldRow && item.position.col === worldCol)
     );
   };
 
-
-
-
   const renderGridCells = (): React.ReactNode[] => {
-  const tiles: React.ReactNode[] = [];
+    const tiles: React.ReactNode[] = [];
 
-  for (let row = 0; row < VIEWPORT_ROWS; row++) {
-    for (let col = 0; col < VIEWPORT_COLS; col++) {
-      const worldRow = row + cameraOffset.offsetY;
-      const worldCol = col + cameraOffset.offsetX;
+    for (let row = 0; row < VIEWPORT_ROWS; row++) {
+      for (let col = 0; col < VIEWPORT_COLS; col++) {
+        const worldRow = row + cameraOffset.offsetY;
+        const worldCol = col + cameraOffset.offsetX;
 
-      const isPlayer =
-        !!state.player?.position &&
-        worldRow === state.player.position.row &&
-        worldCol === state.player.position.col;
+        const isPlayer =
+          !!state.player?.position &&
+          worldRow === state.player.position.row &&
+          worldCol === state.player.position.col;
 
-      const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
-      const itemAtPosition = findItemAtPosition(worldRow, worldCol);
+        const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
+        const itemAtPosition = findItemAtPosition(worldRow, worldCol);
 
-      tiles.push(
-        <View
-          key={`cell-${worldRow}-${worldCol}`}
-          style={[
-            styles.cell,
-            {
-              left: col * CELL_SIZE,
-              top: row * CELL_SIZE,
-              backgroundColor: getCellBackgroundColor(isPlayer, monsterAtPosition, state.inCombat),
-            },
-          ]}
-        >
-          {/* Items layer */}
-          {itemAtPosition && (
-            <Image
-              source={getItemImage(itemAtPosition.shortName)}
-              style={[styles.item, { zIndex: 0 }]}
-              resizeMode="contain"
-            />
-          )}
-
-          {/* Monsters layer */}
-          {monsterAtPosition && !isPlayer && (
-            <TouchableOpacity
-              onPress={() => handleMonsterTap(monsterAtPosition)}
-              style={styles.tappableArea}
-              activeOpacity={0.7}
-            >
+        tiles.push(
+          <View
+            key={`cell-${worldRow}-${worldCol}`}
+            style={[
+              styles.cell,
+              {
+                left: col * CELL_SIZE,
+                top: row * CELL_SIZE,
+                backgroundColor: getCellBackgroundColor(isPlayer, monsterAtPosition, state.inCombat),
+              },
+            ]}
+          >
+            {itemAtPosition && (
               <Image
-                source={getMonsterImage(monsterAtPosition)}
-                style={[styles.character, { zIndex: 1 }]}
+                source={getItemImage(itemAtPosition.shortName)}
+                style={[styles.item, { zIndex: 0 }]}
                 resizeMode="contain"
               />
-            </TouchableOpacity>
-          )}
-
-          {/* Player layer */}
-          {isPlayer && (
-            <TouchableOpacity
-              onPress={handlePlayerTap}
-              style={styles.tappableArea}
-              activeOpacity={0.7}
-            >
-              <Image
-                source={require("../../assets/images/christos.png")}
-                style={[styles.character, { zIndex: 2 }]}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      );
+            )}
+            {monsterAtPosition && !isPlayer && (
+              <TouchableOpacity
+                onPress={() => handleMonsterTap(monsterAtPosition)}
+                style={styles.tappableArea}
+                activeOpacity={0.7}
+              >
+                <Image
+                  source={getMonsterImage(monsterAtPosition)}
+                  style={[styles.character, { zIndex: 1 }]}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            )}
+            {isPlayer && (
+              <TouchableOpacity
+                onPress={handlePlayerTap}
+                style={styles.tappableArea}
+                activeOpacity={0.7}
+              >
+                <Image
+                  source={require("../../assets/images/christos.png")}
+                  style={[styles.character, { zIndex: 2 }]}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        );
+      }
     }
-  }
 
-  return tiles;
-};
+    return tiles;
+  };
 
+  const renderCombatMonsters = (): React.ReactNode[] => {
+    if (!state.inCombat || !state.attackSlots) return [];
 
+    return state.attackSlots.map((monster: Monster) => {
+      if (!monster.position || !monster.uiSlot) return null;
 
+      const screenRow = monster.position.row - cameraOffset.offsetY;
+      const screenCol = monster.position.col - cameraOffset.offsetX;
 
+      const inView =
+        screenRow >= 0 &&
+        screenRow < VIEWPORT_ROWS &&
+        screenCol >= 0 &&
+        screenCol < VIEWPORT_COLS;
+
+      if (!inView) return null;
+
+      return (
+        <TouchableOpacity
+          key={`combat-monster-${monster.id}`}
+          onPress={() => handleMonsterTap(monster)}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: CELL_SIZE,
+            height: CELL_SIZE,
+            zIndex: 3,
+          }}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={getMonsterImage(monster)}
+            style={styles.character}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      );
+    }).filter((item): item is React.ReactElement => item !== null);
+  };
 
   const renderBuildings = (): React.ReactNode[] => {
     return state.level.objects.map((obj: LevelObjectInstance) => {
@@ -189,7 +237,6 @@ export default function GameBoard({
       const objWidth = obj.size?.width ?? 1;
       const objHeight = obj.size?.height ?? 1;
 
-      // Check if building is in viewport
       const inView =
         screenRow + objHeight > 0 &&
         screenRow < VIEWPORT_ROWS &&
@@ -209,7 +256,7 @@ export default function GameBoard({
             top: screenRow * CELL_SIZE,
             width: objWidth * CELL_SIZE,
             height: objHeight * CELL_SIZE,
-            zIndex: 10, // Buildings appear above everything else
+            zIndex: 10,
           }}
         >
           <Image
@@ -228,58 +275,58 @@ export default function GameBoard({
   const renderGrid = () => {
     const gridCells = renderGridCells();
     const buildings = renderBuildings();
-    
-    return [...gridCells, ...buildings]; // Grid cells first, buildings on top
+    const combatMonsters = renderCombatMonsters();
+
+    return [...gridCells, ...combatMonsters, ...buildings];
   };
 
   return (
-    <View style={styles.gridContainer}>
+    <View style={styles.combatDialog}>
       {renderGrid()}
-      
-      {/* InfoBox Dialog */}
       <InfoBox
         visible={infoVisible}
-        name={infoData.name}
+        name={infoData.name}        
         description={infoData.description}
         onClose={() => setInfoVisible(false)}
+      />
+      <InfoBox
+        visible={combatInfoVisible}
+        name="Combat"
+        description={combatMessage}
+        onClose={() => setCombatInfoVisible(false)}
       />
     </View>
   );
 }
 
-// Utility functions
 const getCellBackgroundColor = (isPlayer: boolean, hasMonster: any, inCombat: boolean) => {
   if (isPlayer) return "#444";
   if (hasMonster) return "#622";
-  //if (inCombat) return "#331";
   return "#111";
 };
 
 const getMonsterImage = (monster: any) => {
-  // First try to use the image directly from the monster data
   if (monster.image) {
     return monster.image;
   }
-  
-  // Fallback to shortName mapping
+
   const monsterImages: { [key: string]: any } = {
-    'abhuman': require("../../assets/images/abhuman.png"),
-    'night_hound': require("../../assets/images/nighthound4.png"),
-    'watcher_se': require("../../assets/images/watcherse.png"),
+    abhuman: require("../../assets/images/abhuman.png"),
+    night_hound: require("../../assets/images/nighthound4.png"),
+    watcher_se: require("../../assets/images/watcherse.png"),
   };
-  
+
   return monsterImages[monster.shortName] || require("../../assets/images/abhuman.png");
 };
 
 const getItemImage = (shortName: string) => {
   const itemImages: { [key: string]: any } = {
-    'healthPotion': require("../../assets/images/potion.png"),
-    'ironSword': require("../../assets/images/shortSword.png"),
+    healthPotion: require("../../assets/images/potion.png"),
+    ironSword: require("../../assets/images/shortSword.png"),
   };
   return itemImages[shortName] || require("../../assets/images/potion.png");
 };
 
-// Styles
 const styles = StyleSheet.create({
   gridContainer: {
     width,
@@ -313,6 +360,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: CELL_SIZE * 0.2,
     top: CELL_SIZE * 0.2,
+  },
+  combatDialog: {
+    position: "absolute",
+    top: 25,
+    left: 5,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    borderWidth: 2,
+    borderColor: "#990000",
+    padding: 10,
+    borderRadius: 8,
+    maxWidth: "50%",
   },
 });
 

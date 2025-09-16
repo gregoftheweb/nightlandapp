@@ -1,242 +1,29 @@
-// modules/reducers.ts - All game logic and state updates
-import { GameState, Position, Monster } from "../config/types";
+// modules/reducers.ts
+import { GameState, CombatLogEntry, Monster, LevelMonsterInstance, FootstepInstance, PoolInstance} from "../config/types";
 import { levels } from "../config/levels";
 import { initialState } from "./gameState";
 
-// ==================== HELPER FUNCTIONS ====================
-
-const moveAway = (
-  monster: Monster, 
-  playerPos: Position, 
-  gridWidth: number, 
-  gridHeight: number
-): Position => {
-  const newPos = { ...monster.position };
-  const moveDistance = monster.moveRate || 1;
-  
-  if (monster.position.row < playerPos.row) {
-    newPos.row = Math.max(0, monster.position.row - moveDistance);
-  } else if (monster.position.row > playerPos.row) {
-    newPos.row = Math.min(gridHeight - 1, monster.position.row + moveDistance);
-  }
-  
-  if (monster.position.col < playerPos.col) {
-    newPos.col = Math.max(0, monster.position.col - moveDistance);
-  } else if (monster.position.col > playerPos.col) {
-    newPos.col = Math.min(gridWidth - 1, monster.position.col + moveDistance);
-  }
-  
-  return newPos;
-};
-
-const checkCollision = (pos1: Position, pos2: Position): boolean => {
-  return pos1.row === pos2.row && pos1.col === pos2.col;
-};
-
-// ==================== MOVEMENT LOGIC ====================
-
-export const handleMovePlayer = (
-  state: GameState,
-  dispatch: (action: any) => void,
-  direction: string,
-  showDialog: (message: string, duration?: number) => void
+export const reducer = (
+  state: GameState = initialState,
+  action: any
 ): GameState => {
-  if (state.inCombat) return state;
-
-  const newPosition = { ...state.player.position };
-
-  // Calculate new position
-  switch (direction) {
-    case "up":
-      newPosition.row = Math.max(0, newPosition.row - 1);
-      break;
-    case "down":
-      newPosition.row = Math.min(state.gridHeight - 1, newPosition.row + 1);
-      break;
-    case "left":
-      newPosition.col = Math.max(0, newPosition.col - 1);
-      break;
-    case "right":
-      newPosition.col = Math.min(state.gridWidth - 1, newPosition.col + 1);
-      break;
-    case "stay":
-    case null:
-      break;
-    default:
-      console.warn(`Unhandled direction: ${direction}`);
-      return state;
-  }
-
-  // Move player
-  dispatch({ type: "MOVE_PLAYER", payload: { position: newPosition } });
-  
-  // Update move count
-  const newMoveCount = state.moveCount + 1;
-  dispatch({ type: "UPDATE_MOVE_COUNT", payload: { moveCount: newMoveCount } });
-
-  // Handle monster movement and combat
-  const updatedState = { 
-    ...state, 
-    player: { ...state.player, position: newPosition },
-    moveCount: newMoveCount 
-  };
-  
-  moveMonsters(updatedState, dispatch, showDialog, newPosition);
-  
-  return updatedState;
-};
-
-const moveMonsters = (
-  state: GameState,
-  dispatch: (action: any) => void,
-  showDialog: (message: string, duration?: number) => void,
-  playerPosOverride?: Position
-): void => {
-  if (state.inCombat) return;
-
-  const playerPos = playerPosOverride || state.player.position;
-
-  state.activeMonsters.forEach((monster) => {
-    // Skip monsters already in combat
-    if (
-      state.attackSlots?.some((slot: any) => slot.id === monster.id) ||
-      state.waitingMonsters?.some((m: any) => m.id === monster.id)
-    ) {
-      return;
-    }
-
-    let newPos: Position;
-    
-    if (state.player.isHidden) {
-      newPos = moveAway(monster, playerPos, state.gridWidth, state.gridHeight);
-    } else {
-      // Move toward player
-      const moveDistance = monster.moveRate || 1;
-      newPos = { ...monster.position };
-
-      if (monster.position.row < playerPos.row) {
-        newPos.row = Math.min(monster.position.row + moveDistance, playerPos.row);
-      } else if (monster.position.row > playerPos.row) {
-        newPos.row = Math.max(monster.position.row - moveDistance, playerPos.row);
-      }
-      
-      if (monster.position.col < playerPos.col) {
-        newPos.col = Math.min(monster.position.col + moveDistance, playerPos.col);
-      } else if (monster.position.col > playerPos.col) {
-        newPos.col = Math.max(monster.position.col - moveDistance, playerPos.col);
-      }
-
-      // Keep in bounds
-      newPos.row = Math.max(0, Math.min(state.gridHeight - 1, newPos.row));
-      newPos.col = Math.max(0, Math.min(state.gridWidth - 1, newPos.col));
-
-      // Check for collision with player
-      if (checkCollision(newPos, playerPos)) {
-        if (!state.player.isHidden) {
-          setupCombat(state, dispatch, monster, showDialog, playerPos);
-        }
-        return; // Don't move if entering combat
-      }
-    }
-
-    // Update monster position
-    dispatch({
-      type: "MOVE_MONSTER",
-      payload: { id: monster.id, position: newPos },
-    });
-  });
-};
-
-const setupCombat = (
-  state: GameState,
-  dispatch: (action: any) => void,
-  monster: Monster,
-  showDialog: (message: string, duration?: number) => void,
-  playerPosOverride?: Position
-): void => {
-  if (state.inCombat) return;
-
-  const playerPos = playerPosOverride || state.player.position;
-  let newAttackSlots = [...(state.attackSlots || [])];
-  let newWaitingMonsters = [...(state.waitingMonsters || [])];
-
-  // Define the 4 combat slot positions (matching web version)
-  const slotPositions = [
-    { row: playerPos.row - 1, col: playerPos.col - 1 }, // top-left
-    { row: playerPos.row - 1, col: playerPos.col + 1 }, // top-right  
-    { row: playerPos.row + 1, col: playerPos.col - 1 }, // bottom-left
-    { row: playerPos.row + 1, col: playerPos.col + 1 }, // bottom-right
-  ];
-
-  // Add monster to combat if slot available
-  if (!newAttackSlots.some((slot: any) => slot.id === monster.id)) {
-    if (newAttackSlots.length < (state.maxAttackers || 4)) {
-      // Find next available UI slot
-      const usedUISlots = newAttackSlots.map((slot: any) => slot.uiSlot || 0);
-      const nextUISlot = [0, 1, 2, 3].find(slot => !usedUISlots.includes(slot));
-      
-      if (nextUISlot !== undefined) {
-        // Assign combat position and UI slot
-        const combatMonster = {
-          ...monster,
-          position: { ...slotPositions[nextUISlot] },
-          uiSlot: nextUISlot,
-          inCombatSlot: true
-        };
-        
-        newAttackSlots.push(combatMonster);
-        
-        // Move monster to combat position
-        dispatch({
-          type: "MOVE_MONSTER", 
-          payload: { id: monster.id, position: combatMonster.position }
-        });
-      }
-    } else {
-      // No slots available, add to waiting
-      if (!newWaitingMonsters.some((m: any) => m.id === monster.id)) {
-        newWaitingMonsters.push(monster);
-      }
-    }
-  }
-
-  // Create turn order: player first, then attacking monsters
-  const newTurnOrder = [state.player, ...newAttackSlots];
-
-  // Start combat
-  dispatch({
-    type: "SET_COMBAT",
-    payload: {
-      inCombat: true,
-      attackSlots: newAttackSlots,
-      waitingMonsters: newWaitingMonsters,
-      turnOrder: newTurnOrder,
-      combatTurn: newTurnOrder[0],
-    },
-  });
-
-  showDialog(`${monster.name} attacks!`, 2000);
-};
-
-// ==================== MAIN REDUCER ====================
-
-export const reducer = (state: any = initialState, action: any) => {
   switch (action.type) {
-    
     // ============ LEVEL MANAGEMENT ============
     case "SET_LEVEL":
       const newLevelConfig = levels[String(action.levelId)];
       return {
         ...state,
-        level: newLevelConfig.id,
-        levels: [newLevelConfig],
-        monsters: newLevelConfig.monsters,
-        greatPowers: newLevelConfig.greatPowers,
-        objects: newLevelConfig.objects,
-        pools: newLevelConfig.pools,
-        poolsTemplate: newLevelConfig.poolTemplates,
-        footsteps: newLevelConfig.footsteps,
-        footstepsTemplate: newLevelConfig.footstepsTemplate,
+        level: newLevelConfig,
+        levels: { ...state.levels, [action.levelId]: newLevelConfig },
+        monsters: newLevelConfig.monsters || [],
+        greatPowers: newLevelConfig.greatPowers || [],
+        objects: newLevelConfig.objects || [],
+        pools: newLevelConfig.pools || [],
+        poolsTemplate: newLevelConfig.poolTemplates || [],
+        footsteps: newLevelConfig.footsteps || [],
+        footstepsTemplate: newLevelConfig.footstepsTemplate || {
+          maxInstances: 0,
+        },
         activeMonsters: [],
         attackSlots: [],
         waitingMonsters: [],
@@ -244,6 +31,7 @@ export const reducer = (state: any = initialState, action: any) => {
         turnOrder: [],
         combatTurn: null,
         moveCount: 0,
+        combatLog: [],
         player: {
           ...state.player,
           hp: state.player.maxHP,
@@ -257,7 +45,6 @@ export const reducer = (state: any = initialState, action: any) => {
         console.log("Player cannot move while in combat");
         return state;
       }
-
       let newPlayerPos;
       if (action.payload.position) {
         newPlayerPos = action.payload.position;
@@ -267,10 +54,8 @@ export const reducer = (state: any = initialState, action: any) => {
           console.error("Player position is undefined!");
           return state;
         }
-
         let newRow = currentPos.row;
         let newCol = currentPos.col;
-
         switch (action.payload.direction) {
           case "up":
             newRow = Math.max(0, currentPos.row - 1);
@@ -288,13 +73,11 @@ export const reducer = (state: any = initialState, action: any) => {
             console.warn("Unknown direction:", action.payload.direction);
             return state;
         }
-
         newPlayerPos = { row: newRow, col: newCol };
       } else {
         console.error("MOVE_PLAYER: No position or direction provided");
         return state;
       }
-
       return {
         ...state,
         player: {
@@ -317,7 +100,7 @@ export const reducer = (state: any = initialState, action: any) => {
     case "MOVE_MONSTER":
       return {
         ...state,
-        activeMonsters: state.activeMonsters.map((monster: any) =>
+        activeMonsters: state.activeMonsters.map((monster) =>
           monster.id === action.payload.id
             ? { ...monster, position: action.payload.position }
             : monster
@@ -337,6 +120,7 @@ export const reducer = (state: any = initialState, action: any) => {
 
     // ============ COMBAT SYSTEM ============
     case "SET_COMBAT":
+      console.log("SET_COMBAT dispatched, inCombat:", action.payload.inCombat);
       return {
         ...state,
         inCombat: action.payload.inCombat,
@@ -344,13 +128,14 @@ export const reducer = (state: any = initialState, action: any) => {
         waitingMonsters: action.payload.waitingMonsters || [],
         turnOrder: action.payload.turnOrder,
         combatTurn: action.payload.combatTurn,
+        combatLog: action.payload.inCombat ? state.combatLog || [] : [],
       };
 
     case "START_COMBAT":
       return {
         ...state,
         inCombat: true,
-        activeMonsters: state.activeMonsters.map((monster: any) =>
+        activeMonsters: state.activeMonsters.map((monster) =>
           monster.id === action.payload.monster?.id
             ? { ...monster, inCombatSlot: true }
             : monster
@@ -367,19 +152,54 @@ export const reducer = (state: any = initialState, action: any) => {
     case "UPDATE_WAITING_MONSTERS":
       return { ...state, waitingMonsters: action.payload.waitingMonsters };
 
-    // ============ HEALTH SYSTEM ============
-    case "UPDATE_MONSTER_HP":
+    // ============ COMBAT LOG ============
+    case "ADD_COMBAT_LOG":
+      console.log("ADD_COMBAT_LOG dispatched:", action.payload);
       return {
         ...state,
-        activeMonsters: state.activeMonsters.map((monster: any) =>
+        combatLog: [
+          ...(state.combatLog || []),
+          {
+            id: `${Date.now()}-${Math.random()}`,
+            message: action.payload.message,
+            turn: state.moveCount,
+          },
+        ],
+      };
+
+    // ============ HEALTH SYSTEM ============
+    case "UPDATE_PLAYER":
+      return {
+        ...state,
+        player: { ...state.player, ...action.payload.updates },
+      };
+
+    case "UPDATE_MONSTER":
+      return {
+        ...state,
+        activeMonsters: state.activeMonsters.map((monster) =>
           monster.id === action.payload.id
-            ? { ...monster, hp: action.payload.hp }
+            ? { ...monster, ...action.payload.updates }
             : monster
         ),
-        attackSlots: state.attackSlots.map((slot: any) =>
+        attackSlots: state.attackSlots.map((slot) =>
           slot.id === action.payload.id
-            ? { ...slot, hp: action.payload.hp }
+            ? { ...slot, ...action.payload.updates }
             : slot
+        ),
+      };
+
+    case "REMOVE_MONSTER":
+      return {
+        ...state,
+        activeMonsters: state.activeMonsters.filter(
+          (monster) => monster.id !== action.payload.id
+        ),
+        attackSlots: state.attackSlots.filter(
+          (slot) => slot.id !== action.payload.id
+        ),
+        waitingMonsters: state.waitingMonsters.filter(
+          (monster) => monster.id !== action.payload.id
         ),
       };
 
@@ -389,56 +209,57 @@ export const reducer = (state: any = initialState, action: any) => {
         player: { ...state.player, hp: action.payload.hp },
       };
 
+    case "UPDATE_MONSTER_HP":
+      return {
+        ...state,
+        activeMonsters: state.activeMonsters.map((monster) =>
+          monster.id === action.payload.id
+            ? { ...monster, hp: action.payload.hp }
+            : monster
+        ),
+        attackSlots: state.attackSlots.map((slot) =>
+          slot.id === action.payload.id
+            ? { ...slot, hp: action.payload.hp }
+            : slot
+        ),
+      };
+
     case "RESET_HP":
       return {
         ...state,
         player: { ...state.player, hp: state.player.maxHP },
       };
 
-    // ============ INVENTORY SYSTEM ============
+    case "GAME_OVER":
+      return {
+        ...state,
+        inCombat: false,
+        attackSlots: [],
+        waitingMonsters: [],
+        turnOrder: [],
+        combatTurn: null,
+        combatLog: [],
+      };
+
+    // ============ INVENTORY MANAGEMENT ============
     case "ADD_TO_INVENTORY":
-      const { item } = action.payload;
-      if (state.player.inventory.length >= state.player.maxInventorySize) {
-        return state;
-      }
       return {
         ...state,
         player: {
           ...state.player,
-          inventory: [...state.player.inventory, item],
+          inventory: [...state.player.inventory, action.payload.item],
         },
       };
 
-    case "DROP_ITEM":
-      const { itemId } = action.payload;
-      const droppedItem = state.player.inventory.find(
-        (item: any) => item.id === itemId
-      );
-      if (!droppedItem) return state;
-      const newItem = {
-        ...droppedItem,
-        position: { ...state.player.position },
-        active: true,
-      };
+    case "REMOVE_FROM_INVENTORY":
       return {
         ...state,
         player: {
           ...state.player,
           inventory: state.player.inventory.filter(
-            (item: any) => item.id !== itemId
+            (item) => item.id !== action.payload.id
           ),
         },
-        items: [...state.items, newItem],
-      };
-
-    case "UPDATE_ITEM":
-      return {
-        ...state,
-        items: state.items.map((item: any) =>
-          item.shortName === action.payload.shortName
-            ? { ...item, ...action.payload.updates }
-            : item
-        ),
       };
 
     case "TOGGLE_INVENTORY":
@@ -448,51 +269,77 @@ export const reducer = (state: any = initialState, action: any) => {
         showWeaponsInventory: false,
       };
 
-    // ============ WEAPONS SYSTEM ============
     case "ADD_TO_WEAPONS":
-      const { weapon } = action.payload;
-      if (state.player.weapons.length >= state.player.maxWeaponsSize) {
-        console.log("Weapons inventory full!");
-        return state;
-      }
       return {
         ...state,
         player: {
           ...state.player,
-          weapons: [...state.player.weapons, weapon],
+          weapons: [...state.player.weapons, action.payload.weapon],
         },
       };
 
-    case "DROP_WEAPON":
-      const { weaponId } = action.payload;
-      const droppedWeapon = state.player.weapons.find(
-        (w: any) => w.id === weaponId
-      );
-      if (!droppedWeapon) return state;
-      if (droppedWeapon.id === "weapon-discos-001") {
-        console.log("Cannot drop the Discos!");
-        return state;
-      }
-      const weaponDetails = state.weapons.find((w: any) => w.id === weaponId);
-      const newWeaponItem = {
-        name: weaponDetails.name,
-        shortName: weaponDetails.shortName,
-        position: { ...state.player.position },
-        description: weaponDetails.description,
-        active: true,
-        collectible: true,
-        type: "weapon",
-        weaponId: weaponId,
-      };
+    case "REMOVE_FROM_WEAPONS":
       return {
         ...state,
         player: {
           ...state.player,
-          weapons: state.player.weapons.filter((w: any) => w.id !== weaponId),
+          weapons: state.player.weapons.filter(
+            (w) => w.id !== action.payload.id
+          ),
         },
-        items: [...state.items, newWeaponItem],
-        dropSuccess: true,
       };
+
+    case "EQUIP_WEAPON":
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          weapons: state.player.weapons.map((w) =>
+            w.id === action.payload.id
+              ? { ...w, equipped: true }
+              : { ...w, equipped: false }
+          ),
+        },
+      };
+
+
+case "DROP_WEAPON":
+  const weaponId = action.payload.id;
+  if (weaponId === "weapon-discos-001") {
+    console.log("Cannot drop the Discos!");
+    return state;
+  }
+  
+  const weaponDetails = state.weapons.find((w) => w.id === action.payload.id);
+  if (!weaponDetails) {
+    console.warn(`Weapon with ID ${weaponId} not found`);
+    return state;
+  }
+  
+  const newWeaponItem = {
+  name: weaponDetails.name,
+  shortName: weaponDetails.shortName,
+  position: { ...state.player.position },
+  description: weaponDetails.description,
+  active: true,
+  collectible: true,
+  type: "weapon" as const, // This ensures TypeScript treats it as literal "weapon"
+  weaponId: weaponId,
+  category: "weapon" as const, // Same here if category has similar restrictions
+};
+
+  return {
+    ...state,
+    player: {
+      ...state.player,
+      weapons: state.player.weapons.filter(
+        (w) => w.id !== action.payload.id
+      ),
+    },
+    items: [...state.items, newWeaponItem],
+    dropSuccess: true,
+  };
+
 
     case "TOGGLE_WEAPONS_INVENTORY":
       return {
@@ -506,17 +353,15 @@ export const reducer = (state: any = initialState, action: any) => {
       const { effect, position } = action.payload;
       switch (effect.type) {
         case "swarm":
-          const newMonsters: any[] = [];
+          const newMonsters: Monster[] = [];
           const monstersArray = state.monsters ?? [];
           const monsterTemplate = monstersArray.find(
-            (m: any) => m.name === effect.monsterType
+            (m: LevelMonsterInstance) => m.name === effect.monsterType
           );
-
           if (!monsterTemplate) {
             console.warn("Monster template not found:", effect.monsterType);
             return state;
           }
-
           for (let i = 0; i < effect.count; i++) {
             const spawnRow = Math.max(
               0,
@@ -544,12 +389,10 @@ export const reducer = (state: any = initialState, action: any) => {
               active: true,
             });
           }
-
           return {
             ...state,
             activeMonsters: [...state.activeMonsters, ...newMonsters],
           };
-          
         case "hide":
           return {
             ...state,
@@ -559,7 +402,6 @@ export const reducer = (state: any = initialState, action: any) => {
               hideTurns: effect.duration || 10,
             },
           };
-          
         case "heal":
           return {
             ...state,
@@ -568,7 +410,6 @@ export const reducer = (state: any = initialState, action: any) => {
               hp: Math.min(state.player.maxHP, state.player.hp + effect.amount),
             },
           };
-          
         default:
           return state;
       }
@@ -588,7 +429,7 @@ export const reducer = (state: any = initialState, action: any) => {
     case "UPDATE_OBJECT":
       return {
         ...state,
-        objects: state.objects.map((obj: any) =>
+        objects: state.objects.map((obj) =>
           obj.shortName === action.payload.shortName
             ? { ...obj, ...action.payload.updates }
             : obj
@@ -596,8 +437,8 @@ export const reducer = (state: any = initialState, action: any) => {
       };
 
     case "ADD_FOOTSTEPS":
-      const newFootsteps = {
-        id: state.footsteps.length + 1,
+      const newFootsteps: FootstepInstance = {
+        id: `${state.footsteps.length + 1}`,
         position: action.position,
         direction: action.direction,
       };
@@ -609,18 +450,18 @@ export const reducer = (state: any = initialState, action: any) => {
         ),
       };
 
-    case "ADD_POOL":
-      const newPool = {
-        id: state.pools.length + 1,
-        position: action.position,
-      };
-      return {
-        ...state,
-        pools: [...state.pools, newPool].slice(
-          0,
-          state.poolsTemplate.maxInstances
-        ),
-      };
+case "ADD_POOL":
+  const newPool: PoolInstance = {
+    id: `${state.pools.length + 1}`,
+    position: action.position,
+  };
+  return {
+    ...state,
+    pools: [...state.pools, newPool].slice(
+      0,
+      state.poolsTemplate[0]?.maxInstances || 10 // Access first template's maxInstances
+    ),
+  };
 
     // ============ UI STATE ============
     case "UPDATE_DIALOG":

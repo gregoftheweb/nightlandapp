@@ -1,43 +1,5 @@
-// config/types.ts - Shared type definitions
+// config/types.ts
 import { ImageSourcePropType } from "react-native";
-
-export interface GameState {
-  // Core game data
-  level: Level; // Added: current level object
-  currentLevelId: string;
-  player: Player;
-
-  // Dynamic game state
-  moveCount: number;
-  inCombat: boolean;
-  combatTurn: any;
-  attackSlots: any[];
-  waitingMonsters: any[];
-  turnOrder: any[];
-
-  // Level-specific state
-  activeMonsters: Monster[];
-  items: any[];
-  objects: any[];
-  pools: any[];
-  greatPowers: any[];
-
-  // Configuration references
-  levels: Record<string, Level>;
-  weapons: any[];
-  monsters: any[];
-
-  // Game settings
-  gridWidth: number;
-  gridHeight: number;
-  maxAttackers: number;
-
-  // Save game metadata
-  saveVersion: string;
-  lastSaved: Date;
-  playTime: number; // milliseconds
-  lastAction: string;
-}
 
 export interface Position {
   row: number;
@@ -49,7 +11,7 @@ export interface Area {
   bottomRight: Position;
 }
 
-export type GameObject = {
+export interface GameObject {
   shortName: string;
   category: string;
   name: string;
@@ -80,12 +42,12 @@ export type GameObject = {
   }>;
   lastTrigger?: number;
   maxInstances?: number;
-  zIndex?: number; // Added for render order
-};
+  zIndex?: number;
+}
 
 export interface Monster extends GameObject {
-  id?: string; // Added for runtime assignment
-  position: Position; // Required, overrides GameObject's optional position
+  id?: string;
+  position: Position;
   hp: number;
   maxHP: number;
   attack: number;
@@ -96,34 +58,36 @@ export interface Monster extends GameObject {
   spawnChance?: number;
   maxInstances?: number;
   soulKey: string;
-  uiSlot?: number; // Added for combat slot assignment
+  uiSlot?: number;
   inCombatSlot?: boolean;
 }
 
-// Extended Monster interface for level instances
 export interface LevelMonsterInstance extends Monster {
-  id: string; // Required for level instances
-  templateId: string; // Reference to the monster template
-  currentHP: number; // Current HP (may differ from template)
-  spawned?: boolean; // Whether this was spawned dynamically
-  spawnZoneId?: string; // Which spawn zone created this monster
+  id: string;
+  templateId: string;
+  currentHP: number;
+  spawned?: boolean;
+  spawnZoneId?: string;
 }
 
 export interface Item extends GameObject {
   type: "weapon" | "consumable" | "key" | "collectible" | "building";
   collectible: boolean;
+    id?: string;
   weaponId?: string;
-  healAmount?: number; // For consumables
+  healAmount?: number;
+
+  hitBonus?: number;
+  damage?: number;
   splash?: {
     image: string;
     text: string;
   };
 }
 
-// Extended GameObject interface for level instances
 export interface LevelObjectInstance extends GameObject {
-  id: string; // Unique instance ID
-  templateId: string | number; // Reference to the object template
+  id: string;
+  templateId: string | number;
   interactable?: boolean;
   interactionType?: "door" | "chest" | "npc" | "portal";
   locked?: boolean;
@@ -151,142 +115,42 @@ export interface Player {
   maxWeaponsSize: number;
   soulKey: string;
   moveSpeed: number;
-  level?: number; // Player level
-  experience?: number; // Current experience points
+  level?: number;
+  experience?: number;
 }
 
-// --- Effect ---
 export interface Effect {
-  type: "heal" | "hide" | "damage" | "buff" | "debuff"; // extend as needed
-  amount?: number;
-  duration?: number;
-  value?: number;
-  name?: string;
-  magnitude?: number;
-}
-
-// --- Pool Template (blueprint) ---
-export interface PoolTemplate {
-  name: string;
-  shortName: string;
-  size: { width: number; height: number };
-  description: string;
-  active: boolean;
-  type: "object" | "trap" | "portal";
-  maxInstances: number;
-  effects?: Effect[];
-  decayTime?: number;
-  maxUses?: number;
-  image: string;
-}
-
-// --- Pool Instance (what’s actually on a level) ---
-export interface PoolInstance {
-  position: Position;
-  effects?: Effect[];
-  shortName?: string; // shortName from the template
-  name?: string;
-  description?: string;
-  usesRemaining?: number;
-  lastUsed?: number;
-  image?: string;
-}
-
-// --- Footstep Template (blueprint) ---
-export interface FootstepTemplate {
-  name: string;
-  shortName: string;
-  size: { width: number; height: number };
-  description: string;
-  active: boolean;
-  type: "object" | "clue" | "trail"; // expand categories as needed
-  maxInstances: number;
-  decayTime?: number; // How long footsteps last (milliseconds)
-}
-
-// --- Footstep Instance (placed on a level) ---
-export interface FootstepInstance {
-  id: number;
-  position: Position;
-  direction: number; // in degrees, e.g. 0–360
-  templateId?: string; // optional link to template (shortName)
-  timestamp?: number; // When the footstep was created
-}
-
-// --- Great Power (enhanced monster for major encounters) ---
-export interface GreatPower extends Monster {
-  awakened: boolean; // Whether this Great Power has noticed the player
-  awakenCondition:
-    | "player_within_range"
-    | "hp_threshold"
-    | "time_elapsed"
-    | "item_collected";
-  awakenRange?: number; // Distance for range-based awakening
-  awakenThreshold?: number; // Value for threshold-based awakening
-  awakenItemId?: string; // Item ID for item-based awakening
-  specialAbilities?: string[]; // List of special ability IDs
-}
-
-// --- Boss Encounter (mini-level puzzle game) ---
-export interface BossEncounter {
-  triggerId: string; // What triggers this encounter
-  name: string;
-  description: string;
-  type: "combat" | "puzzle" | "survival" | "stealth" | "escort";
-  boardSize: { width: number; height: number };
-  playerSpawn: Position;
-  objectives: BossObjective[];
-  rewards: BossReward[];
-  timeLimit?: number; // Time limit in milliseconds
-  failureConditions?: BossFailureCondition[];
-  specialRules?: string[]; // Special mechanics for this encounter
-}
-
-export interface BossObjective {
   type:
-    | "defeat_boss"
-    | "survive_waves"
-    | "reach_position"
-    | "collect_item"
-    | "protect_npc";
-  target?: string; // Target ID (boss, item, npc, etc.)
-  position?: Position; // For position-based objectives
-  waves?: number; // For wave survival
-  timeRequired?: number; // Time-based objectives
-  description: string;
-  completed?: boolean; // Runtime state
-}
-
-export interface BossReward {
-  type: "experience" | "item" | "currency" | "ability";
-  value?: number; // For experience/currency
-  itemId?: string; // For item rewards
-  abilityId?: string; // For ability rewards
-}
-
-export interface BossFailureCondition {
-  type:
-    | "player_death"
-    | "time_expired"
-    | "objective_failed"
+    | "damage"
+    | "heal"
+    | "stun"
+    | "poison"
+    | "buff"
+    | "debuff"
+    | "summon"
+    | "teleport"
+    | "spawn"
+    | "destroy"
+    | "activate"
+    | "deactivate"
+    | "quest_complete"
+    | "quest_failed"
     | "target_destroyed";
   description: string;
 }
 
-// --- Spawn Zone (for dynamic monster generation) ---
 export interface SpawnZone {
   id: string;
   area: Area;
-  monsterTypes: string[]; // Array of monster template shortNames
-  spawnRate: number; // Chance per time interval (0.0 to 1.0)
-  maxMonsters: number; // Maximum monsters this zone can have active
-  minPlayerDistance: number; // Minimum distance from player to spawn
-  active?: boolean; // Whether this zone is currently active
-  cooldownTime?: number; // Time between spawn attempts (milliseconds)
-  lastSpawnAttempt?: number; // Timestamp of last spawn attempt
+  monsterTypes: string[];
+  spawnRate: number;
+  maxMonsters: number;
+  minPlayerDistance: number;
+  active?: boolean;
+  cooldownTime?: number;
+  lastSpawnAttempt?: number;
 }
 
-// --- Level Completion Conditions ---
 export interface CompletionCondition {
   type:
     | "reach_position"
@@ -294,81 +158,86 @@ export interface CompletionCondition {
     | "collect_item"
     | "defeat_boss"
     | "survive_time";
-  position?: Position; // For position-based completion
-  itemId?: string; // For item collection
-  bossId?: string; // For boss defeat
-  timeRequired?: number; // For time-based completion
+  position?: Position;
+  itemId?: string;
+  bossId?: string;
+  timeRequired?: number;
   description?: string;
-  completed?: boolean; // Runtime state
+  completed?: boolean;
 }
 
-// --- Enhanced Level Interface ---
+export interface PoolInstance {
+  id: string;
+  position: Position;
+  // Add other properties as needed
+}
+
+export interface PoolTemplate {
+  maxInstances: number;
+  // Add other properties as needed
+}
+
+export interface FootstepInstance {
+  id: string;
+  position: Position;
+  direction: string;
+}
+
+export interface FootstepTemplate {
+  maxInstances: number;
+  // Add other properties as needed
+}
+
+export interface GreatPower {
+  // Define as needed
+  id: string;
+  name: string;
+  // Add other properties
+}
+
+export interface BossEncounter {
+  // Define as needed
+  id: string;
+  // Add other properties
+}
+
 export interface Level {
   id: string;
   name: string;
   description?: string;
-
-  // Board configuration
   boardSize: { width: number; height: number };
   playerSpawn: Position;
-
-  // Level progression
-  requiredLevel?: number; // Minimum player level to enter
-  recommendedLevel?: number; // Recommended player level
-  experienceReward?: number; // XP awarded for completion
-
-  // Environment settings
-  ambientLight?: number; // 0.0 = pitch black, 1.0 = full light
-  weatherEffect?: string | null; // Weather effect ID
-  backgroundMusic?: string; // Background music track ID
-
-  // Level content
+  requiredLevel?: number;
+  recommendedLevel?: number;
+  experienceReward?: number;
+  ambientLight?: number;
+  weatherEffect?: string | null;
+  backgroundMusic?: string;
   items: Item[];
   monsters: LevelMonsterInstance[];
   objects: LevelObjectInstance[];
   pools: PoolInstance[];
-  poolTemplates: PoolTemplate[]; // multiple templates allowed
+  poolTemplates: PoolTemplate[];
   footsteps: FootstepInstance[];
   footstepsTemplate: FootstepTemplate;
   greatPowers?: GreatPower[];
-
-  // Boss encounter (mini-level)
   bossEncounter?: BossEncounter;
-
-  // Level progression
   completionConditions?: CompletionCondition[];
-
-  // Dynamic content
   spawnZones?: SpawnZone[];
-
-  // Metadata
-  version?: string; // For save compatibility
-  lastModified?: Date; // When the level was last updated
+  version?: string;
+  lastModified?: Date;
 }
 
-// --- Weather Effects ---
-export interface WeatherEffect {
-  id: string;
-  name: string;
-  description: string;
-  visibility: number; // Visibility modifier (0.0 to 1.0)
-  movementModifier: number; // Movement speed modifier
-  ambientSoundEffect?: string;
-  particleEffect?: string;
-}
-
-// --- Save Game Related Types ---
 export interface SaveGameMetadata {
   version: string;
   playerName: string;
   currentLevel: string;
-  playTime: number; // Total play time in milliseconds
+  playTime: number;
   lastSaved: Date;
-  gameMode?: string; // Normal, hardcore, etc.
-  difficulty?: string; // Easy, normal, hard
+  gameMode?: string;
+  difficulty?: string;
 }
 
-// --- Combat Related Types ---
 export interface CombatParticipant {
   id: string;
   type: "player" | "monster" | "npc";
@@ -386,7 +255,7 @@ export interface CombatAction {
   id: string;
   name: string;
   type: "attack" | "move" | "defend" | "special";
-  cost: number; // Action points required
+  cost: number;
   range: number;
   damage?: number;
   effects?: Effect[];
@@ -396,7 +265,49 @@ export interface StatusEffect {
   id: string;
   name: string;
   description: string;
-  duration: number; // Turns remaining
+  duration: number;
   effects: Effect[];
   stackable: boolean;
+}
+
+export interface CombatLogEntry {
+  id: string;
+  message: string;
+  turn: number;
+}
+
+export interface GameState {
+  level: Level;
+  currentLevelId: string;
+  player: Player;
+  moveCount: number;
+  inCombat: boolean;
+  combatTurn: CombatParticipant | null;
+  attackSlots: Monster[];
+  waitingMonsters: Monster[];
+  turnOrder: CombatParticipant[];
+  combatLog: CombatLogEntry[];
+  activeMonsters: Monster[];
+  items: Item[];
+  objects: LevelObjectInstance[];
+  pools: PoolInstance[];
+  greatPowers: GreatPower[];
+  poolsTemplate: PoolTemplate[];
+  footsteps: FootstepInstance[];
+  footstepsTemplate: FootstepTemplate;
+  levels: Record<string, Level>;
+  weapons: Item[];
+  monsters: LevelMonsterInstance[];
+  gridWidth: number;
+  gridHeight: number;
+  maxAttackers: number;
+  saveVersion: string;
+  lastSaved: Date;
+  playTime: number;
+  lastAction: string;
+  showInventory?: boolean;
+  showWeaponsInventory?: boolean;
+  dropSuccess?: boolean;
+  dialogData?: any;
+  audioStarted?: boolean;
 }

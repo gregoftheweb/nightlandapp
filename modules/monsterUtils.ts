@@ -1,25 +1,14 @@
 // modules/monsterUtils.ts - Fixed version with proper combat handling
 import { GameState, Monster, Position } from "../config/types";
 import { monsters } from "../config/monsters";
-import { MovementHandler } from "./movement.blech";
-
-// Global movement handler instance for monster AI
-let globalMovementHandler: MovementHandler | null = null;
-
-export function setMovementHandler(handler: MovementHandler) {
-  globalMovementHandler = handler;
-  console.log("MonsterUtils: MovementHandler set");
-}
+import { moveMonsters } from "./gameLoop";
 
 // -------------------- HANDLE MONSTER TURN --------------------
 export const handleMoveMonsters = (
   state: GameState,
   dispatch: (action: any) => void,
-  showDialog: (message: string, duration?: number) => void
+  showDialog?: (message: string, duration?: number) => void
 ) => {
-  // ❌ REMOVED: Don't block all monster movement during combat
-  // if (state.inCombat) return;
-
   console.log("handleMoveMonsters called with", state.activeMonsters.length, "monsters");
 
   // Spawn new monsters first (only when not in combat)
@@ -27,22 +16,8 @@ export const handleMoveMonsters = (
     checkMonsterSpawn(state, dispatch, showDialog);
   }
 
-  // Build occupancy map for this turn
-  const occupiedTiles = new Map<string, string>();
-  state.activeMonsters.forEach(m => {
-    if (m.id) {
-      occupiedTiles.set(`${m.position.row},${m.position.col}`, m.id);
-    }
-  });
-
-  // Move all active monsters toward player (individually checked in moveMonsterTowardPlayer)
-  state.activeMonsters.forEach(monster => {
-    if (!monster.id) return;
-    if (monster.active && globalMovementHandler) {
-      // The movement handler will check if this specific monster is in combat
-      globalMovementHandler.moveMonsterTowardPlayer(state, monster.id, occupiedTiles);
-    }
-  });
+  // Move all active monsters toward player
+  moveMonsters(state, dispatch, showDialog);
 
   console.log("Monster turn complete");
 };
@@ -51,7 +26,7 @@ export const handleMoveMonsters = (
 export const checkMonsterSpawn = (
   state: GameState,
   dispatch: (action: any) => void,
-  showDialog: (message: string, duration?: number) => void
+  showDialog?: (message: string, duration?: number) => void
 ) => {
   console.log("Checking monster spawning...");
 
@@ -59,7 +34,14 @@ export const checkMonsterSpawn = (
     if (!template.spawnRate || !template.spawnChance) continue;
 
     const activeCount = state.activeMonsters.filter(m => m.shortName === template.shortName).length;
-    if (activeCount >= (template.maxInstances || Infinity)) continue;
+    
+    // Special limit for abhumans during combat testing
+    let maxInstances = template.maxInstances || Infinity;
+    if (template.shortName === 'abhuman') {
+      maxInstances = 2; // Limit to just 2 abhumans
+    }
+    
+    if (activeCount >= maxInstances) continue;
 
     if (Math.random() < template.spawnRate * template.spawnChance) {
       const spawnPosition = getSpawnPosition(state);
@@ -73,7 +55,7 @@ export const checkMonsterSpawn = (
 
       console.log(`Spawning ${newMonster.name} at ${spawnPosition.row},${spawnPosition.col}`);
       dispatch({ type: "SPAWN_MONSTER", payload: { monster: newMonster } });
-      showDialog(`${template.name} has appeared!`, 2000);
+      showDialog?.(`${template.name} has appeared!`, 2000);
     }
   }
 };
@@ -94,11 +76,7 @@ export const getSpawnPosition = (state: GameState): Position => {
     const spawnCol = Math.max(0, Math.min(gridWidth - 1, player.position.col + Math.round(Math.cos(angle) * radius)));
 
     const candidate: Position = { row: spawnRow, col: spawnCol };
-    let isOccupied = activeMonsters.some(m => m.position.row === spawnRow && m.position.col === spawnCol);
-
-    if (globalMovementHandler) {
-      isOccupied = globalMovementHandler.isPositionBlocked(candidate, state);
-    }
+    const isOccupied = activeMonsters.some(m => m.position.row === spawnRow && m.position.col === spawnCol);
 
     if (!isOccupied) return candidate;
     attempts++;

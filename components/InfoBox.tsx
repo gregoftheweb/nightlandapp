@@ -16,10 +16,19 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
   onClose
 }) => {
   const [opacity] = useState(new Animated.Value(0));
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (visible) {
+      // Clear any existing timer first
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+
+      setIsModalVisible(true);
+      
       // Fade in
       Animated.timing(opacity, {
         toValue: 1,
@@ -27,43 +36,50 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
         useNativeDriver: true,
       }).start();
 
-      // Clear any existing timer and start a new one only if none exists
-      if (!timerRef.current) {
-        timerRef.current = setTimeout(() => {
-          // Fade out
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: true,
-          }).start(() => {
-            timerRef.current = null;
-            onClose();
-          });
-        }, 3000);
+      // Set auto-close timer
+      timerRef.current = setTimeout(() => {
+        // Fade out
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start(() => {
+          setIsModalVisible(false);
+          timerRef.current = null;
+          onClose();
+        });
+      }, 3000);
+    } else {
+      // Clear timer and hide immediately when visible becomes false
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
+      
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        setIsModalVisible(false);
+      });
     }
 
-    return () => {
-      // Don't clear timer on cleanup - let it run
-    };
-  }, [visible, opacity, onClose]);
-
-  // Clear timer when component unmounts
-  useEffect(() => {
+    // Cleanup function
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
     };
-  }, []);
+  }, [visible, opacity, onClose]);
 
-  if (!visible) {
+  if (!isModalVisible) {
     return null;
   }
 
   return (
-    <Modal transparent={true} visible={visible} animationType="none">
+    <Modal transparent={true} visible={isModalVisible} animationType="none">
       <View style={styles.overlay}>
         <Animated.View style={[styles.infoBox, { opacity }]}>
           <Text style={styles.name}>{name}</Text>

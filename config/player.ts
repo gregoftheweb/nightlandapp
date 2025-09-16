@@ -15,7 +15,7 @@ export const playerConfig: Player = {
   position: { row: 395, col: 200 },
   moveSpeed: 1,
   initiative: 10,
-  attack: 4,
+  attack: 8,
   ac: 14,
   inventory: [],
   maxInventorySize: 10,

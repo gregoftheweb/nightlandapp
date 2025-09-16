@@ -1,47 +1,7 @@
-// modules/playerUtils.ts - Refactored without movement logic
+// modules/playerUtils.ts - Interaction utilities
 import { GameState, Position } from '../config/types';
-import { MovementHandler } from './movement.blech';
 
-export const handleMovePlayer = (
-  state: GameState,
-  dispatch: (action: any) => void,
-  direction: string | null,
-  setOverlay: (overlay: any) => void,
-  showDialog: (message: string, duration?: number) => void,
-  setDeathMessage: (message: string) => void
-) => {
-  if (state.inCombat) return;
-
-  const movementHandler = new MovementHandler(dispatch, showDialog, setOverlay, setDeathMessage);
-  
-  // Handle the movement
-  movementHandler.movePlayer(state, direction as any);
-  
-  // Calculate the new position for interactions
-  const movementResult = movementHandler.calculateNewPosition(
-    state.player.position,
-    direction as any,
-    state.gridWidth,
-    state.gridHeight
-  );
-
-  if (!movementResult.isValid) return;
-
-  // Check for interactions at the new position
-  checkItemInteractions(
-    { ...state, player: { ...state.player, position: movementResult.newPosition } },
-    dispatch,
-    showDialog,
-    setOverlay
-  );
-
-  checkObjectInteractions(
-    { ...state, player: { ...state.player, position: movementResult.newPosition } },
-    dispatch,
-    showDialog,
-    movementResult.newPosition
-  );
-};
+// ==================== ITEM INTERACTION ====================
 
 export const checkItemInteractions = (
   state: GameState,
@@ -114,6 +74,8 @@ export const checkItemInteractions = (
     },
   });
 };
+
+// ==================== OBJECT INTERACTION ====================
 
 export const checkObjectInteractions = (
   state: GameState,
