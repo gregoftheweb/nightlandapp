@@ -235,20 +235,42 @@ export default function Game() {
   const handleMonsterTap = useCallback(
     (monster: any) => {
       if (state.inCombat) {
+        // In combat: set target for attack
         console.log("Monster tapped during combat:", monster.name, "ID:", monster.id);
-        setTargetId(monster.id); // Set target for attack
+        setTargetId(monster.id);
+        showDialog(`Targeting: ${monster.name || monster.shortName}`, 1000);
+      } else {
+        // Not in combat: show info
+        const monsterName = monster.name || monster.shortName || "Monster";
+        const monsterDescription = monster.description || `A dangerous creature. HP: ${monster.hp || "Unknown"}`;
+        showDialog(`${monsterName}\n\n${monsterDescription}`, 3000);
       }
     },
-    [state.inCombat]
+    [state.inCombat, showDialog]
   );
 
   const handlePlayerTap = useCallback(() => {
-    // Could implement info or action menu
-  }, []);
+    // Always show player info when tapped
+    const player = state.player;
+    const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : "";
+    const playerInfo = `${player.description}\n\nHP: ${player.hp}/${player.maxHP}\nAC: ${player.ac}\nAttack: ${player.attack}${weaponInfo}`;
+    showDialog(`${player.name || "Christos"}\n\n${playerInfo}`, 4000);
+  }, [state.player, showDialog]);
 
   const handleBuildingTap = useCallback((building: any) => {
-    // Could implement info or interaction
-  }, []);
+    // Always show building info when tapped
+    const buildingName = building.name || building.shortName || "Building";
+    const buildingDescription = building.description || "An interesting structure in the world.";
+    showDialog(`${buildingName}\n\n${buildingDescription}`, 3000);
+  }, [showDialog]);
+
+  const handleItemTap = useCallback((item: any) => {
+  const itemName = item.name || item.shortName || "Item";
+  const itemDescription = item.description || "An object of interest.";
+  showDialog(`${itemName}\n\n${itemDescription}`, 3000);
+}, [showDialog]);
+
+
 
   return (
     <Pressable
@@ -264,16 +286,12 @@ export default function Game() {
           onPlayerTap={handlePlayerTap}
           onMonsterTap={handleMonsterTap}
           onBuildingTap={handleBuildingTap}
+          onItemTap={handleItemTap} 
         />
+        
         <PositionDisplay position={state.player.position} level={state.level} />
 
-        {state.inCombat && (
-          <View style={styles.combatOverlay}>
-            {/* <Text style={styles.dialogText}>
-              In Combat: {state.attackSlots?.map((m: any) => m.name).join(", ") || "No enemies"}
-            </Text> */}
-          </View>
-        )}
+       
 
         <PlayerHUD
           hp={state.player.hp}

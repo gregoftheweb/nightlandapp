@@ -28,10 +28,21 @@ export const executeAttack = (
     console.log(`   💥 HIT! Damage: ${damageRoll} + ${Math.floor(attacker.attack / 2)} = ${totalDamage}`);
     console.log(`   ${defender.name} HP: ${defender.hp} → ${newHp}`);
 
+    // Create different messages for Christos vs monsters
+    let combatMessage = "";
+    if (attacker.id === "christos") {
+      // Christos attacking - use "the" before monster name
+      const monsterName = defender.name || defender.shortName || "enemy";
+      combatMessage = `Christos hit the ${monsterName} for ${totalDamage}` + (totalDamage >= 10 ? "!!" : "");
+    } else {
+      // Monster attacking - keep it simple
+      combatMessage = `${attacker.name} hit for ${totalDamage}` + (totalDamage >= 10 ? "!!" : "");
+    }
+
     // Dispatch combat log message
     dispatch({
       type: "ADD_COMBAT_LOG",
-      payload: { message: `${attacker.name} hit for ${totalDamage}` + (totalDamage >= 10 ? "!!" : "") },
+      payload: { message: combatMessage },
     });
 
     // Update HP
@@ -50,9 +61,19 @@ export const executeAttack = (
     // Check if defender is dead
     if (newHp <= 0) {
       console.log(`   💀 ${defender.name} is defeated!`);
+      
+      // Create different death messages for Christos vs monsters
+      let deathMessage = "";
+      if (attacker.id === "christos") {
+        const monsterName = defender.name || defender.shortName || "enemy";
+        deathMessage = `Christos killed the ${monsterName}`;
+      } else {
+        deathMessage = `${attacker.name} killed ${defender.name}`;
+      }
+      
       dispatch({
         type: "ADD_COMBAT_LOG",
-        payload: { message: `${attacker.name} killed ${defender.name}` },
+        payload: { message: deathMessage },
       });
 
       if (defender.id !== "christos") {
@@ -68,9 +89,19 @@ export const executeAttack = (
     }
   } else {
     console.log(`   ❌ MISS!`);
+    
+    // Create different miss messages for Christos vs monsters
+    let missMessage = "";
+    if (attacker.id === "christos") {
+      const monsterName = defender.name || defender.shortName || "enemy";
+      missMessage = `Christos missed the ${monsterName}`;
+    } else {
+      missMessage = `${attacker.name} missed`;
+    }
+    
     dispatch({
       type: "ADD_COMBAT_LOG",
-      payload: { message: `${attacker.name} missed!` },
+      payload: { message: missMessage },
     });
   }
 

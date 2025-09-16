@@ -8,8 +8,15 @@ import {
   ImageSourcePropType,
   TouchableOpacity,
 } from "react-native";
-import { Monster, LevelObjectInstance, Player, GameState, CombatLogEntry } from "@/config/types";
+import {
+  Monster,
+  LevelObjectInstance,
+  Player,
+  GameState,
+  CombatLogEntry,
+} from "@/config/types";
 import { InfoBox } from "../../components/InfoBox";
+import { CombatDialog } from "../../components/CombatDialog";
 
 const { width, height } = Dimensions.get("window");
 
@@ -23,6 +30,7 @@ interface GameBoardProps {
   onPlayerTap?: () => void;
   onMonsterTap?: (monster: Monster) => void;
   onBuildingTap?: (building: LevelObjectInstance) => void;
+  onItemTap?: (item: LevelObjectInstance) => void; // ✅ new
 }
 
 export default function GameBoard({
@@ -31,20 +39,23 @@ export default function GameBoard({
   onPlayerTap,
   onMonsterTap,
   onBuildingTap,
+  onItemTap,
 }: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoData, setInfoData] = useState({ name: "", description: "" });
   const [combatInfoVisible, setCombatInfoVisible] = useState(false);
-  const [combatMessage, setCombatMessage] = useState("");
+  const [combatMessages, setCombatMessages] = useState<string[]>([]);
 
   // Handle combat log updates
   useEffect(() => {
     if (state.inCombat && state.combatLog && state.combatLog.length > 0) {
-      const latestLog = state.combatLog[state.combatLog.length - 1];
-      setCombatMessage(latestLog.message);
+      // Extract all messages from combat log
+      const allMessages = state.combatLog.map((log) => log.message);
+      setCombatMessages(allMessages);
       setCombatInfoVisible(true);
     } else {
       setCombatInfoVisible(false);
+      setCombatMessages([]);
     }
   }, [state.combatLog, state.inCombat]);
 
@@ -62,8 +73,11 @@ export default function GameBoard({
     if (onPlayerTap) {
       onPlayerTap();
     } else {
+      // Always show player info when tapped (combat or not)
       const player = state.player;
-      const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : "";
+      const weaponInfo = player.weapons?.length
+        ? ` | Weapon: ${player.weapons[0].id}`
+        : "";
       showInfo(
         player.name || "Player",
         `${player.description}\n\nHP: ${player.hp}/${player.maxHP}\nAC: ${player.ac}\nAttack: ${player.attack}${weaponInfo}`
@@ -72,28 +86,36 @@ export default function GameBoard({
   };
 
   const handleMonsterTap = (monster: Monster) => {
+    // Always show info via InfoBox
+    showInfo(
+      monster.name || monster.shortName || "Monster",
+      monster.description ||
+        `A dangerous creature. HP: ${monster.hp || "Unknown"}`
+    );
+
+    // Also call parent callback if provided (for combat targeting)
     if (onMonsterTap) {
       onMonsterTap(monster);
-    } else {
-      showInfo(
-        monster.name || monster.shortName || "Monster",
-        monster.description || `A dangerous creature. HP: ${monster.hp || "Unknown"}`
-      );
     }
   };
 
   const handleBuildingTap = (building: LevelObjectInstance) => {
+    // Always show building info
+    showInfo(
+      building.name || building.shortName || "Building",
+      building.description || "An interesting structure in the world."
+    );
+
+    // Also call parent callback if provided
     if (onBuildingTap) {
       onBuildingTap(building);
-    } else {
-      showInfo(
-        building.name || building.shortName || "Building",
-        building.description || "An interesting structure in the world."
-      );
     }
   };
 
-  const findMonsterAtPosition = (worldRow: number, worldCol: number): Monster | undefined => {
+  const findMonsterAtPosition = (
+    worldRow: number,
+    worldCol: number
+  ): Monster | undefined => {
     return (
       state.activeMonsters.find(
         (monster: Monster) =>
@@ -113,8 +135,18 @@ export default function GameBoard({
 
   const findItemAtPosition = (worldRow: number, worldCol: number): any => {
     return (
-      state.items?.find((item: any) => item.active && item.position.row === worldRow && item.position.col === worldCol) ||
-      state.level.items?.find((item: any) => item.active && item.position.row === worldRow && item.position.col === worldCol)
+      state.items?.find(
+        (item: any) =>
+          item.active &&
+          item.position.row === worldRow &&
+          item.position.col === worldCol
+      ) ||
+      state.level.items?.find(
+        (item: any) =>
+          item.active &&
+          item.position.row === worldRow &&
+          item.position.col === worldCol
+      )
     );
   };
 
@@ -142,16 +174,26 @@ export default function GameBoard({
               {
                 left: col * CELL_SIZE,
                 top: row * CELL_SIZE,
-                backgroundColor: getCellBackgroundColor(isPlayer, monsterAtPosition, state.inCombat),
+                backgroundColor: getCellBackgroundColor(
+                  isPlayer,
+                  monsterAtPosition,
+                  state.inCombat
+                ),
               },
             ]}
           >
             {itemAtPosition && (
-              <Image
-                source={getItemImage(itemAtPosition.shortName)}
-                style={[styles.item, { zIndex: 0 }]}
-                resizeMode="contain"
-              />
+              <TouchableOpacity
+                onPress={() => onItemTap?.(itemAtPosition)}
+                style={styles.tappableArea}
+                activeOpacity={0.7}
+              >
+                <Image
+                  source={getItemImage(itemAtPosition.shortName)}
+                  style={[styles.item, { zIndex: 1 }]}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             )}
             {monsterAtPosition && !isPlayer && (
               <TouchableOpacity
@@ -168,7 +210,7 @@ export default function GameBoard({
             )}
             {isPlayer && (
               <TouchableOpacity
-                onPress={handlePlayerTap}
+                onPress={onPlayerTap}
                 style={styles.tappableArea}
                 activeOpacity={0.7}
               >
@@ -190,86 +232,90 @@ export default function GameBoard({
   const renderCombatMonsters = (): React.ReactNode[] => {
     if (!state.inCombat || !state.attackSlots) return [];
 
-    return state.attackSlots.map((monster: Monster) => {
-      if (!monster.position || !monster.uiSlot) return null;
+    return state.attackSlots
+      .map((monster: Monster) => {
+        if (!monster.position || !monster.uiSlot) return null;
 
-      const screenRow = monster.position.row - cameraOffset.offsetY;
-      const screenCol = monster.position.col - cameraOffset.offsetX;
+        const screenRow = monster.position.row - cameraOffset.offsetY;
+        const screenCol = monster.position.col - cameraOffset.offsetX;
 
-      const inView =
-        screenRow >= 0 &&
-        screenRow < VIEWPORT_ROWS &&
-        screenCol >= 0 &&
-        screenCol < VIEWPORT_COLS;
+        const inView =
+          screenRow >= 0 &&
+          screenRow < VIEWPORT_ROWS &&
+          screenCol >= 0 &&
+          screenCol < VIEWPORT_COLS;
 
-      if (!inView) return null;
+        if (!inView) return null;
 
-      return (
-        <TouchableOpacity
-          key={`combat-monster-${monster.id}`}
-          onPress={() => handleMonsterTap(monster)}
-          style={{
-            position: "absolute",
-            left: screenCol * CELL_SIZE,
-            top: screenRow * CELL_SIZE,
-            width: CELL_SIZE,
-            height: CELL_SIZE,
-            zIndex: 3,
-          }}
-          activeOpacity={0.7}
-        >
-          <Image
-            source={getMonsterImage(monster)}
-            style={styles.character}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      );
-    }).filter((item): item is React.ReactElement => item !== null);
+        return (
+          <TouchableOpacity
+            key={`combat-monster-${monster.id}`}
+            onPress={() => handleMonsterTap(monster)}
+            style={{
+              position: "absolute",
+              left: screenCol * CELL_SIZE,
+              top: screenRow * CELL_SIZE,
+              width: CELL_SIZE,
+              height: CELL_SIZE,
+              zIndex: 3,
+            }}
+            activeOpacity={0.7}
+          >
+            <Image
+              source={getMonsterImage(monster)}
+              style={styles.character}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        );
+      })
+      .filter((item): item is React.ReactElement => item !== null);
   };
 
   const renderBuildings = (): React.ReactNode[] => {
-    return state.level.objects.map((obj: LevelObjectInstance) => {
-      if (!obj.position || !obj.image) return null;
+    return state.level.objects
+      .map((obj: LevelObjectInstance) => {
+        if (!obj.position || !obj.image) return null;
 
-      const screenRow = obj.position.row - cameraOffset.offsetY;
-      const screenCol = obj.position.col - cameraOffset.offsetX;
-      const objWidth = obj.size?.width ?? 1;
-      const objHeight = obj.size?.height ?? 1;
+        const screenRow = obj.position.row - cameraOffset.offsetY;
+        const screenCol = obj.position.col - cameraOffset.offsetX;
+        const objWidth = obj.size?.width ?? 1;
+        const objHeight = obj.size?.height ?? 1;
 
-      const inView =
-        screenRow + objHeight > 0 &&
-        screenRow < VIEWPORT_ROWS &&
-        screenCol + objWidth > 0 &&
-        screenCol < VIEWPORT_COLS;
+        const inView =
+          screenRow + objHeight > 0 &&
+          screenRow < VIEWPORT_ROWS &&
+          screenCol + objWidth > 0 &&
+          screenCol < VIEWPORT_COLS;
 
-      if (!inView) return null;
+        if (!inView) return null;
 
-      return (
-        <TouchableOpacity
-          key={`building-${obj.id}`}
-          onPress={() => handleBuildingTap(obj)}
-          activeOpacity={0.8}
-          style={{
-            position: "absolute",
-            left: screenCol * CELL_SIZE,
-            top: screenRow * CELL_SIZE,
-            width: objWidth * CELL_SIZE,
-            height: objHeight * CELL_SIZE,
-            zIndex: 10,
-          }}
-        >
-          <Image
-            source={obj.image as ImageSourcePropType}
+        return (
+          <TouchableOpacity
+            key={`building-${obj.id}`}
+            onPress={() => handleBuildingTap(obj)}
+            activeOpacity={0.8}
             style={{
-              width: "100%",
-              height: "100%",
+              position: "absolute",
+              left: screenCol * CELL_SIZE,
+              top: screenRow * CELL_SIZE,
+              width: objWidth * CELL_SIZE,
+              height: objHeight * CELL_SIZE,
+              zIndex: 10,
             }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      );
-    }).filter((item): item is React.ReactElement => item !== null);
+          >
+            <Image
+              source={obj.image as ImageSourcePropType}
+              style={{
+                width: "100%",
+                height: "100%",
+              }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        );
+      })
+      .filter((item): item is React.ReactElement => item !== null);
   };
 
   const renderGrid = () => {
@@ -281,25 +327,32 @@ export default function GameBoard({
   };
 
   return (
-    <View style={styles.combatDialog}>
+    <View style={styles.gridContainer}>
       {renderGrid()}
+
+      {/* InfoBox for general entity information */}
       <InfoBox
         visible={infoVisible}
-        name={infoData.name}        
+        name={infoData.name}
         description={infoData.description}
         onClose={() => setInfoVisible(false)}
       />
-      <InfoBox
+
+      {/* CombatDialog for combat messages */}
+      <CombatDialog
         visible={combatInfoVisible}
-        name="Combat"
-        description={combatMessage}
+        messages={combatMessages}
         onClose={() => setCombatInfoVisible(false)}
       />
     </View>
   );
 }
 
-const getCellBackgroundColor = (isPlayer: boolean, hasMonster: any, inCombat: boolean) => {
+const getCellBackgroundColor = (
+  isPlayer: boolean,
+  hasMonster: any,
+  inCombat: boolean
+) => {
   if (isPlayer) return "#444";
   if (hasMonster) return "#622";
   return "#111";
@@ -316,7 +369,10 @@ const getMonsterImage = (monster: any) => {
     watcher_se: require("../../assets/images/watcherse.png"),
   };
 
-  return monsterImages[monster.shortName] || require("../../assets/images/abhuman.png");
+  return (
+    monsterImages[monster.shortName] ||
+    require("../../assets/images/abhuman.png")
+  );
 };
 
 const getItemImage = (shortName: string) => {
@@ -360,17 +416,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: CELL_SIZE * 0.2,
     top: CELL_SIZE * 0.2,
-  },
-  combatDialog: {
-    position: "absolute",
-    top: 25,
-    left: 5,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    borderWidth: 2,
-    borderColor: "#990000",
-    padding: 10,
-    borderRadius: 8,
-    maxWidth: "50%",
   },
 });
 
