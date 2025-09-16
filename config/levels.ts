@@ -97,6 +97,7 @@ const createGreatPower = (
   overrides: Partial<GreatPower> = {}
 ): GreatPower => {
   return {
+    id:template.id||"Great Power",
     shortName: template.shortName || "unknown",
     name: template.name || "Unnamed Power",
     category: template.category || "greatPower",
@@ -108,11 +109,11 @@ const createGreatPower = (
     maxHP: template.maxHP ?? 100,
     attack: template.attack ?? 0,
     ac: template.ac ?? 0,
-    moveRate: template.moveRate ?? 1,
+  
     soulKey: template.soulKey || "000000",
     awakened: template.awakened ?? false,
     awakenCondition: template.awakenCondition || "player_within_range",
-    awakenRange: template.awakenRange ?? 0,
+   
     ...overrides,
   };
 };
@@ -162,17 +163,19 @@ export const levels: Record<string, Level> = {
     pools: [
       {
         shortName: "heal_pool",
+        id:"sanctuary_pool",
         name: "Sanctuary Pool",
         position: { row: 200, col: 200 },
         image: sanctuaryPoolImg, // Updated from level1State.ts
-        usesRemaining: 3,
-        effects: [{ name: "heal", type: "heal", magnitude: 50 }],
+       
+          effects: [{ type: "heal", description: "config/poolTemplates.ts" }],
       },
       {
         shortName: "poison_pool",
+        id:"poison_pool",
         position: { row: 250, col: 250 },
         image: poisonPoolImg, // Updated from level1State.ts
-        effects: [{ name: "poison", type: "damage", magnitude: 15, duration: 5000 }],
+        effects: [{ type: "poison", description:"poison pool" }],
       },
     ],
     poolTemplates: poolTemplates,
@@ -186,32 +189,15 @@ export const levels: Record<string, Level> = {
           hp: 1000,
           maxHP: 1000,
           attack: 50,
-          ac: 25,
-          moveRate: 0,
+          ac: 25,         
           soulKey: "str:25,dex:10,con:25,int:20,wis:20,cha:25",
           awakened: false,
-          awakenCondition: "player_within_range",
-          awakenRange: 10,
+          awakenCondition: "player_within_range",         
         },
         { row: 100, col: 350 }
       ),
     ],
-    bossEncounter: {
-      triggerId: "watcherse_awakened",
-      name: "Confronting the Watcher",
-      description: "Face the ancient guardian in combat.",
-      type: "combat",
-      boardSize: { width: 50, height: 50 },
-      playerSpawn: { row: 45, col: 25 },
-      objectives: [
-        { type: "defeat_boss", target: "watcherse", description: "Defeat the Watcher" },
-      ],
-      rewards: [
-        { type: "experience", value: 500 },
-        { type: "item", itemId: "watcher_fragment" },
-      ],
-      timeLimit: 300000,
-    },
+    
     completionConditions: [
       {
         type: "reach_position",
@@ -242,12 +228,14 @@ export const levels: Record<string, Level> = {
     footstepsTemplate: {
       name: "Footsteps of Persius",
       shortName: "footstepsPersius",
+      id: "footstepsPersius",
       size: { width: 2, height: 2 },
       description:
         "You discover the faint tracks of your friend Persius in the dry dust of the Nightland. Your hope is forlorn, but meager as it is, there is some left that he might live..",
-      active: true,
+     
       type: "object",
       maxInstances: 100,
+      image: "aassets/images/footprints-blue.png"
     },
     spawnZones: [
       {
@@ -287,32 +275,14 @@ export const levels: Record<string, Level> = {
     pools: [
       {
         shortName: "poison_pool", // References Poison Pool template
+        id:"poison_pool", 
         position: { row: 150, col: 150 },
         image: "assets/pools/custom_poison_swamp.png", // Override image
       },
     ],
     poolTemplates: poolTemplates,
     greatPowers: [],
-    bossEncounter: {
-      triggerId: "level_completion",
-      name: "The Night Hunt",
-      description: "Survive waves of night creatures.",
-      type: "survival",
-      boardSize: { width: 30, height: 30 },
-      playerSpawn: { row: 15, col: 15 },
-      objectives: [
-        {
-          type: "survive_waves",
-          waves: 3,
-          description: "Survive 3 waves of enemies",
-        },
-      ],
-      rewards: [
-        { type: "experience", value: 750 },
-        { type: "item", itemId: "night_cloak" },
-      ],
-      timeLimit: 600000,
-    },
+   
     completionConditions: [
       {
         type: "defeat_all_monsters",
@@ -327,13 +297,14 @@ export const levels: Record<string, Level> = {
     footsteps: [],
     footstepsTemplate: {
       name: "defaultFootstep",
+      id:"defaultFootstep",
       shortName: "defaultFootstep",
       size: { width: 1, height: 1 },
       description: "Default footstep template",
-      active: true,
+     image: "assets/images/footprints-blue.png",
       type: "trail",
       maxInstances: 150,
-      decayTime: 90000,
+     
     },
     spawnZones: [
       {

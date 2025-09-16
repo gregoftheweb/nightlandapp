@@ -361,7 +361,6 @@ export const moveMonsters = (
 
 // ==================== COMBAT SETUP ====================
 
-
 export const setupCombat = (
   state: GameState,
   dispatch: (action: any) => void,
@@ -406,7 +405,13 @@ export const setupCombat = (
         type: "MOVE_MONSTER",
         payload: { id: monster.id, position: combatMonster.position },
       });
-      
+
+      // Add combat log entry
+      dispatch({
+        type: "ADD_COMBAT_LOG",
+        payload: { message: `${monster.name} enters combat!` },
+      });
+
       console.log(`✅ Monster ${monster.name} assigned to attack slot ${nextUISlot}`);
     } else {
       console.warn("No available UI slot for combat monster");
@@ -434,29 +439,25 @@ export const setupCombat = (
   console.log("🎯 Dispatching SET_COMBAT:", combatPayload);
   dispatch({ type: "SET_COMBAT", payload: combatPayload });
 
-  // ==================== COMBAT LOG MESSAGES ====================
+  // Add player comment at start of combat if combat just began
   if (!state.inCombat) {
     dispatch({
       type: "ADD_COMBAT_LOG",
-      payload: {
-        message: getTextContent("combatStartPlayerComment"),
-        entity: "player",
-        timestamp: Date.now(),
-      },
+      payload: { message: getTextContent("combatStartPlayerComment") },
     });
   }
 
+  // Add monster-specific combat start message
   dispatch({
     type: "ADD_COMBAT_LOG",
-    payload: {
-      message: getTextContent("combatStart", [monster.name]),
-      entity: monster.name,
-      timestamp: Date.now(),
-    },
+    payload: { message: getTextContent("combatStart", [monster.name]) },
   });
 
   console.log(`⚔️ Combat initiated! ${newAttackSlots.length} monsters in attack slots`);
 };
+
+
+
 
 
 

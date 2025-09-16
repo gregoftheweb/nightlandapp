@@ -28,7 +28,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     greatPowers: levelConfig.greatPowers || [],
     poolsTemplate: levelConfig.poolTemplates || [],
     footsteps: levelConfig.footsteps || [],
-    footstepsTemplate: levelConfig.footstepsTemplate || { maxInstances: 0 },
+    footstepsTemplate: levelConfig.footstepsTemplate || [],
     levels: { [levelId]: levelConfig },
     weapons: [
       {

@@ -442,18 +442,21 @@ export const reducer = (
             : obj
         ),
       };
-
     case "ADD_FOOTSTEPS":
-      const newFootsteps: FootstepInstance = {
-        id: `${state.footsteps.length + 1}`,
+      const template = state.footstepsTemplate;
+
+      const newFootstep: FootstepInstance = {
+        id: state.footsteps.length + 1,
+        templateId: template?.id || "default",
         position: action.position,
         direction: action.direction,
       };
+
       return {
         ...state,
-        footsteps: [...state.footsteps, newFootsteps].slice(
+        footsteps: [...state.footsteps, newFootstep].slice(
           0,
-          state.footstepsTemplate.maxInstances
+          template?.maxInstances || 10
         ),
       };
 
@@ -461,6 +464,7 @@ export const reducer = (
       const newPool: PoolInstance = {
         id: `${state.pools.length + 1}`,
         position: action.position,
+        image: action.image,
       };
       return {
         ...state,

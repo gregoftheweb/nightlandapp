@@ -60,6 +60,18 @@ export interface Monster extends GameObject {
   uiSlot?: number;
   inCombatSlot?: boolean;
 }
+export interface GreatPower extends GameObject {
+  id: string;
+  name: string;
+    position: Position;
+  hp: number;
+  maxHP: number;
+  attack: number;
+  ac: number;
+  awakened:boolean;
+  awakenCondition:string;
+  soulKey?:string;
+}
 
 export interface LevelMonsterInstance extends Monster {
   id: string;
@@ -166,6 +178,7 @@ export interface CompletionCondition {
 export interface PoolInstance {
   id: string;
   position: Position;
+  image:string;
   shortName?: string;
   name?: string;
   active?: boolean;
@@ -176,25 +189,31 @@ export interface PoolInstance {
 export interface PoolTemplate {
   maxInstances: number;
   shortName?: string;
+  image:string;
   name?: string;
   size?: { width: number; height: number };
   effects?: Effect[];
 }
 
 export interface FootstepInstance {
-  id: string;
+  id: number;
   position: Position;
-  direction: string;
+  direction: number;
+  templateId:string;
 }
 
 export interface FootstepTemplate {
+  id:string;
+  name: string;
+  shortName: string;
+  size?: { width: number; height: number };
   maxInstances: number;
+  description?: string;
+  image:string;
+  type?: string;
 }
 
-export interface GreatPower {
-  id: string;
-  name: string;
-}
+
 
 export interface BossEncounter {
   id: string;
