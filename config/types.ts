@@ -1,4 +1,3 @@
-// config/types.ts
 import { ImageSourcePropType } from "react-native";
 
 export interface Position {
@@ -64,7 +63,7 @@ export interface Monster extends GameObject {
 
 export interface LevelMonsterInstance extends Monster {
   id: string;
-  templateId: string;
+  templateId?: string;
   currentHP: number;
   spawned?: boolean;
   spawnZoneId?: string;
@@ -73,11 +72,9 @@ export interface LevelMonsterInstance extends Monster {
 export interface Item extends GameObject {
   type: "weapon" | "consumable" | "key" | "collectible" | "building";
   collectible: boolean;
-    id?: string;
+  id?: string;
   weaponId?: string;
   healAmount?: number;
-
-  hitBonus?: number;
   damage?: number;
   splash?: {
     image: string;
@@ -87,7 +84,7 @@ export interface Item extends GameObject {
 
 export interface LevelObjectInstance extends GameObject {
   id: string;
-  templateId: string | number;
+  templateId?: string | number;
   interactable?: boolean;
   interactionType?: "door" | "chest" | "npc" | "portal";
   locked?: boolean;
@@ -169,12 +166,19 @@ export interface CompletionCondition {
 export interface PoolInstance {
   id: string;
   position: Position;
-  // Add other properties as needed
+  shortName?: string;
+  name?: string;
+  active?: boolean;
+  size?: { width: number; height: number };
+  effects?: Effect[];
 }
 
 export interface PoolTemplate {
   maxInstances: number;
-  // Add other properties as needed
+  shortName?: string;
+  name?: string;
+  size?: { width: number; height: number };
+  effects?: Effect[];
 }
 
 export interface FootstepInstance {
@@ -185,20 +189,15 @@ export interface FootstepInstance {
 
 export interface FootstepTemplate {
   maxInstances: number;
-  // Add other properties as needed
 }
 
 export interface GreatPower {
-  // Define as needed
   id: string;
   name: string;
-  // Add other properties
 }
 
 export interface BossEncounter {
-  // Define as needed
   id: string;
-  // Add other properties
 }
 
 export interface Level {

@@ -1,4 +1,3 @@
-// app/game/GameBoard.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -14,9 +13,11 @@ import {
   Player,
   GameState,
   CombatLogEntry,
+  Item,
 } from "@/config/types";
 import { InfoBox } from "../../components/InfoBox";
 import { CombatDialog } from "../../components/CombatDialog";
+import { getTextContent } from "../../modules/utils";
 
 const { width, height } = Dimensions.get("window");
 
@@ -30,7 +31,7 @@ interface GameBoardProps {
   onPlayerTap?: () => void;
   onMonsterTap?: (monster: Monster) => void;
   onBuildingTap?: (building: LevelObjectInstance) => void;
-  onItemTap?: (item: LevelObjectInstance) => void; // ✅ new
+  onItemTap?: (item: Item) => void;
 }
 
 export default function GameBoard({
@@ -45,19 +46,32 @@ export default function GameBoard({
   const [infoData, setInfoData] = useState({ name: "", description: "" });
   const [combatInfoVisible, setCombatInfoVisible] = useState(false);
   const [combatMessages, setCombatMessages] = useState<string[]>([]);
+  const [previousInCombat, setPreviousInCombat] = useState(false);
 
-  // Handle combat log updates
+  // Handle combat start and log updates
   useEffect(() => {
-    if (state.inCombat && state.combatLog && state.combatLog.length > 0) {
-      // Extract all messages from combat log
-      const allMessages = state.combatLog.map((log) => log.message);
-      setCombatMessages(allMessages);
+    if (state.inCombat && !previousInCombat && state.attackSlots.length > 0) {
+      // When combat starts (transition from false to true)
+      const firstMonster = state.attackSlots[0];
+      const monsterName = firstMonster.name || firstMonster.shortName || "Monster";
+      const combatStartMessage = getTextContent("combatStart", [monsterName]);
+      setCombatMessages([combatStartMessage, ...state.combatLog.map((log) => log.message)]);
       setCombatInfoVisible(true);
-    } else {
+      console.log("Combat started (detected transition), showing CombatDialog with message:", combatStartMessage);
+    } else if (state.inCombat && state.combatLog.length > 0) {
+      // Update messages during combat
+      setCombatMessages(state.combatLog.map((log) => log.message));
+      setCombatInfoVisible(true);
+    } else if (!state.inCombat && previousInCombat) {
+      // When combat ends (transition from true to false)
       setCombatInfoVisible(false);
       setCombatMessages([]);
+      console.log("Combat ended (detected transition), hiding CombatDialog");
     }
-  }, [state.combatLog, state.inCombat]);
+
+    // Update previous state
+    setPreviousInCombat(state.inCombat);
+  }, [state.inCombat, state.attackSlots, state.combatLog, previousInCombat]);
 
   if (!state.level || !state.level.objects) {
     console.warn("GameBoard: state.level is undefined or missing objects!");
@@ -65,58 +79,57 @@ export default function GameBoard({
   }
 
   const showInfo = (name: string, description: string) => {
+    console.log("showInfo called:", { name, description, infoVisible });
     setInfoData({ name, description });
     setInfoVisible(true);
   };
 
   const handlePlayerTap = () => {
-    if (onPlayerTap) {
-      onPlayerTap();
-    } else {
-      // Always show player info when tapped (combat or not)
-      const player = state.player;
-      const weaponInfo = player.weapons?.length
-        ? ` | Weapon: ${player.weapons[0].id}`
-        : "";
-      showInfo(
-        player.name || "Player",
-        `${player.description}\n\nHP: ${player.hp}/${player.maxHP}\nAC: ${player.ac}\nAttack: ${player.attack}${weaponInfo}`
-      );
-    }
+    console.log("handlePlayerTap called, player:", state.player);
+    const player = state.player;
+    const weaponInfo = player.weapons?.length
+      ? ` | Weapon: ${player.weapons[0].id}`
+      : "";
+    showInfo(
+      player.name || "Christos",
+      `${player.description || "The brave hero of the Last Redoubt."}\n\nHP: ${player.hp}/${player.maxHP}\nAC: ${player.ac || 10}\nAttack: ${player.attack}${weaponInfo}`
+    );
+    onPlayerTap?.();
   };
 
   const handleMonsterTap = (monster: Monster) => {
-    // Always show info via InfoBox
+    console.log("handleMonsterTap called, monster:", monster);
     showInfo(
       monster.name || monster.shortName || "Monster",
       monster.description ||
         `A dangerous creature. HP: ${monster.hp || "Unknown"}`
     );
-
-    // Also call parent callback if provided (for combat targeting)
-    if (onMonsterTap) {
-      onMonsterTap(monster);
-    }
+    onMonsterTap?.(monster);
   };
 
   const handleBuildingTap = (building: LevelObjectInstance) => {
-    // Always show building info
+    console.log("handleBuildingTap called, building:", building);
     showInfo(
       building.name || building.shortName || "Building",
       building.description || "An interesting structure in the world."
     );
+    onBuildingTap?.(building);
+  };
 
-    // Also call parent callback if provided
-    if (onBuildingTap) {
-      onBuildingTap(building);
-    }
+  const handleItemTap = (item: Item) => {
+    console.log("handleItemTap called, item:", item);
+    showInfo(
+      item.name || item.shortName || "Item",
+      item.description || "An object of interest."
+    );
+    onItemTap?.(item);
   };
 
   const findMonsterAtPosition = (
     worldRow: number,
     worldCol: number
   ): Monster | undefined => {
-    return (
+    const monster =
       state.activeMonsters.find(
         (monster: Monster) =>
           monster.position?.row === worldRow &&
@@ -124,30 +137,33 @@ export default function GameBoard({
           !monster.inCombatSlot
       ) ||
       state.level.monsters?.find(
-        (monster: any) =>
+        (monster: Monster) =>
           monster.position?.row === worldRow &&
           monster.position?.col === worldCol &&
           monster.active !== false &&
           !monster.inCombatSlot
-      )
-    );
+      );
+    return monster;
   };
 
-  const findItemAtPosition = (worldRow: number, worldCol: number): any => {
-    return (
+  const findItemAtPosition = (
+    worldRow: number,
+    worldCol: number
+  ): Item | undefined => {
+    const item =
       state.items?.find(
-        (item: any) =>
+        (item: Item) =>
           item.active &&
-          item.position.row === worldRow &&
-          item.position.col === worldCol
+          item.position?.row === worldRow &&
+          item.position?.col === worldCol
       ) ||
       state.level.items?.find(
-        (item: any) =>
+        (item: Item) =>
           item.active &&
-          item.position.row === worldRow &&
-          item.position.col === worldCol
-      )
-    );
+          item.position?.row === worldRow &&
+          item.position?.col === worldCol
+      );
+    return item;
   };
 
   const renderGridCells = (): React.ReactNode[] => {
@@ -184,7 +200,7 @@ export default function GameBoard({
           >
             {itemAtPosition && (
               <TouchableOpacity
-                onPress={() => onItemTap?.(itemAtPosition)}
+                onPress={() => handleItemTap(itemAtPosition)}
                 style={styles.tappableArea}
                 activeOpacity={0.7}
               >
@@ -210,7 +226,7 @@ export default function GameBoard({
             )}
             {isPlayer && (
               <TouchableOpacity
-                onPress={onPlayerTap}
+                onPress={handlePlayerTap}
                 style={styles.tappableArea}
                 activeOpacity={0.7}
               >
@@ -330,19 +346,23 @@ export default function GameBoard({
     <View style={styles.gridContainer}>
       {renderGrid()}
 
-      {/* InfoBox for general entity information */}
       <InfoBox
         visible={infoVisible}
         name={infoData.name}
         description={infoData.description}
-        onClose={() => setInfoVisible(false)}
+        onClose={() => {
+          console.log("InfoBox onClose called, setting infoVisible to false");
+          setInfoVisible(false);
+        }}
       />
 
-      {/* CombatDialog for combat messages */}
       <CombatDialog
         visible={combatInfoVisible}
         messages={combatMessages}
-        onClose={() => setCombatInfoVisible(false)}
+        onClose={() => {
+          console.log("CombatDialog onClose called");
+          setCombatInfoVisible(false);
+        }}
       />
     </View>
   );
@@ -350,7 +370,7 @@ export default function GameBoard({
 
 const getCellBackgroundColor = (
   isPlayer: boolean,
-  hasMonster: any,
+  hasMonster: Monster | undefined,
   inCombat: boolean
 ) => {
   if (isPlayer) return "#444";
@@ -358,7 +378,7 @@ const getCellBackgroundColor = (
   return "#111";
 };
 
-const getMonsterImage = (monster: any) => {
+const getMonsterImage = (monster: Monster) => {
   if (monster.image) {
     return monster.image;
   }

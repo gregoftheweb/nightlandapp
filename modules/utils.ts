@@ -1,5 +1,8 @@
 // /modules/utils.ts
 import { Position } from "../config/types";
+import textContent from "../assets/copy/textcontent";
+
+
 export function moveToward(entity: any, targetRow: number, targetCol: number, speed: number = 1, gridWidth: number = 49, gridHeight: number = 49) {
     let dRow = targetRow - entity.position.row;
     let dCol = targetCol - entity.position.col;
@@ -290,3 +293,22 @@ export function getAttributeModifier(value: number) {
 }
 
 
+
+// New helper function to fetch and format text from textcontent.ts
+export function getTextContent(key: string, replacements: string[] = []): string {
+  let text = textContent[key] || "";
+  console.log(`getTextContent called: key=${key}, text="${text}", replacements=`, replacements);
+  
+  // Perform replacements sequentially
+  replacements.forEach((replacement, index) => {
+    const placeholder = `[${index + 1}]`; // Assumes placeholders are [1], [2], etc.
+    text = text.replace(placeholder, replacement);
+  });
+  
+  // Specifically handle [monster] for combatStart
+  if (key === "combatStart" && replacements.length > 0) {
+    text = text.replace("[monster]", replacements[0]);
+  }
+  
+  return text;
+}

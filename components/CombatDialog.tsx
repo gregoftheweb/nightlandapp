@@ -126,7 +126,7 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({
 const styles = StyleSheet.create({
   combatDialog: {
     position: 'absolute',
-    top: 25,
+    top: 75,
     left: 5,
     backgroundColor: 'rgba(0, 0, 0, 0.3)', // 70% transparent
     borderWidth: 2,

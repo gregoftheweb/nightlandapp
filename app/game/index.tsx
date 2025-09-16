@@ -1,6 +1,5 @@
-// /app/game/index.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, StyleSheet, Dimensions, Pressable, Text } from "react-native";
+import { View, StyleSheet, Dimensions, Pressable } from "react-native";
 import { PositionDisplay } from "../../components/PositionDisplay";
 import { useGameContext } from "../../context/GameContext";
 import GameBoard, { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE } from "./GameBoard";
@@ -9,6 +8,7 @@ import Settings from "../../components/Settings";
 import { calculateCameraOffset } from "../../modules/utils";
 import { handleMovePlayer, initializeStartingMonsters, handleCombatTurn } from "../../modules/gameLoop";
 import { handleMoveMonsters } from "../../modules/monsterUtils";
+import { Monster, LevelObjectInstance, Item } from "@/config/types";
 
 const { width, height } = Dimensions.get("window");
 const MIN_MOVE_DISTANCE = 1;
@@ -20,7 +20,7 @@ type Direction = "up" | "down" | "left" | "right" | "stay" | null;
 export default function Game() {
   const { state, dispatch, showDialog, setOverlay, setDeathMessage } = useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const [targetId, setTargetId] = useState<string | undefined>(); // Add for dynamic targeting
+  const [targetId, setTargetId] = useState<string | undefined>();
 
   const stateRef = useRef(state);
 
@@ -233,44 +233,28 @@ export default function Game() {
   }, [state.inCombat, state.attackSlots, dispatch, showDialog, targetId]);
 
   const handleMonsterTap = useCallback(
-    (monster: any) => {
+    (monster: Monster) => {
       if (state.inCombat) {
-        // In combat: set target for attack
         console.log("Monster tapped during combat:", monster.name, "ID:", monster.id);
         setTargetId(monster.id);
         showDialog(`Targeting: ${monster.name || monster.shortName}`, 1000);
-      } else {
-        // Not in combat: show info
-        const monsterName = monster.name || monster.shortName || "Monster";
-        const monsterDescription = monster.description || `A dangerous creature. HP: ${monster.hp || "Unknown"}`;
-        showDialog(`${monsterName}\n\n${monsterDescription}`, 3000);
       }
+      // InfoBox is handled in GameBoard.tsx
     },
     [state.inCombat, showDialog]
   );
 
   const handlePlayerTap = useCallback(() => {
-    // Always show player info when tapped
-    const player = state.player;
-    const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : "";
-    const playerInfo = `${player.description}\n\nHP: ${player.hp}/${player.maxHP}\nAC: ${player.ac}\nAttack: ${player.attack}${weaponInfo}`;
-    showDialog(`${player.name || "Christos"}\n\n${playerInfo}`, 4000);
-  }, [state.player, showDialog]);
+    // InfoBox is handled in GameBoard.tsx
+  }, []);
 
-  const handleBuildingTap = useCallback((building: any) => {
-    // Always show building info when tapped
-    const buildingName = building.name || building.shortName || "Building";
-    const buildingDescription = building.description || "An interesting structure in the world.";
-    showDialog(`${buildingName}\n\n${buildingDescription}`, 3000);
-  }, [showDialog]);
+  const handleBuildingTap = useCallback((building: LevelObjectInstance) => {
+    // InfoBox is handled in GameBoard.tsx
+  }, []);
 
-  const handleItemTap = useCallback((item: any) => {
-  const itemName = item.name || item.shortName || "Item";
-  const itemDescription = item.description || "An object of interest.";
-  showDialog(`${itemName}\n\n${itemDescription}`, 3000);
-}, [showDialog]);
-
-
+  const handleItemTap = useCallback((item: Item) => {
+    // InfoBox is handled in GameBoard.tsx
+  }, []);
 
   return (
     <Pressable
@@ -286,12 +270,10 @@ export default function Game() {
           onPlayerTap={handlePlayerTap}
           onMonsterTap={handleMonsterTap}
           onBuildingTap={handleBuildingTap}
-          onItemTap={handleItemTap} 
+          onItemTap={handleItemTap}
         />
         
         <PositionDisplay position={state.player.position} level={state.level} />
-
-       
 
         <PlayerHUD
           hp={state.player.hp}
@@ -310,7 +292,6 @@ export default function Game() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
-  dialogText: { color: "#990000" },
   gameContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   combatOverlay: {
     position: "absolute",

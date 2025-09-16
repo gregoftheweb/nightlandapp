@@ -3,6 +3,7 @@ import { GameState, Position, Monster } from "../config/types";
 import { monsters } from "../config/monsters";
 import { handleMoveMonsters } from "./monsterUtils";
 import { processCombatTurn, checkCombatEnd } from "./combat";
+import { getTextContent } from "./utils";
 
 // ==================== HELPER FUNCTIONS ====================
 const moveAway = (
@@ -344,7 +345,7 @@ export const moveMonsters = (
 
       if (checkCollision(newPos, playerPos)) {
         if (!state.player.isHidden) {
-          setupCombat(state, dispatch, monster, showDialog, playerPos);
+          setupCombat(state, dispatch, monster, playerPos);
         }
         return;
       }
@@ -359,11 +360,12 @@ export const moveMonsters = (
 };
 
 // ==================== COMBAT SETUP ====================
+
+
 export const setupCombat = (
   state: GameState,
   dispatch: (action: any) => void,
   monster: Monster,
-  showDialog?: (message: string, duration?: number) => void,
   playerPosOverride?: Position
 ): void => {
   console.log(`\n⚔️ SETTING UP COMBAT with ${monster.name}`);
@@ -406,7 +408,6 @@ export const setupCombat = (
       });
       
       console.log(`✅ Monster ${monster.name} assigned to attack slot ${nextUISlot}`);
-      showDialog?.(`${monster.name} enters combat!`, 2000);
     } else {
       console.warn("No available UI slot for combat monster");
       return;
@@ -433,8 +434,31 @@ export const setupCombat = (
   console.log("🎯 Dispatching SET_COMBAT:", combatPayload);
   dispatch({ type: "SET_COMBAT", payload: combatPayload });
 
+  // ==================== COMBAT LOG MESSAGES ====================
+  if (!state.inCombat) {
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: {
+        message: getTextContent("combatStartPlayerComment"),
+        entity: "player",
+        timestamp: Date.now(),
+      },
+    });
+  }
+
+  dispatch({
+    type: "ADD_COMBAT_LOG",
+    payload: {
+      message: getTextContent("combatStart", [monster.name]),
+      entity: monster.name,
+      timestamp: Date.now(),
+    },
+  });
+
   console.log(`⚔️ Combat initiated! ${newAttackSlots.length} monsters in attack slots`);
 };
+
+
 
 // ==================== INITIALIZATION ====================
 export const initializeStartingMonsters = (

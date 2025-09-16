@@ -1,5 +1,12 @@
 // modules/reducers.ts
-import { GameState, CombatLogEntry, Monster, LevelMonsterInstance, FootstepInstance, PoolInstance} from "../config/types";
+import {
+  GameState,
+  CombatLogEntry,
+  Monster,
+  LevelMonsterInstance,
+  FootstepInstance,
+  PoolInstance,
+} from "../config/types";
 import { levels } from "../config/levels";
 import { initialState } from "./gameState";
 
@@ -302,44 +309,44 @@ export const reducer = (
         },
       };
 
+    case "DROP_WEAPON":
+      const weaponId = action.payload.id;
+      if (weaponId === "weapon-discos-001") {
+        console.log("Cannot drop the Discos!");
+        return state;
+      }
 
-case "DROP_WEAPON":
-  const weaponId = action.payload.id;
-  if (weaponId === "weapon-discos-001") {
-    console.log("Cannot drop the Discos!");
-    return state;
-  }
-  
-  const weaponDetails = state.weapons.find((w) => w.id === action.payload.id);
-  if (!weaponDetails) {
-    console.warn(`Weapon with ID ${weaponId} not found`);
-    return state;
-  }
-  
-  const newWeaponItem = {
-  name: weaponDetails.name,
-  shortName: weaponDetails.shortName,
-  position: { ...state.player.position },
-  description: weaponDetails.description,
-  active: true,
-  collectible: true,
-  type: "weapon" as const, // This ensures TypeScript treats it as literal "weapon"
-  weaponId: weaponId,
-  category: "weapon" as const, // Same here if category has similar restrictions
-};
+      const weaponDetails = state.weapons.find(
+        (w) => w.id === action.payload.id
+      );
+      if (!weaponDetails) {
+        console.warn(`Weapon with ID ${weaponId} not found`);
+        return state;
+      }
 
-  return {
-    ...state,
-    player: {
-      ...state.player,
-      weapons: state.player.weapons.filter(
-        (w) => w.id !== action.payload.id
-      ),
-    },
-    items: [...state.items, newWeaponItem],
-    dropSuccess: true,
-  };
+      const newWeaponItem = {
+        name: weaponDetails.name,
+        shortName: weaponDetails.shortName,
+        position: { ...state.player.position },
+        description: weaponDetails.description,
+        active: true,
+        collectible: true,
+        type: "weapon" as const, // This ensures TypeScript treats it as literal "weapon"
+        weaponId: weaponId,
+        category: "weapon" as const, // Same here if category has similar restrictions
+      };
 
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          weapons: state.player.weapons.filter(
+            (w) => w.id !== action.payload.id
+          ),
+        },
+        items: [...state.items, newWeaponItem],
+        dropSuccess: true,
+      };
 
     case "TOGGLE_WEAPONS_INVENTORY":
       return {
@@ -450,18 +457,18 @@ case "DROP_WEAPON":
         ),
       };
 
-case "ADD_POOL":
-  const newPool: PoolInstance = {
-    id: `${state.pools.length + 1}`,
-    position: action.position,
-  };
-  return {
-    ...state,
-    pools: [...state.pools, newPool].slice(
-      0,
-      state.poolsTemplate[0]?.maxInstances || 10 // Access first template's maxInstances
-    ),
-  };
+    case "ADD_POOL":
+      const newPool: PoolInstance = {
+        id: `${state.pools.length + 1}`,
+        position: action.position,
+      };
+      return {
+        ...state,
+        pools: [...state.pools, newPool].slice(
+          0,
+          state.poolsTemplate[0]?.maxInstances || 10 // Access first template's maxInstances
+        ),
+      };
 
     // ============ UI STATE ============
     case "UPDATE_DIALOG":
