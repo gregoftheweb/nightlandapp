@@ -1,7 +1,7 @@
-// modules/monsterUtils.ts - Fixed version with proper combat handling
+// modules/monsterUtils.ts - Monster spawning and management logic
 import { GameState, Monster, Position } from "../config/types";
 import { monsters } from "../config/monsters";
-import { moveMonsters } from "./gameLoop";
+import { moveMonsters } from "./movement";
 
 // -------------------- HANDLE MONSTER TURN --------------------
 export const handleMoveMonsters = (
@@ -85,12 +85,3 @@ export const getSpawnPosition = (state: GameState): Position => {
   console.warn(`Could not find valid spawn position after ${maxAttempts} attempts`);
   return { row: Math.floor(gridHeight / 2), col: Math.floor(gridWidth / 2) };
 };
-
-// -------------------- HELPER FUNCTIONS --------------------
-export function calculateDistance(pos1: Position, pos2: Position): number {
-  return Math.sqrt(Math.pow(pos2.row - pos1.row, 2) + Math.pow(pos2.col - pos1.col, 2));
-}
-
-export function isAdjacentToPlayer(monster: Monster, playerPosition: Position): boolean {
-  return calculateDistance(monster.position, playerPosition) <= 1.5;
-}

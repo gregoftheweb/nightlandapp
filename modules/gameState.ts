@@ -3,7 +3,7 @@ import { levels } from "../config/levels";
 import { GameState, Level, FootstepTemplate } from "../config/types";
 import { playerConfig } from "../config/player";
 import { reducer } from "./reducers";
-import { initializeStartingMonsters } from "./gameLoop";
+import { initializeStartingMonsters } from "./turnManager";
 
 export const getInitialState = (levelId: string = "1"): GameState => {
   const levelConfig = levels[levelId] as Level;

@@ -6,7 +6,7 @@ import GameBoard, { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE } from "./GameBoard"
 import PlayerHUD from "../../components/PlayerHUD";
 import Settings from "../../components/Settings";
 import { calculateCameraOffset } from "../../modules/utils";
-import { handleMovePlayer, initializeStartingMonsters, handleCombatTurn } from "../../modules/gameLoop";
+import { handleMovePlayer, initializeStartingMonsters, handleCombatTurn } from "../../modules/turnManager";
 import { handleMoveMonsters } from "../../modules/monsterUtils";
 import { Monster, LevelObjectInstance, Item } from "@/config/types";
 
