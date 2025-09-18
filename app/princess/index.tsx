@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { STRINGS } from "../../resources/strings";
+import { STRINGS } from "../../assets/copy/strings";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
