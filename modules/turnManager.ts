@@ -1,172 +1,176 @@
-// modules/gameLoop.ts - Clean game flow orchestration
+// modules/turnManager.ts - Clean turn-based game flow orchestration
 import { GameState, Position, Monster } from "../config/types";
 import { monsters } from "../config/monsters";
 import { handleMoveMonsters } from "./monsterUtils";
 import { handleCombatTurn } from "./combat";
 import { calculateNewPosition } from "./movement";
+import { checkItemInteractions, checkObjectInteractions } from "./interactions";
 
-// ==================== ITEM AND OBJECT INTERACTIONS ====================
+// ==================== MODULE-LEVEL STATE ====================
+let currentGameState: GameState;
+let gameDispatch: (action: any) => void;
+let inCombat: boolean = false;
+let turnType: 'combat' | 'move' | 'non-move-turn' = 'non-move-turn';
 
-const checkItemInteractions = (
-  state: GameState,
-  dispatch: (action: any) => void,
-  showDialog?: (message: string, duration?: number) => void,
-  setOverlay?: (overlay: any) => void
-) => {
-  const playerPos = state.player.position;
+// ==================== TURN TYPE DETERMINATION ====================
 
-  const collectibleAtPosition = state.items?.find((item: any) => {
-    if (!item || !item.active || !item.collectible || !item.position) return false;
-
-    const itemRowStart = item.position.row;
-    const itemColStart = item.position.col;
-    const itemWidth = item.size?.width || 1;
-    const itemHeight = item.size?.height || 1;
-    const itemRowEnd = itemRowStart + itemHeight - 1;
-    const itemColEnd = itemColStart + itemWidth - 1;
-
-    return (
-      item.active &&
-      item.collectible &&
-      playerPos.row >= itemRowStart &&
-      playerPos.row <= itemRowEnd &&
-      playerPos.col >= itemColStart &&
-      playerPos.col <= itemColEnd
-    );
-  });
-
-  if (!collectibleAtPosition) return;
-
-  // Handle splash screen
-  if (collectibleAtPosition.splash && setOverlay) {
-    setOverlay({
-      image: collectibleAtPosition.splash.image,
-      text: collectibleAtPosition.splash.text,
-    });
+const determineTurnType = (direction?: string): 'combat' | 'move' | 'non-move-turn' => {
+  if (inCombat) {
+    return 'combat';
   }
+  if (direction && direction !== 'stay') {
+    return 'move';
+  }
+  return 'non-move-turn';
+};
 
-  // Handle item collection
-  if (collectibleAtPosition.type === 'weapon') {
-    const weapon = state.weapons?.find(
-      (w: any) => w.id === collectibleAtPosition.weaponId
-    );
-    if (!weapon) {
-      console.warn('Weapon not found:', collectibleAtPosition.weaponId);
+// ==================== COMBAT TURN EXECUTION ====================
+
+const doCombatTurn = (
+  action: string,
+  targetId?: string,
+  showDialog?: (message: string, duration?: number) => void,
+  setDeathMessage?: (message: string) => void
+): void => {
+  console.log(`⚔️ EXECUTING COMBAT TURN: ${action}`);
+  
+  // Do Player Attack
+  if (action === 'attack' && targetId) {
+    console.log(`Player attacking target: ${targetId}`);
+  }
+  
+  // Execute full combat round (player + monster attacks)
+  handleCombatTurn(currentGameState, gameDispatch, action, targetId, showDialog, setDeathMessage);
+  
+  // Check if Player Dead - exit to princess page and reset game
+  if (currentGameState.player.hp <= 0) {
+    console.log("💀 PLAYER DEFEATED - Resetting game");
+    setDeathMessage?.("You have been defeated in combat!");
+    gameDispatch({ type: "GAME_OVER" });
+    // Note: Navigation to /app/princess/index.tsx should be handled by the calling component
+    return;
+  }
+};
+
+// ==================== MOVEMENT TURN EXECUTION ====================
+
+const doMoveTurn = (
+  direction: string,
+  setOverlay?: (overlay: any) => void,
+  showDialog?: (message: string, duration?: number) => void
+): void => {
+  console.log(`🚶 EXECUTING MOVE TURN: ${direction}`);
+  
+  // Move Player
+  const newPosition = calculateNewPosition(currentGameState.player.position, direction, currentGameState);
+  gameDispatch({ type: "MOVE_PLAYER", payload: { position: newPosition } });
+  
+  const newMoveCount = currentGameState.moveCount + 1;
+  gameDispatch({ type: "UPDATE_MOVE_COUNT", payload: { moveCount: newMoveCount } });
+  
+  console.log(`Player moved to: (${newPosition.row}, ${newPosition.col}), Move: ${newMoveCount}`);
+
+  // Update game state for interactions AND monster movement
+  currentGameState = { 
+    ...currentGameState, 
+    player: { ...currentGameState.player, position: newPosition },
+    moveCount: newMoveCount 
+  };
+
+  // Handle world interactions at new position
+  checkItemInteractions(currentGameState, gameDispatch, showDialog, setOverlay);
+  checkObjectInteractions(currentGameState, gameDispatch, newPosition, showDialog);
+};
+
+// ==================== NON-MOVE TURN EXECUTION ====================
+
+const doNonMoveTurn = (): void => {
+  console.log(`⏳ EXECUTING NON-MOVE TURN (pass turn)`);
+  
+  // Update turn counter for non-move turns
+  gameDispatch({ type: "PASS_TURN" });
+};
+
+// ==================== MONSTER MOVEMENT AND COMBAT SETUP ====================
+
+const doMonsterMovement = (
+  showDialog?: (message: string, duration?: number) => void
+): void => {
+  console.log(`👹 PROCESSING MONSTER MOVEMENT`);
+  
+  // Move monsters
+  handleMoveMonsters(currentGameState, gameDispatch, showDialog);
+  
+  // Monster collision and combat setup logic is handled within handleMoveMonsters
+  // If a monster is waiting OR a monster collides with Christos:
+  //   - If there is an empty Attack slot: slide into slot
+  //   - Else: hold position until next turn (monster waiting)
+};
+
+// ==================== SPELL AND EFFECTS EXECUTION ====================
+
+const executeSpellsAndEffects = (): void => {
+  // TODO: Execute spells and effects (none yet in game engine)
+  console.log(`✨ EXECUTE SPELLS AND EFFECTS (not implemented yet)`);
+};
+
+// ==================== CLEANUP ====================
+
+const doTurnCleanup = (): void => {
+  console.log(`🧹 TURN CLEANUP`);
+  
+  // Update hidden status if needed
+  if (currentGameState.player.isHidden) {
+    // Hidden status management could go here
+  }
+  
+  // Any other end-of-turn cleanup
+};
+
+// ==================== MAIN TURN EXECUTION ====================
+
+const executeTurn = (
+  action: string = 'move',
+  direction?: string,
+  targetId?: string,
+  setOverlay?: (overlay: any) => void,
+  showDialog?: (message: string, duration?: number) => void,
+  setDeathMessage?: (message: string) => void
+): void => {
+  console.log(`\n🎯 === STARTING TURN EXECUTION ===`);
+  console.log(`Action: ${action}, Direction: ${direction || 'none'}, In Combat: ${inCombat}`);
+
+  // Execute spells and effects (placeholder)
+  executeSpellsAndEffects();
+  
+  // DO TURN
+  if (inCombat) {
+    // Combat Turn
+    doCombatTurn(action, targetId, showDialog, setDeathMessage);
+    
+    // Early exit if player died
+    if (currentGameState.player.hp <= 0) {
       return;
     }
-    const weaponEntry = {
-      id: weapon.id,
-      equipped: false,
-    };
-    dispatch({ type: 'ADD_TO_WEAPONS', payload: { weapon: weaponEntry } });
-    showDialog?.(`Picked up ${weapon.name}!`, 3000);
   } else {
-    const item = {
-      id: `${collectibleAtPosition.shortName}-${Date.now()}`,
-      ...collectibleAtPosition,
-    };
-    dispatch({ type: 'ADD_TO_INVENTORY', payload: { item } });
-    showDialog?.(`Picked up ${item.name}!`, 3000);
-  }
-
-  // Deactivate the collected item
-  dispatch({
-    type: 'UPDATE_ITEM',
-    payload: {
-      shortName: collectibleAtPosition.shortName,
-      updates: { active: false },
-    },
-  });
-};
-
-const checkObjectInteractions = (
-  state: GameState,
-  dispatch: (action: any) => void,
-  playerPos: Position,
-  showDialog?: (message: string, duration?: number) => void
-) => {
-  const objectAtPosition = state.objects?.find((obj: any) => {
-    if (!obj.active) return false;
-
-    if (obj.collisionMask) {
-      return obj.collisionMask.some((mask: any) => {
-        const objRowStart = obj.position.row + mask.row;
-        const objColStart = obj.position.col + mask.col;
-        const objRowEnd = objRowStart + (mask.height || 1) - 1;
-        const objColEnd = objColStart + (mask.width || 1) - 1;
-
-        return (
-          playerPos.row >= objRowStart &&
-          playerPos.row <= objRowEnd &&
-          playerPos.col >= objColStart &&
-          playerPos.col <= objColEnd
-        );
-      });
+    // Non-Combat Turn
+    if (turnType === 'move') {
+      doMoveTurn(direction!, setOverlay, showDialog);
     } else {
-      const objRowStart = obj.position.row;
-      const objColStart = obj.position.col;
-      const objWidth = obj.size?.width || 1;
-      const objHeight = obj.size?.height || 1;
-      const objRowEnd = objRowStart + objHeight - 1;
-      const objColEnd = objColStart + objWidth - 1;
-
-      return (
-        playerPos.row >= objRowStart &&
-        playerPos.row <= objRowEnd &&
-        playerPos.col >= objColStart &&
-        playerPos.col <= objColEnd
-      );
+      doNonMoveTurn();
     }
-  });
-
-  if (!objectAtPosition || !objectAtPosition.effects) return;
-
-  const now = Date.now();
-  const lastTrigger = objectAtPosition.lastTrigger || 0;
+  }
   
-  // Cooldown check (50 seconds)
-  if (now - lastTrigger <= 50000) return;
-
-  objectAtPosition.effects.forEach((effect: any) => {
-    dispatch({
-      type: 'TRIGGER_EFFECT',
-      payload: { effect, position: playerPos },
-    });
-
-    switch (effect.type) {
-      case 'swarm':
-        showDialog?.(
-          `A swarm of ${effect.monsterType}s emerges from the ${objectAtPosition.name}!`,
-          3000
-        );
-        break;
-      case 'hide':
-        showDialog?.(
-          `The ${objectAtPosition.name} cloaks you in silence.`,
-          3000
-        );
-        break;
-      case 'heal':
-        showDialog?.(
-          `The ${objectAtPosition.name} restores your strength!`,
-          3000
-        );
-        break;
-      default:
-        break;
-    }
-  });
-
-  dispatch({
-    type: 'UPDATE_OBJECT',
-    payload: {
-      shortName: objectAtPosition.shortName,
-      updates: { lastTrigger: now },
-    },
-  });
+  // Move monsters (always happens unless player died)
+  doMonsterMovement(showDialog);
+  
+  // Cleanup
+  doTurnCleanup();
+  
+  console.log(`✅ === TURN EXECUTION COMPLETE ===\n`);
 };
 
-// ==================== MAIN PLAYER MOVEMENT HANDLER ====================
+// ==================== PUBLIC INTERFACE FUNCTIONS ====================
 
 export const handleMovePlayer = (
   state: GameState,
@@ -176,38 +180,80 @@ export const handleMovePlayer = (
   showDialog?: (message: string, duration?: number) => void,
   setDeathMessage?: (message: string) => void
 ): void => {
+  // Get and set current gamestate in module level variables
+  currentGameState = state;
+  gameDispatch = dispatch;
+  
+  // Set inCombat boolean
+  inCombat = state.inCombat;
+  
   // Cannot move during combat
-  if (state.inCombat) return;
-
-  // Calculate new player position
-  const newPosition = calculateNewPosition(state.player.position, direction, state);
+  if (inCombat) {
+    console.log("❌ Cannot move during combat");
+    return;
+  }
   
-  // Move player and update turn counter
-  dispatch({ type: "MOVE_PLAYER", payload: { position: newPosition } });
-  const newMoveCount = state.moveCount + 1;
-  dispatch({ type: "UPDATE_MOVE_COUNT", payload: { moveCount: newMoveCount } });
+  // Set Turn Type
+  turnType = determineTurnType(direction);
   
-  console.log(`Player moved to: (${newPosition.row}, ${newPosition.col}), Move: ${newMoveCount}`);
-
-  // Update game state for interactions
-  const updatedState = { 
-    ...state, 
-    player: { ...state.player, position: newPosition },
-    moveCount: newMoveCount 
-  };
-
-  // Handle world interactions at new position
-  checkItemInteractions(updatedState, dispatch, showDialog, setOverlay);
-  checkObjectInteractions(updatedState, dispatch, newPosition, showDialog);
-
-  // Process monster movement and combat checks
-  handleMoveMonsters(updatedState, dispatch, showDialog);
-  
-  console.log(`✅ Player turn completed`);
+  // Execute Turn
+  executeTurn('move', direction, undefined, setOverlay, showDialog, setDeathMessage);
 };
 
-// ==================== COMBAT TURN HANDLER (DELEGATED) ====================
+export const handleCombatAction = (
+  state: GameState,
+  dispatch: (action: any) => void,
+  action: string,
+  targetId?: string,
+  showDialog?: (message: string, duration?: number) => void,
+  setDeathMessage?: (message: string) => void
+): void => {
+  // Get and set current gamestate in module level variables
+  currentGameState = state;
+  gameDispatch = dispatch;
+  
+  // Set inCombat boolean
+  inCombat = state.inCombat;
+  
+  if (!inCombat) {
+    console.log("❌ Cannot perform combat action outside of combat");
+    return;
+  }
+  
+  // Set Turn Type
+  turnType = 'combat';
+  
+  // Execute Turn
+  executeTurn(action, undefined, targetId, undefined, showDialog, setDeathMessage);
+};
 
+export const handlePassTurn = (
+  state: GameState,
+  dispatch: (action: any) => void,
+  showDialog?: (message: string, duration?: number) => void
+): void => {
+  // Get and set current gamestate in module level variables
+  currentGameState = state;
+  gameDispatch = dispatch;
+  
+  // Set inCombat boolean
+  inCombat = state.inCombat;
+  
+  if (inCombat) {
+    console.log("❌ Cannot pass turn during combat");
+    return;
+  }
+  
+  // Set Turn Type
+  turnType = 'non-move-turn';
+  
+  // Execute Turn
+  executeTurn('pass', undefined, undefined, undefined, showDialog);
+};
+
+// ==================== LEGACY EXPORTS FOR BACKWARD COMPATIBILITY ====================
+
+// Re-export combat handler for existing code
 export { handleCombatTurn } from "./combat";
 
 // ==================== GAME INITIALIZATION ====================
@@ -233,7 +279,7 @@ export const initializeStartingMonsters = (
         ...abhumanTemplate,
         id: `abhuman-init-${i}`,
         position: { row: spawnRow, col: spawnCol },
-        hp: abhumanTemplate.hp, // Use hp from template
+        hp: abhumanTemplate.hp,
         active: true,
       };
 

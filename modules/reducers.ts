@@ -127,7 +127,7 @@ export const reducer = (
 
     // ============ COMBAT SYSTEM ============
     case "SET_COMBAT":
-      console.log("SET_COMBAT dispatched, inCombat:", action.payload.inCombat);
+      console.log("SET_COMBAT dispatched, inCombat.");
       return {
         ...state,
         inCombat: action.payload.inCombat,
@@ -247,6 +247,11 @@ export const reducer = (
         combatTurn: null,
         combatLog: [],
       };
+
+    case "RESET_GAME": {
+      // this ressets to game level 1
+      return initialState;
+    }
 
     // ============ INVENTORY MANAGEMENT ============
     case "ADD_TO_INVENTORY":

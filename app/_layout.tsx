@@ -4,7 +4,10 @@ import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import * as NavigationBar from "expo-navigation-bar";
 import { useEffect, useCallback, useState } from "react";
-import { createInitialGameState, serializeGameState } from "../modules/gameState";
+import {
+  createInitialGameState,
+  serializeGameState,
+} from "../modules/gameState";
 import { GameProvider } from "../context/GameContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -15,11 +18,11 @@ export default function Layout() {
     Gabrielle: require("../assets/fonts/Gabrielle.ttf"),
   });
 
-const [gameState] = useState(() => {
-  const gs = createInitialGameState();
-  console.log("Initial game state:", gs);
-  return gs;
-});
+  const [gameState] = useState(() => {
+    const gs = createInitialGameState();
+    console.log("Initial game state:", gs);
+    return gs;
+  });
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
@@ -77,10 +80,7 @@ const [gameState] = useState(() => {
               statusBarHidden: true,
             }}
           >
-            <Stack.Screen
-              name="index"
-              options={{ gestureEnabled: false }}
-            />
+            <Stack.Screen name="index" options={{ gestureEnabled: false }} />
             <Stack.Screen name="princess/index" />
             <Stack.Screen
               name="game/index"

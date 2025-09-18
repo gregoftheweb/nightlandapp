@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, StyleSheet, Dimensions, Pressable } from "react-native";
+import { useRouter } from "expo-router";
 import { PositionDisplay } from "../../components/PositionDisplay";
 import { useGameContext } from "../../context/GameContext";
 import GameBoard, { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE } from "./GameBoard";
 import PlayerHUD from "../../components/PlayerHUD";
 import Settings from "../../components/Settings";
 import { calculateCameraOffset } from "../../modules/utils";
-import { handleMovePlayer, initializeStartingMonsters, handleCombatTurn } from "../../modules/turnManager";
-import { handleMoveMonsters } from "../../modules/monsterUtils";
+import { 
+  handleMovePlayer, 
+  handleCombatAction, 
+  handlePassTurn, 
+  initializeStartingMonsters 
+} from "../../modules/turnManager";
 import { Monster, LevelObjectInstance, Item } from "@/config/types";
 
 const { width, height } = Dimensions.get("window");
@@ -21,12 +26,26 @@ export default function Game() {
   const { state, dispatch, showDialog, setOverlay, setDeathMessage } = useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [targetId, setTargetId] = useState<string | undefined>();
+  const router = useRouter();
 
   const stateRef = useRef(state);
 
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  // Handle player death navigation
+  useEffect(() => {
+    if (state.player.hp <= 0) {
+      console.log("Player died, navigating to death screen");
+      // Add a small delay to allow death message to show
+      setTimeout(() => {
+        // Reset game state before navigation
+        dispatch({ type: "RESET_GAME" });
+        router.push("/princess");
+      }, 2000);
+    }
+  }, [state.player.hp, router, dispatch]);
 
   useEffect(() => {
     if (state.activeMonsters.length === 0 && state.moveCount === 0) {
@@ -202,19 +221,20 @@ export default function Game() {
 
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
 
+  // UPDATED: Use handlePassTurn instead of manual dispatch and handleMoveMonsters
   const handleTurnPress = useCallback(() => {
     console.log("\n🎮 handleTurnPress called, inCombat:", state.inCombat);
     if (state.inCombat) {
       console.log("Blocked: Cannot pass turn while in combat");
       return;
     }
-    console.log("Dispatching PASS_TURN, current moveCount:", state.moveCount);
-    dispatch({ type: "PASS_TURN" });
-    console.log("Calling handleMoveMonsters, activeMonsters:", state.activeMonsters.length);
-    handleMoveMonsters(state, dispatch, showDialog);
+    
+    // Use the new handlePassTurn function
+    handlePassTurn(state, dispatch, showDialog);
     console.log("handleTurnPress completed");
-  }, [dispatch, state.inCombat, state, showDialog]);
+  }, [state, dispatch, showDialog]);
 
+  // UPDATED: Use handleCombatAction instead of handleCombatTurn
   const handleAttackPress = useCallback(() => {
     console.log("\n⚔️ handleAttackPress called, inCombat:", state.inCombat);
     if (!state.inCombat) {
@@ -229,8 +249,10 @@ export default function Game() {
       return;
     }
     console.log("Player attack pressed, targeting:", targetMonster.name, "ID:", targetMonster.id);
-    handleCombatTurn(state, dispatch, "attack", targetMonster.id, showDialog);
-  }, [state.inCombat, state.attackSlots, dispatch, showDialog, targetId]);
+    
+    // Use the new handleCombatAction function
+    handleCombatAction(state, dispatch, "attack", targetMonster.id, showDialog, setDeathMessage);
+  }, [state, dispatch, showDialog, setDeathMessage, targetId]);
 
   const handleMonsterTap = useCallback(
     (monster: Monster) => {

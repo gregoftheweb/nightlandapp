@@ -368,7 +368,7 @@ export const setupCombat = (
     combatTurn: newTurnOrder[0] || state.player,
   };
 
-  console.log("🎯 Dispatching SET_COMBAT:", combatPayload);
+  console.log("🎯 Dispatching SET_COMBAT.");
   dispatch({ type: "SET_COMBAT", payload: combatPayload });
 
   // Add player comment at start of combat if combat just began

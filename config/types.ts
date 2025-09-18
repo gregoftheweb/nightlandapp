@@ -295,6 +295,7 @@ export interface CombatLogEntry {
 }
 
 export interface GameState {
+  gameOver?: boolean;
   level: Level;
   currentLevelId: string;
   player: Player;
