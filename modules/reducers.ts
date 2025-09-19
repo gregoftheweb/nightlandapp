@@ -360,6 +360,34 @@ export const reducer = (
         showInventory: false,
       };
 
+    // ============ ITEM MANAGEMENT ============
+    // ============ ITEM MANAGEMENT ============
+    case "REMOVE_ITEM":
+      console.log(
+        `🗑️ REMOVING ITEM: ${action.payload.shortName} from position (${action.payload.position.row}, ${action.payload.position.col})`
+      );
+      return {
+        ...state,
+        items: state.items.filter(
+          (item) =>
+            !(
+              item.position?.row === action.payload.position.row &&
+              item.position?.col === action.payload.position.col &&
+              item.shortName === action.payload.shortName
+            )
+        ),
+      };
+
+    case "UPDATE_ITEM":
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          item.shortName === action.payload.shortName
+            ? { ...item, ...action.payload.updates }
+            : item
+        ),
+      };
+
     // ============ EFFECTS SYSTEM ============
     case "TRIGGER_EFFECT":
       const { effect, position } = action.payload;

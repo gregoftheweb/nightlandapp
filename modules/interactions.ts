@@ -1,5 +1,5 @@
 // modules/interactions.ts - Handle item and object interactions
-import { GameState, Position } from "../config/types";
+import { GameState, Position, Item } from "../config/types";
 
 // ==================== ITEM INTERACTIONS ====================
 
@@ -10,8 +10,20 @@ export const checkItemInteractions = (
   setOverlay?: (overlay: any) => void
 ) => {
   const playerPos = state.player.position;
+  
+  console.log(`🔍 CHECKING ITEM INTERACTIONS at position (${playerPos.row}, ${playerPos.col})`);
+  console.log(`Items available: ${state.items?.length || 0}`);
+  if (state.items?.length > 0) {
+    console.log('Item details:', state.items.map(item => ({
+      name: item.name,
+      position: item.position,
+      active: item.active,
+      collectible: item.collectible
+    })));
+  }
 
-  const collectibleAtPosition = state.items?.find((item: any) => {
+  // Find all collectible items at player's position
+  const collectibleAtPosition = state.items?.find((item: Item) => {
     if (!item || !item.active || !item.collectible || !item.position) return false;
 
     const itemRowStart = item.position.row;
@@ -33,6 +45,14 @@ export const checkItemInteractions = (
 
   if (!collectibleAtPosition) return;
 
+  // Check if inventory has space (except for weapons which go to weapons array)
+  if (collectibleAtPosition.type !== 'weapon') {
+    if (state.player.inventory.length >= state.player.maxInventorySize) {
+      showDialog?.(`Inventory is full! Cannot pick up ${collectibleAtPosition.name}.`, 3000);
+      return;
+    }
+  }
+
   // Handle splash screen
   if (collectibleAtPosition.splash && setOverlay) {
     setOverlay({
@@ -41,38 +61,92 @@ export const checkItemInteractions = (
     });
   }
 
-  // Handle item collection
+  // Handle item collection based on type
   if (collectibleAtPosition.type === 'weapon') {
-    const weapon = state.weapons?.find(
-      (w: any) => w.id === collectibleAtPosition.weaponId
-    );
-    if (!weapon) {
-      console.warn('Weapon not found:', collectibleAtPosition.weaponId);
-      return;
-    }
-    const weaponEntry = {
-      id: weapon.id,
-      equipped: false,
-    };
-    dispatch({ type: 'ADD_TO_WEAPONS', payload: { weapon: weaponEntry } });
-    showDialog?.(`Picked up ${weapon.name}!`, 3000);
+    handleWeaponCollection(collectibleAtPosition, state, dispatch, showDialog);
   } else {
-    const item = {
-      id: `${collectibleAtPosition.shortName}-${Date.now()}`,
-      ...collectibleAtPosition,
-    };
-    dispatch({ type: 'ADD_TO_INVENTORY', payload: { item } });
-    showDialog?.(`Picked up ${item.name}!`, 3000);
+    handleConsumableCollection(collectibleAtPosition, state, dispatch, showDialog);
   }
 
-  // Deactivate the collected item
+  // Remove the item from the game board
   dispatch({
-    type: 'UPDATE_ITEM',
+    type: 'REMOVE_ITEM',
     payload: {
+      position: collectibleAtPosition.position,
       shortName: collectibleAtPosition.shortName,
-      updates: { active: false },
     },
   });
+
+  console.log(`Collected item: ${collectibleAtPosition.name} at position (${playerPos.row}, ${playerPos.col})`);
+};
+
+// ==================== WEAPON COLLECTION ====================
+
+const handleWeaponCollection = (
+  item: Item,
+  state: GameState,
+  dispatch: (action: any) => void,
+  showDialog?: (message: string, duration?: number) => void
+) => {
+  // Check if weapons inventory has space
+  if (state.player.weapons.length >= state.player.maxWeaponsSize) {
+    showDialog?.(`Weapon inventory is full! Cannot pick up ${item.name}.`, 3000);
+    return;
+  }
+
+  // Find the weapon in the weapons config
+  const weapon = state.weapons?.find((w: Item) => w.id === item.weaponId);
+  if (!weapon) {
+    console.warn('Weapon not found:', item.weaponId);
+    showDialog?.(`Error: Weapon data not found for ${item.name}.`, 3000);
+    return;
+  }
+
+  const weaponEntry = {
+    id: weapon.id,
+    equipped: false,
+  };
+
+  dispatch({ 
+    type: 'ADD_TO_WEAPONS', 
+    payload: { weapon: weaponEntry } 
+  });
+  
+  showDialog?.(`Picked up ${weapon.name}!`, 3000);
+  console.log(`Added weapon to inventory: ${weapon.name}`);
+};
+
+// ==================== CONSUMABLE COLLECTION ====================
+
+const handleConsumableCollection = (
+  item: Item,
+  state: GameState,
+  dispatch: (action: any) => void,
+  showDialog?: (message: string, duration?: number) => void
+) => {
+  // Create a proper inventory item with unique ID
+  const inventoryItem: Item = {
+    id: `${item.shortName}-${Date.now()}`,
+    shortName: item.shortName,
+    category: item.category,
+    name: item.name,
+    description: item.description,
+    type: item.type,
+    collectible: item.collectible,
+    image: item.image,
+    healAmount: item.healAmount,
+    damage: item.damage,
+    // Don't include position in inventory items
+    active: true,
+  };
+
+  dispatch({ 
+    type: 'ADD_TO_INVENTORY', 
+    payload: { item: inventoryItem } 
+  });
+  
+  showDialog?.(`Picked up ${item.name}!`, 3000);
+  console.log(`Added item to inventory: ${item.name}`, inventoryItem);
 };
 
 // ==================== OBJECT INTERACTIONS ====================
@@ -161,5 +235,37 @@ export const checkObjectInteractions = (
       shortName: objectAtPosition.shortName,
       updates: { lastTrigger: now },
     },
+  });
+};
+
+// ==================== UTILITY FUNCTIONS ====================
+
+export const canCollectItem = (item: Item, player: any): boolean => {
+  if (!item.collectible || !item.active) return false;
+  
+  if (item.type === 'weapon') {
+    return player.weapons.length < player.maxWeaponsSize;
+  }
+  
+  return player.inventory.length < player.maxInventorySize;
+};
+
+export const getItemsAtPosition = (items: Item[], position: Position): Item[] => {
+  return items.filter(item => {
+    if (!item.active || !item.position) return false;
+    
+    const itemRowStart = item.position.row;
+    const itemColStart = item.position.col;
+    const itemWidth = item.size?.width || 1;
+    const itemHeight = item.size?.height || 1;
+    const itemRowEnd = itemRowStart + itemHeight - 1;
+    const itemColEnd = itemColStart + itemWidth - 1;
+
+    return (
+      position.row >= itemRowStart &&
+      position.row <= itemRowEnd &&
+      position.col >= itemColStart &&
+      position.col <= itemColEnd
+    );
   });
 };
