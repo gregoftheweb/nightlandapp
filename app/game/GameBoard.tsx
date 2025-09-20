@@ -53,11 +53,18 @@ export default function GameBoard({
     if (state.inCombat && !previousInCombat && state.attackSlots.length > 0) {
       // When combat starts (transition from false to true)
       const firstMonster = state.attackSlots[0];
-      const monsterName = firstMonster.name || firstMonster.shortName || "Monster";
+      const monsterName =
+        firstMonster.name || firstMonster.shortName || "Monster";
       const combatStartMessage = getTextContent("combatStart", [monsterName]);
-      setCombatMessages([combatStartMessage, ...state.combatLog.map((log) => log.message)]);
+      setCombatMessages([
+        combatStartMessage,
+        ...state.combatLog.map((log) => log.message),
+      ]);
       setCombatInfoVisible(true);
-      console.log("Combat started (detected transition), showing CombatDialog with message:", combatStartMessage);
+      console.log(
+        "Combat started (detected transition), showing CombatDialog with message:",
+        combatStartMessage
+      );
     } else if (state.inCombat && state.combatLog.length > 0) {
       // Update messages during combat
       setCombatMessages(state.combatLog.map((log) => log.message));
@@ -92,7 +99,11 @@ export default function GameBoard({
       : "";
     showInfo(
       player.name || "Christos",
-      `${player.description || "The brave hero of the Last Redoubt."}\n\nHP: ${player.hp}/${player.maxHP}\nAC: ${player.ac || 10}\nAttack: ${player.attack}${weaponInfo}`
+      `${player.description || "The brave hero of the Last Redoubt."}\n\nHP: ${
+        player.hp
+      }/${player.maxHP}\nAC: ${player.ac || 10}\nAttack: ${
+        player.attack
+      }${weaponInfo}`
     );
     onPlayerTap?.();
   };
@@ -150,20 +161,12 @@ export default function GameBoard({
     worldRow: number,
     worldCol: number
   ): Item | undefined => {
-    const item =
-      state.items?.find(
-        (item: Item) =>
-          item.active &&
-          item.position?.row === worldRow &&
-          item.position?.col === worldCol
-      ) ||
-      state.level.items?.find(
-        (item: Item) =>
-          item.active &&
-          item.position?.row === worldRow &&
-          item.position?.col === worldCol
-      );
-    return item;
+    return state.items?.find(
+      (item: Item) =>
+        item.active &&
+        item.position?.row === worldRow &&
+        item.position?.col === worldCol
+    );
   };
 
   const renderGridCells = (): React.ReactNode[] => {
