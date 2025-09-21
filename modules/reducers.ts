@@ -125,6 +125,21 @@ export const reducer = (
     case "UPDATE_ACTIVE_MONSTERS":
       return { ...state, activeMonsters: action.payload.activeMonsters };
 
+    case "AWAKEN_GREAT_POWER":
+      // In your game reducer
+      return {
+        ...state,
+        level: {
+          ...state.level,
+          greatPowers:
+            state.level.greatPowers?.map((power) =>
+              power.id === action.payload.greatPowerId
+                ? { ...power, awakened: true }
+                : power
+            ) || [],
+        },
+      };
+
     // ============ COMBAT SYSTEM ============
     case "SET_COMBAT":
       console.log("SET_COMBAT dispatched, inCombat.");

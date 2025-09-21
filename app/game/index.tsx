@@ -13,7 +13,7 @@ import {
   handlePassTurn, 
   initializeStartingMonsters 
 } from "../../modules/turnManager";
-import { Monster, LevelObjectInstance, Item } from "@/config/types";
+import { Monster, LevelObjectInstance, Item, GreatPower } from "@/config/types";
 
 const { width, height } = Dimensions.get("window");
 const MIN_MOVE_DISTANCE = 1;
@@ -221,9 +221,8 @@ export default function Game() {
 
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
 
-  // UPDATED: Use handlePassTurn instead of manual dispatch and handleMoveMonsters
   const handleTurnPress = useCallback(() => {
-    console.log("\n🎮 handleTurnPress called, inCombat:", state.inCombat);
+    console.log("\nhandleTurnPress called, inCombat:", state.inCombat);
     if (state.inCombat) {
       console.log("Blocked: Cannot pass turn while in combat");
       return;
@@ -234,9 +233,8 @@ export default function Game() {
     console.log("handleTurnPress completed");
   }, [state, dispatch, showDialog]);
 
-  // UPDATED: Use handleCombatAction instead of handleCombatTurn
   const handleAttackPress = useCallback(() => {
-    console.log("\n⚔️ handleAttackPress called, inCombat:", state.inCombat);
+    console.log("\nhandleAttackPress called, inCombat:", state.inCombat);
     if (!state.inCombat) {
       console.log("Blocked: Not in combat");
       return;
@@ -266,6 +264,31 @@ export default function Game() {
     [state.inCombat, showDialog]
   );
 
+  const handleGreatPowerTap = useCallback((greatPower: GreatPower) => {
+    console.log("Great Power tapped:", greatPower.name, "awakened:", greatPower.awakened);
+    
+    // Check if player is close enough to potentially awaken the Great Power
+    const playerPos = state.player.position;
+    const powerPos = greatPower.position;
+    const distance = Math.abs(playerPos.row - powerPos.row) + Math.abs(playerPos.col - powerPos.col);
+    
+    if (!greatPower.awakened && distance <= 3) {
+      // Check awaken condition
+      if (greatPower.awakenCondition === "player_within_range") {
+        console.log("Awakening Great Power:", greatPower.name);
+        dispatch({ 
+          type: "AWAKEN_GREAT_POWER", 
+          payload: { greatPowerId: greatPower.id } 
+        });
+        showDialog(`${greatPower.name} has awakened! The ancient power stirs...`, 3000);
+      }
+    } else if (!greatPower.awakened) {
+      showDialog(`You sense the presence of ${greatPower.name}, but you must get closer to disturb its slumber.`, 2000);
+    }
+    
+    // InfoBox is handled in GameBoard.tsx
+  }, [state.player.position, dispatch, showDialog]);
+
   const handlePlayerTap = useCallback(() => {
     // InfoBox is handled in GameBoard.tsx
   }, []);
@@ -293,6 +316,7 @@ export default function Game() {
           onMonsterTap={handleMonsterTap}
           onBuildingTap={handleBuildingTap}
           onItemTap={handleItemTap}
+          onGreatPowerTap={handleGreatPowerTap}
         />
         
         <PositionDisplay position={state.player.position} level={state.level} />

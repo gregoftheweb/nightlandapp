@@ -7,7 +7,7 @@ import {
   GreatPower,
 } from "./types";
 import { buildings, weapons } from "./objects";
-import { monsters } from "./monsters";
+import { getMonsterTemplate, getGreatPowerTemplate } from "./monsters";
 import { poolTemplates } from "./poolTemplates";
 
 // Import images (consolidate from level1State.ts)
@@ -20,9 +20,6 @@ import shortSwordIMG from "@assets/images/shortSword.png";
 import potionIMG from "@assets/images/potion.png";
 import sanctuaryPoolImg from "@assets/images/poolofpeace.png";
 import poisonPoolImg from "@assets/images/poolofpeace.png";
-import abhumanIMG from "@assets/images/abhuman.png";
-import night_houndIMG from "@assets/images/nighthound4.png";
-import watcher_seIMG from "@assets/images/watcherse.png";
 
 // Helper function to create object instances from templates
 const createObjectInstance = (
@@ -53,13 +50,17 @@ const createObjectInstance = (
   };
 };
 
-// Helper function to create monster instances from templates
-const createMonsterInstance = (
+// Helper function to create monster spawn configs
+const createMonsterSpawnConfig = (
   monsterShortName: string,
   position: Position,
-  overrides: Partial<LevelMonsterInstance> = {}
+  spawnOverrides?: {
+    spawnRate?: number;
+    spawnChance?: number;
+    maxInstances?: number;
+  }
 ): LevelMonsterInstance => {
-  const template = monsters.find((m) => m.shortName === monsterShortName);
+  const template = getMonsterTemplate(monsterShortName);
   if (!template) {
     throw new Error(`Monster template ${monsterShortName} not found`);
   }
@@ -82,38 +83,29 @@ const createMonsterInstance = (
     moveRate: template.moveRate ?? 1,
     soulKey: template.soulKey ?? "000000",
     initiative: template.initiative ?? 0,
-    spawnRate: template.spawnRate,
-    spawnChance: template.spawnChance,
-    maxInstances: template.maxInstances,
+    // Use spawn overrides or fall back to template defaults
+    spawnRate: spawnOverrides?.spawnRate ?? template.spawnRate,
+    spawnChance: spawnOverrides?.spawnChance ?? template.spawnChance,
+    maxInstances: spawnOverrides?.maxInstances ?? template.maxInstances,
     spawned: false,
-    ...overrides,
   };
 };
 
-// Helper function to create GreatPower instances
-const createGreatPower = (
-  template: Partial<GreatPower>,
+// Helper function to create GreatPower instances for levels
+const createGreatPowerForLevel = (
+  shortName: string,
   position: Position,
   overrides: Partial<GreatPower> = {}
 ): GreatPower => {
+  const template = getGreatPowerTemplate(shortName);
+  if (!template) {
+    throw new Error(`GreatPower template ${shortName} not found`);
+  }
+
   return {
-    id:template.id||"Great Power",
-    shortName: template.shortName || "unknown",
-    name: template.name || "Unnamed Power",
-    category: template.category || "greatPower",
-    image: template.image,
+    ...template,
+    id: `${shortName}_${position.row}_${position.col}`,
     position,
-    size: template.size || { width: 1, height: 1 },
-    active: template.active ?? true,
-    hp: template.hp ?? 100,
-    maxHP: template.maxHP ?? 100,
-    attack: template.attack ?? 0,
-    ac: template.ac ?? 0,
-  
-    soulKey: template.soulKey || "000000",
-    awakened: template.awakened ?? false,
-    awakenCondition: template.awakenCondition || "player_within_range",
-   
     ...overrides,
   };
 };
@@ -145,7 +137,7 @@ export const levels: Record<string, Level> = {
         shortName: "ironSword",
         category: "weapon",
         name: "Iron Sword",
-        image: shortSwordIMG, // Updated from level1State.ts
+        image: shortSwordIMG,
         position: { row: 380, col: 200 },
         size: { width: 1, height: 1 },
         active: true,
@@ -156,9 +148,9 @@ export const levels: Record<string, Level> = {
         hitBonus: 1,
       },
     ],
-    monsters: [],
+    monsters: [], // No pre-placed monsters for this level, they spawn dynamically
     objects: [
-      createObjectInstance(100, { row: 396, col: 198 }, { image: redoubtIMG }), // Updated image
+      createObjectInstance(100, { row: 396, col: 198 }, { image: redoubtIMG }),
     ],
     pools: [
       {
@@ -166,36 +158,25 @@ export const levels: Record<string, Level> = {
         id:"sanctuary_pool",
         name: "Sanctuary Pool",
         position: { row: 200, col: 200 },
-        image: sanctuaryPoolImg, // Updated from level1State.ts
-       
-          effects: [{ type: "heal", description: "config/poolTemplates.ts" }],
+        image: sanctuaryPoolImg,
+        effects: [{ type: "heal", description: "config/poolTemplates.ts" }],
       },
       {
         shortName: "poison_pool",
         id:"poison_pool",
         position: { row: 250, col: 250 },
-        image: poisonPoolImg, // Updated from level1State.ts
+        image: poisonPoolImg,
         effects: [{ type: "poison", description:"poison pool" }],
       },
     ],
     poolTemplates: poolTemplates,
     greatPowers: [
-      createGreatPower(
-        {
-          shortName: "watcherse",
-          name: "The Watcher of the South East",
-          category: "GreatPower",
-          image: watcher_seIMG, // Updated from level1State.ts
-          hp: 1000,
-          maxHP: 1000,
-          attack: 50,
-          ac: 25,         
-          soulKey: "str:25,dex:10,con:25,int:20,wis:20,cha:25",
-          awakened: false,
-          awakenCondition: "player_within_range",         
-        },
-        { row: 100, col: 350 }
-      ),
+      createGreatPowerForLevel("watcher_se", { row: 100, col: 350 }, {
+        hp: 1000,
+        maxHP: 1000,
+        attack: 50,
+        ac: 25,
+      }),
     ],
     
     completionConditions: [
@@ -232,7 +213,6 @@ export const levels: Record<string, Level> = {
       size: { width: 2, height: 2 },
       description:
         "You discover the faint tracks of your friend Persius in the dry dust of the Nightland. Your hope is forlorn, but meager as it is, there is some left that he might live..",
-     
       type: "object",
       maxInstances: 100,
       image: "aassets/images/footprints-blue.png"
@@ -244,7 +224,7 @@ export const levels: Record<string, Level> = {
           topLeft: { row: 0, col: 0 },
           bottomRight: { row: 100, col: 400 },
         },
-        monsterTypes: ["abhuman", "night_hound"],
+        monsterTypes: ["abhuman", "night_hound"], // References monster shortNames
         spawnRate: 0.1,
         maxMonsters: 5,
         minPlayerDistance: 20,
@@ -264,24 +244,23 @@ export const levels: Record<string, Level> = {
     ambientLight: 0.15,
     weatherEffect: "mist",
     backgroundMusic: "watching_grounds",
-    items: [     
-    ],
+    items: [],
     monsters: [
-      createMonsterInstance("night_hound", { row: 200, col: 200 }),
-      createMonsterInstance("night_hound", { row: 250, col: 300 }),
-      createMonsterInstance("watcher_se", { row: 300, col: 400 }),
+      // Pre-placed monsters with custom spawn settings
+      createMonsterSpawnConfig("night_hound", { row: 200, col: 200 }),
+      createMonsterSpawnConfig("night_hound", { row: 250, col: 300 }),
     ],
     objects: [],
     pools: [
       {
-        shortName: "poison_pool", // References Poison Pool template
+        shortName: "poison_pool",
         id:"poison_pool", 
         position: { row: 150, col: 150 },
         image: "assets/pools/custom_poison_swamp.png", // Override image
       },
     ],
     poolTemplates: poolTemplates,
-    greatPowers: [],
+    greatPowers: [], // No great powers in this level
    
     completionConditions: [
       {
@@ -301,10 +280,9 @@ export const levels: Record<string, Level> = {
       shortName: "defaultFootstep",
       size: { width: 1, height: 1 },
       description: "Default footstep template",
-     image: "assets/images/footprints-blue.png",
+      image: "assets/images/footprints-blue.png",
       type: "trail",
       maxInstances: 150,
-     
     },
     spawnZones: [
       {
@@ -313,7 +291,7 @@ export const levels: Record<string, Level> = {
           topLeft: { row: 100, col: 100 },
           bottomRight: { row: 400, col: 500 },
         },
-        monsterTypes: ["night_hound"],
+        monsterTypes: ["night_hound"], // References monster shortNames
         spawnRate: 0.2,
         maxMonsters: 8,
         minPlayerDistance: 15,

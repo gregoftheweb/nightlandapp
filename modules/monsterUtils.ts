@@ -1,6 +1,6 @@
 // modules/monsterUtils.ts - Monster spawning and management logic
 import { GameState, Monster, Position } from "../config/types";
-import { monsters } from "../config/monsters";
+import { getMonsterTemplate } from "../config/monsters";
 import { moveMonsters } from "./movement";
 
 // -------------------- HANDLE MONSTER TURN --------------------
@@ -30,15 +30,19 @@ export const checkMonsterSpawn = (
 ) => {
   console.log("Checking monster spawning...");
 
-  for (const template of monsters) {
-    if (!template.spawnRate || !template.spawnChance) continue;
+  // Get unique monster types that can spawn in this level
+  const spawnableMonsterTypes = getSpawnableMonsterTypes(state);
+
+  for (const monsterShortName of spawnableMonsterTypes) {
+    const template = getMonsterTemplate(monsterShortName);
+    if (!template || !template.spawnRate || !template.spawnChance) continue;
 
     const activeCount = state.activeMonsters.filter(m => m.shortName === template.shortName).length;
     
-    // Special limit for abhumans during combat testing
+    // Use template maxInstances with special handling for specific monsters
     let maxInstances = template.maxInstances || Infinity;
     if (template.shortName === 'abhuman') {
-      maxInstances = 2; // Limit to just 2 abhumans
+      maxInstances = 2; // Limit to just 2 abhumans during testing
     }
     
     if (activeCount >= maxInstances) continue;
@@ -58,6 +62,36 @@ export const checkMonsterSpawn = (
       showDialog?.(`${template.name} has appeared!`, 2000);
     }
   }
+};
+
+// -------------------- HELPER FUNCTIONS --------------------
+
+/**
+ * Get all spawnable monster types for the current level.
+ * This combines monsters from spawn zones and any pre-placed monsters in the level.
+ */
+const getSpawnableMonsterTypes = (state: GameState): string[] => {
+  const spawnableTypes = new Set<string>();
+
+  // Add monsters from spawn zones
+  if (state.level.spawnZones) {
+    state.level.spawnZones.forEach(zone => {
+      if (zone.active !== false) { // Default to active if not specified
+        zone.monsterTypes.forEach(type => spawnableTypes.add(type));
+      }
+    });
+  }
+
+  // Add any pre-placed monsters from the level configuration
+  if (state.level.monsters) {
+    state.level.monsters.forEach(monster => {
+      if (monster.active !== false) {
+        spawnableTypes.add(monster.shortName);
+      }
+    });
+  }
+
+  return Array.from(spawnableTypes);
 };
 
 // -------------------- SPAWN POSITION LOGIC --------------------
@@ -84,4 +118,25 @@ export const getSpawnPosition = (state: GameState): Position => {
 
   console.warn(`Could not find valid spawn position after ${maxAttempts} attempts`);
   return { row: Math.floor(gridHeight / 2), col: Math.floor(gridWidth / 2) };
+};
+
+// -------------------- MONSTER CREATION UTILITIES --------------------
+
+/**
+ * Create a monster instance from a template for spawning
+ */
+export const createMonsterFromTemplate = (shortName: string, position: Position): Monster | null => {
+  const template = getMonsterTemplate(shortName);
+  if (!template) {
+    console.error(`Monster template not found: ${shortName}`);
+    return null;
+  }
+
+  return {
+    ...template,
+    id: `${shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    position,
+    active: true,
+    hp: template.hp,
+  };
 };

@@ -14,6 +14,7 @@ import {
   GameState,
   CombatLogEntry,
   Item,
+  GreatPower,
 } from "@/config/types";
 import { InfoBox } from "../../components/InfoBox";
 import { CombatDialog } from "../../components/CombatDialog";
@@ -32,6 +33,7 @@ interface GameBoardProps {
   onMonsterTap?: (monster: Monster) => void;
   onBuildingTap?: (building: LevelObjectInstance) => void;
   onItemTap?: (item: Item) => void;
+  onGreatPowerTap?: (greatPower: GreatPower) => void;
 }
 
 export default function GameBoard({
@@ -41,6 +43,7 @@ export default function GameBoard({
   onMonsterTap,
   onBuildingTap,
   onItemTap,
+  onGreatPowerTap,
 }: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoData, setInfoData] = useState({ name: "", description: "" });
@@ -118,6 +121,16 @@ export default function GameBoard({
     onMonsterTap?.(monster);
   };
 
+  const handleGreatPowerTap = (greatPower: GreatPower) => {
+    console.log("handleGreatPowerTap called, greatPower:", greatPower);
+    const statusInfo = greatPower.awakened ? "AWAKENED" : "Sleeping";
+    showInfo(
+      greatPower.name || greatPower.shortName || "Great Power",
+      `${greatPower.description || "An ancient entity of immense power."}\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${greatPower.maxHP}\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`
+    );
+    onGreatPowerTap?.(greatPower);
+  };
+
   const handleBuildingTap = (building: LevelObjectInstance) => {
     console.log("handleBuildingTap called, building:", building);
     showInfo(
@@ -157,6 +170,18 @@ export default function GameBoard({
     return monster;
   };
 
+  const findGreatPowerAtPosition = (
+    worldRow: number,
+    worldCol: number
+  ): GreatPower | undefined => {
+    return state.level.greatPowers?.find(
+      (power: GreatPower) =>
+        power.position?.row === worldRow &&
+        power.position?.col === worldCol &&
+        power.active !== false
+    );
+  };
+
   const findItemAtPosition = (
     worldRow: number,
     worldCol: number
@@ -183,6 +208,7 @@ export default function GameBoard({
           worldCol === state.player.position.col;
 
         const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
+        const greatPowerAtPosition = findGreatPowerAtPosition(worldRow, worldCol);
         const itemAtPosition = findItemAtPosition(worldRow, worldCol);
 
         tiles.push(
@@ -196,6 +222,7 @@ export default function GameBoard({
                 backgroundColor: getCellBackgroundColor(
                   isPlayer,
                   monsterAtPosition,
+                  greatPowerAtPosition,
                   state.inCombat
                 ),
               },
@@ -214,7 +241,20 @@ export default function GameBoard({
                 />
               </TouchableOpacity>
             )}
-            {monsterAtPosition && !isPlayer && (
+            {greatPowerAtPosition && !isPlayer && (
+              <TouchableOpacity
+                onPress={() => handleGreatPowerTap(greatPowerAtPosition)}
+                style={styles.tappableArea}
+                activeOpacity={0.7}
+              >
+                <Image
+                  source={getGreatPowerImage(greatPowerAtPosition)}
+                  style={[styles.character, { zIndex: 2, opacity: greatPowerAtPosition.awakened ? 1.0 : 0.7 }]}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            )}
+            {monsterAtPosition && !isPlayer && !greatPowerAtPosition && (
               <TouchableOpacity
                 onPress={() => handleMonsterTap(monsterAtPosition)}
                 style={styles.tappableArea}
@@ -235,7 +275,7 @@ export default function GameBoard({
               >
                 <Image
                   source={require("../../assets/images/christos.png")}
-                  style={[styles.character, { zIndex: 2 }]}
+                  style={[styles.character, { zIndex: 3 }]}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
@@ -276,7 +316,7 @@ export default function GameBoard({
               top: screenRow * CELL_SIZE,
               width: CELL_SIZE,
               height: CELL_SIZE,
-              zIndex: 3,
+              zIndex: 4,
             }}
             activeOpacity={0.7}
           >
@@ -374,9 +414,11 @@ export default function GameBoard({
 const getCellBackgroundColor = (
   isPlayer: boolean,
   hasMonster: Monster | undefined,
+  hasGreatPower: GreatPower | undefined,
   inCombat: boolean
 ) => {
   if (isPlayer) return "#444";
+  if (hasGreatPower) return hasGreatPower.awakened ? "#644" : "#422";
   if (hasMonster) return "#622";
   return "#111";
 };
@@ -389,12 +431,26 @@ const getMonsterImage = (monster: Monster) => {
   const monsterImages: { [key: string]: any } = {
     abhuman: require("../../assets/images/abhuman.png"),
     night_hound: require("../../assets/images/nighthound4.png"),
-    watcher_se: require("../../assets/images/watcherse.png"),
   };
 
   return (
     monsterImages[monster.shortName] ||
     require("../../assets/images/abhuman.png")
+  );
+};
+
+const getGreatPowerImage = (greatPower: GreatPower) => {
+  if (greatPower.image) {
+    return greatPower.image;
+  }
+
+  const greatPowerImages: { [key: string]: any } = {
+    watcher_se: require("../../assets/images/watcherse.png"),
+  };
+
+  return (
+    greatPowerImages[greatPower.shortName] ||
+    require("../../assets/images/watcherse.png")
   );
 };
 
