@@ -1,6 +1,6 @@
 // modules/monsterUtils.ts - Monster spawning and management logic
 import { GameState, Monster, Position } from "../config/types";
-import { monsters } from "../config/monsters";
+import { getMonsterTemplate } from "../config/monsters";
 import { moveMonsters } from "./movement";
 
 // -------------------- HANDLE MONSTER TURN --------------------
@@ -30,32 +30,48 @@ export const checkMonsterSpawn = (
 ) => {
   console.log("Checking monster spawning...");
 
-  for (const template of monsters) {
-    if (!template.spawnRate || !template.spawnChance) continue;
+  // Process each monster configuration from the level
+  if (state.level.monsters && state.level.monsters.length > 0) {
+    for (const monsterConfig of state.level.monsters) {
+      // Skip if no spawn configuration
+      if (!monsterConfig.spawnRate || !monsterConfig.spawnChance || !monsterConfig.maxInstances) {
+        continue;
+      }
 
-    const activeCount = state.activeMonsters.filter(m => m.shortName === template.shortName).length;
-    
-    // Special limit for abhumans during combat testing
-    let maxInstances = template.maxInstances || Infinity;
-    if (template.shortName === 'abhuman') {
-      maxInstances = 2; // Limit to just 2 abhumans
-    }
-    
-    if (activeCount >= maxInstances) continue;
+      // Count active monsters of this type
+      const activeCount = state.activeMonsters.filter(m => m.shortName === monsterConfig.shortName).length;
+      
+      // Check against maxInstances for this monster type
+      if (activeCount >= monsterConfig.maxInstances) {
+        continue;
+      }
 
-    if (Math.random() < template.spawnRate * template.spawnChance) {
-      const spawnPosition = getSpawnPosition(state);
-      const newMonster: Monster = {
-        ...template,
-        id: `${template.shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        position: spawnPosition,
-        active: true,
-        hp: template.hp,
-      };
+      // Use the spawn logic: Math.random() < spawnRate * spawnChance
+      if (Math.random() < monsterConfig.spawnRate * monsterConfig.spawnChance) {
+        const template = getMonsterTemplate(monsterConfig.shortName);
+        if (!template) {
+          console.error(`Monster template not found: ${monsterConfig.shortName}`);
+          continue;
+        }
 
-      console.log(`Spawning ${newMonster.name} at ${spawnPosition.row},${spawnPosition.col}`);
-      dispatch({ type: "SPAWN_MONSTER", payload: { monster: newMonster } });
-      showDialog?.(`${template.name} has appeared!`, 2000);
+        const spawnPosition = getSpawnPosition(state);
+        const newMonster: Monster = {
+          ...template,
+          id: `${template.shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          position: spawnPosition,
+          active: true,
+          hp: template.hp,
+          maxHP: template.maxHP,
+          attack: template.attack,
+          ac: template.ac,
+          moveRate: template.moveRate,
+          soulKey: template.soulKey,
+        };
+
+        console.log(`Spawning ${newMonster.name} at ${spawnPosition.row},${spawnPosition.col}`);
+        dispatch({ type: "SPAWN_MONSTER", payload: { monster: newMonster } });
+        showDialog?.(`${template.name} has appeared!`, 2000);
+      }
     }
   }
 };
@@ -84,4 +100,30 @@ export const getSpawnPosition = (state: GameState): Position => {
 
   console.warn(`Could not find valid spawn position after ${maxAttempts} attempts`);
   return { row: Math.floor(gridHeight / 2), col: Math.floor(gridWidth / 2) };
+};
+
+// -------------------- MONSTER CREATION UTILITIES --------------------
+
+/**
+ * Create a monster instance from a template for spawning
+ */
+export const createMonsterFromTemplate = (shortName: string, position: Position): Monster | null => {
+  const template = getMonsterTemplate(shortName);
+  if (!template) {
+    console.error(`Monster template not found: ${shortName}`);
+    return null;
+  }
+
+  return {
+    ...template,
+    id: `${shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    position,
+    active: true,
+    hp: template.hp,
+    maxHP: template.maxHP,
+    attack: template.attack,
+    ac: template.ac,
+    moveRate: template.moveRate,
+    soulKey: template.soulKey,
+  };
 };
