@@ -30,68 +30,50 @@ export const checkMonsterSpawn = (
 ) => {
   console.log("Checking monster spawning...");
 
-  // Get unique monster types that can spawn in this level
-  const spawnableMonsterTypes = getSpawnableMonsterTypes(state);
-
-  for (const monsterShortName of spawnableMonsterTypes) {
-    const template = getMonsterTemplate(monsterShortName);
-    if (!template || !template.spawnRate || !template.spawnChance) continue;
-
-    const activeCount = state.activeMonsters.filter(m => m.shortName === template.shortName).length;
-    
-    // Use template maxInstances with special handling for specific monsters
-    let maxInstances = template.maxInstances || Infinity;
-    if (template.shortName === 'abhuman') {
-      maxInstances = 2; // Limit to just 2 abhumans during testing
-    }
-    
-    if (activeCount >= maxInstances) continue;
-
-    if (Math.random() < template.spawnRate * template.spawnChance) {
-      const spawnPosition = getSpawnPosition(state);
-      const newMonster: Monster = {
-        ...template,
-        id: `${template.shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        position: spawnPosition,
-        active: true,
-        hp: template.hp,
-      };
-
-      console.log(`Spawning ${newMonster.name} at ${spawnPosition.row},${spawnPosition.col}`);
-      dispatch({ type: "SPAWN_MONSTER", payload: { monster: newMonster } });
-      showDialog?.(`${template.name} has appeared!`, 2000);
-    }
-  }
-};
-
-// -------------------- HELPER FUNCTIONS --------------------
-
-/**
- * Get all spawnable monster types for the current level.
- * This combines monsters from spawn zones and any pre-placed monsters in the level.
- */
-const getSpawnableMonsterTypes = (state: GameState): string[] => {
-  const spawnableTypes = new Set<string>();
-
-  // Add monsters from spawn zones
-  if (state.level.spawnZones) {
-    state.level.spawnZones.forEach(zone => {
-      if (zone.active !== false) { // Default to active if not specified
-        zone.monsterTypes.forEach(type => spawnableTypes.add(type));
+  // Process each monster configuration from the level
+  if (state.level.monsters && state.level.monsters.length > 0) {
+    for (const monsterConfig of state.level.monsters) {
+      // Skip if no spawn configuration
+      if (!monsterConfig.spawnRate || !monsterConfig.spawnChance || !monsterConfig.maxInstances) {
+        continue;
       }
-    });
-  }
 
-  // Add any pre-placed monsters from the level configuration
-  if (state.level.monsters) {
-    state.level.monsters.forEach(monster => {
-      if (monster.active !== false) {
-        spawnableTypes.add(monster.shortName);
+      // Count active monsters of this type
+      const activeCount = state.activeMonsters.filter(m => m.shortName === monsterConfig.shortName).length;
+      
+      // Check against maxInstances for this monster type
+      if (activeCount >= monsterConfig.maxInstances) {
+        continue;
       }
-    });
-  }
 
-  return Array.from(spawnableTypes);
+      // Use the spawn logic: Math.random() < spawnRate * spawnChance
+      if (Math.random() < monsterConfig.spawnRate * monsterConfig.spawnChance) {
+        const template = getMonsterTemplate(monsterConfig.shortName);
+        if (!template) {
+          console.error(`Monster template not found: ${monsterConfig.shortName}`);
+          continue;
+        }
+
+        const spawnPosition = getSpawnPosition(state);
+        const newMonster: Monster = {
+          ...template,
+          id: `${template.shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          position: spawnPosition,
+          active: true,
+          hp: template.hp,
+          maxHP: template.maxHP,
+          attack: template.attack,
+          ac: template.ac,
+          moveRate: template.moveRate,
+          soulKey: template.soulKey,
+        };
+
+        console.log(`Spawning ${newMonster.name} at ${spawnPosition.row},${spawnPosition.col}`);
+        dispatch({ type: "SPAWN_MONSTER", payload: { monster: newMonster } });
+        showDialog?.(`${template.name} has appeared!`, 2000);
+      }
+    }
+  }
 };
 
 // -------------------- SPAWN POSITION LOGIC --------------------
@@ -138,5 +120,10 @@ export const createMonsterFromTemplate = (shortName: string, position: Position)
     position,
     active: true,
     hp: template.hp,
+    maxHP: template.maxHP,
+    attack: template.attack,
+    ac: template.ac,
+    moveRate: template.moveRate,
+    soulKey: template.soulKey,
   };
 };

@@ -50,15 +50,13 @@ const createObjectInstance = (
   };
 };
 
-// Helper function to create monster spawn configs
+// Helper function to create monster spawn configs - WITH SPAWN SETTINGS
 const createMonsterSpawnConfig = (
   monsterShortName: string,
-  position: Position,
-  spawnOverrides?: {
-    spawnRate?: number;
-    spawnChance?: number;
-    maxInstances?: number;
-  }
+  spawnRate: number,
+  spawnChance: number,
+  maxInstances: number,
+  position: Position = { row: 0, col: 0 }
 ): LevelMonsterInstance => {
   const template = getMonsterTemplate(monsterShortName);
   if (!template) {
@@ -66,9 +64,9 @@ const createMonsterSpawnConfig = (
   }
 
   return {
-    id: `${monsterShortName}_${position.row}_${position.col}`,
+    id: `${monsterShortName}_spawn_config`,
     templateId: monsterShortName,
-    position,
+    position, // Usually default, actual spawn position determined dynamically
     active: true,
     currentHP: template.hp ?? 10,
     hp: template.hp ?? 10,
@@ -83,10 +81,10 @@ const createMonsterSpawnConfig = (
     moveRate: template.moveRate ?? 1,
     soulKey: template.soulKey ?? "000000",
     initiative: template.initiative ?? 0,
-    // Use spawn overrides or fall back to template defaults
-    spawnRate: spawnOverrides?.spawnRate ?? template.spawnRate,
-    spawnChance: spawnOverrides?.spawnChance ?? template.spawnChance,
-    maxInstances: spawnOverrides?.maxInstances ?? template.maxInstances,
+    // SPAWN CONFIGURATION - SET PER LEVEL
+    spawnRate,
+    spawnChance,
+    maxInstances,
     spawned: false,
   };
 };
@@ -148,7 +146,11 @@ export const levels: Record<string, Level> = {
         hitBonus: 1,
       },
     ],
-    monsters: [], // No pre-placed monsters for this level, they spawn dynamically
+    // INDIVIDUAL MONSTER SPAWN CONFIGURATIONS
+    monsters: [
+      createMonsterSpawnConfig('abhuman', 0.2, 0.3, 2), // Low spawn rate, higher chance, max 2
+      createMonsterSpawnConfig('night_hound', 0.15, 0.2, 3), // Moderate spawn settings, max 3
+    ],
     objects: [
       createObjectInstance(100, { row: 396, col: 198 }, { image: redoubtIMG }),
     ],
@@ -217,19 +219,6 @@ export const levels: Record<string, Level> = {
       maxInstances: 100,
       image: "aassets/images/footprints-blue.png"
     },
-    spawnZones: [
-      {
-        id: "northern_wastes",
-        area: {
-          topLeft: { row: 0, col: 0 },
-          bottomRight: { row: 100, col: 400 },
-        },
-        monsterTypes: ["abhuman", "night_hound"], // References monster shortNames
-        spawnRate: 0.1,
-        maxMonsters: 5,
-        minPlayerDistance: 20,
-      },
-    ],
   },
   "2": {
     id: "2",
@@ -245,10 +234,10 @@ export const levels: Record<string, Level> = {
     weatherEffect: "mist",
     backgroundMusic: "watching_grounds",
     items: [],
+    // DIFFERENT SPAWN SETTINGS FOR LEVEL 2
     monsters: [
-      // Pre-placed monsters with custom spawn settings
-      createMonsterSpawnConfig("night_hound", { row: 200, col: 200 }),
-      createMonsterSpawnConfig("night_hound", { row: 250, col: 300 }),
+      createMonsterSpawnConfig('night_hound', 0.25, 0.4, 6), // Higher spawn rate and chance, more max instances
+      createMonsterSpawnConfig('abhuman', 0.1, 0.15, 1), // Lower spawn settings for this level
     ],
     objects: [],
     pools: [
@@ -284,18 +273,5 @@ export const levels: Record<string, Level> = {
       type: "trail",
       maxInstances: 150,
     },
-    spawnZones: [
-      {
-        id: "mist_valleys",
-        area: {
-          topLeft: { row: 100, col: 100 },
-          bottomRight: { row: 400, col: 500 },
-        },
-        monsterTypes: ["night_hound"], // References monster shortNames
-        spawnRate: 0.2,
-        maxMonsters: 8,
-        minPlayerDistance: 15,
-      },
-    ],
   },
 };

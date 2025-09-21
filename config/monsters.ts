@@ -6,6 +6,7 @@ import night_houndIMG from "@assets/images/nighthound4.png";
 import watcher_seIMG from "@assets/images/watcherse.png";
 
 // -------------------- REGULAR MONSTERS --------------------
+// Base monster templates - NO spawn configuration here
 export const monsters: Monster[] = [
   {
     shortName: 'abhuman',
@@ -20,9 +21,6 @@ export const monsters: Monster[] = [
     attack: 5,
     ac: 12,
     moveRate: 2,
-    spawnRate: 0.2,
-    spawnChance: 0.3,
-    maxInstances: 2,
     soulKey: 'str:16,dex:10,con:14,int:8,wis:8,cha:6',
   },
   {
@@ -38,9 +36,6 @@ export const monsters: Monster[] = [
     attack: 6,
     ac: 14,
     moveRate: 2,
-    spawnRate: 0.2,
-    spawnChance: 0.1,
-    maxInstances: 15,
     soulKey: 'str:12,dex:16,con:12,int:6,wis:10,cha:8',
   },
 ];
