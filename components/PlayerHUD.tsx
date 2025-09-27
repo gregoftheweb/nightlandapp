@@ -13,25 +13,28 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import turnButtonIMG from "@assets/images/buttonTurn.png";
 import attackButtonIMG from "@assets/images/buttonAttack.png";
+import inventoryButtonIMG from "@assets/images/buttonInventory.png";
 
 const { width } = Dimensions.get("window");
 
 interface PlayerHUDProps {
   hp: number;
   maxHP: number;
-  inCombat: boolean; // added
+  inCombat: boolean;
   onGearPress?: () => void;
   onTurnPress?: () => void;
-  onAttackPress?: () => void; // added
+  onAttackPress?: () => void;
+  onInventoryPress?: () => void; // New prop for inventory
 }
 
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
   hp,
   maxHP,
-  inCombat,        // destructure inCombat
+  inCombat,
   onGearPress,
   onTurnPress,
-  onAttackPress,   // destructure onAttackPress
+  onAttackPress,
+  onInventoryPress, // New prop
 }) => {
   const insets = useSafeAreaInsets();
 
@@ -47,6 +50,13 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
     } else {
       onTurnPress?.();
     }
+  };
+
+  const handleInventoryPress = (
+    event: NativeSyntheticEvent<NativeTouchEvent>
+  ) => {
+    event.stopPropagation();
+    onInventoryPress?.();
   };
 
   return (
@@ -68,7 +78,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Dynamic Turn/Attack Button */}
+      {/* Dynamic Turn/Attack Button - Always centered */}
       <TouchableOpacity
         style={styles.turnButton}
         onPress={handleActionPress}
@@ -77,6 +87,18 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         <Image
           source={inCombat ? attackButtonIMG : turnButtonIMG}
           style={styles.turnButtonImage}
+        />
+      </TouchableOpacity>
+
+      {/* Inventory Button - Right side */}
+      <TouchableOpacity
+        style={styles.inventoryButton}
+        onPress={handleInventoryPress}
+        activeOpacity={0.7}
+      >
+        <Image
+          source={inventoryButtonIMG}
+          style={styles.inventoryButtonImage}
         />
       </TouchableOpacity>
     </View>
@@ -94,7 +116,7 @@ const styles = StyleSheet.create({
     pointerEvents: "box-none",
   },
   statusBar: {
-    width: width * 0.55,
+    width: width * 0.7, // Widened from 0.55 to 0.75
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -125,11 +147,22 @@ const styles = StyleSheet.create({
   turnButton: {
     position: "absolute",
     bottom: 5,
-    alignSelf: "center",
+    left: "50%",
+    marginLeft: -30, // Half of button width (60/2) to center perfectly
   },
   turnButtonImage: {
     width: 60,
     height: 60,
+    resizeMode: "contain",
+  },
+  inventoryButton: {
+    position: "absolute",
+    bottom: 15, // Slightly higher than turn button to align with HUD
+    right: width * 0.28, // Position on the right side, matching HUD spacing
+  },
+  inventoryButtonImage: {
+    width: 40, // Slightly smaller than turn button, close to HUD height
+    height: 40,
     resizeMode: "contain",
   },
 });

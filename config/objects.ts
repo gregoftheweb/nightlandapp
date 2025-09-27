@@ -1,11 +1,17 @@
 // config/objects.ts
-import { GameObject } from './types';
+import { GameObject } from "./types";
 
 import redoubtImg from "@assets/images/redoubt.png";
+import riverIMG from "@assets/images/river1.png";
+import cursedTotemIMG from "@assets/images/cursedtotem.png";
+import petrifiedWillowIMG from "@assets/images/petrifiedWillow.png";
+import maguffinRockIMG from "@assets/images/maguffinRock.png";
+import shortSwordIMG from "@assets/images/shortSword.png";
+import potionIMG from "@assets/images/potion.png";
 
-// Weapons
-export const weapons: Record<number, GameObject> = {
-  1: {
+// WEAPONS TEMPLATES - Pure templates without position data
+export const weapons: Record<string, GameObject> = {
+  discos: {
     shortName: "discos",
     category: "weapon",
     name: "Discos",
@@ -15,24 +21,126 @@ export const weapons: Record<number, GameObject> = {
     hitBonus: 2,
     type: "melee",
     range: 1,
-   
-    active: true, // Weapon is active by default
+    active: true,
+  },
+  ironSword: {
+    shortName: "ironSword",
+    category: "weapon",
+    name: "Iron Sword",
+    description: "A sturdy iron blade, well-balanced and sharp.",
+    damage: 8,
+    hitBonus: 1,
+    type: "melee",
+    range: 1,
+    active: true,
   },
 };
 
-// Buildings
+// CONSUMABLES TEMPLATES
+export const consumables: Record<string, GameObject> = {
+  healthPotion: {
+    shortName: "healthPotion",
+    category: "consumable",
+    name: "Health Potion",
+    description: "A red potion that restores health when consumed.",
+    type: "consumable",
+    active: true,
+    effects: [
+      {
+        type: "heal",
+        value: 25,
+      },
+    ],
+  },
+};
 
-export const buildings: Record<number, GameObject> = {
-  100: {
+// BUILDINGS TEMPLATES - Pure templates without position data
+export const buildings: Record<string, GameObject> = {
+  redoubt: {
     shortName: "redoubt",
     category: "building",
     name: "The Last Redoubt",
     description: "The Last home of the remnant of Mankind.",
     width: 4,
     height: 4,
-    image: redoubtImg, // ✅ pass the imported image
-    position: { row: 396, col: 198 },
+    image: redoubtImg,
     active: true,
     zIndex: 0,
   },
+  river: {
+    shortName: "river",
+    category: "building",
+    name: "Ancient River",
+    description: "A dried riverbed from ages past.",
+    width: 2,
+    height: 6,
+    image: riverIMG,
+    active: true,
+    zIndex: 0,
+  },
+  cursedTotem: {
+    shortName: "cursedTotem",
+    category: "building",
+    name: "Cursed Totem",
+    description: "An ancient totem radiating malevolent energy.",
+    width: 1,
+    height: 2,
+    image: cursedTotemIMG,
+    active: true,
+    zIndex: 1,
+  },
+  petrifiedWillow: {
+    shortName: "petrifiedWillow",
+    category: "building",
+    name: "Petrified Willow",
+    description: "A once-living tree, now turned to stone.",
+    width: 3,
+    height: 3,
+    image: petrifiedWillowIMG,
+    active: true,
+    zIndex: 0,
+  },
+  maguffinRock: {
+    shortName: "maguffinRock",
+    category: "building",
+    name: "Maguffin Rock",
+    description: "A mysterious rock formation with unknown properties.",
+    width: 2,
+    height: 2,
+    image: maguffinRockIMG,
+    active: true,
+    zIndex: 0,
+  },
+};
+
+// UTILITY FUNCTIONS TO GET TEMPLATES
+export const getWeaponTemplate = (
+  shortName: string
+): GameObject | undefined => {
+  return weapons[shortName];
+};
+
+export const getBuildingTemplate = (
+  shortName: string
+): GameObject | undefined => {
+  return buildings[shortName];
+};
+
+export const getConsumableTemplate = (
+  shortName: string
+): GameObject | undefined => {
+  return consumables[shortName];
+};
+
+export const getItemTemplate = (shortName: string): GameObject | undefined => {
+  return weapons[shortName] || consumables[shortName];
+};
+
+// Get all templates combined (useful for lookups)
+export const getAllObjectTemplates = (): Record<string, GameObject> => {
+  return {
+    ...weapons,
+    ...consumables,
+    ...buildings,
+  };
 };

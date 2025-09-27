@@ -5,36 +5,34 @@ import {
   LevelObjectInstance,
   LevelMonsterInstance,
   GreatPower,
+  Item,
 } from "./types";
-import { buildings, weapons } from "./objects";
+import { 
+  getBuildingTemplate, 
+  getWeaponTemplate, 
+  getConsumableTemplate 
+} from "./objects";
 import { getMonsterTemplate, getGreatPowerTemplate } from "./monsters";
 import { poolTemplates } from "./poolTemplates";
 
-// Import images (consolidate from level1State.ts)
-import redoubtIMG from "@assets/images/redoubt.png";
-import riverIMG from "@assets/images/river1.png";
-import cursedTotemIMG from "@assets/images/cursedtotem.png";
-import petrifiedWillowIMG from "@assets/images/petrifiedWillow.png";
-import maguffinRockIMG from "@assets/images/maguffinRock.png";
-import shortSwordIMG from "@assets/images/shortSword.png";
-import potionIMG from "@assets/images/potion.png";
+// Import pool images
 import sanctuaryPoolImg from "@assets/images/poolofpeace.png";
 import poisonPoolImg from "@assets/images/poolofpeace.png";
 
-// Helper function to create object instances from templates
+// Helper function to create object instances from building templates
 const createObjectInstance = (
-  objectId: number,
+  templateShortName: string,
   position: Position,
   overrides: Partial<LevelObjectInstance> = {}
 ): LevelObjectInstance => {
-  const template = buildings[objectId];
+  const template = getBuildingTemplate(templateShortName);
   if (!template) {
-    throw new Error(`Object template ${objectId} not found`);
+    throw new Error(`Building template ${templateShortName} not found`);
   }
 
   return {
     id: `${template.shortName}_${position.row}_${position.col}`,
-    templateId: objectId,
+    templateId: templateShortName,
     position,
     active: true,
     shortName: template.shortName,
@@ -46,12 +44,64 @@ const createObjectInstance = (
       width: template.width || 1,
       height: template.height || 1,
     },
+    zIndex: template.zIndex,
+    ...overrides,
+  };
+};
+
+// Helper function to create item instances from templates
+const createItemInstance = (
+  templateShortName: string,
+  position: Position,
+  overrides: Partial<Item> = {}
+): Item => {
+  // Try weapon first, then consumable
+  let template = getWeaponTemplate(templateShortName);
+  let itemType: "weapon" | "consumable" = "weapon";
+  
+  if (!template) {
+    template = getConsumableTemplate(templateShortName);
+    itemType = "consumable";
+  }
+  
+  if (!template) {
+    throw new Error(`Item template ${templateShortName} not found`);
+  }
+
+  const baseItem: Item = {
+    shortName: template.shortName,
+    category: template.category,
+    name: template.name,
+    description: template.description,
+    image: template.image,
+    position,
+    size: template.size || { width: 1, height: 1 },
+    active: true,
+    type: itemType,
+    collectible: true,
+    id: `${template.shortName}_${position.row}_${position.col}`,
+  };
+
+  // Add specific properties based on type
+  if (itemType === "weapon") {
+    baseItem.weaponId = template.shortName;
+    baseItem.damage = template.damage;
+    baseItem.hitBonus = template.hitBonus;
+  } else if (itemType === "consumable" && template.effects) {
+    const healEffect = template.effects.find(e => e.type === "heal");
+    if (healEffect) {
+      baseItem.healAmount = healEffect.value;
+    }
+  }
+
+  return {
+    ...baseItem,
     ...overrides,
   };
 };
 
 // Helper function to create monster spawn configs - WITH SPAWN SETTINGS
-const createMonsterSpawnConfig = (
+const createMonsterInstance = (
   monsterShortName: string,
   spawnRate: number,
   spawnChance: number,
@@ -118,46 +168,29 @@ export const levels: Record<string, Level> = {
     ambientLight: 0.2,
     weatherEffect: null,
     backgroundMusic: "nightland_ambient",
+    
+    // ITEMS - Created from templates with specific positions
     items: [
-      {
-        shortName: "healthPotion",
-        category: "consumable",
-        name: "Health Potion",
-        image: potionIMG,
-        position: { row: 375, col: 195 },
-        size: { width: 1, height: 1 },
-        active: true,
-        type: "consumable",
-        collectible: true,
-        healAmount: 25,
-      },
-      {
-        shortName: "ironSword",
-        category: "weapon",
-        name: "Iron Sword",
-        image: shortSwordIMG,
-        position: { row: 380, col: 200 },
-        size: { width: 1, height: 1 },
-        active: true,
-        type: "weapon",
-        collectible: true,
-        weaponId: "ironSword",
-        damage: 8,
-        hitBonus: 1,
-      },
+      createItemInstance("healthPotion", { row: 375, col: 195 }),
+      createItemInstance("ironSword", { row: 380, col: 200 }),
     ],
-    // INDIVIDUAL MONSTER SPAWN CONFIGURATIONS
+    
+    // MONSTERS - Individual spawn configurations per level
     monsters: [
-      createMonsterSpawnConfig('abhuman', 0.2, 0.3, 2), // Low spawn rate, higher chance, max 2
-      createMonsterSpawnConfig('night_hound', 0.15, 0.2, 3), // Moderate spawn settings, max 3
+      createMonsterInstance('abhuman', 0.2, 0.3, 2), // Low spawn rate, higher chance, max 2
+      createMonsterInstance('night_hound', 0.15, 0.2, 3), // Moderate spawn settings, max 3
     ],
+    
+    // OBJECTS - Buildings and structures
     objects: [
-      createObjectInstance(100, { row: 396, col: 198 }, { image: redoubtIMG }),
+      createObjectInstance("redoubt", { row: 396, col: 198 }),
     ],
+    
+    // POOLS - Instance-specific configurations
     pools: [
       {
         shortName: "heal_pool",
-        id:"sanctuary_pool",
+        id: "sanctuary_pool",
         name: "Sanctuary Pool",
         position: { row: 200, col: 200 },
         image: sanctuaryPoolImg,
@@ -165,13 +198,16 @@ export const levels: Record<string, Level> = {
       },
       {
         shortName: "poison_pool",
-        id:"poison_pool",
+        id: "poison_pool",
         position: { row: 250, col: 250 },
         image: poisonPoolImg,
-        effects: [{ type: "poison", description:"poison pool" }],
+        effects: [{ type: "poison", description: "poison pool" }],
       },
     ],
+    
     poolTemplates: poolTemplates,
+    
+    // GREAT POWERS - Boss-level entities
     greatPowers: [
       createGreatPowerForLevel("watcher_se", { row: 100, col: 350 }, {
         hp: 1000,
@@ -193,6 +229,7 @@ export const levels: Record<string, Level> = {
         description: "Find the iron sword",
       },
     ],
+    
     footsteps: [
       {
         id: 1,
@@ -200,7 +237,7 @@ export const levels: Record<string, Level> = {
         direction: 0,
         templateId: "footstepsPersius",
       },
-      // ... all other footsteps from level1State.ts ...
+      // ... other footsteps ...
       {
         id: 26,
         position: { row: 10, col: 215 },
@@ -208,6 +245,7 @@ export const levels: Record<string, Level> = {
         templateId: "footstepsPersius",
       },
     ],
+    
     footstepsTemplate: {
       name: "Footsteps of Persius",
       shortName: "footstepsPersius",
@@ -217,9 +255,10 @@ export const levels: Record<string, Level> = {
         "You discover the faint tracks of your friend Persius in the dry dust of the Nightland. Your hope is forlorn, but meager as it is, there is some left that he might live..",
       type: "object",
       maxInstances: 100,
-      image: "aassets/images/footprints-blue.png"
+      image: "assets/images/footprints-blue.png"
     },
   },
+  
   "2": {
     id: "2",
     name: "The Watching Grounds",
@@ -233,21 +272,26 @@ export const levels: Record<string, Level> = {
     ambientLight: 0.15,
     weatherEffect: "mist",
     backgroundMusic: "watching_grounds",
-    items: [],
+    
+    items: [], // No items in this level
+    
     // DIFFERENT SPAWN SETTINGS FOR LEVEL 2
     monsters: [
-      createMonsterSpawnConfig('night_hound', 0.25, 0.4, 6), // Higher spawn rate and chance, more max instances
-      createMonsterSpawnConfig('abhuman', 0.1, 0.15, 1), // Lower spawn settings for this level
+      createMonsterInstance('night_hound', 0.25, 0.4, 6), // Higher spawn rate and chance, more max instances
+      createMonsterInstance('abhuman', 0.1, 0.15, 1), // Lower spawn settings for this level
     ],
-    objects: [],
+    
+    objects: [], // No objects in this level
+    
     pools: [
       {
         shortName: "poison_pool",
-        id:"poison_pool", 
+        id: "poison_pool", 
         position: { row: 150, col: 150 },
         image: "assets/pools/custom_poison_swamp.png", // Override image
       },
     ],
+    
     poolTemplates: poolTemplates,
     greatPowers: [], // No great powers in this level
    
@@ -262,10 +306,12 @@ export const levels: Record<string, Level> = {
         description: "Reach the eastern exit",
       },
     ],
+    
     footsteps: [],
+    
     footstepsTemplate: {
       name: "defaultFootstep",
-      id:"defaultFootstep",
+      id: "defaultFootstep",
       shortName: "defaultFootstep",
       size: { width: 1, height: 1 },
       description: "Default footstep template",

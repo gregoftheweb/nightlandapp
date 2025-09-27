@@ -3,15 +3,20 @@ import { View, StyleSheet, Dimensions, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { PositionDisplay } from "../../components/PositionDisplay";
 import { useGameContext } from "../../context/GameContext";
-import GameBoard, { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE } from "./GameBoard";
+import GameBoard, {
+  VIEWPORT_ROWS,
+  VIEWPORT_COLS,
+  CELL_SIZE,
+} from "./GameBoard";
 import PlayerHUD from "../../components/PlayerHUD";
 import Settings from "../../components/Settings";
+import Inventory from "../../components/Inventory"; // New import
 import { calculateCameraOffset } from "../../modules/utils";
-import { 
-  handleMovePlayer, 
-  handleCombatAction, 
-  handlePassTurn, 
-  initializeStartingMonsters 
+import {
+  handleMovePlayer,
+  handleCombatAction,
+  handlePassTurn,
+  initializeStartingMonsters,
 } from "../../modules/turnManager";
 import { Monster, LevelObjectInstance, Item, GreatPower } from "@/config/types";
 
@@ -23,8 +28,10 @@ const MOVEMENT_INTERVAL = 150;
 type Direction = "up" | "down" | "left" | "right" | "stay" | null;
 
 export default function Game() {
-  const { state, dispatch, showDialog, setOverlay, setDeathMessage } = useGameContext();
+  const { state, dispatch, showDialog, setOverlay, setDeathMessage } =
+    useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [inventoryVisible, setInventoryVisible] = useState(false); // New state
   const [targetId, setTargetId] = useState<string | undefined>();
   const router = useRouter();
 
@@ -92,7 +99,13 @@ export default function Game() {
   );
 
   const getMovementDirectionFromTap = useCallback(
-    (tapRow: number, tapCol: number, playerRow: number, playerCol: number, minDistance: number): Direction => {
+    (
+      tapRow: number,
+      tapCol: number,
+      playerRow: number,
+      playerCol: number,
+      minDistance: number
+    ): Direction => {
       const deltaRow = tapRow - playerRow;
       const deltaCol = tapCol - playerCol;
       const absRow = Math.abs(deltaRow);
@@ -162,7 +175,7 @@ export default function Game() {
 
   const handlePress = useCallback(
     (event: any) => {
-      if (state.inCombat || settingsVisible) return;
+      if (state.inCombat || settingsVisible || inventoryVisible) return; // Added inventoryVisible check
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - HUD_HEIGHT) return;
 
@@ -180,12 +193,19 @@ export default function Game() {
       if (!direction) return;
       performMove(direction);
     },
-    [state.inCombat, settingsVisible, calculateTapPosition, getMovementDirectionFromTap, performMove]
+    [
+      state.inCombat,
+      settingsVisible,
+      inventoryVisible,
+      calculateTapPosition,
+      getMovementDirectionFromTap,
+      performMove,
+    ] // Added inventoryVisible dependency
   );
 
   const handleLongPress = useCallback(
     (event: any) => {
-      if (state.inCombat || settingsVisible) return;
+      if (state.inCombat || settingsVisible || inventoryVisible) return; // Added inventoryVisible check
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - HUD_HEIGHT) return;
 
@@ -206,20 +226,37 @@ export default function Game() {
     [
       state.inCombat,
       settingsVisible,
+      inventoryVisible, // Added inventoryVisible dependency
       calculateTapPosition,
       getMovementDirectionFromTap,
       startLongPressInterval,
     ]
   );
 
-  const handlePressOut = useCallback(() => stopLongPressInterval(), [stopLongPressInterval]);
+  const handlePressOut = useCallback(
+    () => stopLongPressInterval(),
+    [stopLongPressInterval]
+  );
 
   const handleGearPress = useCallback(() => {
-    if (state.inCombat) showDialog("Cannot access settings during combat", 1500);
+    if (state.inCombat)
+      showDialog("Cannot access settings during combat", 1500);
     else setSettingsVisible(true);
   }, [state.inCombat, showDialog]);
 
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
+
+  // New inventory handlers
+  const handleInventoryPress = useCallback(() => {
+    if (state.inCombat)
+      showDialog("Cannot access inventory during combat", 1500);
+    else setInventoryVisible(true);
+  }, [state.inCombat, showDialog]);
+
+  const handleCloseInventory = useCallback(
+    () => setInventoryVisible(false),
+    []
+  );
 
   const handleTurnPress = useCallback(() => {
     console.log("\nhandleTurnPress called, inCombat:", state.inCombat);
@@ -227,7 +264,7 @@ export default function Game() {
       console.log("Blocked: Cannot pass turn while in combat");
       return;
     }
-    
+
     // Use the new handlePassTurn function
     handlePassTurn(state, dispatch, showDialog);
     console.log("handleTurnPress completed");
@@ -246,16 +283,33 @@ export default function Game() {
       console.warn("No target monster in attack slots");
       return;
     }
-    console.log("Player attack pressed, targeting:", targetMonster.name, "ID:", targetMonster.id);
-    
+    console.log(
+      "Player attack pressed, targeting:",
+      targetMonster.name,
+      "ID:",
+      targetMonster.id
+    );
+
     // Use the new handleCombatAction function
-    handleCombatAction(state, dispatch, "attack", targetMonster.id, showDialog, setDeathMessage);
+    handleCombatAction(
+      state,
+      dispatch,
+      "attack",
+      targetMonster.id,
+      showDialog,
+      setDeathMessage
+    );
   }, [state, dispatch, showDialog, setDeathMessage, targetId]);
 
   const handleMonsterTap = useCallback(
     (monster: Monster) => {
       if (state.inCombat) {
-        console.log("Monster tapped during combat:", monster.name, "ID:", monster.id);
+        console.log(
+          "Monster tapped during combat:",
+          monster.name,
+          "ID:",
+          monster.id
+        );
         setTargetId(monster.id);
         showDialog(`Targeting: ${monster.name || monster.shortName}`, 1000);
       }
@@ -264,30 +318,46 @@ export default function Game() {
     [state.inCombat, showDialog]
   );
 
-  const handleGreatPowerTap = useCallback((greatPower: GreatPower) => {
-    console.log("Great Power tapped:", greatPower.name, "awakened:", greatPower.awakened);
-    
-    // Check if player is close enough to potentially awaken the Great Power
-    const playerPos = state.player.position;
-    const powerPos = greatPower.position;
-    const distance = Math.abs(playerPos.row - powerPos.row) + Math.abs(playerPos.col - powerPos.col);
-    
-    if (!greatPower.awakened && distance <= 3) {
-      // Check awaken condition
-      if (greatPower.awakenCondition === "player_within_range") {
-        console.log("Awakening Great Power:", greatPower.name);
-        dispatch({ 
-          type: "AWAKEN_GREAT_POWER", 
-          payload: { greatPowerId: greatPower.id } 
-        });
-        showDialog(`${greatPower.name} has awakened! The ancient power stirs...`, 3000);
+  const handleGreatPowerTap = useCallback(
+    (greatPower: GreatPower) => {
+      console.log(
+        "Great Power tapped:",
+        greatPower.name,
+        "awakened:",
+        greatPower.awakened
+      );
+
+      // Check if player is close enough to potentially awaken the Great Power
+      const playerPos = state.player.position;
+      const powerPos = greatPower.position;
+      const distance =
+        Math.abs(playerPos.row - powerPos.row) +
+        Math.abs(playerPos.col - powerPos.col);
+
+      if (!greatPower.awakened && distance <= 3) {
+        // Check awaken condition
+        if (greatPower.awakenCondition === "player_within_range") {
+          console.log("Awakening Great Power:", greatPower.name);
+          dispatch({
+            type: "AWAKEN_GREAT_POWER",
+            payload: { greatPowerId: greatPower.id },
+          });
+          showDialog(
+            `${greatPower.name} has awakened! The ancient power stirs...`,
+            3000
+          );
+        }
+      } else if (!greatPower.awakened) {
+        showDialog(
+          `You sense the presence of ${greatPower.name}, but you must get closer to disturb its slumber.`,
+          2000
+        );
       }
-    } else if (!greatPower.awakened) {
-      showDialog(`You sense the presence of ${greatPower.name}, but you must get closer to disturb its slumber.`, 2000);
-    }
-    
-    // InfoBox is handled in GameBoard.tsx
-  }, [state.player.position, dispatch, showDialog]);
+
+      // InfoBox is handled in GameBoard.tsx
+    },
+    [state.player.position, dispatch, showDialog]
+  );
 
   const handlePlayerTap = useCallback(() => {
     // InfoBox is handled in GameBoard.tsx
@@ -318,19 +388,22 @@ export default function Game() {
           onItemTap={handleItemTap}
           onGreatPowerTap={handleGreatPowerTap}
         />
-        
         <PositionDisplay position={state.player.position} level={state.level} />
-
         <PlayerHUD
           hp={state.player.hp}
           maxHP={state.player.maxHP}
           onGearPress={handleGearPress}
           onTurnPress={handleTurnPress}
           onAttackPress={handleAttackPress}
+          onInventoryPress={handleInventoryPress} // New prop
           inCombat={state.inCombat}
         />
-
         <Settings visible={settingsVisible} onClose={handleCloseSettings} />
+        <Inventory
+          visible={inventoryVisible}
+          onClose={handleCloseInventory}
+          inventory={state.player.inventory}
+        />{/* Updated with inventory prop */}
       </View>
     </Pressable>
   );
