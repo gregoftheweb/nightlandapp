@@ -54,6 +54,19 @@ export const consumables: Record<string, GameObject> = {
   },
 };
 
+export const collectible: Record<string, GameObject> = {
+  maguffinRock: {
+    shortName: "maguffinRock",
+    category: "collectible",
+    name: "Maguffin Rock",
+    description: "A mysterious rock formation with unknown properties.",
+    type:"collectible",
+    image: maguffinRockIMG,
+    active: true,
+    zIndex: 0,
+  },
+};
+
 // BUILDINGS TEMPLATES - Pure templates without position data
 export const buildings: Record<string, GameObject> = {
   redoubt: {
@@ -100,17 +113,7 @@ export const buildings: Record<string, GameObject> = {
     active: true,
     zIndex: 0,
   },
-  maguffinRock: {
-    shortName: "maguffinRock",
-    category: "building",
-    name: "Maguffin Rock",
-    description: "A mysterious rock formation with unknown properties.",
-    width: 2,
-    height: 2,
-    image: maguffinRockIMG,
-    active: true,
-    zIndex: 0,
-  },
+
 };
 
 // UTILITY FUNCTIONS TO GET TEMPLATES
@@ -132,6 +135,12 @@ export const getConsumableTemplate = (
   return consumables[shortName];
 };
 
+
+export const getCollectibleTemplate = (
+  shortName: string
+): GameObject | undefined => {
+  return collectible[shortName];
+};
 export const getItemTemplate = (shortName: string): GameObject | undefined => {
   return weapons[shortName] || consumables[shortName];
 };

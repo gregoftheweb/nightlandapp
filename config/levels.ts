@@ -7,10 +7,11 @@ import {
   GreatPower,
   Item,
 } from "./types";
-import { 
-  getBuildingTemplate, 
-  getWeaponTemplate, 
-  getConsumableTemplate 
+import {
+  getBuildingTemplate,
+  getWeaponTemplate,
+  getConsumableTemplate,
+  getCollectibleTemplate,
 } from "./objects";
 import { getMonsterTemplate, getGreatPowerTemplate } from "./monsters";
 import { poolTemplates } from "./poolTemplates";
@@ -57,13 +58,18 @@ const createItemInstance = (
 ): Item => {
   // Try weapon first, then consumable
   let template = getWeaponTemplate(templateShortName);
-  let itemType: "weapon" | "consumable" = "weapon";
-  
+  let itemType: "weapon" | "consumable" | "collectible" = "weapon";
+
   if (!template) {
     template = getConsumableTemplate(templateShortName);
     itemType = "consumable";
   }
-  
+
+  if (!template) {
+    template = getCollectibleTemplate(templateShortName);
+    itemType = "collectible";
+  }
+
   if (!template) {
     throw new Error(`Item template ${templateShortName} not found`);
   }
@@ -88,12 +94,12 @@ const createItemInstance = (
     baseItem.damage = template.damage;
     baseItem.hitBonus = template.hitBonus;
   } else if (itemType === "consumable" && template.effects) {
-    const healEffect = template.effects.find(e => e.type === "heal");
+    const healEffect = template.effects.find((e) => e.type === "heal");
     if (healEffect) {
       baseItem.healAmount = healEffect.value;
     }
   }
-
+console.log("adding images:", baseItem.image);
   return {
     ...baseItem,
     ...overrides,
@@ -161,31 +167,31 @@ const createGreatPowerForLevel = (
 export const levels: Record<string, Level> = {
   "1": {
     id: "1",
-    name: "The Outer Wastes",
-    description: "Your first venture into the eternal darkness surrounding the Last Redoubt.",
+    name: "The Dark Outer Wastes",
+    description:
+      "Lands known by the Monstruwacans. Your first venture into the eternal darkness surrounding the Last Redoubt.",
     boardSize: { width: 400, height: 400 },
     playerSpawn: { row: 395, col: 200 },
     ambientLight: 0.2,
     weatherEffect: null,
     backgroundMusic: "nightland_ambient",
-    
+
     // ITEMS - Created from templates with specific positions
     items: [
       createItemInstance("healthPotion", { row: 375, col: 195 }),
       createItemInstance("ironSword", { row: 380, col: 200 }),
+      createItemInstance("maguffinRock", { row: 390, col: 210 }),
     ],
-    
+
     // MONSTERS - Individual spawn configurations per level
     monsters: [
-      createMonsterInstance('abhuman', 0.2, 0.3, 2), // Low spawn rate, higher chance, max 2
-      createMonsterInstance('night_hound', 0.15, 0.2, 3), // Moderate spawn settings, max 3
+      createMonsterInstance("abhuman", 0.2, 0.3, 2), // Low spawn rate, higher chance, max 2
+      createMonsterInstance("night_hound", 0.15, 0.2, 3), // Moderate spawn settings, max 3
     ],
-    
+
     // OBJECTS - Buildings and structures
-    objects: [
-      createObjectInstance("redoubt", { row: 396, col: 198 }),
-    ],
-    
+    objects: [createObjectInstance("redoubt", { row: 396, col: 198 })],
+
     // POOLS - Instance-specific configurations
     pools: [
       {
@@ -204,19 +210,23 @@ export const levels: Record<string, Level> = {
         effects: [{ type: "poison", description: "poison pool" }],
       },
     ],
-    
+
     poolTemplates: poolTemplates,
-    
+
     // GREAT POWERS - Boss-level entities
     greatPowers: [
-      createGreatPowerForLevel("watcher_se", { row: 100, col: 350 }, {
-        hp: 1000,
-        maxHP: 1000,
-        attack: 50,
-        ac: 25,
-      }),
+      createGreatPowerForLevel(
+        "watcher_se",
+        { row: 100, col: 350 },
+        {
+          hp: 1000,
+          maxHP: 1000,
+          attack: 50,
+          ac: 25,
+        }
+      ),
     ],
-    
+
     completionConditions: [
       {
         type: "reach_position",
@@ -229,7 +239,7 @@ export const levels: Record<string, Level> = {
         description: "Find the iron sword",
       },
     ],
-    
+
     footsteps: [
       {
         id: 1,
@@ -245,7 +255,7 @@ export const levels: Record<string, Level> = {
         templateId: "footstepsPersius",
       },
     ],
-    
+
     footstepsTemplate: {
       name: "Footsteps of Persius",
       shortName: "footstepsPersius",
@@ -255,10 +265,10 @@ export const levels: Record<string, Level> = {
         "You discover the faint tracks of your friend Persius in the dry dust of the Nightland. Your hope is forlorn, but meager as it is, there is some left that he might live..",
       type: "object",
       maxInstances: 100,
-      image: "assets/images/footprints-blue.png"
+      image: "assets/images/footprints-blue.png",
     },
   },
-  
+
   "2": {
     id: "2",
     name: "The Watching Grounds",
@@ -272,29 +282,29 @@ export const levels: Record<string, Level> = {
     ambientLight: 0.15,
     weatherEffect: "mist",
     backgroundMusic: "watching_grounds",
-    
+
     items: [], // No items in this level
-    
+
     // DIFFERENT SPAWN SETTINGS FOR LEVEL 2
     monsters: [
-      createMonsterInstance('night_hound', 0.25, 0.4, 6), // Higher spawn rate and chance, more max instances
-      createMonsterInstance('abhuman', 0.1, 0.15, 1), // Lower spawn settings for this level
+      createMonsterInstance("night_hound", 0.25, 0.4, 6), // Higher spawn rate and chance, more max instances
+      createMonsterInstance("abhuman", 0.1, 0.15, 1), // Lower spawn settings for this level
     ],
-    
+
     objects: [], // No objects in this level
-    
+
     pools: [
       {
         shortName: "poison_pool",
-        id: "poison_pool", 
+        id: "poison_pool",
         position: { row: 150, col: 150 },
         image: "assets/pools/custom_poison_swamp.png", // Override image
       },
     ],
-    
+
     poolTemplates: poolTemplates,
     greatPowers: [], // No great powers in this level
-   
+
     completionConditions: [
       {
         type: "defeat_all_monsters",
@@ -306,9 +316,9 @@ export const levels: Record<string, Level> = {
         description: "Reach the eastern exit",
       },
     ],
-    
+
     footsteps: [],
-    
+
     footstepsTemplate: {
       name: "defaultFootstep",
       id: "defaultFootstep",

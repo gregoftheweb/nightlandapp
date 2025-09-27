@@ -15,7 +15,7 @@ export const PositionDisplay: React.FC<PositionDisplayProps> = ({ position, leve
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
-        Level: {level.name || level.id} {"\n"}
+        {level.name || level.id} {"\n"}
         ({position.row},{position.col})
       </Text>
     </View>
@@ -26,7 +26,7 @@ export const PositionDisplay: React.FC<PositionDisplayProps> = ({ position, leve
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    top: 10,
+    top: 33,
     right: 10,
     backgroundColor: "rgba(0,0,0,0.5)", // semi-transparent background
     paddingHorizontal: 8,
