@@ -376,19 +376,48 @@ export const reducer = (
       };
 
     // ============ ITEM MANAGEMENT ============
- case "REMOVE_ITEM_FROM_GAMEBOARD":
-  console.log(`Removing item from gameboard: ${action.payload.shortName} from position (${action.payload.position.row}, ${action.payload.position.col})`);
-  return {
-    ...state,
-    items: state.items.filter(
-      (item) =>
-        !(
-          item.position?.row === action.payload.position.row &&
-          item.position?.col === action.payload.position.col &&
-          item.shortName === action.payload.shortName
-        )
-    ),
-  };
+
+    case "DROP_ITEM": {
+      const { item, position } = action.payload;
+
+      // remove from player inventory
+      const updatedInventory = state.player.inventory.filter(
+        (invItem) => invItem.id !== item.id
+      );
+
+      // create board item
+      const droppedItem = {
+        ...item,
+        position: { ...position },
+        active: true,
+        collectible: true,
+      };
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          inventory: updatedInventory,
+        },
+        items: [...state.items, droppedItem],
+      };
+    }
+
+    case "REMOVE_ITEM_FROM_GAMEBOARD":
+      console.log(
+        `Removing item from gameboard: ${action.payload.shortName} from position (${action.payload.position.row}, ${action.payload.position.col})`
+      );
+      return {
+        ...state,
+        items: state.items.filter(
+          (item) =>
+            !(
+              item.position?.row === action.payload.position.row &&
+              item.position?.col === action.payload.position.col &&
+              item.shortName === action.payload.shortName
+            )
+        ),
+      };
 
     case "UPDATE_ITEM":
       return {

@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Item } from "@/config/types";
+import { useGameContext } from "../context/GameContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -30,9 +31,18 @@ export default function Inventory({
     onClose();
   };
 
+  const { state, dispatch } = useGameContext();
+
   const handleDrop = (item: Item) => {
-    console.log("Drop item:", item.name);
-    // TODO: Implement drop functionality
+    console.log("Dropping item:", item.name);
+
+    dispatch({
+      type: "DROP_ITEM",
+      payload: {
+        item,
+        position: { ...state.player.position },
+      },
+    });
   };
 
   const handleUse = (item: Item) => {
@@ -45,47 +55,53 @@ export default function Inventory({
     // TODO: Implement equip functionality
   };
 
-
   const renderInventoryItem = (item: Item, index: number) => {
-  const isWeapon = item.type === "weapon";
-  console.log("in inventory render:", item.name)
-  return (
-    <View key={`${item.id || item.shortName}_${index}`} style={styles.inventoryItem}>
-      <Text style={styles.itemName}>{item.name}</Text>
-      <View style={styles.actionButtons}>
-        {<TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => handleDrop(item)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.actionButtonText}>drop</Text>
-        </TouchableOpacity>}
-        {<Text style={styles.separator}>|</Text>}
-        {<TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => handleUse(item)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.actionButtonText}>use</Text>
-        </TouchableOpacity>}
-        {isWeapon && (
-          <>
-            {<Text style={styles.separator}>|</Text>}
-            {<TouchableOpacity
+    const isWeapon = item.type === "weapon";
+    console.log("in inventory render:", item.name);
+    return (
+      <View
+        key={`${item.id || item.shortName}_${index}`}
+        style={styles.inventoryItem}
+      >
+        <Text style={styles.itemName}>{item.name}</Text>
+        <View style={styles.actionButtons}>
+          {
+            <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => handleEquip(item)}
+              onPress={() => handleDrop(item)}
               activeOpacity={0.7}
             >
-              <Text style={styles.actionButtonText}>equip</Text>
-            </TouchableOpacity>}
-          </>
-        )}
+              <Text style={styles.actionButtonText}>drop</Text>
+            </TouchableOpacity>
+          }
+          {<Text style={styles.separator}>|</Text>}
+          {
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleUse(item)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.actionButtonText}>use</Text>
+            </TouchableOpacity>
+          }
+          {isWeapon && (
+            <>
+              {<Text style={styles.separator}>|</Text>}
+              {
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => handleEquip(item)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.actionButtonText}>equip</Text>
+                </TouchableOpacity>
+              }
+            </>
+          )}
+        </View>
       </View>
-    </View>
-  );
-};
-
-
+    );
+  };
 
   return (
     <Modal

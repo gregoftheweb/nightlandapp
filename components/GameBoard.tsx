@@ -16,9 +16,9 @@ import {
   Item,
   GreatPower,
 } from "@/config/types";
-import { InfoBox } from "../../components/InfoBox";
-import { CombatDialog } from "../../components/CombatDialog";
-import { getTextContent } from "../../modules/utils";
+import { InfoBox } from "./InfoBox";
+import { CombatDialog } from "./CombatDialog";
+import { getTextContent } from "../modules/utils";
 
 const { width, height } = Dimensions.get("window");
 
@@ -126,7 +126,11 @@ export default function GameBoard({
     const statusInfo = greatPower.awakened ? "AWAKENED" : "Sleeping";
     showInfo(
       greatPower.name || greatPower.shortName || "Great Power",
-      `${greatPower.description || "An ancient entity of immense power."}\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${greatPower.maxHP}\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`
+      `${
+        greatPower.description || "An ancient entity of immense power."
+      }\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${
+        greatPower.maxHP
+      }\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`
     );
     onGreatPowerTap?.(greatPower);
   };
@@ -208,7 +212,10 @@ export default function GameBoard({
           worldCol === state.player.position.col;
 
         const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
-        const greatPowerAtPosition = findGreatPowerAtPosition(worldRow, worldCol);
+        const greatPowerAtPosition = findGreatPowerAtPosition(
+          worldRow,
+          worldCol
+        );
         const itemAtPosition = findItemAtPosition(worldRow, worldCol);
 
         tiles.push(
@@ -249,7 +256,13 @@ export default function GameBoard({
               >
                 <Image
                   source={getGreatPowerImage(greatPowerAtPosition)}
-                  style={[styles.character, { zIndex: 2, opacity: greatPowerAtPosition.awakened ? 1.0 : 0.7 }]}
+                  style={[
+                    styles.character,
+                    {
+                      zIndex: 2,
+                      opacity: greatPowerAtPosition.awakened ? 1.0 : 0.7,
+                    },
+                  ]}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
@@ -274,7 +287,7 @@ export default function GameBoard({
                 activeOpacity={0.7}
               >
                 <Image
-                  source={require("../../assets/images/christos.png")}
+                  source={require("../assets/images/christos.png")}
                   style={[styles.character, { zIndex: 3 }]}
                   resizeMode="contain"
                 />
@@ -429,13 +442,12 @@ const getMonsterImage = (monster: Monster) => {
   }
 
   const monsterImages: { [key: string]: any } = {
-    abhuman: require("../../assets/images/abhuman.png"),
-    night_hound: require("../../assets/images/nighthound4.png"),
+    abhuman: require("../assets/images/abhuman.png"),
+    night_hound: require("../assets/images/nighthound4.png"),
   };
 
   return (
-    monsterImages[monster.shortName] ||
-    require("../../assets/images/abhuman.png")
+    monsterImages[monster.shortName] || require("../assets/images/abhuman.png")
   );
 };
 
@@ -445,21 +457,21 @@ const getGreatPowerImage = (greatPower: GreatPower) => {
   }
 
   const greatPowerImages: { [key: string]: any } = {
-    watcher_se: require("../../assets/images/watcherse.png"),
+    watcher_se: require("../assets/images/watcherse.png"),
   };
 
   return (
     greatPowerImages[greatPower.shortName] ||
-    require("../../assets/images/watcherse.png")
+    require("../assets/images/watcherse.png")
   );
 };
 
 const getItemImage = (shortName: string) => {
   const itemImages: { [key: string]: any } = {
-    healthPotion: require("../../assets/images/potion.png"),
-    ironSword: require("../../assets/images/shortSword.png"),
+    healthPotion: require("../assets/images/potion.png"),
+    ironSword: require("../assets/images/shortSword.png"),
   };
-  return itemImages[shortName] || require("../../assets/images/potion.png");
+  return itemImages[shortName] || require("../assets/images/potion.png");
 };
 
 const styles = StyleSheet.create({

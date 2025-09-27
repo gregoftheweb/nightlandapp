@@ -1,8 +1,11 @@
 // /context/GameContext.tsx
 import React, { createContext, useContext, ReactNode, useReducer } from "react";
-import { deserializeGameState, createInitialGameState } from "../modules/gameState";
-import { reducer as gameReducer } from "../modules/gameState";
-import { GameState } from '../config/types';
+import {
+  deserializeGameState,
+  createInitialGameState,
+} from "../modules/gameState";
+import { reducer } from "../modules/reducers"; // ⬅️ import reducer directly
+import { GameState } from "../config/types";
 
 interface GameContextType {
   state: GameState;
@@ -10,7 +13,6 @@ interface GameContextType {
   showDialog: (message: string, duration?: number) => void;
   setOverlay: (overlay: any) => void;
   setDeathMessage: (message: string) => void;
-  initialGameState?: string;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -20,13 +22,15 @@ interface GameProviderProps {
   initialGameState?: string;
 }
 
-export const GameProvider = ({ children, initialGameState }: GameProviderProps) => {
- 
-  const initialState = initialGameState 
-    ? deserializeGameState(initialGameState) 
+export const GameProvider = ({
+  children,
+  initialGameState,
+}: GameProviderProps) => {
+  const initialState = initialGameState
+    ? deserializeGameState(initialGameState)
     : createInitialGameState();
- 
-  const [state, dispatch] = useReducer(gameReducer, initialState);
+
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const showDialog = (message: string, duration?: number) =>
     console.log("Dialog:", message, duration);
@@ -34,7 +38,9 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
   const setDeathMessage = (message: string) => console.log("Death:", message);
 
   return (
-    <GameContext.Provider value={{ state, dispatch, showDialog, setOverlay, setDeathMessage, initialGameState }}>
+    <GameContext.Provider
+      value={{ state, dispatch, showDialog, setOverlay, setDeathMessage }}
+    >
       {children}
     </GameContext.Provider>
   );
@@ -42,6 +48,7 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
 
 export const useGameContext = () => {
   const context = useContext(GameContext);
-  if (!context) throw new Error("useGameContext must be used within a GameProvider");
+  if (!context)
+    throw new Error("useGameContext must be used within a GameProvider");
   return context;
 };

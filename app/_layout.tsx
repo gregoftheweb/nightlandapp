@@ -71,12 +71,12 @@ export default function Layout() {
           translucent={true} // Android: ensures status bar doesn't affect layout
           backgroundColor="transparent" // Android: prevents color artifacts
         />
-        <GameProvider initialGameState={serializeGameState(gameState)}>
+
+        <GameProvider>
           <Stack
             screenOptions={{
               headerShown: false,
               gestureEnabled: true,
-              // Fallback for screen-specific status bar control
               statusBarHidden: true,
             }}
           >
@@ -85,8 +85,8 @@ export default function Layout() {
             <Stack.Screen
               name="game/index"
               options={{
-                presentation: "fullScreenModal", // Enhances immersion
-                statusBarHidden: true, // Explicitly hide for game screen
+                presentation: "fullScreenModal",
+                statusBarHidden: true,
               }}
             />
           </Stack>

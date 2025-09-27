@@ -7,7 +7,7 @@ import GameBoard, {
   VIEWPORT_ROWS,
   VIEWPORT_COLS,
   CELL_SIZE,
-} from "./GameBoard";
+} from "../../components/GameBoard";
 import PlayerHUD from "../../components/PlayerHUD";
 import Settings from "../../components/Settings";
 import Inventory from "../../components/Inventory"; // New import
