@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   Modal,
   NativeSyntheticEvent,
   NativeTouchEvent,
+  Animated,
 } from "react-native";
+import { audioManager } from "../modules/audioManager";
 
 const { width, height } = Dimensions.get("window");
 
@@ -17,10 +19,81 @@ interface SettingsProps {
   onClose: () => void;
 }
 
+interface ToggleProps {
+  value: boolean;
+  onToggle: (value: boolean) => void;
+  label: string;
+}
+
+function ModernToggle({ value, onToggle, label }: ToggleProps) {
+  const [animation] = useState(new Animated.Value(value ? 1 : 0));
+
+  useEffect(() => {
+    Animated.timing(animation, {
+      toValue: value ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [value, animation]);
+
+  const handlePress = () => {
+    onToggle(!value);
+  };
+
+  const translateX = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
+
+  const backgroundColor = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(120, 120, 120, 0.3)', '#4CAF50'],
+  });
+
+  return (
+    <View style={styles.toggleContainer}>
+      <Text style={styles.toggleLabel}>{label}</Text>
+      <TouchableOpacity
+        style={styles.toggleButton}
+        onPress={handlePress}
+        activeOpacity={0.8}
+      >
+        <Animated.View style={[styles.toggleTrack, { backgroundColor }]}>
+          <Animated.View
+            style={[
+              styles.toggleThumb,
+              {
+                transform: [{ translateX }],
+                backgroundColor: value ? '#fff' : '#f0f0f0',
+              },
+            ]}
+          />
+        </Animated.View>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function Settings({ visible, onClose }: SettingsProps) {
+  const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(
+    audioManager.getIsEnabled()
+  );
+
+  // Update local state when modal becomes visible
+  useEffect(() => {
+    if (visible) {
+      setBackgroundMusicEnabled(audioManager.getIsEnabled());
+    }
+  }, [visible]);
+
   const handleClosePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
-    event.stopPropagation(); // Prevent touch from bubbling to parent
+    event.stopPropagation();
     onClose();
+  };
+
+  const handleBackgroundMusicToggle = (enabled: boolean) => {
+    setBackgroundMusicEnabled(enabled);
+    audioManager.setEnabled(enabled);
   };
 
   return (
@@ -32,7 +105,7 @@ export default function Settings({ visible, onClose }: SettingsProps) {
     >
       <View
         style={styles.overlay}
-        onTouchStart={(event) => event.stopPropagation()} // Capture touches on overlay
+        onTouchStart={(event) => event.stopPropagation()}
       >
         <View style={styles.settingsContainer}>
           <View style={styles.header}>
@@ -46,7 +119,14 @@ export default function Settings({ visible, onClose }: SettingsProps) {
             </TouchableOpacity>
           </View>
           <View style={styles.content}>
-            <Text style={styles.placeholder}>Settings options will go here</Text>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Audio</Text>
+              <ModernToggle
+                value={backgroundMusicEnabled}
+                onToggle={handleBackgroundMusicToggle}
+                label="Background Music"
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -109,10 +189,51 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  placeholder: {
+  section: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
     color: "#fff",
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.3)",
+    paddingBottom: 5,
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+  },
+  toggleLabel: {
     fontSize: 16,
-    textAlign: "center",
-    marginTop: 50,
+    color: "#fff",
+    fontWeight: "500",
+  },
+  toggleButton: {
+    padding: 2,
+  },
+  toggleTrack: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    position: "relative",
+  },
+  toggleThumb: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });

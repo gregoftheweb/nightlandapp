@@ -10,6 +10,7 @@ import {
 } from "../modules/gameState";
 import { GameProvider } from "../context/GameContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { audioManager } from "../modules/audioManager";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,6 +34,26 @@ export default function Layout() {
   useEffect(() => {
     onLayoutRootView();
   }, [fontsLoaded, onLayoutRootView]);
+
+  // Initialize audio system
+  useEffect(() => {
+    const initAudio = async () => {
+      try {
+        await audioManager.initializeAudio();
+        await audioManager.loadBackgroundMusic();
+        console.log("Audio system initialized");
+      } catch (error) {
+        console.error("Failed to initialize audio system:", error);
+      }
+    };
+
+    initAudio();
+
+    // Cleanup on unmount
+    return () => {
+      audioManager.cleanup();
+    };
+  }, []);
 
   // Android immersive mode and status bar handling
   useEffect(() => {

@@ -10,7 +10,7 @@ import GameBoard, {
 } from "../../components/GameBoard";
 import PlayerHUD from "../../components/PlayerHUD";
 import Settings from "../../components/Settings";
-import Inventory from "../../components/Inventory"; // New import
+import Inventory from "../../components/Inventory";
 import { calculateCameraOffset } from "../../modules/utils";
 import {
   handleMovePlayer,
@@ -19,6 +19,8 @@ import {
   initializeStartingMonsters,
 } from "../../modules/turnManager";
 import { Monster, LevelObjectInstance, Item, GreatPower } from "@/config/types";
+import { audioManager } from "../../modules/audioManager";
+import { useFocusEffect } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 const MIN_MOVE_DISTANCE = 1;
@@ -31,7 +33,7 @@ export default function Game() {
   const { state, dispatch, showDialog, setOverlay, setDeathMessage } =
     useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const [inventoryVisible, setInventoryVisible] = useState(false); // New state
+  const [inventoryVisible, setInventoryVisible] = useState(false);
   const [targetId, setTargetId] = useState<string | undefined>();
   const router = useRouter();
 
@@ -41,10 +43,24 @@ export default function Game() {
     stateRef.current = state;
   }, [state]);
 
+  // Start background music when game screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      audioManager.playBackgroundMusic();
+      
+      return () => {
+        // Pause when screen loses focus (optional)
+        audioManager.pauseBackgroundMusic();
+      };
+    }, [])
+  );
+
   // Handle player death navigation
   useEffect(() => {
     if (state.player.hp <= 0) {
       console.log("Player died, navigating to death screen");
+      // Stop background music on death
+      audioManager.pauseBackgroundMusic();
       // Add a small delay to allow death message to show
       setTimeout(() => {
         // Reset game state before navigation
@@ -175,7 +191,7 @@ export default function Game() {
 
   const handlePress = useCallback(
     (event: any) => {
-      if (state.inCombat || settingsVisible || inventoryVisible) return; // Added inventoryVisible check
+      if (state.inCombat || settingsVisible || inventoryVisible) return;
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - HUD_HEIGHT) return;
 
@@ -200,12 +216,12 @@ export default function Game() {
       calculateTapPosition,
       getMovementDirectionFromTap,
       performMove,
-    ] // Added inventoryVisible dependency
+    ]
   );
 
   const handleLongPress = useCallback(
     (event: any) => {
-      if (state.inCombat || settingsVisible || inventoryVisible) return; // Added inventoryVisible check
+      if (state.inCombat || settingsVisible || inventoryVisible) return;
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - HUD_HEIGHT) return;
 
@@ -226,7 +242,7 @@ export default function Game() {
     [
       state.inCombat,
       settingsVisible,
-      inventoryVisible, // Added inventoryVisible dependency
+      inventoryVisible,
       calculateTapPosition,
       getMovementDirectionFromTap,
       startLongPressInterval,
@@ -246,7 +262,6 @@ export default function Game() {
 
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
 
-  // New inventory handlers
   const handleInventoryPress = useCallback(() => {
     if (state.inCombat)
       showDialog("Cannot access inventory during combat", 1500);
@@ -265,7 +280,6 @@ export default function Game() {
       return;
     }
 
-    // Use the new handlePassTurn function
     handlePassTurn(state, dispatch, showDialog);
     console.log("handleTurnPress completed");
   }, [state, dispatch, showDialog]);
@@ -290,7 +304,6 @@ export default function Game() {
       targetMonster.id
     );
 
-    // Use the new handleCombatAction function
     handleCombatAction(
       state,
       dispatch,
@@ -313,7 +326,6 @@ export default function Game() {
         setTargetId(monster.id);
         showDialog(`Targeting: ${monster.name || monster.shortName}`, 1000);
       }
-      // InfoBox is handled in GameBoard.tsx
     },
     [state.inCombat, showDialog]
   );
@@ -327,7 +339,6 @@ export default function Game() {
         greatPower.awakened
       );
 
-      // Check if player is close enough to potentially awaken the Great Power
       const playerPos = state.player.position;
       const powerPos = greatPower.position;
       const distance =
@@ -335,7 +346,6 @@ export default function Game() {
         Math.abs(playerPos.col - powerPos.col);
 
       if (!greatPower.awakened && distance <= 3) {
-        // Check awaken condition
         if (greatPower.awakenCondition === "player_within_range") {
           console.log("Awakening Great Power:", greatPower.name);
           dispatch({
@@ -353,8 +363,6 @@ export default function Game() {
           2000
         );
       }
-
-      // InfoBox is handled in GameBoard.tsx
     },
     [state.player.position, dispatch, showDialog]
   );
@@ -395,7 +403,7 @@ export default function Game() {
           onGearPress={handleGearPress}
           onTurnPress={handleTurnPress}
           onAttackPress={handleAttackPress}
-          onInventoryPress={handleInventoryPress} // New prop
+          onInventoryPress={handleInventoryPress}
           inCombat={state.inCombat}
         />
         <Settings visible={settingsVisible} onClose={handleCloseSettings} />
@@ -403,7 +411,7 @@ export default function Game() {
           visible={inventoryVisible}
           onClose={handleCloseInventory}
           inventory={state.player.inventory}
-        />{/* Updated with inventory prop */}
+        />
       </View>
     </Pressable>
   );
