@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Image,
@@ -6,6 +6,7 @@ import {
   Dimensions,
   ImageSourcePropType,
   TouchableOpacity,
+  ImageBackground,
 } from "react-native";
 import {
   Monster,
@@ -25,6 +26,11 @@ const { width, height } = Dimensions.get("window");
 const CELL_SIZE = 32;
 const VIEWPORT_COLS = Math.floor(width / CELL_SIZE);
 const VIEWPORT_ROWS = Math.floor(height / CELL_SIZE);
+
+// Background tile configuration
+const BACKGROUND_TILE_SIZE = 320; // Size of your background tile image
+const BACKGROUND_SCALE = CELL_SIZE / 32; // Adjust this to scale the background relative to game cells
+const SCALED_TILE_SIZE = BACKGROUND_TILE_SIZE * BACKGROUND_SCALE;
 
 interface GameBoardProps {
   state: GameState;
@@ -196,6 +202,19 @@ export default function GameBoard({
         item.position?.row === worldRow &&
         item.position?.col === worldCol
     );
+  };
+
+  // Calculate background offset for seamless scrolling
+  const getBackgroundStyle = () => {
+    const scaledTileSize = BACKGROUND_TILE_SIZE * BACKGROUND_SCALE;
+    const offsetX = -(cameraOffset.offsetX * CELL_SIZE) % scaledTileSize;
+    const offsetY = -(cameraOffset.offsetY * CELL_SIZE) % scaledTileSize;
+
+    return {
+      transform: [{ translateX: offsetX }, { translateY: offsetY }],
+      width: width + scaledTileSize,
+      height: height + scaledTileSize,
+    };
   };
 
   const renderGridCells = (): React.ReactNode[] => {
@@ -398,9 +417,66 @@ export default function GameBoard({
     return [...gridCells, ...combatMonsters, ...buildings];
   };
 
+  const tiledBackground = useMemo(() => {
+    // number of tiles to cover the screen + 1 buffer row/col each side
+    const cols = Math.ceil(width / SCALED_TILE_SIZE) + 2;
+    const rows = Math.ceil(height / SCALED_TILE_SIZE) + 2;
+
+    // normalize remainder to [0, SCALED_TILE_SIZE)
+    const rawX =
+      (((cameraOffset.offsetX * CELL_SIZE) % SCALED_TILE_SIZE) +
+        SCALED_TILE_SIZE) %
+      SCALED_TILE_SIZE;
+    const rawY =
+      (((cameraOffset.offsetY * CELL_SIZE) % SCALED_TILE_SIZE) +
+        SCALED_TILE_SIZE) %
+      SCALED_TILE_SIZE;
+
+    // offset in range [-SCALED_TILE_SIZE+1 .. 0]
+    const offsetX = -rawX;
+    const offsetY = -rawY;
+
+    const tiles: React.ReactNode[] = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const left = offsetX + c * SCALED_TILE_SIZE;
+        const top = offsetY + r * SCALED_TILE_SIZE;
+
+        tiles.push(
+          <Image
+            key={`bg-${r}-${c}`}
+            source={require("../assets/images/dark-green-bg-320.png")}
+            style={{
+              position: "absolute",
+              left,
+              top,
+              width: SCALED_TILE_SIZE,
+              height: SCALED_TILE_SIZE,
+            }}
+            resizeMode="stretch" // fill tile exactly
+          />
+        );
+      }
+    }
+    return tiles;
+  }, [
+    cameraOffset.offsetX,
+    cameraOffset.offsetY,
+    width,
+    height,
+    SCALED_TILE_SIZE,
+  ]);
+
   return (
     <View style={styles.gridContainer}>
-      {renderGrid()}
+      {/* Tiled Background */}
+
+      <View style={styles.backgroundContainer} pointerEvents="none">
+        {tiledBackground}
+      </View>
+
+      {/* Game Content */}
+      <View style={styles.gameContent}>{renderGrid()}</View>
 
       <InfoBox
         visible={infoVisible}
@@ -430,10 +506,14 @@ const getCellBackgroundColor = (
   hasGreatPower: GreatPower | undefined,
   inCombat: boolean
 ) => {
-  if (isPlayer) return "#444";
-  if (hasGreatPower) return hasGreatPower.awakened ? "#644" : "#422";
-  if (hasMonster) return "#622";
-  return "#111";
+  // Make cell backgrounds more transparent to show the tiled background
+  if (isPlayer) return "rgba(68, 68, 68, 0.7)";
+  if (hasGreatPower)
+    return hasGreatPower.awakened
+      ? "rgba(102, 68, 68, 0.6)"
+      : "rgba(68, 34, 34, 0.5)";
+  if (hasMonster) return "rgba(102, 34, 34, 0.6)";
+  return "rgba(17, 17, 17, 0.3)"; // Very transparent for normal cells
 };
 
 const getMonsterImage = (monster: Monster) => {
@@ -479,14 +559,33 @@ const styles = StyleSheet.create({
     width,
     height,
     position: "relative",
-    backgroundColor: "#111",
+    overflow: "hidden", // Prevent background from showing outside bounds
+  },
+  backgroundTile: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    zIndex: -1, // Behind everything else
+  },
+  backgroundContainer: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    width,
+    height,
+    // no zIndex required because you render it first; pointerEvents ensures touches pass through
+  },
+  gameContent: {
+    width,
+    height,
+    position: "relative",
   },
   cell: {
     width: CELL_SIZE,
     height: CELL_SIZE,
     position: "absolute",
     borderWidth: 0.5,
-    borderColor: "#222",
+    borderColor: "rgba(8, 8, 8, 0.3)", // More transparent borders
   },
   character: {
     width: CELL_SIZE * 0.8,
