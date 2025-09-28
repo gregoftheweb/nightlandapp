@@ -1,5 +1,6 @@
 // modules/interactions.ts - Handle item and object interactions
 import { GameState, Position, Item } from "../config/types";
+import { createItemInstance } from "../config/levels";
 
 // ==================== ITEM INTERACTIONS ====================
 
@@ -160,29 +161,33 @@ const handleWeaponCollection = (
     return;
   }
 
-  // Find the weapon in the weapons config
-  const weapon = state.weapons?.find((w: Item) => w.id === item.weaponId);
-  if (!weapon) {
-    console.warn("❌ Weapon not found in config:", item.weaponId);
+  // Create full inventory item from shortName
+  const inventoryItem = createItemInstance(
+    item.shortName,
+    state.player.position
+  );
+
+  if (!inventoryItem) {
+    console.warn("❌ Failed to create weapon instance:", item.shortName);
     showDialog?.(`Error: Weapon data not found for ${item.name}.`, 3000);
     return;
   }
 
-  const weaponEntry = {
-    id: weapon.id,
-    equipped: false,
-  };
+  console.log(`✅ Adding weapon to inventory:`, inventoryItem);
 
-  console.log(`✅ Adding weapon to inventory:`, weaponEntry);
-
+  // Dispatch full weapon object
   dispatch({
     type: "ADD_TO_WEAPONS",
-    payload: { weapon: weaponEntry },
+    payload: { weapon: inventoryItem },
   });
 
-  showDialog?.(`Picked up ${weapon.name}!`, 3000);
-  console.log(`📦 Weapon added: ${weapon.name} (ID: ${weapon.id})`);
+  showDialog?.(`Picked up ${inventoryItem.name}!`, 3000);
+  console.log(`📦 Weapon added: ${inventoryItem.name} (shortName: ${item.shortName})`);
 };
+
+
+
+
 
 // ==================== CONSUMABLE COLLECTION ====================
 
@@ -195,20 +200,10 @@ const handleConsumableCollection = (
   console.log(`🧪 Attempting to collect consumable: ${item.name}`);
 
   // Create a proper inventory item with unique ID
-  const inventoryItem: Item = {
-    id: `${item.shortName}-${Date.now()}`,
-    shortName: item.shortName,
-    category: item.category,
-    name: item.name,
-    description: item.description,
-    type: item.type,
-    collectible: item.collectible,
-    image: item.image,
-    healAmount: item.healAmount,
-    damage: item.damage,
-    // Don't include position in inventory items
-    active: true,
-  };
+  const inventoryItem = createItemInstance(
+    item.shortName,
+    state.player.position
+  );
 
   console.log(`✅ Adding consumable to inventory:`, {
     id: inventoryItem.id,

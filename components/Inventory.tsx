@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Item } from "@/config/types";
 import { useGameContext } from "../context/GameContext";
+import { useItem, canUseItem } from "@/modules/effects";
 
 const { width, height } = Dimensions.get("window");
 
@@ -19,12 +20,14 @@ interface InventoryProps {
   visible: boolean;
   onClose: () => void;
   inventory: Item[];
+  showDialog?: (message: string, duration?: number) => void;
 }
 
 export default function Inventory({
   visible,
   onClose,
   inventory,
+  showDialog,
 }: InventoryProps) {
   const handleClosePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
     event.stopPropagation(); // Prevent touch from bubbling to parent
@@ -46,8 +49,36 @@ export default function Inventory({
   };
 
   const handleUse = (item: Item) => {
-    console.log("Use item:", item.name);
-    // TODO: Implement use functionality
+    console.log("Using item:", item.name);
+    
+    // Check if item can be used
+    if (!canUseItem(item)) {
+      showDialog?.(`${item.name} cannot be used.`, 2000);
+      return;
+    }
+
+    // Use the item through the effects system
+    const result = useItem(item, {
+      state,
+      dispatch,
+      showDialog,
+      item
+    });
+
+    // Handle the result
+    if (result.success) {
+      // Remove item from inventory if it should be consumed
+      if (result.consumeItem) {
+        dispatch({
+          type: "REMOVE_FROM_INVENTORY",
+          payload: { id: item.id }
+        });
+        console.log(`Consumed item: ${item.name}`);
+      }
+    } else {
+      // Show failure message
+      showDialog?.(result.message, 2000);
+    }
   };
 
   const handleEquip = (item: Item) => {
@@ -57,7 +88,10 @@ export default function Inventory({
 
   const renderInventoryItem = (item: Item, index: number) => {
     const isWeapon = item.type === "weapon";
+    const isUsable = canUseItem(item);
+    
     console.log("in inventory render:", item.name);
+    
     return (
       <View
         key={`${item.id || item.shortName}_${index}`}
@@ -65,37 +99,43 @@ export default function Inventory({
       >
         <Text style={styles.itemName}>{item.name}</Text>
         <View style={styles.actionButtons}>
-          {
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleDrop(item)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.actionButtonText}>drop</Text>
-            </TouchableOpacity>
-          }
-          {<Text style={styles.separator}>|</Text>}
-          {
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleUse(item)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.actionButtonText}>use</Text>
-            </TouchableOpacity>
-          }
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleDrop(item)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.actionButtonText}>drop</Text>
+          </TouchableOpacity>
+          
+          <Text style={styles.separator}>|</Text>
+          
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              !isUsable && styles.disabledButton
+            ]}
+            onPress={() => handleUse(item)}
+            activeOpacity={isUsable ? 0.7 : 1}
+            disabled={!isUsable}
+          >
+            <Text style={[
+              styles.actionButtonText,
+              !isUsable && styles.disabledButtonText
+            ]}>
+              use
+            </Text>
+          </TouchableOpacity>
+          
           {isWeapon && (
             <>
-              {<Text style={styles.separator}>|</Text>}
-              {
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => handleEquip(item)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.actionButtonText}>equip</Text>
-                </TouchableOpacity>
-              }
+              <Text style={styles.separator}>|</Text>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleEquip(item)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.actionButtonText}>equip</Text>
+              </TouchableOpacity>
             </>
           )}
         </View>
@@ -233,6 +273,12 @@ const styles = StyleSheet.create({
     color: "#990000",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  disabledButtonText: {
+    color: "rgba(153, 0, 0, 0.5)",
   },
   separator: {
     color: "rgba(255, 255, 255, 0.3)",

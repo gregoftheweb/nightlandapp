@@ -25,14 +25,7 @@ export interface GameObject {
   position?: Position;
   active?: boolean;
   size?: { width: number; height: number };
-  effects?: Array<{
-    type: string;
-    duration?: number;
-    monsterType?: string;
-    count?: number;
-    range?: number;
-    value?: number;
-  }>;
+  effects?: Effect[];
   collisionMask?: Array<{
     row: number;
     col: number;
@@ -63,14 +56,14 @@ export interface Monster extends GameObject {
 export interface GreatPower extends GameObject {
   id: string;
   name: string;
-    position: Position;
+  position: Position;
   hp: number;
   maxHP: number;
   attack: number;
   ac: number;
-  awakened:boolean;
-  awakenCondition:string;
-  soulKey?:string;
+  awakened: boolean;
+  awakenCondition: string;
+  soulKey?: string;
 }
 
 export interface LevelMonsterInstance extends Monster {
@@ -92,6 +85,10 @@ export interface Item extends GameObject {
     image: string;
     text: string;
   };
+  usable?: boolean;
+  consumeOnUse?: boolean; // Renamed to avoid confusion with type
+  maxUses?: number;
+  currentUses?: number;
 }
 
 export interface LevelObjectInstance extends GameObject {
@@ -144,8 +141,80 @@ export interface Effect {
     | "deactivate"
     | "quest_complete"
     | "quest_failed"
-    | "target_destroyed";
-  description: string;
+    | "target_destroyed"
+    | "swarm" // Add swarm for existing code
+    | "hide"; // Add hide for existing code
+
+  description?: string;
+
+  // Numeric values
+  value?: number; // Primary effect value (heal amount, damage, etc.)
+  duration?: number; // Duration in turns/seconds
+  range?: number; // Effect range in grid units
+  count?: number; // Number of spawned entities
+  amount?: number; // Alternative to value for clarity
+
+  // Target specification
+  target?: "self" | "enemy" | "ally" | "area" | "all";
+  targetId?: string; // Specific target ID
+
+  // Spawn/summon properties
+  monsterType?: string; // Type of monster to spawn
+  entityId?: string; // ID of entity to summon/create
+
+  // Position and area effects
+  position?: Position; // Specific position for effect
+  area?: Area; // Area of effect
+
+  // Conditional logic
+  condition?: {
+    type: "hp_below" | "hp_above" | "has_item" | "level_check" | "random";
+    value?: number;
+    probability?: number; // 0-1 for random conditions
+    itemId?: string;
+  };
+
+  // Status effects
+  statusEffect?: {
+    id: string;
+    name: string;
+    icon?: string;
+    stackable?: boolean;
+    maxStacks?: number;
+  };
+
+  // Resource costs
+  cost?: {
+    hp?: number;
+    mp?: number;
+    stamina?: number;
+    item?: string;
+    quantity?: number;
+  };
+
+  // Success/failure messaging
+  successMessage?: string;
+  failureMessage?: string;
+
+  // Cooldown and usage limits
+  cooldown?: number; // Cooldown in turns
+  maxUses?: number; // Max uses per item/ability
+  currentUses?: number; // Current usage count
+
+  // Animation and visual effects
+  animation?: {
+    type: string;
+    duration: number;
+    color?: string;
+    particle?: string;
+  };
+
+  // Sound effects
+  sound?: {
+    trigger: string;
+    success?: string;
+    failure?: string;
+  };
 }
 
 export interface SpawnZone {
@@ -178,7 +247,7 @@ export interface CompletionCondition {
 export interface PoolInstance {
   id: string;
   position: Position;
-  image:string;
+  image: string;
   shortName?: string;
   name?: string;
   active?: boolean;
@@ -189,7 +258,7 @@ export interface PoolInstance {
 export interface PoolTemplate {
   maxInstances: number;
   shortName?: string;
-  image:string;
+  image: string;
   name?: string;
   size?: { width: number; height: number };
   effects?: Effect[];
@@ -199,21 +268,19 @@ export interface FootstepInstance {
   id: number;
   position: Position;
   direction: number;
-  templateId:string;
+  templateId: string;
 }
 
 export interface FootstepTemplate {
-  id:string;
+  id: string;
   name: string;
   shortName: string;
   size?: { width: number; height: number };
   maxInstances: number;
   description?: string;
-  image:string;
+  image: string;
   type?: string;
 }
-
-
 
 export interface BossEncounter {
   id: string;

@@ -51,7 +51,7 @@ const createObjectInstance = (
 };
 
 // Helper function to create item instances from templates
-const createItemInstance = (
+export const createItemInstance = (
   templateShortName: string,
   position: Position,
   overrides: Partial<Item> = {}
@@ -86,6 +86,7 @@ const createItemInstance = (
     type: itemType,
     collectible: true,
     id: `${template.shortName}_${position.row}_${position.col}`,
+    effects: template.effects, // Add this line
   };
 
   // Add specific properties based on type
@@ -99,7 +100,7 @@ const createItemInstance = (
       baseItem.healAmount = healEffect.value;
     }
   }
-console.log("adding images:", baseItem.image);
+  console.log("adding images:", baseItem.image);
   return {
     ...baseItem,
     ...overrides,
