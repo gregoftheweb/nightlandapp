@@ -20,6 +20,7 @@ import {
 import { InfoBox } from "./InfoBox";
 import { CombatDialog } from "./CombatDialog";
 import { getTextContent } from "../modules/utils";
+import { getItemTemplate } from "@/config/objects"; // Added import for template lookup
 
 const { width, height } = Dimensions.get("window");
 
@@ -217,55 +218,55 @@ export default function GameBoard({
     };
   };
 
-// Simplified renderGridCells - only renders background grid cells
-const renderGridCells = (): React.ReactNode[] => {
-  const tiles: React.ReactNode[] = [];
+  // Simplified renderGridCells - only renders background grid cells
+  const renderGridCells = (): React.ReactNode[] => {
+    const tiles: React.ReactNode[] = [];
 
-  for (let row = 0; row < VIEWPORT_ROWS; row++) {
-    for (let col = 0; col < VIEWPORT_COLS; col++) {
-      const worldRow = row + cameraOffset.offsetY;
-      const worldCol = col + cameraOffset.offsetX;
+    for (let row = 0; row < VIEWPORT_ROWS; row++) {
+      for (let col = 0; col < VIEWPORT_COLS; col++) {
+        const worldRow = row + cameraOffset.offsetY;
+        const worldCol = col + cameraOffset.offsetX;
 
-      const isPlayer =
-        !!state.player?.position &&
-        worldRow === state.player.position.row &&
-        worldCol === state.player.position.col;
+        const isPlayer =
+          !!state.player?.position &&
+          worldRow === state.player.position.row &&
+          worldCol === state.player.position.col;
 
-      const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
-      const greatPowerAtPosition = findGreatPowerAtPosition(worldRow, worldCol);
+        const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
+        const greatPowerAtPosition = findGreatPowerAtPosition(
+          worldRow,
+          worldCol
+        );
 
-      tiles.push(
-        <View
-          key={`cell-${worldRow}-${worldCol}`}
-          style={[
-            styles.cell,
-            {
-              left: col * CELL_SIZE,
-              top: row * CELL_SIZE,
-              borderColor: getCellBorderColor(
-                isPlayer,
-                monsterAtPosition,
-                greatPowerAtPosition,
-                state.inCombat
-              ),
-              backgroundColor: getCellBackgroundColor(
-                isPlayer,
-                monsterAtPosition,
-                greatPowerAtPosition,
-                state.inCombat
-              ),
-            },
-          ]}
-        />
-      );
+        tiles.push(
+          <View
+            key={`cell-${worldRow}-${worldCol}`}
+            style={[
+              styles.cell,
+              {
+                left: col * CELL_SIZE,
+                top: row * CELL_SIZE,
+                borderColor: getCellBorderColor(
+                  isPlayer,
+                  monsterAtPosition,
+                  greatPowerAtPosition,
+                  state.inCombat
+                ),
+                backgroundColor: getCellBackgroundColor(
+                  isPlayer,
+                  monsterAtPosition,
+                  greatPowerAtPosition,
+                  state.inCombat
+                ),
+              },
+            ]}
+          />
+        );
+      }
     }
-  }
 
-  return tiles;
-};
-
-  
-
+    return tiles;
+  };
 
   const renderCombatMonsters = (): React.ReactNode[] => {
     if (!state.inCombat || !state.attackSlots) return [];
@@ -310,202 +311,188 @@ const renderGridCells = (): React.ReactNode[] => {
       .filter((item): item is React.ReactElement => item !== null);
   };
 
-  
   // Render player as absolute-positioned entity
-const renderPlayer = (): React.ReactNode | null => {
-  if (!state.player?.position) return null;
+  const renderPlayer = (): React.ReactNode | null => {
+    if (!state.player?.position) return null;
 
-  const screenRow = state.player.position.row - cameraOffset.offsetY;
-  const screenCol = state.player.position.col - cameraOffset.offsetX;
+    const screenRow = state.player.position.row - cameraOffset.offsetY;
+    const screenCol = state.player.position.col - cameraOffset.offsetX;
 
-  const inView =
-    screenRow >= 0 &&
-    screenRow < VIEWPORT_ROWS &&
-    screenCol >= 0 &&
-    screenCol < VIEWPORT_COLS;
+    const inView =
+      screenRow >= 0 &&
+      screenRow < VIEWPORT_ROWS &&
+      screenCol >= 0 &&
+      screenCol < VIEWPORT_COLS;
 
-  if (!inView) return null;
+    if (!inView) return null;
 
-  return (
-    <TouchableOpacity
-      key="player"
-      onPress={handlePlayerTap}
-      style={{
-        position: "absolute",
-        left: screenCol * CELL_SIZE,
-        top: screenRow * CELL_SIZE,
-        width: CELL_SIZE,
-        height: CELL_SIZE,
-        zIndex: state.player.zIndex || 500,
-      }}
-      activeOpacity={0.7}
-    >
-      <Image
-        source={state.player.image as ImageSourcePropType}
+    return (
+      <TouchableOpacity
+        key="player"
+        onPress={handlePlayerTap}
         style={{
-          width: CELL_SIZE * 0.8,
-          height: CELL_SIZE * 0.8,
           position: "absolute",
-          left: CELL_SIZE * 0.1,
-          top: CELL_SIZE * 0.1,
+          left: screenCol * CELL_SIZE,
+          top: screenRow * CELL_SIZE,
+          width: CELL_SIZE,
+          height: CELL_SIZE,
+          zIndex: 5,
         }}
-        resizeMode="contain"
-      />
-    </TouchableOpacity>
-  );
-};
+        activeOpacity={0.7}
+      >
+        <Image
+          source={require("../assets/images/christos.png")}
+          style={styles.character}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+    );
+  };
 
-// Render monsters as absolute-positioned entities
-const renderMonsters = (): React.ReactNode[] => {
-  return state.activeMonsters
-    .filter((monster) => !monster.inCombatSlot)
-    .map((monster) => {
-      if (!monster.position) return null;
+  // Render monsters as absolute-positioned entities
+  const renderMonsters = (): React.ReactNode[] => {
+    if (!state.activeMonsters) return [];
 
-      const screenRow = monster.position.row - cameraOffset.offsetY;
-      const screenCol = monster.position.col - cameraOffset.offsetX;
+    return state.activeMonsters
+      .map((monster) => {
+        if (!monster.position || monster.inCombatSlot) return null;
 
-      const inView =
-        screenRow >= 0 &&
-        screenRow < VIEWPORT_ROWS &&
-        screenCol >= 0 &&
-        screenCol < VIEWPORT_COLS;
+        const screenRow = monster.position.row - cameraOffset.offsetY;
+        const screenCol = monster.position.col - cameraOffset.offsetX;
 
-      if (!inView) return null;
+        const inView =
+          screenRow >= 0 &&
+          screenRow < VIEWPORT_ROWS &&
+          screenCol >= 0 &&
+          screenCol < VIEWPORT_COLS;
 
-      return (
-        <TouchableOpacity
-          key={`monster-${monster.id}`}
-          onPress={() => handleMonsterTap(monster)}
-          style={{
-            position: "absolute",
-            left: screenCol * CELL_SIZE,
-            top: screenRow * CELL_SIZE,
-            width: CELL_SIZE,
-            height: CELL_SIZE,
-            zIndex: monster.zIndex || 1,
-          }}
-          activeOpacity={0.7}
-        >
-          <Image
-            source={getMonsterImage(monster)}
+        if (!inView) return null;
+
+        return (
+          <TouchableOpacity
+            key={`monster-${monster.id}`}
+            onPress={() => handleMonsterTap(monster)}
             style={{
-              width: CELL_SIZE * 0.8,
-              height: CELL_SIZE * 0.8,
               position: "absolute",
-              left: CELL_SIZE * 0.1,
-              top: CELL_SIZE * 0.1,
+              left: screenCol * CELL_SIZE,
+              top: screenRow * CELL_SIZE,
+              width: CELL_SIZE,
+              height: CELL_SIZE,
+              zIndex: 3,
             }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      );
-    })
-    .filter((item): item is React.ReactElement => item !== null);
-};
+            activeOpacity={0.7}
+          >
+            <Image
+              source={getMonsterImage(monster)}
+              style={styles.character}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        );
+      })
+      .filter((item): item is React.ReactElement => item !== null);
+  };
 
-// Render great powers as absolute-positioned entities
-const renderGreatPowers = (): React.ReactNode[] => {
-  if (!state.level.greatPowers) return [];
+  // Render great powers as absolute-positioned entities
+  const renderGreatPowers = (): React.ReactNode[] => {
+    if (!state.level.greatPowers) return [];
 
-  return state.level.greatPowers
-    .map((greatPower) => {
-      if (!greatPower.position) return null;
+    return state.level.greatPowers
+      .map((greatPower) => {
+        if (!greatPower.position || greatPower.active === false) return null;
 
-      const screenRow = greatPower.position.row - cameraOffset.offsetY;
-      const screenCol = greatPower.position.col - cameraOffset.offsetX;
+        const screenRow = greatPower.position.row - cameraOffset.offsetY;
+        const screenCol = greatPower.position.col - cameraOffset.offsetX;
 
-      const inView =
-        screenRow >= 0 &&
-        screenRow < VIEWPORT_ROWS &&
-        screenCol >= 0 &&
-        screenCol < VIEWPORT_COLS;
+        const inView =
+          screenRow >= 0 &&
+          screenRow < VIEWPORT_ROWS &&
+          screenCol >= 0 &&
+          screenCol < VIEWPORT_COLS;
 
-      if (!inView) return null;
+        if (!inView) return null;
 
-      return (
-        <TouchableOpacity
-          key={`greatpower-${greatPower.id}`}
-          onPress={() => handleGreatPowerTap(greatPower)}
-          style={{
-            position: "absolute",
-            left: screenCol * CELL_SIZE,
-            top: screenRow * CELL_SIZE,
-            width: CELL_SIZE,
-            height: CELL_SIZE,
-            zIndex: greatPower.zIndex || 2,
-          }}
-          activeOpacity={0.7}
-        >
-          <Image
-            source={getGreatPowerImage(greatPower)}
+        return (
+          <TouchableOpacity
+            key={`greatpower-${greatPower.id}`}
+            onPress={() => handleGreatPowerTap(greatPower)}
             style={{
-              width: CELL_SIZE * 0.8,
-              height: CELL_SIZE * 0.8,
               position: "absolute",
-              left: CELL_SIZE * 0.1,
-              top: CELL_SIZE * 0.1,
-              opacity: greatPower.awakened ? 1.0 : 0.7,
+              left: screenCol * CELL_SIZE,
+              top: screenRow * CELL_SIZE,
+              width: CELL_SIZE,
+              height: CELL_SIZE,
+              zIndex: 2,
             }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      );
-    })
-    .filter((item): item is React.ReactElement => item !== null);
-};
+            activeOpacity={0.7}
+          >
+            <Image
+              source={getGreatPowerImage(greatPower)}
+              style={{
+                width: CELL_SIZE * 0.8,
+                height: CELL_SIZE * 0.8,
+                position: "absolute",
+                left: CELL_SIZE * 0.1,
+                top: CELL_SIZE * 0.1,
+                opacity: greatPower.awakened ? 1.0 : 0.7,
+              }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        );
+      })
+      .filter((item): item is React.ReactElement => item !== null);
+  };
 
-// Render items as absolute-positioned entities
-const renderItems = (): React.ReactNode[] => {
-  if (!state.items) return [];
+  // Render items as absolute-positioned entities
+  const renderItems = (): React.ReactNode[] => {
+    if (!state.items) return [];
 
-  return state.items
-    .map((item) => {
-      if (!item.position || !item.active) return null;
+    return state.items
+      .map((item) => {
+        if (!item.position || !item.active) return null;
 
-      const screenRow = item.position.row - cameraOffset.offsetY;
-      const screenCol = item.position.col - cameraOffset.offsetX;
+        const screenRow = item.position.row - cameraOffset.offsetY;
+        const screenCol = item.position.col - cameraOffset.offsetX;
 
-      const inView =
-        screenRow >= 0 &&
-        screenRow < VIEWPORT_ROWS &&
-        screenCol >= 0 &&
-        screenCol < VIEWPORT_COLS;
+        const inView =
+          screenRow >= 0 &&
+          screenRow < VIEWPORT_ROWS &&
+          screenCol >= 0 &&
+          screenCol < VIEWPORT_COLS;
 
-      if (!inView) return null;
+        if (!inView) return null;
 
-      return (
-        <TouchableOpacity
-          key={`item-${item.id}`}
-          onPress={() => handleItemTap(item)}
-          style={{
-            position: "absolute",
-            left: screenCol * CELL_SIZE,
-            top: screenRow * CELL_SIZE,
-            width: CELL_SIZE,
-            height: CELL_SIZE,
-            zIndex: item.zIndex || 1,
-          }}
-          activeOpacity={0.7}
-        >
-          <Image
-            source={getItemImage(item.shortName)}
+        return (
+          <TouchableOpacity
+            key={`item-${item.id}`}
+            onPress={() => handleItemTap(item)}
             style={{
-              width: CELL_SIZE * 0.6,
-              height: CELL_SIZE * 0.6,
               position: "absolute",
-              left: CELL_SIZE * 0.2,
-              top: CELL_SIZE * 0.2,
+              left: screenCol * CELL_SIZE,
+              top: screenRow * CELL_SIZE,
+              width: CELL_SIZE,
+              height: CELL_SIZE,
+              zIndex: item.zIndex || 1,
             }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      );
-    })
-    .filter((item): item is React.ReactElement => item !== null);
-};
-
-
+            activeOpacity={0.7}
+          >
+            <Image
+              source={getItemImage(item)} // Updated to pass full item
+              style={{
+                width: CELL_SIZE * 0.6,
+                height: CELL_SIZE * 0.6,
+                position: "absolute",
+                left: CELL_SIZE * 0.2,
+                top: CELL_SIZE * 0.2,
+              }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        );
+      })
+      .filter((item): item is React.ReactElement => item !== null);
+  };
 
   const renderBuildings = (): React.ReactNode[] => {
     return state.level.objects
@@ -551,52 +538,45 @@ const renderItems = (): React.ReactNode[] => {
           </TouchableOpacity>
         );
       })
-
       .filter((item): item is React.ReactElement => item !== null);
   };
 
+  const renderGrid = () => {
+    const gridCells = renderGridCells();
 
-  
-const renderGrid = () => {
-  const gridCells = renderGridCells();
+    // Collect all entities that need z-index sorting
+    const allEntities = [
+      ...renderBuildings(),
+      ...renderMonsters(),
+      ...renderGreatPowers(),
+      ...renderItems(),
+      ...renderCombatMonsters(),
+      renderPlayer(),
+    ].filter((entity): entity is React.ReactElement => entity !== null);
 
-  // Collect all entities that need z-index sorting
-  const allEntities = [
-    ...renderBuildings(),
-    ...renderMonsters(),
-    ...renderGreatPowers(),
-    ...renderItems(),
-    ...renderCombatMonsters(),
-    renderPlayer(),
-  ].filter((entity): entity is React.ReactElement => entity !== null);
+    // Sort by z-index (lower values render first/behind)
+    allEntities.sort((a, b) => {
+      const getZIndex = (element: React.ReactElement): number => {
+        const props = element.props as any;
+        const style = props.style;
 
-  // Sort by z-index (lower values render first/behind)
-  allEntities.sort((a, b) => {
-    const getZIndex = (element: React.ReactElement): number => {
-      const props = element.props as any;
-      const style = props.style;
-      
-      if (Array.isArray(style)) {
-        // Find zIndex in style array
-        for (const s of style) {
-          if (s && typeof s === 'object' && 'zIndex' in s) {
-            return (s as any).zIndex || 0;
+        if (Array.isArray(style)) {
+          // Find zIndex in style array
+          for (const s of style) {
+            if (s && typeof s === "object" && "zIndex" in s) {
+              return (s as any).zIndex || 0;
+            }
           }
+          return 0;
         }
-        return 0;
-      }
-      return style?.zIndex || 0;
-    };
-    
-    return getZIndex(a) - getZIndex(b);
-  });
+        return style?.zIndex || 0;
+      };
 
-  return [...gridCells, ...allEntities];
-};
-  
+      return getZIndex(a) - getZIndex(b);
+    });
 
-
-
+    return [...gridCells, ...allEntities];
+  };
 
   const tiledBackground = useMemo(() => {
     // number of tiles to cover the screen + 1 buffer row/col each side
@@ -651,7 +631,6 @@ const renderGrid = () => {
   return (
     <View style={styles.gridContainer}>
       {/* Tiled Background */}
-
       <View style={styles.backgroundContainer} pointerEvents="none">
         {tiledBackground}
       </View>
@@ -689,10 +668,6 @@ const getCellBackgroundColor = (
 ) => {
   // Make cell backgrounds more transparent to show the tiled background
   if (isPlayer) return "rgba(45, 81, 105, 0.4)";
-  // if (hasGreatPower)
-  //   return hasGreatPower.awakened
-  //     ? "rgba(102, 68, 68, 0.6)"
-  //     : "rgba(68, 34, 34, 0.5)";
   if (hasMonster) return "rgba(88, 57, 57, 0.4)";
   return "rgba(17, 17, 17, 0.3)"; // Very transparent for normal cells
 };
@@ -714,41 +689,20 @@ const getCellBorderColor = (
 };
 
 const getMonsterImage = (monster: Monster) => {
-  if (monster.image) {
-    return monster.image;
-  }
-
-  const monsterImages: { [key: string]: any } = {
-    abhuman: require("../assets/images/abhuman.png"),
-    night_hound: require("../assets/images/nighthound4.png"),
-  };
-
-  return (
-    monsterImages[monster.shortName] || require("../assets/images/abhuman.png")
-  );
+  return monster.image || require("../assets/images/abhuman.png"); // Fallback if no template lookup
 };
 
 const getGreatPowerImage = (greatPower: GreatPower) => {
-  if (greatPower.image) {
-    return greatPower.image;
-  }
-
-  const greatPowerImages: { [key: string]: any } = {
-    watcher_se: require("../assets/images/watcherse.png"),
-  };
-
-  return (
-    greatPowerImages[greatPower.shortName] ||
-    require("../assets/images/watcherse.png")
-  );
+  return greatPower.image || require("../assets/images/watcherse.png"); // Fallback if no template lookup
 };
 
-const getItemImage = (shortName: string) => {
-  const itemImages: { [key: string]: any } = {
-    healthPotion: require("../assets/images/potion.png"),
-    ironSword: require("../assets/images/shortSword.png"),
-  };
-  return itemImages[shortName] || require("../assets/images/potion.png");
+const getItemImage = (item: Item) => {
+  if (item.image) {
+    return item.image;
+  }
+  //backup grab it from template
+  const template = getItemTemplate(item.shortName);
+  return template?.image || require("../assets/images/potion.png"); // Default fallback
 };
 
 const styles = StyleSheet.create({
