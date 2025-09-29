@@ -21,7 +21,7 @@ export default function Layout() {
 
   const [gameState] = useState(() => {
     const gs = createInitialGameState();
-    console.log("Initial game state:", gs);
+    // console.log("Initial game state:", gs);
     return gs;
   });
 

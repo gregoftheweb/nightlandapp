@@ -29,7 +29,7 @@ export const weapons: Record<string, GameObject> = {
     category: "weapon",
     name: "Iron Sword",
     description: "A sturdy iron blade, well-balanced and sharp.",
-    image:shortSwordIMG,
+    image: shortSwordIMG,
     damage: 8,
     hitBonus: 1,
     type: "melee",
@@ -130,6 +130,9 @@ export const buildings: Record<string, GameObject> = {
       {
         type: "recuperate",
         value: 10,
+      },
+      {
+        type: "hide",
       },
     ],
   },

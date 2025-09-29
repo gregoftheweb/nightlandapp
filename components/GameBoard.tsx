@@ -499,7 +499,7 @@ export default function GameBoard({
       .map((obj: LevelObjectInstance) => {
         if (!obj.position || !obj.image) return null;
 
-        console.log(`Building ${obj.shortName} zIndex:`, obj.zIndex);
+        // console.log(`Building ${obj.shortName} zIndex:`, obj.zIndex);
         const screenRow = obj.position.row - cameraOffset.offsetY;
         const screenCol = obj.position.col - cameraOffset.offsetX;
         const objWidth = obj.size?.width ?? 1;

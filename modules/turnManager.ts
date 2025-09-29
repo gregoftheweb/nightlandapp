@@ -147,6 +147,7 @@ const doTurnCleanup = (): void => {
   // Update hidden status if needed
   if (currentGameState.player.isHidden) {
     // Hidden status management could go here
+    console.log("Christos is hidden");
   }
 
   // Any other end-of-turn cleanup

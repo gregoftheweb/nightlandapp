@@ -30,7 +30,7 @@ const MOVEMENT_INTERVAL = 150;
 type Direction = "up" | "down" | "left" | "right" | "stay" | null;
 
 export default function Game() {
-  const { state, dispatch, showDialog, setOverlay, setDeathMessage } =
+  const { state, dispatch, setOverlay, setDeathMessage } =
     useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [inventoryVisible, setInventoryVisible] = useState(false);
@@ -157,11 +157,10 @@ export default function Game() {
         dispatch,
         direction,
         setOverlay,
-        showDialog,
         setDeathMessage
       );
     },
-    [dispatch, setOverlay, showDialog, setDeathMessage]
+    [dispatch, setOverlay, setDeathMessage]
   );
 
   const startLongPressInterval = useCallback(
@@ -255,18 +254,16 @@ export default function Game() {
   );
 
   const handleGearPress = useCallback(() => {
-    if (state.inCombat)
-      showDialog("Cannot access settings during combat", 1500);
-    else setSettingsVisible(true);
-  }, [state.inCombat, showDialog]);
+    if (!state.inCombat)
+      setSettingsVisible(true);
+  }, [state.inCombat]);
 
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
 
   const handleInventoryPress = useCallback(() => {
-    if (state.inCombat)
-      showDialog("Cannot access inventory during combat", 1500);
-    else setInventoryVisible(true);
-  }, [state.inCombat, showDialog]);
+    if (!state.inCombat)
+      setInventoryVisible(true);
+  }, [state.inCombat]);
 
   const handleCloseInventory = useCallback(
     () => setInventoryVisible(false),
@@ -274,20 +271,17 @@ export default function Game() {
   );
 
   const handleTurnPress = useCallback(() => {
-    console.log("\nhandleTurnPress called, inCombat:", state.inCombat);
     if (state.inCombat) {
-      console.log("Blocked: Cannot pass turn while in combat");
+      //early return
       return;
     }
 
-    handlePassTurn(state, dispatch, showDialog);
-    console.log("handleTurnPress completed");
-  }, [state, dispatch, showDialog]);
+    handlePassTurn(state, dispatch);
+  }, [state, dispatch]);
 
   const handleAttackPress = useCallback(() => {
-    console.log("\nhandleAttackPress called, inCombat:", state.inCombat);
     if (!state.inCombat) {
-      console.log("Blocked: Not in combat");
+      //early return
       return;
     }
     const targetMonster = targetId
@@ -297,22 +291,15 @@ export default function Game() {
       console.warn("No target monster in attack slots");
       return;
     }
-    console.log(
-      "Player attack pressed, targeting:",
-      targetMonster.name,
-      "ID:",
-      targetMonster.id
-    );
 
     handleCombatAction(
       state,
       dispatch,
       "attack",
       targetMonster.id,
-      showDialog,
       setDeathMessage
     );
-  }, [state, dispatch, showDialog, setDeathMessage, targetId]);
+  }, [state, dispatch, setDeathMessage, targetId]);
 
   const handleMonsterTap = useCallback(
     (monster: Monster) => {
@@ -324,10 +311,10 @@ export default function Game() {
           monster.id
         );
         setTargetId(monster.id);
-        showDialog(`Targeting: ${monster.name || monster.shortName}`, 1000);
+       
       }
     },
-    [state.inCombat, showDialog]
+    [state.inCombat]
   );
 
   const handleGreatPowerTap = useCallback(
@@ -352,19 +339,13 @@ export default function Game() {
             type: "AWAKEN_GREAT_POWER",
             payload: { greatPowerId: greatPower.id },
           });
-          showDialog(
-            `${greatPower.name} has awakened! The ancient power stirs...`,
-            3000
-          );
+         
         }
       } else if (!greatPower.awakened) {
-        showDialog(
-          `You sense the presence of ${greatPower.name}, but you must get closer to disturb its slumber.`,
-          2000
-        );
+       //do nothing
       }
     },
-    [state.player.position, dispatch, showDialog]
+    [state.player.position, dispatch]
   );
 
   const handlePlayerTap = useCallback(() => {

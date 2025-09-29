@@ -210,9 +210,9 @@ export const checkObjectInteractions = (
   playerPos: Position
 ) => {
   console.log('Checking object interactions at playerPos:', playerPos);
-  console.log('Available objects:', state.objects);
+  //console.log('Available objects:', state.objects);
 
-  const objectAtPosition = state.objects?.find((obj: any) => {
+  const isChristosOnTopOfObject = state.objects?.find((obj: any) => {
     if (!obj.active) {
       console.log(`Object ${obj.name} is inactive, skipping`);
       return false;
@@ -231,14 +231,7 @@ export const checkObjectInteractions = (
           playerPos.col >= objColStart &&
           playerPos.col <= objColEnd
         );
-        console.log(`Checking collision for ${obj.name}:`, {
-          objRowStart,
-          objRowEnd,
-          objColStart,
-          objColEnd,
-          playerPos,
-          isCollision,
-        });
+
         return isCollision;
       });
     } else {
@@ -255,36 +248,33 @@ export const checkObjectInteractions = (
         playerPos.col >= objColStart &&
         playerPos.col <= objColEnd
       );
-      console.log(`Checking collision for ${obj.name} (no mask):`, {
-        objRowStart,
-        objRowEnd,
-        objColStart,
-        objColEnd,
-        playerPos,
-        isCollision,
-      });
+     
       return isCollision;
     }
   });
 
-  if (!objectAtPosition) {
+  if (!isChristosOnTopOfObject) {
     console.log('No object found at player position');
+    //turn off isHidden
+     dispatch({
+      type: 'CLEAR_HIDE',
+    });
     return;
   }
-  if (!objectAtPosition.effects) {
-    console.log(`Object ${objectAtPosition.name} has no effects`);
+  if (!isChristosOnTopOfObject.effects) {
+    console.log(`Object ${isChristosOnTopOfObject.name} has no effects`);
     return;
   }
 
   // Check which effects need cooldowns (swarm and heal are one-time per cooldown)
-  const needsCooldown = objectAtPosition.effects.some((e: any) => 
+  const needsCooldown = isChristosOnTopOfObject.effects.some((e: any) => 
     e.type === 'swarm' || e.type === 'heal'
   );
 
   if (needsCooldown) {
     const now = Date.now();
-    const lastTrigger = objectAtPosition.lastTrigger || 0;
-    console.log(`Cooldown check for ${objectAtPosition.name}:`, {
+    const lastTrigger = isChristosOnTopOfObject.lastTrigger || 0;
+    console.log(`Cooldown check for ${isChristosOnTopOfObject.name}:`, {
       now,
       lastTrigger,
       timeSinceLast: now - lastTrigger,
@@ -292,12 +282,12 @@ export const checkObjectInteractions = (
 
     // Cooldown check (50 seconds)
     if (now - lastTrigger <= 50000) {
-      console.log(`Cooldown active for ${objectAtPosition.name}, exiting`);
+      console.log(`Cooldown active for ${isChristosOnTopOfObject.name}, exiting`);
       return;
     }
   }
 
-  objectAtPosition.effects.forEach((effect: any) => {
+  isChristosOnTopOfObject.effects.forEach((effect: any) => {
     console.log('Triggering effect:', effect);
 
     dispatch({
@@ -307,16 +297,16 @@ export const checkObjectInteractions = (
 
     switch (effect.type) {
       case 'swarm':
-        console.log(`A swarm of ${effect.monsterType}s emerges from the ${objectAtPosition.name}!`);
+        console.log(`A swarm of ${effect.monsterType}s emerges from the ${isChristosOnTopOfObject.name}!`);
         break;
       case 'hide':
-        console.log(`The ${objectAtPosition.name} cloaks you in silence.`);
+        console.log(`The ${isChristosOnTopOfObject.name} cloaks you in silence.`);
         break;
       case 'heal':
-        console.log(`The ${objectAtPosition.name} restores your strength!`);
+        console.log(`The ${isChristosOnTopOfObject.name} restores your strength!`);
         break;
       case 'recuperate':
-        console.log(`The ${objectAtPosition.name} restores ${effect.amount || 5} HP!`);
+        console.log(`The ${isChristosOnTopOfObject.name} restores ${effect.amount || 5} HP!`);
         break;
       default:
         console.log(`Unhandled effect type: ${effect.type}`);
@@ -330,7 +320,7 @@ export const checkObjectInteractions = (
     dispatch({
       type: 'UPDATE_OBJECT',
       payload: {
-        shortName: objectAtPosition.shortName,
+        shortName: isChristosOnTopOfObject.shortName,
         updates: { lastTrigger: now },
       },
     });
