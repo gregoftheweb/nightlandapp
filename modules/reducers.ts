@@ -423,81 +423,114 @@ export const reducer = (
       };
 
     // ============ EFFECTS SYSTEM ============
-    case "TRIGGER_EFFECT":
-      const { effect, position } = action.payload;
-      switch (effect.type) {
-        case "swarm":
-          const newMonsters: Monster[] = [];
-          const monstersArray = state.monsters ?? [];
-          const monsterTemplate = monstersArray.find(
-            (m: LevelMonsterInstance) => m.name === effect.monsterType
-          );
-          if (!monsterTemplate) {
-            console.warn("Monster template not found:", effect.monsterType);
-            return state;
-          }
-          for (let i = 0; i < effect.count; i++) {
-            const spawnRow = Math.max(
-              0,
-              Math.min(
-                state.gridHeight - 1,
-                position.row +
-                  Math.floor(Math.random() * effect.range * 2) -
-                  effect.range
-              )
-            );
-            const spawnCol = Math.max(
-              0,
-              Math.min(
-                state.gridWidth - 1,
-                position.col +
-                  Math.floor(Math.random() * effect.range * 2) -
-                  effect.range
-              )
-            );
-            newMonsters.push({
-              ...monsterTemplate,
-              id: `${monsterTemplate.shortName}-${Date.now()}-${i}`,
-              hp: monsterTemplate.hp,
-              position: { row: spawnRow, col: spawnCol },
-              active: true,
-            });
-          }
-          return {
-            ...state,
-            activeMonsters: [...state.activeMonsters, ...newMonsters],
-          };
-        case "hide":
-          return {
-            ...state,
-            player: {
-              ...state.player,
-              isHidden: true,
-              hideTurns: effect.duration || 10,
-            },
-          };
-        case "heal":
-          // Safeguard against NaN: Ensure amount is a valid number, default to 0 if not
-          const healAmount =
-            typeof effect.amount === "number" && !isNaN(effect.amount)
-              ? effect.amount
-              : 0;
-          // Also ensure current hp is a number (fallback to 0 if NaN)
-          const currentHP =
-            typeof state.player.hp === "number" && !isNaN(state.player.hp)
-              ? state.player.hp
-              : 0;
-          const newHP = Math.min(state.player.maxHP, currentHP + healAmount);
-          return {
-            ...state,
-            player: {
-              ...state.player,
-              hp: newHP,
-            },
-          };
-        default:
-          return state;
+case "TRIGGER_EFFECT":
+  const { effect, position } = action.payload;
+  switch (effect.type) {
+    case "swarm": {
+      const newMonsters: Monster[] = [];
+      const monstersArray = state.monsters ?? [];
+      const monsterTemplate = monstersArray.find(
+        (m: LevelMonsterInstance) => m.name === effect.monsterType
+      );
+      if (!monsterTemplate) {
+        console.warn("Monster template not found:", effect.monsterType);
+        return state;
       }
+      for (let i = 0; i < effect.count; i++) {
+        const spawnRow = Math.max(
+          0,
+          Math.min(
+            state.gridHeight - 1,
+            position.row +
+              Math.floor(Math.random() * effect.range * 2) -
+              effect.range
+          )
+        );
+        const spawnCol = Math.max(
+          0,
+          Math.min(
+            state.gridWidth - 1,
+            position.col +
+              Math.floor(Math.random() * effect.range * 2) -
+              effect.range
+          )
+        );
+        newMonsters.push({
+          ...monsterTemplate,
+          id: `${monsterTemplate.shortName}-${Date.now()}-${i}`,
+          hp: monsterTemplate.hp,
+          position: { row: spawnRow, col: spawnCol },
+          active: true,
+        });
+      }
+      return {
+        ...state,
+        activeMonsters: [...state.activeMonsters, ...newMonsters],
+      };
+    }
+    
+    case "hide":
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          isHidden: true,
+          hideTurns: effect.duration || 10,
+        },
+      };
+      
+    case "heal": {
+      const healAmount =
+        typeof effect.amount === "number" && !isNaN(effect.amount)
+          ? effect.amount
+          : 0;
+      const currentHP =
+        typeof state.player.hp === "number" && !isNaN(state.player.hp)
+          ? state.player.hp
+          : 0;
+      const newHP = Math.min(state.player.maxHP, currentHP + healAmount);
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          hp: newHP,
+        },
+      };
+    }
+    
+    case "recuperate": {
+      // Only heal if player is below max HP
+      if (state.player.hp >= state.player.maxHP) {
+        return state;
+      }
+
+      const recuperateAmount =
+        typeof effect.amount === "number" && !isNaN(effect.amount)
+          ? effect.amount
+          : 5;
+
+      const currentHP =
+        typeof state.player.hp === "number" && !isNaN(state.player.hp)
+          ? state.player.hp
+          : 0;
+
+      const newHP = Math.min(
+        state.player.maxHP,
+        currentHP + recuperateAmount
+      );
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          hp: newHP,
+        },
+      };
+    }
+    
+    default:
+      return state;
+  }
 
     case "DECREMENT_HIDE_TURNS":
       const newHideTurns = Math.max(0, state.player.hideTurns - 1);

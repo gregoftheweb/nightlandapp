@@ -10,18 +10,20 @@ import { checkItemInteractions, checkObjectInteractions } from "./interactions";
 let currentGameState: GameState;
 let gameDispatch: (action: any) => void;
 let inCombat: boolean = false;
-let turnType: 'combat' | 'move' | 'non-move-turn' = 'non-move-turn';
+let turnType: "combat" | "move" | "non-move-turn" = "non-move-turn";
 
 // ==================== TURN TYPE DETERMINATION ====================
 
-const determineTurnType = (direction?: string): 'combat' | 'move' | 'non-move-turn' => {
+const determineTurnType = (
+  direction?: string
+): "combat" | "move" | "non-move-turn" => {
   if (inCombat) {
-    return 'combat';
+    return "combat";
   }
-  if (direction && direction !== 'stay') {
-    return 'move';
+  if (direction && direction !== "stay") {
+    return "move";
   }
-  return 'non-move-turn';
+  return "non-move-turn";
 };
 
 // ==================== COMBAT TURN EXECUTION ====================
@@ -29,19 +31,30 @@ const determineTurnType = (direction?: string): 'combat' | 'move' | 'non-move-tu
 const doCombatTurn = (
   action: string,
   targetId?: string,
-  showDialog?: (message: string, duration?: number) => void,
   setDeathMessage?: (message: string) => void
 ): void => {
   console.log(`⚔️ EXECUTING COMBAT TURN: ${action}`);
-  
+
   // Do Player Attack
-  if (action === 'attack' && targetId) {
+  if (action === "attack" && targetId) {
     console.log(`Player attacking target: ${targetId}`);
   }
-  
+
   // Execute full combat round (player + monster attacks)
-  handleCombatTurn(currentGameState, gameDispatch, action, targetId, showDialog, setDeathMessage);
-  
+  handleCombatTurn(
+    currentGameState,
+    gameDispatch,
+    action,
+    targetId,
+    setDeathMessage
+  );
+  // Check ongoing object interactions at current position (for recuperate, etc.)
+  checkObjectInteractions(
+    currentGameState,
+    gameDispatch,
+    currentGameState.player.position
+  );
+
   // Check if Player Dead - exit to princess page and reset game
   if (currentGameState.player.hp <= 0) {
     console.log("💀 PLAYER DEFEATED - Resetting game");
@@ -56,51 +69,63 @@ const doCombatTurn = (
 
 const doMoveTurn = (
   direction: string,
-  setOverlay?: (overlay: any) => void,
-  showDialog?: (message: string, duration?: number) => void
+  setOverlay?: (overlay: any) => void
 ): void => {
   console.log(`🚶 EXECUTING MOVE TURN: ${direction}`);
-  
+
   // Move Player
-  const newPosition = calculateNewPosition(currentGameState.player.position, direction, currentGameState);
+  const newPosition = calculateNewPosition(
+    currentGameState.player.position,
+    direction,
+    currentGameState
+  );
   gameDispatch({ type: "MOVE_PLAYER", payload: { position: newPosition } });
-  
+
   const newMoveCount = currentGameState.moveCount + 1;
-  gameDispatch({ type: "UPDATE_MOVE_COUNT", payload: { moveCount: newMoveCount } });
-  
-  console.log(`Player moved to: (${newPosition.row}, ${newPosition.col}), Move: ${newMoveCount}`);
+  gameDispatch({
+    type: "UPDATE_MOVE_COUNT",
+    payload: { moveCount: newMoveCount },
+  });
+
+  console.log(
+    `Player moved to: (${newPosition.row}, ${newPosition.col}), Move: ${newMoveCount}`
+  );
 
   // Update game state for interactions AND monster movement
-  currentGameState = { 
-    ...currentGameState, 
+  currentGameState = {
+    ...currentGameState,
     player: { ...currentGameState.player, position: newPosition },
-    moveCount: newMoveCount 
+    moveCount: newMoveCount,
   };
 
   // Handle world interactions at new position
-  checkItemInteractions(currentGameState, gameDispatch, showDialog, setOverlay);
-  checkObjectInteractions(currentGameState, gameDispatch, newPosition, showDialog);
+  checkItemInteractions(currentGameState, gameDispatch, setOverlay);
+  checkObjectInteractions(currentGameState, gameDispatch, newPosition);
 };
 
 // ==================== NON-MOVE TURN EXECUTION ====================
 
 const doNonMoveTurn = (): void => {
   console.log(`⏳ EXECUTING NON-MOVE TURN (pass turn)`);
-  
+
   // Update turn counter for non-move turns
   gameDispatch({ type: "PASS_TURN" });
+  // Check ongoing object interactions at current position (for recuperate, etc.)
+  checkObjectInteractions(
+    currentGameState,
+    gameDispatch,
+    currentGameState.player.position
+  );
 };
 
 // ==================== MONSTER MOVEMENT AND COMBAT SETUP ====================
 
-const doMonsterMovement = (
-  showDialog?: (message: string, duration?: number) => void
-): void => {
+const doMonsterMovement = (): void => {
   console.log(`👹 PROCESSING MONSTER MOVEMENT`);
-  
+
   // Move monsters
-  handleMoveMonsters(currentGameState, gameDispatch, showDialog);
-  
+  handleMoveMonsters(currentGameState, gameDispatch);
+
   // Monster collision and combat setup logic is handled within handleMoveMonsters
   // If a monster is waiting OR a monster collides with Christos:
   //   - If there is an empty Attack slot: slide into slot
@@ -118,55 +143,58 @@ const executeSpellsAndEffects = (): void => {
 
 const doTurnCleanup = (): void => {
   console.log(`🧹 TURN CLEANUP`);
-  
+
   // Update hidden status if needed
   if (currentGameState.player.isHidden) {
     // Hidden status management could go here
   }
-  
+
   // Any other end-of-turn cleanup
 };
 
 // ==================== MAIN TURN EXECUTION ====================
 
 const executeTurn = (
-  action: string = 'move',
+  action: string = "move",
   direction?: string,
   targetId?: string,
   setOverlay?: (overlay: any) => void,
-  showDialog?: (message: string, duration?: number) => void,
   setDeathMessage?: (message: string) => void
 ): void => {
   console.log(`\n🎯 === STARTING TURN EXECUTION ===`);
-  console.log(`Action: ${action}, Direction: ${direction || 'none'}, In Combat: ${inCombat}`);
+  console.log(
+    `Action: ${action}, Direction: ${
+      direction || "none"
+    }, In Combat: ${inCombat}`
+  );
 
   // Execute spells and effects (placeholder)
   executeSpellsAndEffects();
-  
+
   // DO TURN
   if (inCombat) {
     // Combat Turn
-    doCombatTurn(action, targetId, showDialog, setDeathMessage);
-    
+    doCombatTurn(action, targetId, setDeathMessage);
+
     // Early exit if player died
     if (currentGameState.player.hp <= 0) {
       return;
     }
   } else {
     // Non-Combat Turn
-    if (turnType === 'move') {
-      doMoveTurn(direction!, setOverlay, showDialog);
+    if (turnType === "move") {
+      doMoveTurn(direction!, setOverlay);
     } else {
       doNonMoveTurn();
     }
   }
-  
+
   // Move monsters (always happens unless player died)
-  doMonsterMovement(showDialog);
-  
+  doMonsterMovement();
+
   // Cleanup
   doTurnCleanup();
-  
+
   console.log(`✅ === TURN EXECUTION COMPLETE ===\n`);
 };
 
@@ -177,27 +205,32 @@ export const handleMovePlayer = (
   dispatch: (action: any) => void,
   direction: string,
   setOverlay?: (overlay: any) => void,
-  showDialog?: (message: string, duration?: number) => void,
   setDeathMessage?: (message: string) => void
 ): void => {
   // Get and set current gamestate in module level variables
   currentGameState = state;
   gameDispatch = dispatch;
-  
+
   // Set inCombat boolean
   inCombat = state.inCombat;
-  
+
   // Cannot move during combat
   if (inCombat) {
     console.log("❌ Cannot move during combat");
     return;
   }
-  
+
   // Set Turn Type
   turnType = determineTurnType(direction);
-  
+
   // Execute Turn
-  executeTurn('move', direction, undefined, setOverlay, showDialog, setDeathMessage);
+  executeTurn(
+    "move",
+    direction,
+    undefined,
+    setOverlay,
+    setDeathMessage
+  );
 };
 
 export const handleCombatAction = (
@@ -205,50 +238,54 @@ export const handleCombatAction = (
   dispatch: (action: any) => void,
   action: string,
   targetId?: string,
-  showDialog?: (message: string, duration?: number) => void,
   setDeathMessage?: (message: string) => void
 ): void => {
   // Get and set current gamestate in module level variables
   currentGameState = state;
   gameDispatch = dispatch;
-  
+
   // Set inCombat boolean
   inCombat = state.inCombat;
-  
+
   if (!inCombat) {
     console.log("❌ Cannot perform combat action outside of combat");
     return;
   }
-  
+
   // Set Turn Type
-  turnType = 'combat';
-  
+  turnType = "combat";
+
   // Execute Turn
-  executeTurn(action, undefined, targetId, undefined, showDialog, setDeathMessage);
+  executeTurn(
+    action,
+    undefined,
+    targetId,
+    undefined,
+    setDeathMessage
+  );
 };
 
 export const handlePassTurn = (
   state: GameState,
   dispatch: (action: any) => void,
-  showDialog?: (message: string, duration?: number) => void
 ): void => {
   // Get and set current gamestate in module level variables
   currentGameState = state;
   gameDispatch = dispatch;
-  
+
   // Set inCombat boolean
   inCombat = state.inCombat;
-  
+
   if (inCombat) {
     console.log("❌ Cannot pass turn during combat");
     return;
   }
-  
+
   // Set Turn Type
-  turnType = 'non-move-turn';
-  
+  turnType = "non-move-turn";
+
   // Execute Turn
-  executeTurn('pass', undefined, undefined, undefined, showDialog);
+  executeTurn("pass", undefined, undefined, undefined);
 };
 
 // ==================== LEGACY EXPORTS FOR BACKWARD COMPATIBILITY ====================
@@ -262,19 +299,23 @@ export const initializeStartingMonsters = (
   state: GameState,
   dispatch: (action: any) => void
 ): void => {
-  const abhumanTemplate = monsters.find(m => m.shortName === 'abhuman');
+  const abhumanTemplate = monsters.find((m) => m.shortName === "abhuman");
   if (abhumanTemplate) {
     // Spawn exactly 2 abhumans for testing
     for (let i = 0; i < 2; i++) {
       const angle = Math.random() * 2 * Math.PI;
       const distance = 15 + Math.random() * 10; // Closer for testing
-      
-      let spawnRow = Math.round(state.player.position.row + Math.sin(angle) * distance);
-      let spawnCol = Math.round(state.player.position.col + Math.cos(angle) * distance);
-      
+
+      let spawnRow = Math.round(
+        state.player.position.row + Math.sin(angle) * distance
+      );
+      let spawnCol = Math.round(
+        state.player.position.col + Math.cos(angle) * distance
+      );
+
       spawnRow = Math.max(0, Math.min(state.gridHeight - 1, spawnRow));
       spawnCol = Math.max(0, Math.min(state.gridWidth - 1, spawnCol));
-      
+
       const newMonster: Monster = {
         ...abhumanTemplate,
         id: `abhuman-init-${i}`,
@@ -287,9 +328,15 @@ export const initializeStartingMonsters = (
         type: "SPAWN_MONSTER",
         payload: { monster: newMonster },
       });
-      
-      console.log(`🎯 Spawned initial ${newMonster.name} #${i+1} at (${spawnRow}, ${spawnCol}), distance: ${Math.round(distance)}`);
-      console.log(`   Stats: HP:${newMonster.hp}, Attack:${newMonster.attack}, AC:${newMonster.ac}`);
+
+      console.log(
+        `🎯 Spawned initial ${newMonster.name} #${
+          i + 1
+        } at (${spawnRow}, ${spawnCol}), distance: ${Math.round(distance)}`
+      );
+      console.log(
+        `   Stats: HP:${newMonster.hp}, Attack:${newMonster.attack}, AC:${newMonster.ac}`
+      );
     }
   }
 };

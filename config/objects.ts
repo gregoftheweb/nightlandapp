@@ -128,8 +128,8 @@ export const buildings: Record<string, GameObject> = {
     zIndex: 0,
     effects: [
       {
-        type: "heal",
-        value: 20,
+        type: "recuperate",
+        value: 10,
       },
     ],
   },

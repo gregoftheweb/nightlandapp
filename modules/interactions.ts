@@ -7,7 +7,6 @@ import { createItemInstance } from "../config/levels";
 export const checkItemInteractions = (
   state: GameState,
   dispatch: (action: any) => void,
-  showDialog?: (message: string, duration?: number) => void,
   setOverlay?: (overlay: any) => void
 ) => {
   const playerPos = state.player.position;
@@ -66,10 +65,6 @@ export const checkItemInteractions = (
   // Check if inventory has space (except for weapons which go to weapons array)
   if (collectibleAtPosition.type !== "weapon") {
     if (state.player.inventory.length >= state.player.maxInventorySize) {
-      showDialog?.(
-        `Inventory is full! Cannot pick up ${collectibleAtPosition.name}.`,
-        3000
-      );
       console.log(
         `❌ Inventory full - cannot collect ${collectibleAtPosition.name}`
       );
@@ -101,14 +96,9 @@ export const checkItemInteractions = (
 
   // Handle item collection based on type
   if (collectibleAtPosition.type === "weapon") {
-    handleWeaponCollection(collectibleAtPosition, state, dispatch, showDialog);
+    handleWeaponCollection(collectibleAtPosition, state, dispatch);
   } else {
-    handleConsumableCollection(
-      collectibleAtPosition,
-      state,
-      dispatch,
-      showDialog
-    );
+    handleConsumableCollection(collectibleAtPosition, state, dispatch);
   }
 
   // Remove the item from the game board
@@ -136,9 +126,6 @@ export const checkItemInteractions = (
   console.log(
     `🗑️ Removing item from position (${collectibleAtPosition.position?.row}, ${collectibleAtPosition.position?.col})`
   );
-
-  // Note: The actual inventory state will be updated by the reducer
-  // To see the final state, we'd need to access it after the dispatch completes
 };
 
 // ==================== WEAPON COLLECTION ====================
@@ -146,17 +133,12 @@ export const checkItemInteractions = (
 const handleWeaponCollection = (
   item: Item,
   state: GameState,
-  dispatch: (action: any) => void,
-  showDialog?: (message: string, duration?: number) => void
+  dispatch: (action: any) => void
 ) => {
   console.log(`⚔️ Attempting to collect weapon: ${item.name}`);
 
   // Check if weapons inventory has space
   if (state.player.weapons.length >= state.player.maxWeaponsSize) {
-    showDialog?.(
-      `Weapon inventory is full! Cannot pick up ${item.name}.`,
-      3000
-    );
     console.log(`❌ Weapon inventory full - cannot collect ${item.name}`);
     return;
   }
@@ -169,7 +151,6 @@ const handleWeaponCollection = (
 
   if (!inventoryItem) {
     console.warn("❌ Failed to create weapon instance:", item.shortName);
-    showDialog?.(`Error: Weapon data not found for ${item.name}.`, 3000);
     return;
   }
 
@@ -181,21 +162,15 @@ const handleWeaponCollection = (
     payload: { weapon: inventoryItem },
   });
 
-  showDialog?.(`Picked up ${inventoryItem.name}!`, 3000);
   console.log(`📦 Weapon added: ${inventoryItem.name} (shortName: ${item.shortName})`);
 };
-
-
-
-
 
 // ==================== CONSUMABLE COLLECTION ====================
 
 const handleConsumableCollection = (
   item: Item,
   state: GameState,
-  dispatch: (action: any) => void,
-  showDialog?: (message: string, duration?: number) => void
+  dispatch: (action: any) => void
 ) => {
   console.log(`🧪 Attempting to collect consumable: ${item.name}`);
 
@@ -217,9 +192,7 @@ const handleConsumableCollection = (
     payload: { item: inventoryItem },
   });
 
-  showDialog?.(`Picked up ${item.name}!`, 3000);
   console.log(`📦 Consumable added: ${item.name} (ID: ${inventoryItem.id})`);
-  // Add this line right after the dispatch:
   console.log(
     `CHRISTOS INVENTORY AFTER ADD:`,
     [...state.player.inventory, inventoryItem].map((item: any) => ({
@@ -234,8 +207,7 @@ const handleConsumableCollection = (
 export const checkObjectInteractions = (
   state: GameState,
   dispatch: (action: any) => void,
-  playerPos: Position,
-  showDialog?: (message: string, duration?: number) => void
+  playerPos: Position
 ) => {
   console.log('Checking object interactions at playerPos:', playerPos);
   console.log('Available objects:', state.objects);
@@ -304,18 +276,25 @@ export const checkObjectInteractions = (
     return;
   }
 
-  const now = Date.now();
-  const lastTrigger = objectAtPosition.lastTrigger || 0;
-  console.log(`Cooldown check for ${objectAtPosition.name}:`, {
-    now,
-    lastTrigger,
-    timeSinceLast: now - lastTrigger,
-  });
+  // Check which effects need cooldowns (swarm and heal are one-time per cooldown)
+  const needsCooldown = objectAtPosition.effects.some((e: any) => 
+    e.type === 'swarm' || e.type === 'heal'
+  );
 
-  // Cooldown check (50 seconds)
-  if (now - lastTrigger <= 50000) {
-    console.log(`Cooldown active for ${objectAtPosition.name}, exiting`);
-    return;
+  if (needsCooldown) {
+    const now = Date.now();
+    const lastTrigger = objectAtPosition.lastTrigger || 0;
+    console.log(`Cooldown check for ${objectAtPosition.name}:`, {
+      now,
+      lastTrigger,
+      timeSinceLast: now - lastTrigger,
+    });
+
+    // Cooldown check (50 seconds)
+    if (now - lastTrigger <= 50000) {
+      console.log(`Cooldown active for ${objectAtPosition.name}, exiting`);
+      return;
+    }
   }
 
   objectAtPosition.effects.forEach((effect: any) => {
@@ -336,22 +315,26 @@ export const checkObjectInteractions = (
       case 'heal':
         console.log(`The ${objectAtPosition.name} restores your strength!`);
         break;
+      case 'recuperate':
+        console.log(`The ${objectAtPosition.name} restores ${effect.amount || 5} HP!`);
+        break;
       default:
         console.log(`Unhandled effect type: ${effect.type}`);
         break;
     }
   });
 
-  dispatch({
-    type: 'UPDATE_OBJECT',
-    payload: {
-      shortName: objectAtPosition.shortName,
-      updates: { lastTrigger: now },
-    },
-  });
-};
-
-
+  // Only update lastTrigger for effects that need cooldown
+  if (needsCooldown) {
+    const now = Date.now();
+    dispatch({
+      type: 'UPDATE_OBJECT',
+      payload: {
+        shortName: objectAtPosition.shortName,
+        updates: { lastTrigger: now },
+      },
+    });
+  }};
 
 // ==================== UTILITY FUNCTIONS ====================
 

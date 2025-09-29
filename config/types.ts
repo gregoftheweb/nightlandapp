@@ -128,23 +128,14 @@ export interface Player {
 
 export interface Effect {
   type:
-    | "damage"
     | "heal"
     | "stun"
     | "poison"
-    | "buff"
-    | "debuff"
-    | "summon"
     | "teleport"
     | "spawn"
-    | "destroy"
-    | "activate"
-    | "deactivate"
-    | "quest_complete"
-    | "quest_failed"
-    | "target_destroyed"
     | "swarm"
-    | "hide";
+    | "hide"
+    | "recuperate";
 
   description?: string;
 

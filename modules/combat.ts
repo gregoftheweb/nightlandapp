@@ -18,8 +18,7 @@ const checkCollision = (pos1: Position, pos2: Position): boolean => {
 export const executeAttack = (
   attacker: any,
   defender: any,
-  dispatch: any,
-  showDialog?: (message: string, duration?: number) => void
+  dispatch: any
 ): boolean => {
   const attackRoll = rollD20();
   const totalAttack = attackRoll + attacker.attack;
@@ -121,7 +120,6 @@ export const executeAttack = (
 export const processCombatTurn = (
   state: GameState,
   dispatch: any,
-  showDialog?: (message: string, duration?: number) => void,
   targetId?: string
 ): void => {
   if (!state.inCombat || !state.attackSlots || state.attackSlots.length === 0) {
@@ -149,7 +147,7 @@ export const processCombatTurn = (
       }
 
       if (targetMonster) {
-        const monsterDied = executeAttack(entity, targetMonster, dispatch, showDialog);
+        const monsterDied = executeAttack(entity, targetMonster, dispatch);
         if (monsterDied) {
           const updatedAttackSlots = state.attackSlots.filter((m: any) => m.id !== targetMonster.id);
           dispatch({
@@ -170,7 +168,7 @@ export const processCombatTurn = (
       }
     } else {
       console.log(`\n👹 ${entity.name}'s turn:`);
-      const playerDied = executeAttack(entity, state.player, dispatch, showDialog);
+      const playerDied = executeAttack(entity, state.player, dispatch);
       if (playerDied) {
         console.log("💀 GAME OVER - Player defeated!");
         return;
@@ -254,8 +252,7 @@ const moveWaitingMonstersToAttackSlots = (
 
 export const checkCombatEnd = (
   state: GameState,
-  dispatch: any,
-  showDialog?: (message: string, duration?: number) => void
+  dispatch: any
 ): boolean => {
   const aliveMonsters = state.attackSlots?.filter((m: any) => m.hp > 0) || [];
 
@@ -395,7 +392,6 @@ export const handleCombatTurn = (
   dispatch: any,
   action: string,
   targetId?: string,
-  showDialog?: (message: string, duration?: number) => void,
   setDeathMessage?: (message: string) => void
 ): void => {
   if (!state.inCombat) {
@@ -406,10 +402,10 @@ export const handleCombatTurn = (
   console.log(`\n⚔️ PROCESSING COMBAT ACTION: ${action} (target: ${targetId || 'none'})`);
 
   // Process the full combat round, passing targetId for player attack
-  processCombatTurn(state, dispatch, showDialog, targetId);
+  processCombatTurn(state, dispatch, targetId);
 
   // Check if combat has ended
-  const combatEnded = checkCombatEnd(state, dispatch, showDialog);
+  const combatEnded = checkCombatEnd(state, dispatch);
 
   if (combatEnded) {
     console.log("Combat has ended");
