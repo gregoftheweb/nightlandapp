@@ -14,11 +14,6 @@ import {
   getCollectibleTemplate,
 } from "./objects";
 import { getMonsterTemplate, getGreatPowerTemplate } from "./monsters";
-import { poolTemplates } from "./poolTemplates";
-
-// Import pool images
-import sanctuaryPoolImg from "@assets/images/poolofpeace.png";
-import poisonPoolImg from "@assets/images/poolofpeace.png";
 
 // Helper function to create object instances from building templates
 const createObjectInstance = (
@@ -46,6 +41,7 @@ const createObjectInstance = (
       height: template.height || 1,
     },
     zIndex: template.zIndex,
+    effects: template.effects,
     ...overrides,
   };
 };
@@ -86,7 +82,7 @@ export const createItemInstance = (
     type: itemType,
     collectible: true,
     id: `${template.shortName}_${position.row}_${position.col}`,
-    effects: template.effects, // Add this line
+    effects: template.effects,
   };
 
   // Add specific properties based on type
@@ -123,7 +119,7 @@ const createMonsterInstance = (
   return {
     id: `${monsterShortName}_spawn_config`,
     templateId: monsterShortName,
-    position, // Usually default, actual spawn position determined dynamically
+    position,
     active: true,
     currentHP: template.hp ?? 10,
     hp: template.hp ?? 10,
@@ -179,40 +175,23 @@ export const levels: Record<string, Level> = {
 
     // ITEMS - Created from templates with specific positions
     items: [
-      createItemInstance("healthPotion", { row: 375, col: 195 }),
+      createItemInstance("healthPotion", { row: 395, col: 195 }),
       createItemInstance("ironSword", { row: 380, col: 200 }),
       createItemInstance("maguffinRock", { row: 390, col: 210 }),
     ],
 
     // MONSTERS - Individual spawn configurations per level
     monsters: [
-      createMonsterInstance("abhuman", 0.2, 0.3, 2), // Low spawn rate, higher chance, max 2
-      createMonsterInstance("night_hound", 0.15, 0.2, 3), // Moderate spawn settings, max 3
+      createMonsterInstance("abhuman", 0.2, 0.3, 2),
+      createMonsterInstance("night_hound", 0.15, 0.2, 3),
     ],
 
-    // OBJECTS - Buildings and structures
-    objects: [createObjectInstance("redoubt", { row: 396, col: 198 })],
-
-    // POOLS - Instance-specific configurations
-    pools: [
-      {
-        shortName: "heal_pool",
-        id: "sanctuary_pool",
-        name: "Sanctuary Pool",
-        position: { row: 200, col: 200 },
-        image: sanctuaryPoolImg,
-        effects: [{ type: "heal", description: "config/poolTemplates.ts" }],
-      },
-      {
-        shortName: "poison_pool",
-        id: "poison_pool",
-        position: { row: 250, col: 250 },
-        image: poisonPoolImg,
-        effects: [{ type: "poison", description: "poison pool" }],
-      },
+    // OBJECTS - Buildings and structures (including pools)
+    objects: [
+      createObjectInstance("redoubt", { row: 396, col: 198 }),
+      createObjectInstance("healingPool", { row: 385, col: 200 }),
+      createObjectInstance("poisonPool", { row: 250, col: 250 }),
     ],
-
-    poolTemplates: poolTemplates,
 
     // GREAT POWERS - Boss-level entities
     greatPowers: [
@@ -248,7 +227,6 @@ export const levels: Record<string, Level> = {
         direction: 0,
         templateId: "footstepsPersius",
       },
-      // ... other footsteps ...
       {
         id: 26,
         position: { row: 10, col: 215 },
@@ -284,27 +262,20 @@ export const levels: Record<string, Level> = {
     weatherEffect: "mist",
     backgroundMusic: "watching_grounds",
 
-    items: [], // No items in this level
+    items: [],
 
     // DIFFERENT SPAWN SETTINGS FOR LEVEL 2
     monsters: [
-      createMonsterInstance("night_hound", 0.25, 0.4, 6), // Higher spawn rate and chance, more max instances
-      createMonsterInstance("abhuman", 0.1, 0.15, 1), // Lower spawn settings for this level
+      createMonsterInstance("night_hound", 0.25, 0.4, 6),
+      createMonsterInstance("abhuman", 0.1, 0.15, 1),
     ],
 
-    objects: [], // No objects in this level
-
-    pools: [
-      {
-        shortName: "poison_pool",
-        id: "poison_pool",
-        position: { row: 150, col: 150 },
-        image: "assets/pools/custom_poison_swamp.png", // Override image
-      },
+    // OBJECTS - Buildings including pools
+    objects: [
+      createObjectInstance("poisonPool", { row: 150, col: 150 }),
     ],
 
-    poolTemplates: poolTemplates,
-    greatPowers: [], // No great powers in this level
+    greatPowers: [],
 
     completionConditions: [
       {

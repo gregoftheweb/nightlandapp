@@ -231,15 +231,20 @@ const handleConsumableCollection = (
 };
 
 // ==================== OBJECT INTERACTIONS ====================
-
 export const checkObjectInteractions = (
   state: GameState,
   dispatch: (action: any) => void,
   playerPos: Position,
   showDialog?: (message: string, duration?: number) => void
 ) => {
+  console.log('Checking object interactions at playerPos:', playerPos);
+  console.log('Available objects:', state.objects);
+
   const objectAtPosition = state.objects?.find((obj: any) => {
-    if (!obj.active) return false;
+    if (!obj.active) {
+      console.log(`Object ${obj.name} is inactive, skipping`);
+      return false;
+    }
 
     if (obj.collisionMask) {
       return obj.collisionMask.some((mask: any) => {
@@ -248,12 +253,21 @@ export const checkObjectInteractions = (
         const objRowEnd = objRowStart + (mask.height || 1) - 1;
         const objColEnd = objColStart + (mask.width || 1) - 1;
 
-        return (
+        const isCollision = (
           playerPos.row >= objRowStart &&
           playerPos.row <= objRowEnd &&
           playerPos.col >= objColStart &&
           playerPos.col <= objColEnd
         );
+        console.log(`Checking collision for ${obj.name}:`, {
+          objRowStart,
+          objRowEnd,
+          objColStart,
+          objColEnd,
+          playerPos,
+          isCollision,
+        });
+        return isCollision;
       });
     } else {
       const objRowStart = obj.position.row;
@@ -263,61 +277,81 @@ export const checkObjectInteractions = (
       const objRowEnd = objRowStart + objHeight - 1;
       const objColEnd = objColStart + objWidth - 1;
 
-      return (
+      const isCollision = (
         playerPos.row >= objRowStart &&
         playerPos.row <= objRowEnd &&
         playerPos.col >= objColStart &&
         playerPos.col <= objColEnd
       );
+      console.log(`Checking collision for ${obj.name} (no mask):`, {
+        objRowStart,
+        objRowEnd,
+        objColStart,
+        objColEnd,
+        playerPos,
+        isCollision,
+      });
+      return isCollision;
     }
   });
 
-  if (!objectAtPosition || !objectAtPosition.effects) return;
+  if (!objectAtPosition) {
+    console.log('No object found at player position');
+    return;
+  }
+  if (!objectAtPosition.effects) {
+    console.log(`Object ${objectAtPosition.name} has no effects`);
+    return;
+  }
 
   const now = Date.now();
   const lastTrigger = objectAtPosition.lastTrigger || 0;
+  console.log(`Cooldown check for ${objectAtPosition.name}:`, {
+    now,
+    lastTrigger,
+    timeSinceLast: now - lastTrigger,
+  });
 
   // Cooldown check (50 seconds)
-  if (now - lastTrigger <= 50000) return;
+  if (now - lastTrigger <= 50000) {
+    console.log(`Cooldown active for ${objectAtPosition.name}, exiting`);
+    return;
+  }
 
   objectAtPosition.effects.forEach((effect: any) => {
+    console.log('Triggering effect:', effect);
+
     dispatch({
-      type: "TRIGGER_EFFECT",
+      type: 'TRIGGER_EFFECT',
       payload: { effect, position: playerPos },
     });
 
     switch (effect.type) {
-      case "swarm":
-        showDialog?.(
-          `A swarm of ${effect.monsterType}s emerges from the ${objectAtPosition.name}!`,
-          3000
-        );
+      case 'swarm':
+        console.log(`A swarm of ${effect.monsterType}s emerges from the ${objectAtPosition.name}!`);
         break;
-      case "hide":
-        showDialog?.(
-          `The ${objectAtPosition.name} cloaks you in silence.`,
-          3000
-        );
+      case 'hide':
+        console.log(`The ${objectAtPosition.name} cloaks you in silence.`);
         break;
-      case "heal":
-        showDialog?.(
-          `The ${objectAtPosition.name} restores your strength!`,
-          3000
-        );
+      case 'heal':
+        console.log(`The ${objectAtPosition.name} restores your strength!`);
         break;
       default:
+        console.log(`Unhandled effect type: ${effect.type}`);
         break;
     }
   });
 
   dispatch({
-    type: "UPDATE_OBJECT",
+    type: 'UPDATE_OBJECT',
     payload: {
       shortName: objectAtPosition.shortName,
       updates: { lastTrigger: now },
     },
   });
 };
+
+
 
 // ==================== UTILITY FUNCTIONS ====================
 

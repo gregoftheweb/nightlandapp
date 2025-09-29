@@ -13,6 +13,7 @@ export const playerConfig: Player = {
   hp: 100,
   maxHP: 100,
   position: { row: 395, col: 200 },
+  zIndex: 500,
   moveSpeed: 1,
   initiative: 10,
   attack: 8,

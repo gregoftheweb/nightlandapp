@@ -86,7 +86,7 @@ export interface Item extends GameObject {
     text: string;
   };
   usable?: boolean;
-  consumeOnUse?: boolean; // Renamed to avoid confusion with type
+  consumeOnUse?: boolean;
   maxUses?: number;
   currentUses?: number;
 }
@@ -123,6 +123,7 @@ export interface Player {
   moveSpeed: number;
   level?: number;
   experience?: number;
+  zIndex?: number;
 }
 
 export interface Effect {
@@ -142,35 +143,35 @@ export interface Effect {
     | "quest_complete"
     | "quest_failed"
     | "target_destroyed"
-    | "swarm" // Add swarm for existing code
-    | "hide"; // Add hide for existing code
+    | "swarm"
+    | "hide";
 
   description?: string;
 
   // Numeric values
-  value?: number; // Primary effect value (heal amount, damage, etc.)
-  duration?: number; // Duration in turns/seconds
-  range?: number; // Effect range in grid units
-  count?: number; // Number of spawned entities
-  amount?: number; // Alternative to value for clarity
+  value?: number;
+  duration?: number;
+  range?: number;
+  count?: number;
+  amount?: number;
 
   // Target specification
   target?: "self" | "enemy" | "ally" | "area" | "all";
-  targetId?: string; // Specific target ID
+  targetId?: string;
 
   // Spawn/summon properties
-  monsterType?: string; // Type of monster to spawn
-  entityId?: string; // ID of entity to summon/create
+  monsterType?: string;
+  entityId?: string;
 
   // Position and area effects
-  position?: Position; // Specific position for effect
-  area?: Area; // Area of effect
+  position?: Position;
+  area?: Area;
 
   // Conditional logic
   condition?: {
     type: "hp_below" | "hp_above" | "has_item" | "level_check" | "random";
     value?: number;
-    probability?: number; // 0-1 for random conditions
+    probability?: number;
     itemId?: string;
   };
 
@@ -197,9 +198,9 @@ export interface Effect {
   failureMessage?: string;
 
   // Cooldown and usage limits
-  cooldown?: number; // Cooldown in turns
-  maxUses?: number; // Max uses per item/ability
-  currentUses?: number; // Current usage count
+  cooldown?: number;
+  maxUses?: number;
+  currentUses?: number;
 
   // Animation and visual effects
   animation?: {
@@ -244,26 +245,6 @@ export interface CompletionCondition {
   completed?: boolean;
 }
 
-export interface PoolInstance {
-  id: string;
-  position: Position;
-  image: string;
-  shortName?: string;
-  name?: string;
-  active?: boolean;
-  size?: { width: number; height: number };
-  effects?: Effect[];
-}
-
-export interface PoolTemplate {
-  maxInstances: number;
-  shortName?: string;
-  image: string;
-  name?: string;
-  size?: { width: number; height: number };
-  effects?: Effect[];
-}
-
 export interface FootstepInstance {
   id: number;
   position: Position;
@@ -301,8 +282,6 @@ export interface Level {
   items: Item[];
   monsters: LevelMonsterInstance[];
   objects: LevelObjectInstance[];
-  pools: PoolInstance[];
-  poolTemplates: PoolTemplate[];
   footsteps: FootstepInstance[];
   footstepsTemplate: FootstepTemplate;
   greatPowers?: GreatPower[];
@@ -376,9 +355,7 @@ export interface GameState {
   activeMonsters: Monster[];
   items: Item[];
   objects: LevelObjectInstance[];
-  pools: PoolInstance[];
   greatPowers: GreatPower[];
-  poolsTemplate: PoolTemplate[];
   footsteps: FootstepInstance[];
   footstepsTemplate: FootstepTemplate;
   levels: Record<string, Level>;

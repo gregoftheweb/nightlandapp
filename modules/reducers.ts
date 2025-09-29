@@ -5,7 +5,6 @@ import {
   Monster,
   LevelMonsterInstance,
   FootstepInstance,
-  PoolInstance,
 } from "../config/types";
 import { levels } from "../config/levels";
 import { initialState } from "./gameState";
@@ -25,8 +24,6 @@ export const reducer = (
         monsters: newLevelConfig.monsters || [],
         greatPowers: newLevelConfig.greatPowers || [],
         objects: newLevelConfig.objects || [],
-        pools: newLevelConfig.pools || [],
-        poolsTemplate: newLevelConfig.poolTemplates || [],
         footsteps: newLevelConfig.footsteps || [],
         footstepsTemplate: newLevelConfig.footstepsTemplate || {
           maxInstances: 0,
@@ -126,7 +123,6 @@ export const reducer = (
       return { ...state, activeMonsters: action.payload.activeMonsters };
 
     case "AWAKEN_GREAT_POWER":
-      // In your game reducer
       return {
         ...state,
         level: {
@@ -264,7 +260,6 @@ export const reducer = (
       };
 
     case "RESET_GAME": {
-      // this ressets to game level 1
       return initialState;
     }
 
@@ -351,9 +346,9 @@ export const reducer = (
         description: weaponDetails.description,
         active: true,
         collectible: true,
-        type: "weapon" as const, // This ensures TypeScript treats it as literal "weapon"
+        type: "weapon" as const,
         weaponId: weaponId,
-        category: "weapon" as const, // Same here if category has similar restrictions
+        category: "weapon" as const,
       };
 
       return {
@@ -380,12 +375,10 @@ export const reducer = (
     case "DROP_ITEM": {
       const { item, position } = action.payload;
 
-      // remove from player inventory
       const updatedInventory = state.player.inventory.filter(
         (invItem) => invItem.id !== item.id
       );
 
-      // create board item
       const droppedItem = {
         ...item,
         position: { ...position },
@@ -484,11 +477,22 @@ export const reducer = (
             },
           };
         case "heal":
+          // Safeguard against NaN: Ensure amount is a valid number, default to 0 if not
+          const healAmount =
+            typeof effect.amount === "number" && !isNaN(effect.amount)
+              ? effect.amount
+              : 0;
+          // Also ensure current hp is a number (fallback to 0 if NaN)
+          const currentHP =
+            typeof state.player.hp === "number" && !isNaN(state.player.hp)
+              ? state.player.hp
+              : 0;
+          const newHP = Math.min(state.player.maxHP, currentHP + healAmount);
           return {
             ...state,
             player: {
               ...state.player,
-              hp: Math.min(state.player.maxHP, state.player.hp + effect.amount),
+              hp: newHP,
             },
           };
         default:
@@ -531,20 +535,6 @@ export const reducer = (
         footsteps: [...state.footsteps, newFootstep].slice(
           0,
           template?.maxInstances || 10
-        ),
-      };
-
-    case "ADD_POOL":
-      const newPool: PoolInstance = {
-        id: `${state.pools.length + 1}`,
-        position: action.position,
-        image: action.image,
-      };
-      return {
-        ...state,
-        pools: [...state.pools, newPool].slice(
-          0,
-          state.poolsTemplate[0]?.maxInstances || 10 // Access first template's maxInstances
         ),
       };
 

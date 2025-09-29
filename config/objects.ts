@@ -8,6 +8,7 @@ import petrifiedWillowIMG from "@assets/images/petrifiedWillow.png";
 import maguffinRockIMG from "@assets/images/maguffinRock.png";
 import shortSwordIMG from "@assets/images/shortSword.png";
 import potionIMG from "@assets/images/potion.png";
+import sanctuaryPoolImg from "@assets/images/poolofpeace.png";
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
@@ -28,6 +29,7 @@ export const weapons: Record<string, GameObject> = {
     category: "weapon",
     name: "Iron Sword",
     description: "A sturdy iron blade, well-balanced and sharp.",
+    image:shortSwordIMG,
     damage: 8,
     hitBonus: 1,
     type: "melee",
@@ -44,6 +46,7 @@ export const consumables: Record<string, GameObject> = {
     name: "Health Potion",
     description: "A red potion that restores health when consumed.",
     type: "consumable",
+    image: potionIMG,
     active: true,
     effects: [
       {
@@ -60,7 +63,7 @@ export const collectible: Record<string, GameObject> = {
     category: "collectible",
     name: "Maguffin Rock",
     description: "A mysterious rock formation with unknown properties.",
-    type:"collectible",
+    type: "collectible",
     image: maguffinRockIMG,
     active: true,
     zIndex: 0,
@@ -74,8 +77,8 @@ export const buildings: Record<string, GameObject> = {
     category: "building",
     name: "The Last Redoubt",
     description: "The Last home of the remnant of Mankind.",
-    width: 4,
-    height: 4,
+    width: 6,
+    height: 6,
     image: redoubtImg,
     active: true,
     zIndex: 0,
@@ -113,7 +116,40 @@ export const buildings: Record<string, GameObject> = {
     active: true,
     zIndex: 0,
   },
-
+  healingPool: {
+    shortName: "healingPool",
+    category: "building",
+    name: "Healing Pool",
+    description: "A serene pool of restorative waters.",
+    width: 4,
+    height: 4,
+    image: sanctuaryPoolImg,
+    active: true,
+    zIndex: 0,
+    effects: [
+      {
+        type: "heal",
+        value: 20,
+      },
+    ],
+  },
+  poisonPool: {
+    shortName: "poisonPool",
+    category: "building",
+    name: "Poison Pool",
+    description: "A bubbling pool of toxic sludge.",
+    width: 2,
+    height: 2,
+    image: sanctuaryPoolImg,
+    active: true,
+    zIndex: 0,
+    effects: [
+      {
+        type: "poison",
+        value: 10,
+      },
+    ],
+  },
 };
 
 // UTILITY FUNCTIONS TO GET TEMPLATES
@@ -135,12 +171,12 @@ export const getConsumableTemplate = (
   return consumables[shortName];
 };
 
-
 export const getCollectibleTemplate = (
   shortName: string
 ): GameObject | undefined => {
   return collectible[shortName];
 };
+
 export const getItemTemplate = (shortName: string): GameObject | undefined => {
   return weapons[shortName] || consumables[shortName];
 };

@@ -217,108 +217,55 @@ export default function GameBoard({
     };
   };
 
-  const renderGridCells = (): React.ReactNode[] => {
-    const tiles: React.ReactNode[] = [];
+// Simplified renderGridCells - only renders background grid cells
+const renderGridCells = (): React.ReactNode[] => {
+  const tiles: React.ReactNode[] = [];
 
-    for (let row = 0; row < VIEWPORT_ROWS; row++) {
-      for (let col = 0; col < VIEWPORT_COLS; col++) {
-        const worldRow = row + cameraOffset.offsetY;
-        const worldCol = col + cameraOffset.offsetX;
+  for (let row = 0; row < VIEWPORT_ROWS; row++) {
+    for (let col = 0; col < VIEWPORT_COLS; col++) {
+      const worldRow = row + cameraOffset.offsetY;
+      const worldCol = col + cameraOffset.offsetX;
 
-        const isPlayer =
-          !!state.player?.position &&
-          worldRow === state.player.position.row &&
-          worldCol === state.player.position.col;
+      const isPlayer =
+        !!state.player?.position &&
+        worldRow === state.player.position.row &&
+        worldCol === state.player.position.col;
 
-        const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
-        const greatPowerAtPosition = findGreatPowerAtPosition(
-          worldRow,
-          worldCol
-        );
-        const itemAtPosition = findItemAtPosition(worldRow, worldCol);
+      const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
+      const greatPowerAtPosition = findGreatPowerAtPosition(worldRow, worldCol);
 
-        tiles.push(
-          <View
-            key={`cell-${worldRow}-${worldCol}`}
-            style={[
-              styles.cell,
-              {
-                left: col * CELL_SIZE,
-                top: row * CELL_SIZE,
-                backgroundColor: getCellBackgroundColor(
-                  isPlayer,
-                  monsterAtPosition,
-                  greatPowerAtPosition,
-                  state.inCombat
-                ),
-              },
-            ]}
-          >
-            {itemAtPosition && (
-              <TouchableOpacity
-                onPress={() => handleItemTap(itemAtPosition)}
-                style={styles.tappableArea}
-                activeOpacity={0.7}
-              >
-                <Image
-                  source={getItemImage(itemAtPosition.shortName)}
-                  style={[styles.item, { zIndex: 1 }]}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            )}
-            {greatPowerAtPosition && !isPlayer && (
-              <TouchableOpacity
-                onPress={() => handleGreatPowerTap(greatPowerAtPosition)}
-                style={styles.tappableArea}
-                activeOpacity={0.7}
-              >
-                <Image
-                  source={getGreatPowerImage(greatPowerAtPosition)}
-                  style={[
-                    styles.character,
-                    {
-                      zIndex: 2,
-                      opacity: greatPowerAtPosition.awakened ? 1.0 : 0.7,
-                    },
-                  ]}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            )}
-            {monsterAtPosition && !isPlayer && !greatPowerAtPosition && (
-              <TouchableOpacity
-                onPress={() => handleMonsterTap(monsterAtPosition)}
-                style={styles.tappableArea}
-                activeOpacity={0.7}
-              >
-                <Image
-                  source={getMonsterImage(monsterAtPosition)}
-                  style={[styles.character, { zIndex: 1 }]}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            )}
-            {isPlayer && (
-              <TouchableOpacity
-                onPress={handlePlayerTap}
-                style={styles.tappableArea}
-                activeOpacity={0.7}
-              >
-                <Image
-                  source={require("../assets/images/christos.png")}
-                  style={[styles.character, { zIndex: 3 }]}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        );
-      }
+      tiles.push(
+        <View
+          key={`cell-${worldRow}-${worldCol}`}
+          style={[
+            styles.cell,
+            {
+              left: col * CELL_SIZE,
+              top: row * CELL_SIZE,
+              borderColor: getCellBorderColor(
+                isPlayer,
+                monsterAtPosition,
+                greatPowerAtPosition,
+                state.inCombat
+              ),
+              backgroundColor: getCellBackgroundColor(
+                isPlayer,
+                monsterAtPosition,
+                greatPowerAtPosition,
+                state.inCombat
+              ),
+            },
+          ]}
+        />
+      );
     }
+  }
 
-    return tiles;
-  };
+  return tiles;
+};
+
+  
+
 
   const renderCombatMonsters = (): React.ReactNode[] => {
     if (!state.inCombat || !state.attackSlots) return [];
@@ -363,11 +310,209 @@ export default function GameBoard({
       .filter((item): item is React.ReactElement => item !== null);
   };
 
+  
+  // Render player as absolute-positioned entity
+const renderPlayer = (): React.ReactNode | null => {
+  if (!state.player?.position) return null;
+
+  const screenRow = state.player.position.row - cameraOffset.offsetY;
+  const screenCol = state.player.position.col - cameraOffset.offsetX;
+
+  const inView =
+    screenRow >= 0 &&
+    screenRow < VIEWPORT_ROWS &&
+    screenCol >= 0 &&
+    screenCol < VIEWPORT_COLS;
+
+  if (!inView) return null;
+
+  return (
+    <TouchableOpacity
+      key="player"
+      onPress={handlePlayerTap}
+      style={{
+        position: "absolute",
+        left: screenCol * CELL_SIZE,
+        top: screenRow * CELL_SIZE,
+        width: CELL_SIZE,
+        height: CELL_SIZE,
+        zIndex: state.player.zIndex || 500,
+      }}
+      activeOpacity={0.7}
+    >
+      <Image
+        source={state.player.image as ImageSourcePropType}
+        style={{
+          width: CELL_SIZE * 0.8,
+          height: CELL_SIZE * 0.8,
+          position: "absolute",
+          left: CELL_SIZE * 0.1,
+          top: CELL_SIZE * 0.1,
+        }}
+        resizeMode="contain"
+      />
+    </TouchableOpacity>
+  );
+};
+
+// Render monsters as absolute-positioned entities
+const renderMonsters = (): React.ReactNode[] => {
+  return state.activeMonsters
+    .filter((monster) => !monster.inCombatSlot)
+    .map((monster) => {
+      if (!monster.position) return null;
+
+      const screenRow = monster.position.row - cameraOffset.offsetY;
+      const screenCol = monster.position.col - cameraOffset.offsetX;
+
+      const inView =
+        screenRow >= 0 &&
+        screenRow < VIEWPORT_ROWS &&
+        screenCol >= 0 &&
+        screenCol < VIEWPORT_COLS;
+
+      if (!inView) return null;
+
+      return (
+        <TouchableOpacity
+          key={`monster-${monster.id}`}
+          onPress={() => handleMonsterTap(monster)}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: CELL_SIZE,
+            height: CELL_SIZE,
+            zIndex: monster.zIndex || 1,
+          }}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={getMonsterImage(monster)}
+            style={{
+              width: CELL_SIZE * 0.8,
+              height: CELL_SIZE * 0.8,
+              position: "absolute",
+              left: CELL_SIZE * 0.1,
+              top: CELL_SIZE * 0.1,
+            }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      );
+    })
+    .filter((item): item is React.ReactElement => item !== null);
+};
+
+// Render great powers as absolute-positioned entities
+const renderGreatPowers = (): React.ReactNode[] => {
+  if (!state.level.greatPowers) return [];
+
+  return state.level.greatPowers
+    .map((greatPower) => {
+      if (!greatPower.position) return null;
+
+      const screenRow = greatPower.position.row - cameraOffset.offsetY;
+      const screenCol = greatPower.position.col - cameraOffset.offsetX;
+
+      const inView =
+        screenRow >= 0 &&
+        screenRow < VIEWPORT_ROWS &&
+        screenCol >= 0 &&
+        screenCol < VIEWPORT_COLS;
+
+      if (!inView) return null;
+
+      return (
+        <TouchableOpacity
+          key={`greatpower-${greatPower.id}`}
+          onPress={() => handleGreatPowerTap(greatPower)}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: CELL_SIZE,
+            height: CELL_SIZE,
+            zIndex: greatPower.zIndex || 2,
+          }}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={getGreatPowerImage(greatPower)}
+            style={{
+              width: CELL_SIZE * 0.8,
+              height: CELL_SIZE * 0.8,
+              position: "absolute",
+              left: CELL_SIZE * 0.1,
+              top: CELL_SIZE * 0.1,
+              opacity: greatPower.awakened ? 1.0 : 0.7,
+            }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      );
+    })
+    .filter((item): item is React.ReactElement => item !== null);
+};
+
+// Render items as absolute-positioned entities
+const renderItems = (): React.ReactNode[] => {
+  if (!state.items) return [];
+
+  return state.items
+    .map((item) => {
+      if (!item.position || !item.active) return null;
+
+      const screenRow = item.position.row - cameraOffset.offsetY;
+      const screenCol = item.position.col - cameraOffset.offsetX;
+
+      const inView =
+        screenRow >= 0 &&
+        screenRow < VIEWPORT_ROWS &&
+        screenCol >= 0 &&
+        screenCol < VIEWPORT_COLS;
+
+      if (!inView) return null;
+
+      return (
+        <TouchableOpacity
+          key={`item-${item.id}`}
+          onPress={() => handleItemTap(item)}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: CELL_SIZE,
+            height: CELL_SIZE,
+            zIndex: item.zIndex || 1,
+          }}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={getItemImage(item.shortName)}
+            style={{
+              width: CELL_SIZE * 0.6,
+              height: CELL_SIZE * 0.6,
+              position: "absolute",
+              left: CELL_SIZE * 0.2,
+              top: CELL_SIZE * 0.2,
+            }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      );
+    })
+    .filter((item): item is React.ReactElement => item !== null);
+};
+
+
+
   const renderBuildings = (): React.ReactNode[] => {
     return state.level.objects
       .map((obj: LevelObjectInstance) => {
         if (!obj.position || !obj.image) return null;
 
+        console.log(`Building ${obj.shortName} zIndex:`, obj.zIndex);
         const screenRow = obj.position.row - cameraOffset.offsetY;
         const screenCol = obj.position.col - cameraOffset.offsetX;
         const objWidth = obj.size?.width ?? 1;
@@ -392,7 +537,7 @@ export default function GameBoard({
               top: screenRow * CELL_SIZE,
               width: objWidth * CELL_SIZE,
               height: objHeight * CELL_SIZE,
-              zIndex: 10,
+              zIndex: obj.zIndex || 0, // Use the object's zIndex, default to 0
             }}
           >
             <Image
@@ -406,16 +551,52 @@ export default function GameBoard({
           </TouchableOpacity>
         );
       })
+
       .filter((item): item is React.ReactElement => item !== null);
   };
 
-  const renderGrid = () => {
-    const gridCells = renderGridCells();
-    const buildings = renderBuildings();
-    const combatMonsters = renderCombatMonsters();
 
-    return [...gridCells, ...combatMonsters, ...buildings];
-  };
+  
+const renderGrid = () => {
+  const gridCells = renderGridCells();
+
+  // Collect all entities that need z-index sorting
+  const allEntities = [
+    ...renderBuildings(),
+    ...renderMonsters(),
+    ...renderGreatPowers(),
+    ...renderItems(),
+    ...renderCombatMonsters(),
+    renderPlayer(),
+  ].filter((entity): entity is React.ReactElement => entity !== null);
+
+  // Sort by z-index (lower values render first/behind)
+  allEntities.sort((a, b) => {
+    const getZIndex = (element: React.ReactElement): number => {
+      const props = element.props as any;
+      const style = props.style;
+      
+      if (Array.isArray(style)) {
+        // Find zIndex in style array
+        for (const s of style) {
+          if (s && typeof s === 'object' && 'zIndex' in s) {
+            return (s as any).zIndex || 0;
+          }
+        }
+        return 0;
+      }
+      return style?.zIndex || 0;
+    };
+    
+    return getZIndex(a) - getZIndex(b);
+  });
+
+  return [...gridCells, ...allEntities];
+};
+  
+
+
+
 
   const tiledBackground = useMemo(() => {
     // number of tiles to cover the screen + 1 buffer row/col each side
@@ -507,12 +688,28 @@ const getCellBackgroundColor = (
   inCombat: boolean
 ) => {
   // Make cell backgrounds more transparent to show the tiled background
-  if (isPlayer) return "rgba(68, 68, 68, 0.7)";
+  if (isPlayer) return "rgba(45, 81, 105, 0.4)";
+  // if (hasGreatPower)
+  //   return hasGreatPower.awakened
+  //     ? "rgba(102, 68, 68, 0.6)"
+  //     : "rgba(68, 34, 34, 0.5)";
+  if (hasMonster) return "rgba(88, 57, 57, 0.4)";
+  return "rgba(17, 17, 17, 0.3)"; // Very transparent for normal cells
+};
+
+const getCellBorderColor = (
+  isPlayer: boolean,
+  hasMonster: Monster | undefined,
+  hasGreatPower: GreatPower | undefined,
+  inCombat: boolean
+) => {
+  // Make cell backgrounds more transparent to show the tiled background
+  if (isPlayer) return "rgba(84, 124, 255, 0.7)";
   if (hasGreatPower)
     return hasGreatPower.awakened
       ? "rgba(102, 68, 68, 0.6)"
-      : "rgba(68, 34, 34, 0.5)";
-  if (hasMonster) return "rgba(102, 34, 34, 0.6)";
+      : "rgba(255, 8, 8, 0.5)";
+  if (hasMonster) return "rgba(255, 8, 8, 0.6)";
   return "rgba(17, 17, 17, 0.3)"; // Very transparent for normal cells
 };
 
