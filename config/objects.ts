@@ -77,11 +77,20 @@ export const buildings: Record<string, GameObject> = {
     category: "building",
     name: "The Last Redoubt",
     description: "The Last home of the remnant of Mankind.",
-    width: 6,
-    height: 6,
+    width: 8,
+    height: 8,
     image: redoubtImg,
     active: true,
     zIndex: 0,
+      effects: [
+      {
+        type: "recuperate",
+        value: 10,
+      },
+      {
+        type: "hide",
+      },
+    ],
   },
   river: {
     shortName: "river",
@@ -99,11 +108,19 @@ export const buildings: Record<string, GameObject> = {
     category: "building",
     name: "Cursed Totem",
     description: "An ancient totem radiating malevolent energy.",
-    width: 1,
-    height: 2,
+    width: 3,
+    height: 6,
     image: cursedTotemIMG,
     active: true,
     zIndex: 1,
+    effects: [
+      {
+        type: "swarm",
+        monsterType: "abhuman", //shortname of monster
+        count: 4, //how many monsters spawn
+        range: 12, //how far away + - 5 grid squares to spawn
+      },
+    ],
   },
   petrifiedWillow: {
     shortName: "petrifiedWillow",

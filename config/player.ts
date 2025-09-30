@@ -7,7 +7,7 @@ export const playerConfig: Player = {
   name: "Christos",
   shortName: "christos",
   id: "christos",
-  description: "One of the humans from the Last Redoubt.",
+  description: "A brave hero from the Last Redoubt. He ventures on a hopeless quest to rescue is brother - Persius.",
   lastComment: "",
   image: christosIMG,
   hp: 100,

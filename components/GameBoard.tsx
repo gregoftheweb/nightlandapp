@@ -109,11 +109,10 @@ export default function GameBoard({
       : "";
     showInfo(
       player.name || "Christos",
-      `${player.description || "The brave hero of the Last Redoubt."}\n\nHP: ${
-        player.hp
-      }/${player.maxHP}\nAC: ${player.ac || 10}\nAttack: ${
-        player.attack
-      }${weaponInfo}`
+      `${
+        player.description || "The brave hero of the Last Redoubt."
+      }\n\n Level: ${state.level.name}\n${state.level.description}\n
+      ${player.position.row}- ${player.position.col}`
     );
     onPlayerTap?.();
   };
@@ -606,7 +605,7 @@ export default function GameBoard({
         tiles.push(
           <Image
             key={`bg-${r}-${c}`}
-            source={require("../assets/images/dark-green-bg-320.png")}
+            source={require("../assets/images/dark-blue-bg-320.png")}
             style={{
               position: "absolute",
               left,

@@ -5,9 +5,11 @@ import {
   Monster,
   LevelMonsterInstance,
   FootstepInstance,
+  Position,
 } from "../config/types";
 import { levels } from "../config/levels";
 import { initialState } from "./gameState";
+import { createMonsterFromTemplate } from "../modules/monsterUtils";
 
 export const reducer = (
   state: GameState = initialState,
@@ -427,42 +429,67 @@ export const reducer = (
       const { effect, position } = action.payload;
       switch (effect.type) {
         case "swarm": {
-          const newMonsters: Monster[] = [];
-          const monstersArray = state.monsters ?? [];
-          const monsterTemplate = monstersArray.find(
-            (m: LevelMonsterInstance) => m.name === effect.monsterType
-          );
-          if (!monsterTemplate) {
-            console.warn("Monster template not found:", effect.monsterType);
+          // Validate we have the necessary effect properties
+          if (!effect.monsterType || !effect.count || !effect.range) {
+            console.error("Swarm effect missing required properties:", effect);
             return state;
           }
+
+          // Get the spawn range (effect.range +/- 5 grid squares)
+          const spawnRange = effect.range;
+          const playerPos = state.player.position;
+          const newMonsters: Monster[] = [];
+
+          // Create the specified number of monsters
           for (let i = 0; i < effect.count; i++) {
+            // Generate random offset within range
+            const angle = Math.random() * 2 * Math.PI;
+            const distance = Math.random() * spawnRange;
+
+            // Calculate spawn position relative to player
+            const rowOffset = Math.round(Math.sin(angle) * distance);
+            const colOffset = Math.round(Math.cos(angle) * distance);
+
+            // Add random variance (+/- 5 grid squares as specified)
+            const variance = 5;
+            const rowVariance =
+              Math.floor(Math.random() * variance * 2) - variance;
+            const colVariance =
+              Math.floor(Math.random() * variance * 2) - variance;
+
+            // Calculate final position, clamped to grid bounds
             const spawnRow = Math.max(
               0,
               Math.min(
                 state.gridHeight - 1,
-                position.row +
-                  Math.floor(Math.random() * effect.range * 2) -
-                  effect.range
+                playerPos.row + rowOffset + rowVariance
               )
             );
             const spawnCol = Math.max(
               0,
               Math.min(
                 state.gridWidth - 1,
-                position.col +
-                  Math.floor(Math.random() * effect.range * 2) -
-                  effect.range
+                playerPos.col + colOffset + colVariance
               )
             );
-            newMonsters.push({
-              ...monsterTemplate,
-              id: `${monsterTemplate.shortName}-${Date.now()}-${i}`,
-              hp: monsterTemplate.hp,
-              position: { row: spawnRow, col: spawnCol },
-              active: true,
-            });
+
+            const spawnPosition: Position = { row: spawnRow, col: spawnCol };
+
+            // Create monster using the utility function
+            const monster = createMonsterFromTemplate(
+              effect.monsterType,
+              spawnPosition
+            );
+
+            if (monster) {
+              newMonsters.push(monster);
+              console.log(
+                `Swarm spawned ${monster.name} at ${spawnRow},${spawnCol}`
+              );
+            }
           }
+
+          // Return updated state with new monsters
           return {
             ...state,
             activeMonsters: [...state.activeMonsters, ...newMonsters],

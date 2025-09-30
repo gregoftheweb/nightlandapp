@@ -166,7 +166,7 @@ export const levels: Record<string, Level> = {
     id: "1",
     name: "The Dark Outer Wastes",
     description:
-      "Lands known by the Monstruwacans. Your first venture into the eternal darkness surrounding the Last Redoubt.",
+      "The only lands known by the Monstruwacans, all else is beyond they skill and ken.",
     boardSize: { width: 400, height: 400 },
     playerSpawn: { row: 395, col: 200 },
     ambientLight: 0.2,
@@ -182,15 +182,16 @@ export const levels: Record<string, Level> = {
 
     // MONSTERS - Individual spawn configurations per level
     monsters: [
-      createMonsterInstance("abhuman", 0.2, 0.3, 2),
-      createMonsterInstance("night_hound", 0.15, 0.2, 3),
+      createMonsterInstance("abhuman", 0.1, 0.2, 2),
+      createMonsterInstance("night_hound", 0.04, 0.15, 3),
     ],
 
     // OBJECTS - Buildings and structures (including pools)
     objects: [
-      createObjectInstance("redoubt", { row: 396, col: 198 }),
-      createObjectInstance("healingPool", { row: 385, col: 200 }),
+      createObjectInstance("redoubt", { row: 390, col: 198 }),
+      createObjectInstance("healingPool", { row: 385, col: 20 }),
       createObjectInstance("poisonPool", { row: 250, col: 250 }),
+      createObjectInstance("cursedTotem", { row: 385, col: 210 }),
     ],
 
     // GREAT POWERS - Boss-level entities
