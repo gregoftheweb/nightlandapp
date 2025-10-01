@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { View, StyleSheet, Dimensions, Pressable } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { PositionDisplay } from "../../components/PositionDisplay";
 import { useGameContext } from "../../context/GameContext";
 import GameBoard, {
@@ -20,12 +21,14 @@ import {
 } from "../../modules/turnManager";
 import { Monster, LevelObjectInstance, Item, GreatPower } from "@/config/types";
 import { audioManager } from "../../modules/audioManager";
-import { useFocusEffect } from "@react-navigation/native";
 
+// Constants
 const { width, height } = Dimensions.get("window");
 const MIN_MOVE_DISTANCE = 1;
 const HUD_HEIGHT = 60;
 const MOVEMENT_INTERVAL = 150;
+const GAME_OVER_DELAY = 4000;
+const GREAT_POWER_AWAKEN_DISTANCE = 3;
 
 type Direction = "up" | "down" | "left" | "right" | "stay" | null;
 
@@ -36,37 +39,53 @@ export default function Game() {
   const [targetId, setTargetId] = useState<string | undefined>();
   const router = useRouter();
 
+  // Refs
   const stateRef = useRef(state);
+  const longPressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentDirection = useRef<Direction>(null);
 
+  // Keep state ref in sync
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
 
-  // Start background music when game screen is focused
+  // Memoized camera offset calculation
+  const cameraOffset = useMemo(
+    () =>
+      calculateCameraOffset(
+        state.player.position,
+        VIEWPORT_COLS,
+        VIEWPORT_ROWS,
+        state.gridWidth,
+        state.gridHeight
+      ),
+    [state.player.position, state.gridWidth, state.gridHeight]
+  );
+
+  // Audio management
   useFocusEffect(
     useCallback(() => {
       audioManager.playBackgroundMusic();
-
-      return () => {
-        // Pause when screen loses focus (optional)
-        audioManager.pauseBackgroundMusic();
-      };
+      return () => audioManager.pauseBackgroundMusic();
     }, [])
   );
 
+  // Game over handling
   useEffect(() => {
-    if (state.gameOver) {
-      console.log("Game Over detected, navigating to death screen");
-      audioManager.pauseBackgroundMusic();
+    if (!state.gameOver) return;
 
-      // Small delay to show death message in InfoBox (handled by GameBoard)
-      setTimeout(() => {
-        dispatch({ type: "RESET_GAME" });
-        router.push("/princess");
-      }, 4000); // Match the InfoBox display time
-    }
+    console.log("Game Over detected, navigating to death screen");
+    audioManager.pauseBackgroundMusic();
+
+    const timeout = setTimeout(() => {
+      dispatch({ type: "RESET_GAME" });
+      router.push("/princess");
+    }, GAME_OVER_DELAY);
+
+    return () => clearTimeout(timeout);
   }, [state.gameOver, router, dispatch]);
 
+  // Initialize starting monsters
   useEffect(() => {
     if (state.activeMonsters.length === 0 && state.moveCount === 0) {
       console.log("Initializing starting monsters");
@@ -74,31 +93,7 @@ export default function Game() {
     }
   }, [state.activeMonsters.length, state.moveCount, state, dispatch]);
 
-  const longPressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-  const currentDirection = useRef<Direction>(null);
-
-  const [cameraOffset, setCameraOffset] = useState(() =>
-    calculateCameraOffset(
-      state.player.position,
-      VIEWPORT_COLS,
-      VIEWPORT_ROWS,
-      state.gridWidth,
-      state.gridHeight
-    )
-  );
-
-  useEffect(() => {
-    setCameraOffset(
-      calculateCameraOffset(
-        state.player.position,
-        VIEWPORT_COLS,
-        VIEWPORT_ROWS,
-        state.gridWidth,
-        state.gridHeight
-      )
-    );
-  }, [state.player.position, state.gridWidth, state.gridHeight]);
-
+  // Tap position calculation
   const calculateTapPosition = useCallback(
     (pageX: number, pageY: number) => {
       const gridLeft = (width - VIEWPORT_COLS * CELL_SIZE) / 2;
@@ -106,11 +101,15 @@ export default function Game() {
       const rawCol = (pageX - gridLeft) / CELL_SIZE + cameraOffset.offsetX;
       const rawRow = (pageY - gridTop) / CELL_SIZE + cameraOffset.offsetY;
 
-      return { tapCol: Math.floor(rawCol), tapRow: Math.floor(rawRow) };
+      return { 
+        tapCol: Math.floor(rawCol), 
+        tapRow: Math.floor(rawRow) 
+      };
     },
-    [cameraOffset]
+    [cameraOffset.offsetX, cameraOffset.offsetY]
   );
 
+  // Movement direction calculation
   const getMovementDirectionFromTap = useCallback(
     (
       tapRow: number,
@@ -124,50 +123,46 @@ export default function Game() {
       const absRow = Math.abs(deltaRow);
       const absCol = Math.abs(deltaCol);
 
-      if (absRow < minDistance && absCol < minDistance) {
-        return null;
-      }
+      if (absRow < minDistance && absCol < minDistance) return null;
 
+      // Determine primary direction based on larger delta
       if (absRow > absCol) {
         return deltaRow > 0 ? "down" : "up";
       } else if (absCol > absRow) {
         return deltaCol > 0 ? "right" : "left";
       } else {
-        if (deltaRow !== 0) {
-          return deltaRow > 0 ? "down" : "up";
-        } else if (deltaCol !== 0) {
-          return deltaCol > 0 ? "right" : "left";
-        }
+        // Equal deltas - prioritize vertical movement
+        return deltaRow !== 0 
+          ? (deltaRow > 0 ? "down" : "up")
+          : (deltaCol > 0 ? "right" : "left");
       }
-
-      return null;
     },
     []
   );
 
+  // Movement execution
   const performMove = useCallback(
     (direction: Direction) => {
       if (!direction || stateRef.current.inCombat) return;
-
-      handleMovePlayer(
-        stateRef.current,
-        dispatch,
-        direction,
-        setOverlay
-      );
+      handleMovePlayer(stateRef.current, dispatch, direction, setOverlay);
     },
     [dispatch, setOverlay]
   );
 
+  // Long press interval management
   const startLongPressInterval = useCallback(
     (direction: Direction) => {
       currentDirection.current = direction;
-      if (longPressInterval.current) clearInterval(longPressInterval.current);
+      if (longPressInterval.current) {
+        clearInterval(longPressInterval.current);
+      }
 
       longPressInterval.current = setInterval(() => {
         if (stateRef.current.inCombat || !currentDirection.current) {
-          clearInterval(longPressInterval.current!);
-          longPressInterval.current = null;
+          if (longPressInterval.current) {
+            clearInterval(longPressInterval.current);
+            longPressInterval.current = null;
+          }
           return;
         }
         performMove(currentDirection.current);
@@ -184,9 +179,22 @@ export default function Game() {
     }
   }, []);
 
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => stopLongPressInterval();
+  }, [stopLongPressInterval]);
+
+  // Check if overlay is blocking interaction
+  const isOverlayVisible = useMemo(
+    () => settingsVisible || inventoryVisible,
+    [settingsVisible, inventoryVisible]
+  );
+
+  // Press handlers
   const handlePress = useCallback(
     (event: any) => {
-      if (state.inCombat || settingsVisible || inventoryVisible) return;
+      if (state.inCombat || isOverlayVisible) return;
+      
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - HUD_HEIGHT) return;
 
@@ -201,13 +209,12 @@ export default function Game() {
         MIN_MOVE_DISTANCE
       );
 
-      if (!direction) return;
-      performMove(direction);
+      if (direction) performMove(direction);
     },
     [
       state.inCombat,
-      settingsVisible,
-      inventoryVisible,
+      state.player.position,
+      isOverlayVisible,
       calculateTapPosition,
       getMovementDirectionFromTap,
       performMove,
@@ -216,7 +223,8 @@ export default function Game() {
 
   const handleLongPress = useCallback(
     (event: any) => {
-      if (state.inCombat || settingsVisible || inventoryVisible) return;
+      if (state.inCombat || isOverlayVisible) return;
+      
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - HUD_HEIGHT) return;
 
@@ -231,78 +239,59 @@ export default function Game() {
         MIN_MOVE_DISTANCE
       );
 
-      if (!direction) return;
-      startLongPressInterval(direction);
+      if (direction) startLongPressInterval(direction);
     },
     [
       state.inCombat,
-      settingsVisible,
-      inventoryVisible,
+      state.player.position,
+      isOverlayVisible,
       calculateTapPosition,
       getMovementDirectionFromTap,
       startLongPressInterval,
     ]
   );
 
-  const handlePressOut = useCallback(
-    () => stopLongPressInterval(),
-    [stopLongPressInterval]
-  );
-
+  // UI interaction handlers
   const handleGearPress = useCallback(() => {
     if (!state.inCombat) setSettingsVisible(true);
   }, [state.inCombat]);
 
-  const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
+  const handleCloseSettings = useCallback(() => {
+    setSettingsVisible(false);
+  }, []);
 
   const handleInventoryPress = useCallback(() => {
     if (!state.inCombat) setInventoryVisible(true);
   }, [state.inCombat]);
 
-  const handleCloseInventory = useCallback(
-    () => setInventoryVisible(false),
-    []
-  );
+  const handleCloseInventory = useCallback(() => {
+    setInventoryVisible(false);
+  }, []);
 
   const handleTurnPress = useCallback(() => {
-    if (state.inCombat) {
-      //early return
-      return;
-    }
-
+    if (state.inCombat) return;
     handlePassTurn(state, dispatch);
   }, [state, dispatch]);
 
   const handleAttackPress = useCallback(() => {
-    if (!state.inCombat) {
-      //early return
-      return;
-    }
+    if (!state.inCombat || !state.attackSlots) return;
+
     const targetMonster = targetId
-      ? state.attackSlots?.find((m) => m.id === targetId)
-      : state.attackSlots?.[0];
+      ? state.attackSlots.find((m) => m.id === targetId)
+      : state.attackSlots[0];
+
     if (!targetMonster) {
       console.warn("No target monster in attack slots");
       return;
     }
 
-    handleCombatAction(
-      state,
-      dispatch,
-      "attack",
-      targetMonster.id,
-    );
+    handleCombatAction(state, dispatch, "attack", targetMonster.id);
   }, [state, dispatch, targetId]);
 
   const handleMonsterTap = useCallback(
     (monster: Monster) => {
       if (state.inCombat) {
-        console.log(
-          "Monster tapped during combat:",
-          monster.name,
-          "ID:",
-          monster.id
-        );
+        console.log("Monster tapped during combat:", monster.name, "ID:", monster.id);
         setTargetId(monster.id);
       }
     },
@@ -311,12 +300,9 @@ export default function Game() {
 
   const handleGreatPowerTap = useCallback(
     (greatPower: GreatPower) => {
-      console.log(
-        "Great Power tapped:",
-        greatPower.name,
-        "awakened:",
-        greatPower.awakened
-      );
+      console.log("Great Power tapped:", greatPower.name, "awakened:", greatPower.awakened);
+
+      if (greatPower.awakened) return;
 
       const playerPos = state.player.position;
       const powerPos = greatPower.position;
@@ -324,39 +310,31 @@ export default function Game() {
         Math.abs(playerPos.row - powerPos.row) +
         Math.abs(playerPos.col - powerPos.col);
 
-      if (!greatPower.awakened && distance <= 3) {
-        if (greatPower.awakenCondition === "player_within_range") {
-          console.log("Awakening Great Power:", greatPower.name);
-          dispatch({
-            type: "AWAKEN_GREAT_POWER",
-            payload: { greatPowerId: greatPower.id },
-          });
-        }
-      } else if (!greatPower.awakened) {
-        //do nothing
+      if (
+        distance <= GREAT_POWER_AWAKEN_DISTANCE &&
+        greatPower.awakenCondition === "player_within_range"
+      ) {
+        console.log("Awakening Great Power:", greatPower.name);
+        dispatch({
+          type: "AWAKEN_GREAT_POWER",
+          payload: { greatPowerId: greatPower.id },
+        });
       }
     },
     [state.player.position, dispatch]
   );
 
-  const handlePlayerTap = useCallback(() => {
-    // InfoBox is handled in GameBoard.tsx
-  }, []);
-
-  const handleBuildingTap = useCallback((building: LevelObjectInstance) => {
-    // InfoBox is handled in GameBoard.tsx
-  }, []);
-
-  const handleItemTap = useCallback((item: Item) => {
-    // InfoBox is handled in GameBoard.tsx
-  }, []);
+  // Empty handlers for entities managed by GameBoard
+  const handlePlayerTap = useCallback(() => {}, []);
+  const handleBuildingTap = useCallback(() => {}, []);
+  const handleItemTap = useCallback(() => {}, []);
 
   return (
     <Pressable
       style={styles.container}
       onPress={handlePress}
       onLongPress={handleLongPress}
-      onPressOut={handlePressOut}
+      onPressOut={stopLongPressInterval}
     >
       <View style={styles.gameContainer}>
         <GameBoard
@@ -390,17 +368,13 @@ export default function Game() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
-  gameContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  combatOverlay: {
-    position: "absolute",
-    top: 25,
-    left: 5,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    borderWidth: 2,
-    borderColor: "#990000",
-    padding: 10,
-    borderRadius: 8,
-    maxWidth: "50%",
+  container: { 
+    flex: 1, 
+    backgroundColor: "#000" 
+  },
+  gameContainer: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center" 
   },
 });

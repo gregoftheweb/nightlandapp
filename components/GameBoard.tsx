@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   View,
   Image,
@@ -6,7 +6,6 @@ import {
   Dimensions,
   ImageSourcePropType,
   TouchableOpacity,
-  ImageBackground,
 } from "react-native";
 import {
   Monster,
@@ -16,11 +15,12 @@ import {
   CombatLogEntry,
   Item,
   GreatPower,
+  Position,
 } from "@/config/types";
 import { InfoBox } from "./InfoBox";
 import { CombatDialog } from "./CombatDialog";
 import { getTextContent } from "../modules/utils";
-import { getItemTemplate } from "@/config/objects"; // Added import for template lookup
+import { getItemTemplate } from "@/config/objects";
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,8 +29,8 @@ const VIEWPORT_COLS = Math.floor(width / CELL_SIZE);
 const VIEWPORT_ROWS = Math.floor(height / CELL_SIZE);
 
 // Background tile configuration
-const BACKGROUND_TILE_SIZE = 320; // Size of your background tile image
-const BACKGROUND_SCALE = CELL_SIZE / 32; // Adjust this to scale the background relative to game cells
+const BACKGROUND_TILE_SIZE = 320;
+const BACKGROUND_SCALE = CELL_SIZE / 32;
 const SCALED_TILE_SIZE = BACKGROUND_TILE_SIZE * BACKGROUND_SCALE;
 
 interface GameBoardProps {
@@ -58,203 +58,197 @@ export default function GameBoard({
   const [combatMessages, setCombatMessages] = useState<string[]>([]);
   const [previousInCombat, setPreviousInCombat] = useState(false);
 
-  // Handle combat start and log updates
+  // Memoized entity position maps for O(1) lookups (perf: replaces linear scans)
+  const monsterPositionMap = useMemo(() => {
+    const map = new Map<string, Monster>();
+    [...(state.activeMonsters || []), ...(state.level.monsters || [])].forEach((m) => {
+      if (m.position && !m.inCombatSlot && m.active !== false) {
+        const key = `${m.position.row}-${m.position.col}`;
+        map.set(key, m);
+      }
+    });
+    return map;
+  }, [state.activeMonsters, state.level.monsters]);
+
+  const greatPowerPositionMap = useMemo(() => {
+    const map = new Map<string, GreatPower>();
+    (state.level.greatPowers || []).forEach((gp) => {
+      if (gp.position && gp.active !== false) {
+        const key = `${gp.position.row}-${gp.position.col}`;
+        map.set(key, gp);
+      }
+    });
+    return map;
+  }, [state.level.greatPowers]);
+
+  const itemPositionMap = useMemo(() => {
+    const map = new Map<string, Item>();
+    (state.items || []).forEach((item) => {
+      if (item.active && item.position) {
+        const key = `${item.position.row}-${item.position.col}`;
+        map.set(key, item);
+      }
+    });
+    return map;
+  }, [state.items]);
+
+  // Fast position finders using maps (perf: O(1) vs O(n))
+  const findMonsterAtPosition = useMemo(
+    () => (worldRow: number, worldCol: number): Monster | undefined =>
+      monsterPositionMap.get(`${worldRow}-${worldCol}`),
+    [monsterPositionMap]
+  );
+
+  const findGreatPowerAtPosition = useMemo(
+    () => (worldRow: number, worldCol: number): GreatPower | undefined =>
+      greatPowerPositionMap.get(`${worldRow}-${worldCol}`),
+    [greatPowerPositionMap]
+  );
+
+  const findItemAtPosition = useMemo(
+    () => (worldRow: number, worldCol: number): Item | undefined =>
+      itemPositionMap.get(`${worldRow}-${worldCol}`),
+    [itemPositionMap]
+  );
+
+  // Handle combat start and log updates (dev logs wrapped)
   useEffect(() => {
+    if (__DEV__) {
+      console.log("Combat effect running");
+    }
     if (state.inCombat && !previousInCombat && state.attackSlots.length > 0) {
-      // When combat starts (transition from false to true)
       const firstMonster = state.attackSlots[0];
-      const monsterName =
-        firstMonster.name || firstMonster.shortName || "Monster";
+      const monsterName = firstMonster.name || firstMonster.shortName || "Monster";
       const combatStartMessage = getTextContent("combatStart", [monsterName]);
-      setCombatMessages([
-        combatStartMessage,
-        ...state.combatLog.map((log) => log.message),
-      ]);
+      setCombatMessages([combatStartMessage, ...state.combatLog.map((log) => log.message)]);
       setCombatInfoVisible(true);
-      console.log(
-        "Combat started (detected transition), showing CombatDialog with message:",
-        combatStartMessage
-      );
+      if (__DEV__) {
+        console.log("Combat started (detected transition), showing CombatDialog with message:", combatStartMessage);
+      }
     } else if (state.inCombat && state.combatLog.length > 0) {
-      // Update messages during combat
       setCombatMessages(state.combatLog.map((log) => log.message));
       setCombatInfoVisible(true);
     } else if (!state.inCombat && previousInCombat) {
-      // When combat ends (transition from true to false)
       setCombatInfoVisible(false);
       setCombatMessages([]);
-      console.log("Combat ended (detected transition), hiding CombatDialog");
+      if (__DEV__) {
+        console.log("Combat ended (detected transition), hiding CombatDialog");
+      }
     }
-
-    // Update previous state
     setPreviousInCombat(state.inCombat);
   }, [state.inCombat, state.attackSlots, state.combatLog, previousInCombat]);
 
+  // Game over effect (dev logs wrapped; no auto-close comment since updated InfoBox)
   useEffect(() => {
     if (state.gameOver) {
-      const deathMessage =
-        state.gameOverMessage ||
-        "Your journey ends here. The darkness claims another soul...";
-
-      console.log("DEATH DETECTED - Showing InfoBox:", deathMessage);
-
-      setInfoData({
-        name: "DEATH",
-        description: deathMessage,
-      });
+      const deathMessage = state.gameOverMessage || "Your journey ends here. The darkness claims another soul...";
+      if (__DEV__) {
+        console.log("DEATH DETECTED - Showing InfoBox:", deathMessage);
+      }
+      setInfoData({ name: "DEATH", description: deathMessage });
       setInfoVisible(true);
-
-      // InfoBox will auto-close after 3 seconds
-      // index.tsx will handle navigation after 4 seconds
+      // InfoBox stays open until user closes; index.tsx handles navigation on close
     }
   }, [state.gameOver, state.gameOverMessage]);
 
   if (!state.level || !state.level.objects) {
-    console.warn("GameBoard: state.level is undefined or missing objects!");
+    if (__DEV__) {
+      console.warn("GameBoard: state.level is undefined or missing objects!");
+    }
     return <View style={styles.gridContainer} />;
   }
 
-  const showInfo = (name: string, description: string) => {
-    console.log("showInfo called:", { name, description, infoVisible });
+  // Memoized showInfo (perf: avoids closure recreation; dev log wrapped)
+  const showInfo = useCallback((name: string, description: string) => {
+    if (__DEV__) {
+      console.log("showInfo called:", { name, description, infoVisible });
+    }
     setInfoData({ name, description });
     setInfoVisible(true);
-  };
+  }, [infoVisible]); // Dep on infoVisible to avoid stale closures
 
-  const handlePlayerTap = () => {
-    console.log("handlePlayerTap called, player:", state.player);
+  // Memoized handlers (perf: stable refs for child props/optimizations)
+  const handlePlayerTap = useCallback(() => {
+    if (__DEV__) {
+      console.log("handlePlayerTap called, player:", state.player);
+    }
     const player = state.player;
-    const weaponInfo = player.weapons?.length
-      ? ` | Weapon: ${player.weapons[0].id}`
-      : "";
+    const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : "";
     showInfo(
       player.name || "Christos",
-      `${
-        player.description || "The brave hero of the Last Redoubt."
-      }\n\n Level: ${state.level.name}\n${state.level.description}\n
-      ${player.position.row}- ${player.position.col}`
+      `${player.description || "The brave hero of the Last Redoubt."}\n\n Level: ${state.level.name}\n${state.level.description}\n${player.position.row}- ${player.position.col}`
     );
     onPlayerTap?.();
-  };
+  }, [state.player, state.level, showInfo, onPlayerTap]);
 
-  const handleMonsterTap = (monster: Monster) => {
-    console.log("handleMonsterTap called, monster:", monster);
+  const handleMonsterTap = useCallback((monster: Monster) => {
+    if (__DEV__) {
+      console.log("handleMonsterTap called, monster:", monster);
+    }
     showInfo(
       monster.name || monster.shortName || "Monster",
-      monster.description ||
-        `A dangerous creature. HP: ${monster.hp || "Unknown"}`
+      monster.description || `A dangerous creature. HP: ${monster.hp || "Unknown"}`
     );
     onMonsterTap?.(monster);
-  };
+  }, [showInfo, onMonsterTap]);
 
-  const handleGreatPowerTap = (greatPower: GreatPower) => {
-    console.log("handleGreatPowerTap called, greatPower:", greatPower);
+  const handleGreatPowerTap = useCallback((greatPower: GreatPower) => {
+    if (__DEV__) {
+      console.log("handleGreatPowerTap called, greatPower:", greatPower);
+    }
     const statusInfo = greatPower.awakened ? "AWAKENED" : "Sleeping";
     showInfo(
       greatPower.name || greatPower.shortName || "Great Power",
-      `${
-        greatPower.description || "An ancient entity of immense power."
-      }\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${
-        greatPower.maxHP
-      }\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`
+      `${greatPower.description || "An ancient entity of immense power."}\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${greatPower.maxHP}\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`
     );
     onGreatPowerTap?.(greatPower);
-  };
+  }, [showInfo, onGreatPowerTap]);
 
-  const handleBuildingTap = (building: LevelObjectInstance) => {
-    console.log("handleBuildingTap called, building:", building);
+  const handleBuildingTap = useCallback((building: LevelObjectInstance) => {
+    if (__DEV__) {
+      console.log("handleBuildingTap called, building:", building);
+    }
     showInfo(
       building.name || building.shortName || "Building",
       building.description || "An interesting structure in the world."
     );
     onBuildingTap?.(building);
-  };
+  }, [showInfo, onBuildingTap]);
 
-  const handleItemTap = (item: Item) => {
-    console.log("handleItemTap called, item:", item);
+  const handleItemTap = useCallback((item: Item) => {
+    if (__DEV__) {
+      console.log("handleItemTap called, item:", item);
+    }
     showInfo(
       item.name || item.shortName || "Item",
       item.description || "An object of interest."
     );
     onItemTap?.(item);
-  };
+  }, [showInfo, onItemTap]);
 
-  const findMonsterAtPosition = (
-    worldRow: number,
-    worldCol: number
-  ): Monster | undefined => {
-    const monster =
-      state.activeMonsters.find(
-        (monster: Monster) =>
-          monster.position?.row === worldRow &&
-          monster.position?.col === worldCol &&
-          !monster.inCombatSlot
-      ) ||
-      state.level.monsters?.find(
-        (monster: Monster) =>
-          monster.position?.row === worldRow &&
-          monster.position?.col === worldCol &&
-          monster.active !== false &&
-          !monster.inCombatSlot
-      );
-    return monster;
-  };
-
-  const findGreatPowerAtPosition = (
-    worldRow: number,
-    worldCol: number
-  ): GreatPower | undefined => {
-    return state.level.greatPowers?.find(
-      (power: GreatPower) =>
-        power.position?.row === worldRow &&
-        power.position?.col === worldCol &&
-        power.active !== false
-    );
-  };
-
-  const findItemAtPosition = (
-    worldRow: number,
-    worldCol: number
-  ): Item | undefined => {
-    return state.items?.find(
-      (item: Item) =>
-        item.active &&
-        item.position?.row === worldRow &&
-        item.position?.col === worldCol
-    );
-  };
-
-  // Calculate background offset for seamless scrolling
-  const getBackgroundStyle = () => {
+  // Background style (unchanged, but memoized for consistency)
+  const getBackgroundStyle = useMemo(() => () => {
     const scaledTileSize = BACKGROUND_TILE_SIZE * BACKGROUND_SCALE;
     const offsetX = -(cameraOffset.offsetX * CELL_SIZE) % scaledTileSize;
     const offsetY = -(cameraOffset.offsetY * CELL_SIZE) % scaledTileSize;
-
     return {
       transform: [{ translateX: offsetX }, { translateY: offsetY }],
       width: width + scaledTileSize,
       height: height + scaledTileSize,
     };
-  };
+  }, [cameraOffset.offsetX, cameraOffset.offsetY]);
 
-  // Simplified renderGridCells - only renders background grid cells
-  const renderGridCells = (): React.ReactNode[] => {
+  // Memoized grid cells (perf: deps on camera + entities; skips if unchanged)
+  const renderGridCells = useMemo(() => {
     const tiles: React.ReactNode[] = [];
-
     for (let row = 0; row < VIEWPORT_ROWS; row++) {
       for (let col = 0; col < VIEWPORT_COLS; col++) {
         const worldRow = row + cameraOffset.offsetY;
         const worldCol = col + cameraOffset.offsetX;
 
-        const isPlayer =
-          !!state.player?.position &&
-          worldRow === state.player.position.row &&
-          worldCol === state.player.position.col;
-
+        const isPlayer = !!state.player?.position && worldRow === state.player.position.row && worldCol === state.player.position.col;
         const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol);
-        const greatPowerAtPosition = findGreatPowerAtPosition(
-          worldRow,
-          worldCol
-        );
+        const greatPowerAtPosition = findGreatPowerAtPosition(worldRow, worldCol);
 
         tiles.push(
           <View
@@ -264,86 +258,52 @@ export default function GameBoard({
               {
                 left: col * CELL_SIZE,
                 top: row * CELL_SIZE,
-                borderColor: getCellBorderColor(
-                  isPlayer,
-                  monsterAtPosition,
-                  greatPowerAtPosition,
-                  state.inCombat
-                ),
-                backgroundColor: getCellBackgroundColor(
-                  isPlayer,
-                  monsterAtPosition,
-                  greatPowerAtPosition,
-                  state.inCombat
-                ),
+                borderColor: getCellBorderColor(isPlayer, monsterAtPosition, greatPowerAtPosition, state.inCombat),
+                backgroundColor: getCellBackgroundColor(isPlayer, monsterAtPosition, greatPowerAtPosition, state.inCombat),
               },
             ]}
           />
         );
       }
     }
-
     return tiles;
-  };
+  }, [cameraOffset.offsetY, cameraOffset.offsetX, state.player?.position, monsterPositionMap, greatPowerPositionMap, state.inCombat]);
 
-  const renderCombatMonsters = (): React.ReactNode[] => {
+  // Memoized entity renders (perf: deps on relevant state slices)
+  const renderCombatMonsters = useMemo(() => {
     if (!state.inCombat || !state.attackSlots) return [];
+    return state.attackSlots.map((monster: Monster, index) => {
+      if (!monster.position || !monster.uiSlot) return null;
+      const screenRow = monster.position.row - cameraOffset.offsetY;
+      const screenCol = monster.position.col - cameraOffset.offsetX;
+      const inView = screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS;
+      if (!inView) return null;
+      return (
+        <TouchableOpacity
+          key={`combat-monster-${monster.id}-${index}`}
+          onPress={() => handleMonsterTap(monster)}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: CELL_SIZE,
+            height: CELL_SIZE,
+            zIndex: 4,
+          }}
+          activeOpacity={0.7}
+        >
+          <Image source={getMonsterImage(monster)} style={styles.character} resizeMode="contain" />
+        </TouchableOpacity>
+      );
+    }).filter((item): item is React.ReactElement => item !== null);
+  }, [state.inCombat, state.attackSlots, cameraOffset.offsetY, cameraOffset.offsetX, handleMonsterTap]);
 
-    return state.attackSlots
-      .map((monster: Monster) => {
-        if (!monster.position || !monster.uiSlot) return null;
-
-        const screenRow = monster.position.row - cameraOffset.offsetY;
-        const screenCol = monster.position.col - cameraOffset.offsetX;
-
-        const inView =
-          screenRow >= 0 &&
-          screenRow < VIEWPORT_ROWS &&
-          screenCol >= 0 &&
-          screenCol < VIEWPORT_COLS;
-
-        if (!inView) return null;
-
-        return (
-          <TouchableOpacity
-            key={`combat-monster-${monster.id}`}
-            onPress={() => handleMonsterTap(monster)}
-            style={{
-              position: "absolute",
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: CELL_SIZE,
-              height: CELL_SIZE,
-              zIndex: 4,
-            }}
-            activeOpacity={0.7}
-          >
-            <Image
-              source={getMonsterImage(monster)}
-              style={styles.character}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        );
-      })
-      .filter((item): item is React.ReactElement => item !== null);
-  };
-
-  // Render player as absolute-positioned entity
-  const renderPlayer = (): React.ReactNode | null => {
+  const renderPlayer = useMemo(() => {
     if (!state.player?.position) return null;
-
     const screenRow = state.player.position.row - cameraOffset.offsetY;
     const screenCol = state.player.position.col - cameraOffset.offsetX;
-
-    const inView =
-      screenRow >= 0 &&
-      screenRow < VIEWPORT_ROWS &&
-      screenCol >= 0 &&
-      screenCol < VIEWPORT_COLS;
-
+    const inView = screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS;
     if (!inView) return null;
-
     return (
       <TouchableOpacity
         key="player"
@@ -358,294 +318,194 @@ export default function GameBoard({
         }}
         activeOpacity={0.7}
       >
-        <Image
-          source={require("../assets/images/christos.png")}
-          style={styles.character}
-          resizeMode="contain"
-        />
+        <Image source={require("../assets/images/christos.png")} style={styles.character} resizeMode="contain" />
       </TouchableOpacity>
     );
-  };
+  }, [state.player?.position, cameraOffset.offsetY, cameraOffset.offsetX, handlePlayerTap]);
 
-  // Render monsters as absolute-positioned entities
-  const renderMonsters = (): React.ReactNode[] => {
+  const renderMonsters = useMemo(() => {
     if (!state.activeMonsters) return [];
+    return state.activeMonsters.map((monster, index) => {
+      if (!monster.position || monster.inCombatSlot) return null;
+      const screenRow = monster.position.row - cameraOffset.offsetY;
+      const screenCol = monster.position.col - cameraOffset.offsetX;
+      const inView = screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS;
+      if (!inView) return null;
+      return (
+        <TouchableOpacity
+          key={`monster-${monster.id}-${index}`}
+          onPress={() => handleMonsterTap(monster)}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: CELL_SIZE,
+            height: CELL_SIZE,
+            zIndex: 3,
+          }}
+          activeOpacity={0.7}
+        >
+          <Image source={getMonsterImage(monster)} style={styles.character} resizeMode="contain" />
+        </TouchableOpacity>
+      );
+    }).filter((item): item is React.ReactElement => item !== null);
+  }, [state.activeMonsters, cameraOffset.offsetY, cameraOffset.offsetX, handleMonsterTap]);
 
-    return state.activeMonsters
-      .map((monster) => {
-        if (!monster.position || monster.inCombatSlot) return null;
-
-        const screenRow = monster.position.row - cameraOffset.offsetY;
-        const screenCol = monster.position.col - cameraOffset.offsetX;
-
-        const inView =
-          screenRow >= 0 &&
-          screenRow < VIEWPORT_ROWS &&
-          screenCol >= 0 &&
-          screenCol < VIEWPORT_COLS;
-
-        if (!inView) return null;
-
-        return (
-          <TouchableOpacity
-            key={`monster-${monster.id}`}
-            onPress={() => handleMonsterTap(monster)}
-            style={{
-              position: "absolute",
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: CELL_SIZE,
-              height: CELL_SIZE,
-              zIndex: 3,
-            }}
-            activeOpacity={0.7}
-          >
-            <Image
-              source={getMonsterImage(monster)}
-              style={styles.character}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        );
-      })
-      .filter((item): item is React.ReactElement => item !== null);
-  };
-
-  // Render great powers as absolute-positioned entities
-  // Replace the renderGreatPowers function in GameBoard.tsx
-  const renderGreatPowers = (): React.ReactNode[] => {
+  const renderGreatPowers = useMemo(() => {
     if (!state.level.greatPowers) return [];
+    return state.level.greatPowers.map((greatPower, index) => {
+      if (!greatPower.position || greatPower.active === false) return null;
+      const screenRow = greatPower.position.row - cameraOffset.offsetY;
+      const screenCol = greatPower.position.col - cameraOffset.offsetX;
+      const gpWidth = greatPower.width || 1;
+      const gpHeight = greatPower.height || 1;
+      const inView = screenRow + gpHeight > 0 && screenRow < VIEWPORT_ROWS && screenCol + gpWidth > 0 && screenCol < VIEWPORT_COLS;
+      if (!inView) return null;
+      return (
+        <TouchableOpacity
+          key={`greatpower-${greatPower.id}-${index}`}
+          onPress={() => handleGreatPowerTap(greatPower)}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: gpWidth * CELL_SIZE,
+            height: gpHeight * CELL_SIZE,
+            zIndex: 2,
+          }}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={getGreatPowerImage(greatPower)}
+            style={{ width: "100%", height: "100%", opacity: greatPower.awakened ? 1.0 : 0.7 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      );
+    }).filter((item): item is React.ReactElement => item !== null);
+  }, [state.level.greatPowers, cameraOffset.offsetY, cameraOffset.offsetX, handleGreatPowerTap]);
 
-    return state.level.greatPowers
-      .map((greatPower) => {
-        if (!greatPower.position || greatPower.active === false) return null;
-
-        const screenRow = greatPower.position.row - cameraOffset.offsetY;
-        const screenCol = greatPower.position.col - cameraOffset.offsetX;
-        const gpWidth = greatPower.width || 1;
-        const gpHeight = greatPower.height || 1;
-
-        // Check if any part of the Great Power is in view
-        const inView =
-          screenRow + gpHeight > 0 &&
-          screenRow < VIEWPORT_ROWS &&
-          screenCol + gpWidth > 0 &&
-          screenCol < VIEWPORT_COLS;
-
-        if (!inView) return null;
-
-        return (
-          <TouchableOpacity
-            key={`greatpower-${greatPower.id}`}
-            onPress={() => handleGreatPowerTap(greatPower)}
-            style={{
-              position: "absolute",
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: gpWidth * CELL_SIZE,
-              height: gpHeight * CELL_SIZE,
-              zIndex: 2,
-            }}
-            activeOpacity={0.7}
-          >
-            <Image
-              source={getGreatPowerImage(greatPower)}
-              style={{
-                width: "100%",
-                height: "100%",
-                opacity: greatPower.awakened ? 1.0 : 0.7,
-              }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        );
-      })
-      .filter((item): item is React.ReactElement => item !== null);
-  };
-
-  // Render items as absolute-positioned entities
-  const renderItems = (): React.ReactNode[] => {
+  const renderItems = useMemo(() => {
     if (!state.items) return [];
+    return state.items.map((item, index) => {
+      if (!item.position || !item.active) return null;
+      const screenRow = item.position.row - cameraOffset.offsetY;
+      const screenCol = item.position.col - cameraOffset.offsetX;
+      const inView = screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS;
+      if (!inView) return null;
+      return (
+        <TouchableOpacity
+          key={`item-${item.id}-${index}`}
+          onPress={() => handleItemTap(item)}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: CELL_SIZE,
+            height: CELL_SIZE,
+            zIndex: item.zIndex || 1,
+          }}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={getItemImage(item)}
+            style={{ width: CELL_SIZE * 0.6, height: CELL_SIZE * 0.6, position: "absolute", left: CELL_SIZE * 0.2, top: CELL_SIZE * 0.2 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      );
+    }).filter((item): item is React.ReactElement => item !== null);
+  }, [state.items, cameraOffset.offsetY, cameraOffset.offsetX, handleItemTap]);
 
-    return state.items
-      .map((item) => {
-        if (!item.position || !item.active) return null;
+  const renderBuildings = useMemo(() => {
+    return state.level.objects.map((obj: LevelObjectInstance, index) => {
+      if (!obj.position || !obj.image) return null;
+      const screenRow = obj.position.row - cameraOffset.offsetY;
+      const screenCol = obj.position.col - cameraOffset.offsetX;
+      const objWidth = obj.size?.width ?? 1;
+      const objHeight = obj.size?.height ?? 1;
+      const inView = screenRow + objHeight > 0 && screenRow < VIEWPORT_ROWS && screenCol + objWidth > 0 && screenCol < VIEWPORT_COLS;
+      if (!inView) return null;
+      return (
+        <TouchableOpacity
+          key={`building-${obj.id}-${index}`}
+          onPress={() => handleBuildingTap(obj)}
+          activeOpacity={0.8}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: objWidth * CELL_SIZE,
+            height: objHeight * CELL_SIZE,
+            zIndex: obj.zIndex || 0,
+          }}
+        >
+          <Image source={obj.image as ImageSourcePropType} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
+        </TouchableOpacity>
+      );
+    }).filter((item): item is React.ReactElement => item !== null);
+  }, [state.level.objects, cameraOffset.offsetY, cameraOffset.offsetX, handleBuildingTap]);
 
-        const screenRow = item.position.row - cameraOffset.offsetY;
-        const screenCol = item.position.col - cameraOffset.offsetX;
-
-        const inView =
-          screenRow >= 0 &&
-          screenRow < VIEWPORT_ROWS &&
-          screenCol >= 0 &&
-          screenCol < VIEWPORT_COLS;
-
-        if (!inView) return null;
-
-        return (
-          <TouchableOpacity
-            key={`item-${item.id}`}
-            onPress={() => handleItemTap(item)}
-            style={{
-              position: "absolute",
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: CELL_SIZE,
-              height: CELL_SIZE,
-              zIndex: item.zIndex || 1,
-            }}
-            activeOpacity={0.7}
-          >
-            <Image
-              source={getItemImage(item)} // Updated to pass full item
-              style={{
-                width: CELL_SIZE * 0.6,
-                height: CELL_SIZE * 0.6,
-                position: "absolute",
-                left: CELL_SIZE * 0.2,
-                top: CELL_SIZE * 0.2,
-              }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        );
-      })
-      .filter((item): item is React.ReactElement => item !== null);
-  };
-
-  const renderBuildings = (): React.ReactNode[] => {
-    return state.level.objects
-      .map((obj: LevelObjectInstance) => {
-        if (!obj.position || !obj.image) return null;
-
-        // console.log(`Building ${obj.shortName} zIndex:`, obj.zIndex);
-        const screenRow = obj.position.row - cameraOffset.offsetY;
-        const screenCol = obj.position.col - cameraOffset.offsetX;
-        const objWidth = obj.size?.width ?? 1;
-        const objHeight = obj.size?.height ?? 1;
-
-        const inView =
-          screenRow + objHeight > 0 &&
-          screenRow < VIEWPORT_ROWS &&
-          screenCol + objWidth > 0 &&
-          screenCol < VIEWPORT_COLS;
-
-        if (!inView) return null;
-
-        return (
-          <TouchableOpacity
-            key={`building-${obj.id}`}
-            onPress={() => handleBuildingTap(obj)}
-            activeOpacity={0.8}
-            style={{
-              position: "absolute",
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: objWidth * CELL_SIZE,
-              height: objHeight * CELL_SIZE,
-              zIndex: obj.zIndex || 0, // Use the object's zIndex, default to 0
-            }}
-          >
-            <Image
-              source={obj.image as ImageSourcePropType}
-              style={{
-                width: "100%",
-                height: "100%",
-              }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        );
-      })
-      .filter((item): item is React.ReactElement => item !== null);
-  };
-
-  const renderGrid = () => {
-    const gridCells = renderGridCells();
-
-    // Collect all entities that need z-index sorting
+  // Memoized grid render (perf: batches entities + z-sort only if needed)
+  const renderGrid = useMemo(() => {
+    const gridCells = renderGridCells;
     const allEntities = [
-      ...renderBuildings(),
-      ...renderMonsters(),
-      ...renderGreatPowers(),
-      ...renderItems(),
-      ...renderCombatMonsters(),
-      renderPlayer(),
+      ...renderBuildings,
+      ...renderMonsters,
+      ...renderGreatPowers,
+      ...renderItems,
+      ...renderCombatMonsters,
+      renderPlayer,
     ].filter((entity): entity is React.ReactElement => entity !== null);
 
-    // Sort by z-index (lower values render first/behind)
-    allEntities.sort((a, b) => {
-      const getZIndex = (element: React.ReactElement): number => {
-        const props = element.props as any;
-        const style = props.style;
-
-        if (Array.isArray(style)) {
-          // Find zIndex in style array
-          for (const s of style) {
-            if (s && typeof s === "object" && "zIndex" in s) {
-              return (s as any).zIndex || 0;
+    // Sort by z-index (perf: only if allEntities changed)
+    if (allEntities.length > 1) {
+      allEntities.sort((a, b) => {
+        const getZIndex = (element: React.ReactElement): number => {
+          const props = element.props as any;
+          const style = props.style;
+          if (Array.isArray(style)) {
+            for (const s of style) {
+              if (s && typeof s === "object" && "zIndex" in s) {
+                return (s as any).zIndex || 0;
+              }
             }
+            return 0;
           }
-          return 0;
-        }
-        return style?.zIndex || 0;
-      };
-
-      return getZIndex(a) - getZIndex(b);
-    });
+          return style?.zIndex || 0;
+        };
+        return getZIndex(a) - getZIndex(b);
+      });
+    }
 
     return [...gridCells, ...allEntities];
-  };
+  }, [renderGridCells, renderBuildings, renderMonsters, renderGreatPowers, renderItems, renderCombatMonsters, renderPlayer]);
 
+  // Tiled background (unchanged; already memoized well)
   const tiledBackground = useMemo(() => {
-    // number of tiles to cover the screen + 1 buffer row/col each side
     const cols = Math.ceil(width / SCALED_TILE_SIZE) + 2;
     const rows = Math.ceil(height / SCALED_TILE_SIZE) + 2;
-
-    // normalize remainder to [0, SCALED_TILE_SIZE)
-    const rawX =
-      (((cameraOffset.offsetX * CELL_SIZE) % SCALED_TILE_SIZE) +
-        SCALED_TILE_SIZE) %
-      SCALED_TILE_SIZE;
-    const rawY =
-      (((cameraOffset.offsetY * CELL_SIZE) % SCALED_TILE_SIZE) +
-        SCALED_TILE_SIZE) %
-      SCALED_TILE_SIZE;
-
-    // offset in range [-SCALED_TILE_SIZE+1 .. 0]
+    const rawX = (((cameraOffset.offsetX * CELL_SIZE) % SCALED_TILE_SIZE) + SCALED_TILE_SIZE) % SCALED_TILE_SIZE;
+    const rawY = (((cameraOffset.offsetY * CELL_SIZE) % SCALED_TILE_SIZE) + SCALED_TILE_SIZE) % SCALED_TILE_SIZE;
     const offsetX = -rawX;
     const offsetY = -rawY;
-
     const tiles: React.ReactNode[] = [];
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const left = offsetX + c * SCALED_TILE_SIZE;
         const top = offsetY + r * SCALED_TILE_SIZE;
-
         tiles.push(
           <Image
             key={`bg-${r}-${c}`}
             source={require("../assets/images/dark-blue-bg-320.png")}
-            style={{
-              position: "absolute",
-              left,
-              top,
-              width: SCALED_TILE_SIZE,
-              height: SCALED_TILE_SIZE,
-            }}
-            resizeMode="stretch" // fill tile exactly
+            style={{ position: "absolute", left, top, width: SCALED_TILE_SIZE, height: SCALED_TILE_SIZE }}
+            resizeMode="stretch"
           />
         );
       }
     }
     return tiles;
-  }, [
-    cameraOffset.offsetX,
-    cameraOffset.offsetY,
-    width,
-    height,
-    SCALED_TILE_SIZE,
-  ]);
+  }, [cameraOffset.offsetX, cameraOffset.offsetY, width, height, SCALED_TILE_SIZE]);
 
   return (
     <View style={styles.gridContainer}>
@@ -655,14 +515,16 @@ export default function GameBoard({
       </View>
 
       {/* Game Content */}
-      <View style={styles.gameContent}>{renderGrid()}</View>
+      <View style={styles.gameContent}>{renderGrid}</View>
 
       <InfoBox
         visible={infoVisible}
         name={infoData.name}
         description={infoData.description}
         onClose={() => {
-          console.log("InfoBox onClose called, setting infoVisible to false");
+          if (__DEV__) {
+            console.log("InfoBox onClose called, setting infoVisible to false");
+          }
           setInfoVisible(false);
         }}
       />
@@ -671,7 +533,9 @@ export default function GameBoard({
         visible={combatInfoVisible}
         messages={combatMessages}
         onClose={() => {
-          console.log("CombatDialog onClose called");
+          if (__DEV__) {
+            console.log("CombatDialog onClose called");
+          }
           setCombatInfoVisible(false);
         }}
       />
@@ -679,16 +543,16 @@ export default function GameBoard({
   );
 }
 
+// Utility functions (unchanged, but could memoize if called in loops)
 const getCellBackgroundColor = (
   isPlayer: boolean,
   hasMonster: Monster | undefined,
   hasGreatPower: GreatPower | undefined,
   inCombat: boolean
 ) => {
-  // Make cell backgrounds more transparent to show the tiled background
   if (isPlayer) return "rgba(45, 81, 105, 0.4)";
   if (hasMonster) return "rgba(88, 57, 57, 0.4)";
-  return "rgba(17, 17, 17, 0.3)"; // Very transparent for normal cells
+  return "rgba(17, 17, 17, 0.3)";
 };
 
 const getCellBorderColor = (
@@ -697,31 +561,23 @@ const getCellBorderColor = (
   hasGreatPower: GreatPower | undefined,
   inCombat: boolean
 ) => {
-  // Make cell backgrounds more transparent to show the tiled background
   if (isPlayer) return "rgba(84, 124, 255, 0.7)";
-  // if (hasGreatPower)
-  //   return hasGreatPower.awakened
-  //     ? "rgba(102, 68, 68, 0.6)"
-  //     : "rgba(255, 8, 8, 0.5)";
   if (hasMonster) return "rgba(255, 8, 8, 0.6)";
-  return "rgba(17, 17, 17, 0.3)"; // Very transparent for normal cells
+  return "rgba(17, 17, 17, 0.3)";
 };
 
 const getMonsterImage = (monster: Monster) => {
-  return monster.image || require("../assets/images/abhuman.png"); // Fallback if no template lookup
+  return monster.image || require("../assets/images/abhuman.png");
 };
 
 const getGreatPowerImage = (greatPower: GreatPower) => {
-  return greatPower.image || require("../assets/images/watcherse.png"); // Fallback if no template lookup
+  return greatPower.image || require("../assets/images/watcherse.png");
 };
 
 const getItemImage = (item: Item) => {
-  if (item.image) {
-    return item.image;
-  }
-  //backup grab it from template
+  if (item.image) return item.image;
   const template = getItemTemplate(item.shortName);
-  return template?.image || require("../assets/images/potion.png"); // Default fallback
+  return template?.image || require("../assets/images/potion.png");
 };
 
 const styles = StyleSheet.create({
@@ -729,13 +585,7 @@ const styles = StyleSheet.create({
     width,
     height,
     position: "relative",
-    overflow: "hidden", // Prevent background from showing outside bounds
-  },
-  backgroundTile: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    zIndex: -1, // Behind everything else
+    overflow: "hidden",
   },
   backgroundContainer: {
     position: "absolute",
@@ -743,7 +593,6 @@ const styles = StyleSheet.create({
     top: 0,
     width,
     height,
-    // no zIndex required because you render it first; pointerEvents ensures touches pass through
   },
   gameContent: {
     width,
@@ -755,7 +604,7 @@ const styles = StyleSheet.create({
     height: CELL_SIZE,
     position: "absolute",
     borderWidth: 0.5,
-    borderColor: "rgba(8, 8, 8, 0.3)", // More transparent borders
+    borderColor: "rgba(8, 8, 8, 0.3)",
   },
   character: {
     width: CELL_SIZE * 0.8,
@@ -763,19 +612,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: CELL_SIZE * 0.1,
     top: CELL_SIZE * 0.1,
-  },
-  tappableArea: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  item: {
-    width: CELL_SIZE * 0.6,
-    height: CELL_SIZE * 0.6,
-    position: "absolute",
-    left: CELL_SIZE * 0.2,
-    top: CELL_SIZE * 0.2,
   },
 });
 

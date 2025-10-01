@@ -262,6 +262,7 @@ export const reducer = (
         turnOrder: [],
         combatTurn: null,
         combatLog: [],
+        activeMonsters: [],  // <-- Add this to flush monsters immediately
       };
     }
 
