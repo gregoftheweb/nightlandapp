@@ -30,7 +30,7 @@ const MOVEMENT_INTERVAL = 150;
 type Direction = "up" | "down" | "left" | "right" | "stay" | null;
 
 export default function Game() {
-  const { state, dispatch, setOverlay, setDeathMessage } = useGameContext();
+  const { state, dispatch, setOverlay } = useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [inventoryVisible, setInventoryVisible] = useState(false);
   const [targetId, setTargetId] = useState<string | undefined>();
@@ -153,11 +153,10 @@ export default function Game() {
         stateRef.current,
         dispatch,
         direction,
-        setOverlay,
-        setDeathMessage
+        setOverlay
       );
     },
-    [dispatch, setOverlay, setDeathMessage]
+    [dispatch, setOverlay]
   );
 
   const startLongPressInterval = useCallback(
@@ -292,9 +291,8 @@ export default function Game() {
       dispatch,
       "attack",
       targetMonster.id,
-      setDeathMessage
     );
-  }, [state, dispatch, setDeathMessage, targetId]);
+  }, [state, dispatch, targetId]);
 
   const handleMonsterTap = useCallback(
     (monster: Monster) => {
