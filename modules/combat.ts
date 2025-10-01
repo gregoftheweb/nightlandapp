@@ -328,6 +328,8 @@ export const setupCombat = (
   playerPosOverride?: Position
 ): void => {
   console.log(`\n⚔️ SETTING UP COMBAT with ${monster.name}`);
+  console.log(`📊 BEFORE SETUP - state.attackSlots:`, state.attackSlots);
+  console.log(`📊 BEFORE SETUP - state.inCombat:`, state.inCombat);
 
   let newAttackSlots = [...(state.attackSlots || [])];
   let newWaitingMonsters = [...(state.waitingMonsters || [])];
@@ -360,6 +362,15 @@ export const setupCombat = (
       };
 
       newAttackSlots.push(combatMonster);
+
+      console.log(
+        `✅ ADDED TO ATTACK SLOTS - Monster: ${monster.name}, ID: ${monster.id}, Slot: ${nextUISlot}`
+      );
+      console.log(`📊 NEW attackSlots array length:`, newAttackSlots.length);
+      console.log(
+        `📊 NEW attackSlots IDs:`,
+        newAttackSlots.map((m) => m.id)
+      );
 
       dispatch({
         type: "MOVE_MONSTER",
@@ -398,7 +409,9 @@ export const setupCombat = (
     combatTurn: newTurnOrder[0] || state.player,
   };
 
-  console.log("🎯 Dispatching SET_COMBAT.");
+  console.log(`🎯 DISPATCHING SET_COMBAT with payload:`);
+
+
   dispatch({ type: "SET_COMBAT", payload: combatPayload });
 
   // Add player comment at start of combat if combat just began
@@ -427,7 +440,7 @@ export const handleCombatTurn = (
   dispatch: any,
   action: string,
   targetId?: string,
-  setDeathMessage?: (message: string) => void  // Can remove this parameter now
+  setDeathMessage?: (message: string) => void // Can remove this parameter now
 ): void => {
   if (!state.inCombat) {
     console.warn("handleCombatTurn called but not in combat");

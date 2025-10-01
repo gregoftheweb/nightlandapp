@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Modal, Animated, TouchableOpacity, NativeSyntheticEvent, NativeTouchEvent } from 'react-native';
+import { View, Text, StyleSheet, Modal, Animated, TouchableOpacity, NativeSyntheticEvent, NativeTouchEvent, Image, ImageSourcePropType } from 'react-native';
 
 interface InfoBoxProps {
   visible: boolean;
   name: string;
   description: string;
+  image?: ImageSourcePropType;
   onClose: () => void;
 }
 
@@ -12,6 +13,7 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
   visible,
   name,
   description,
+  image,
   onClose
 }) => {
   const [opacity] = useState(new Animated.Value(0));
@@ -61,6 +63,17 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
               <Text style={styles.closeText}>×</Text>
             </TouchableOpacity>
           </View>
+          
+          {image && (
+            <View style={styles.imageContainer}>
+              <Image 
+                source={image} 
+                style={styles.image}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+          
           <Text style={styles.description}>{description}</Text>
         </Animated.View>
       </View>
@@ -119,6 +132,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     lineHeight: 28,
     textAlign: 'center',
+  },
+  imageContainer: {
+    alignItems: 'center',
+    marginVertical: 15,
+  },
+  image: {
+    maxWidth: 150,
+    maxHeight:150,
+    aspectRatio: 1,
   },
   description: {
     fontSize: 14,
