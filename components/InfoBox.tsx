@@ -1,6 +1,5 @@
-// components/InfoBox.tsx
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Modal, Animated } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Modal, Animated, TouchableOpacity, NativeSyntheticEvent, NativeTouchEvent } from 'react-native';
 
 interface InfoBoxProps {
   visible: boolean;
@@ -17,45 +16,18 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
 }) => {
   const [opacity] = useState(new Animated.Value(0));
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (visible) {
-      // Clear any existing timer first
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-
       setIsModalVisible(true);
-      
       // Fade in
       Animated.timing(opacity, {
         toValue: 1,
         duration: 200,
         useNativeDriver: true,
       }).start();
-
-      // Set auto-close timer
-      timerRef.current = setTimeout(() => {
-        // Fade out
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }).start(() => {
-          setIsModalVisible(false);
-          timerRef.current = null;
-          onClose();
-        });
-      }, 3000);
     } else {
-      // Clear timer and hide immediately when visible becomes false
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-      
+      // Fade out
       Animated.timing(opacity, {
         toValue: 0,
         duration: 200,
@@ -64,15 +36,12 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
         setIsModalVisible(false);
       });
     }
+  }, [visible, opacity]);
 
-    // Cleanup function
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [visible, opacity, onClose]);
+  const handleClosePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    event.stopPropagation();
+    onClose();
+  };
 
   if (!isModalVisible) {
     return null;
@@ -82,7 +51,16 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
     <Modal transparent={true} visible={isModalVisible} animationType="none">
       <View style={styles.overlay}>
         <Animated.View style={[styles.infoBox, { opacity }]}>
-          <Text style={styles.name}>{name}</Text>
+          <View style={styles.header}>
+            <Text style={styles.name}>{name}</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={handleClosePress}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.closeText}>×</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.description}>{description}</Text>
         </Animated.View>
       </View>
@@ -106,17 +84,47 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     margin: 20,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+    position: 'relative',
+  },
   name: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#ff0000',
     textAlign: 'center',
-    marginBottom: 10,
+    flex: 1,
+  },
+  closeButton: {
+    position: 'absolute',
+    right: -10,
+    top: -15,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#990000',
+  },
+  closeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    lineHeight: 28,
+    textAlign: 'center',
   },
   description: {
     fontSize: 14,
     color: '#ff0000',
     textAlign: 'center',
     lineHeight: 20,
+    marginTop: 10,
   },
 });
