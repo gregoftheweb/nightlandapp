@@ -135,7 +135,8 @@ export interface Effect {
     | "spawn"
     | "swarm"
     | "hide"
-    | "recuperate";
+    | "recuperate"
+    | "soulsuck";
 
   description?: string;
 
@@ -364,4 +365,5 @@ export interface GameState {
   dropSuccess?: boolean;
   dialogData?: any;
   audioStarted?: boolean;
+  gameOverMessage?: string;
 }

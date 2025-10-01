@@ -30,8 +30,7 @@ const MOVEMENT_INTERVAL = 150;
 type Direction = "up" | "down" | "left" | "right" | "stay" | null;
 
 export default function Game() {
-  const { state, dispatch, setOverlay, setDeathMessage } =
-    useGameContext();
+  const { state, dispatch, setOverlay, setDeathMessage } = useGameContext();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [inventoryVisible, setInventoryVisible] = useState(false);
   const [targetId, setTargetId] = useState<string | undefined>();
@@ -47,7 +46,7 @@ export default function Game() {
   useFocusEffect(
     useCallback(() => {
       audioManager.playBackgroundMusic();
-      
+
       return () => {
         // Pause when screen loses focus (optional)
         audioManager.pauseBackgroundMusic();
@@ -55,20 +54,18 @@ export default function Game() {
     }, [])
   );
 
-  // Handle player death navigation
   useEffect(() => {
-    if (state.player.hp <= 0) {
-      console.log("Player died, navigating to death screen");
-      // Stop background music on death
+    if (state.gameOver) {
+      console.log("Game Over detected, navigating to death screen");
       audioManager.pauseBackgroundMusic();
-      // Add a small delay to allow death message to show
+
+      // Small delay to show death message in InfoBox (handled by GameBoard)
       setTimeout(() => {
-        // Reset game state before navigation
         dispatch({ type: "RESET_GAME" });
         router.push("/princess");
-      }, 2000);
+      }, 4000); // Match the InfoBox display time
     }
-  }, [state.player.hp, router, dispatch]);
+  }, [state.gameOver, router, dispatch]);
 
   useEffect(() => {
     if (state.activeMonsters.length === 0 && state.moveCount === 0) {
@@ -254,15 +251,13 @@ export default function Game() {
   );
 
   const handleGearPress = useCallback(() => {
-    if (!state.inCombat)
-      setSettingsVisible(true);
+    if (!state.inCombat) setSettingsVisible(true);
   }, [state.inCombat]);
 
   const handleCloseSettings = useCallback(() => setSettingsVisible(false), []);
 
   const handleInventoryPress = useCallback(() => {
-    if (!state.inCombat)
-      setInventoryVisible(true);
+    if (!state.inCombat) setInventoryVisible(true);
   }, [state.inCombat]);
 
   const handleCloseInventory = useCallback(
@@ -311,7 +306,6 @@ export default function Game() {
           monster.id
         );
         setTargetId(monster.id);
-       
       }
     },
     [state.inCombat]
@@ -339,10 +333,9 @@ export default function Game() {
             type: "AWAKEN_GREAT_POWER",
             payload: { greatPowerId: greatPower.id },
           });
-         
         }
       } else if (!greatPower.awakened) {
-       //do nothing
+        //do nothing
       }
     },
     [state.player.position, dispatch]

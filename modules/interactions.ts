@@ -210,8 +210,8 @@ export const checkObjectInteractions = (
   playerPos: Position
 ) => {
   console.log('Checking object interactions at playerPos:', playerPos);
-  //console.log('Available objects:', state.objects);
 
+  // Check regular objects first
   const isChristosOnTopOfObject = state.objects?.find((obj: any) => {
     if (!obj.active) {
       console.log(`Object ${obj.name} is inactive, skipping`);
@@ -225,14 +225,12 @@ export const checkObjectInteractions = (
         const objRowEnd = objRowStart + (mask.height || 1) - 1;
         const objColEnd = objColStart + (mask.width || 1) - 1;
 
-        const isCollision = (
+        return (
           playerPos.row >= objRowStart &&
           playerPos.row <= objRowEnd &&
           playerPos.col >= objColStart &&
           playerPos.col <= objColEnd
         );
-
-        return isCollision;
       });
     } else {
       const objRowStart = obj.position.row;
@@ -242,52 +240,79 @@ export const checkObjectInteractions = (
       const objRowEnd = objRowStart + objHeight - 1;
       const objColEnd = objColStart + objWidth - 1;
 
-      const isCollision = (
+      return (
         playerPos.row >= objRowStart &&
         playerPos.row <= objRowEnd &&
         playerPos.col >= objColStart &&
         playerPos.col <= objColEnd
       );
-     
-      return isCollision;
     }
   });
 
-  if (!isChristosOnTopOfObject) {
-    console.log('No object found at player position');
-    //turn off isHidden
-     dispatch({
-      type: 'CLEAR_HIDE',
-    });
-    return;
+  // Check Great Powers
+  const isChristosOnTopOfGreatPower = state.level.greatPowers?.find((gp: any) => {
+    if (!gp.active) {
+      console.log(`Great Power ${gp.name} is inactive, skipping`);
+      return false;
+    }
+
+    const gpRowStart = gp.position.row;
+    const gpColStart = gp.position.col;
+    const gpWidth = gp.width || 1;
+    const gpHeight = gp.height || 1;
+    const gpRowEnd = gpRowStart + gpHeight - 1;
+    const gpColEnd = gpColStart + gpWidth - 1;
+
+    return (
+      playerPos.row >= gpRowStart &&
+      playerPos.row <= gpRowEnd &&
+      playerPos.col >= gpColStart &&
+      playerPos.col <= gpColEnd
+    );
+  });
+
+  // Handle regular objects
+  if (isChristosOnTopOfObject) {
+    handleObjectEffects(isChristosOnTopOfObject, state, dispatch, playerPos);
+  } else {
+    // Turn off isHidden if not on any object
+    dispatch({ type: 'CLEAR_HIDE' });
   }
-  if (!isChristosOnTopOfObject.effects) {
-    console.log(`Object ${isChristosOnTopOfObject.name} has no effects`);
+
+  // Handle Great Powers
+  if (isChristosOnTopOfGreatPower) {
+    handleGreatPowerEffects(isChristosOnTopOfGreatPower, state, dispatch, playerPos);
+  }
+};
+
+const handleObjectEffects = (
+  obj: any,
+  state: GameState,
+  dispatch: (action: any) => void,
+  playerPos: Position
+) => {
+  if (!obj.effects) {
+    console.log(`Object ${obj.name} has no effects`);
     return;
   }
 
   // Check which effects need cooldowns (swarm and heal are one-time per cooldown)
-  const needsCooldown = isChristosOnTopOfObject.effects.some((e: any) => 
+  const needsCooldown = obj.effects.some((e: any) => 
     e.type === 'swarm' || e.type === 'heal'
   );
 
   if (needsCooldown) {
     const now = Date.now();
-    const lastTrigger = isChristosOnTopOfObject.lastTrigger || 0;
-    console.log(`Cooldown check for ${isChristosOnTopOfObject.name}:`, {
-      now,
-      lastTrigger,
-      timeSinceLast: now - lastTrigger,
-    });
-
+    const lastTrigger = obj.lastTrigger || 0;
+    
     // Cooldown check (50 seconds)
     if (now - lastTrigger <= 50000) {
-      console.log(`Cooldown active for ${isChristosOnTopOfObject.name}, exiting`);
+      console.log(`Cooldown active for ${obj.name}, exiting`);
       return;
     }
   }
 
-  isChristosOnTopOfObject.effects.forEach((effect: any) => {
+  obj.effects.forEach((effect: any) => {
     console.log('Triggering effect:', effect);
 
     dispatch({
@@ -295,18 +320,19 @@ export const checkObjectInteractions = (
       payload: { effect, position: playerPos },
     });
 
+    // Log effect messages
     switch (effect.type) {
       case 'swarm':
-        console.log(`A swarm of ${effect.monsterType}s emerges from the ${isChristosOnTopOfObject.name}!`);
+        console.log(`A swarm of ${effect.monsterType}s emerges from the ${obj.name}!`);
         break;
       case 'hide':
-        console.log(`The ${isChristosOnTopOfObject.name} cloaks you in silence.`);
+        console.log(`The ${obj.name} cloaks you in silence.`);
         break;
       case 'heal':
-        console.log(`The ${isChristosOnTopOfObject.name} restores your strength!`);
+        console.log(`The ${obj.name} restores your strength!`);
         break;
       case 'recuperate':
-        console.log(`The ${isChristosOnTopOfObject.name} restores ${effect.amount || 5} HP!`);
+        console.log(`The ${obj.name} restores ${effect.amount || 5} HP!`);
         break;
       default:
         console.log(`Unhandled effect type: ${effect.type}`);
@@ -320,11 +346,43 @@ export const checkObjectInteractions = (
     dispatch({
       type: 'UPDATE_OBJECT',
       payload: {
-        shortName: isChristosOnTopOfObject.shortName,
+        shortName: obj.shortName,
         updates: { lastTrigger: now },
       },
     });
-  }};
+  }
+};
+
+// Handle Great Power effects
+const handleGreatPowerEffects = (
+  greatPower: any,
+  state: GameState,
+  dispatch: (action: any) => void,
+  playerPos: Position
+) => {
+  console.log(`Player collided with Great Power: ${greatPower.name}`);
+
+  // Awaken the Great Power if not already awakened
+  if (!greatPower.awakened && greatPower.awakenCondition === 'player_within_range') {
+    console.log(`Awakening Great Power: ${greatPower.name}`);
+    dispatch({
+      type: 'AWAKEN_GREAT_POWER',
+      payload: { id: greatPower.id }
+    });
+  }
+
+  // Execute effects if awakened
+  if (greatPower.effects) {
+    greatPower.effects.forEach((effect: any) => {
+      console.log('Triggering Great Power effect:', effect);
+
+      dispatch({
+        type: 'TRIGGER_EFFECT',
+        payload: { effect, position: playerPos, source: 'greatPower' },
+      });
+    });
+  }
+};
 
 // ==================== UTILITY FUNCTIONS ====================
 

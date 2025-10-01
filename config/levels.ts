@@ -198,7 +198,7 @@ export const levels: Record<string, Level> = {
     greatPowers: [
       createGreatPowerForLevel(
         "watcher_se",
-        { row: 100, col: 350 },
+        { row: 380, col: 190 },
         {
           hp: 1000,
           maxHP: 1000,

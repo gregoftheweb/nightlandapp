@@ -250,9 +250,12 @@ export const reducer = (
         player: { ...state.player, hp: state.player.maxHP },
       };
 
-    case "GAME_OVER":
+    case "GAME_OVER": {
+      // This should set the death state but NOT reset anything yet
       return {
         ...state,
+        gameOver: true,
+        gameOverMessage: state.gameOverMessage || "You have been defeated.",
         inCombat: false,
         attackSlots: [],
         waitingMonsters: [],
@@ -260,6 +263,7 @@ export const reducer = (
         combatTurn: null,
         combatLog: [],
       };
+    }
 
     case "RESET_GAME": {
       return initialState;
@@ -563,7 +567,22 @@ export const reducer = (
             },
           };
         }
-
+        case "soulsuck": {
+          console.log("SOULSUCK EFFECT TRIGGERED - Player soul consumed!");
+          return {
+            ...state,
+            player: {
+              ...state.player,
+              hp: 0,
+            },
+            gameOver: true,
+            gameOverMessage:
+              "Your soul has been consumed by the Watcher. The darkness claims another victim...",
+            inCombat: false,
+            attackSlots: [],
+            waitingMonsters: [],
+          };
+        }
         default:
           return state;
       }

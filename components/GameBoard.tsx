@@ -90,6 +90,25 @@ export default function GameBoard({
     setPreviousInCombat(state.inCombat);
   }, [state.inCombat, state.attackSlots, state.combatLog, previousInCombat]);
 
+  useEffect(() => {
+    if (state.gameOver) {
+      const deathMessage =
+        state.gameOverMessage ||
+        "Your journey ends here. The darkness claims another soul...";
+
+      console.log("DEATH DETECTED - Showing InfoBox:", deathMessage);
+
+      setInfoData({
+        name: "DEATH",
+        description: deathMessage,
+      });
+      setInfoVisible(true);
+
+      // InfoBox will auto-close after 3 seconds
+      // index.tsx will handle navigation after 4 seconds
+    }
+  }, [state.gameOver, state.gameOverMessage]);
+
   if (!state.level || !state.level.objects) {
     console.warn("GameBoard: state.level is undefined or missing objects!");
     return <View style={styles.gridContainer} />;
@@ -393,6 +412,7 @@ export default function GameBoard({
   };
 
   // Render great powers as absolute-positioned entities
+  // Replace the renderGreatPowers function in GameBoard.tsx
   const renderGreatPowers = (): React.ReactNode[] => {
     if (!state.level.greatPowers) return [];
 
@@ -402,11 +422,14 @@ export default function GameBoard({
 
         const screenRow = greatPower.position.row - cameraOffset.offsetY;
         const screenCol = greatPower.position.col - cameraOffset.offsetX;
+        const gpWidth = greatPower.width || 1;
+        const gpHeight = greatPower.height || 1;
 
+        // Check if any part of the Great Power is in view
         const inView =
-          screenRow >= 0 &&
+          screenRow + gpHeight > 0 &&
           screenRow < VIEWPORT_ROWS &&
-          screenCol >= 0 &&
+          screenCol + gpWidth > 0 &&
           screenCol < VIEWPORT_COLS;
 
         if (!inView) return null;
@@ -419,8 +442,8 @@ export default function GameBoard({
               position: "absolute",
               left: screenCol * CELL_SIZE,
               top: screenRow * CELL_SIZE,
-              width: CELL_SIZE,
-              height: CELL_SIZE,
+              width: gpWidth * CELL_SIZE,
+              height: gpHeight * CELL_SIZE,
               zIndex: 2,
             }}
             activeOpacity={0.7}
@@ -428,11 +451,8 @@ export default function GameBoard({
             <Image
               source={getGreatPowerImage(greatPower)}
               style={{
-                width: CELL_SIZE * 0.8,
-                height: CELL_SIZE * 0.8,
-                position: "absolute",
-                left: CELL_SIZE * 0.1,
-                top: CELL_SIZE * 0.1,
+                width: "100%",
+                height: "100%",
                 opacity: greatPower.awakened ? 1.0 : 0.7,
               }}
               resizeMode="contain"
@@ -679,10 +699,10 @@ const getCellBorderColor = (
 ) => {
   // Make cell backgrounds more transparent to show the tiled background
   if (isPlayer) return "rgba(84, 124, 255, 0.7)";
-  if (hasGreatPower)
-    return hasGreatPower.awakened
-      ? "rgba(102, 68, 68, 0.6)"
-      : "rgba(255, 8, 8, 0.5)";
+  // if (hasGreatPower)
+  //   return hasGreatPower.awakened
+  //     ? "rgba(102, 68, 68, 0.6)"
+  //     : "rgba(255, 8, 8, 0.5)";
   if (hasMonster) return "rgba(255, 8, 8, 0.6)";
   return "rgba(17, 17, 17, 0.3)"; // Very transparent for normal cells
 };

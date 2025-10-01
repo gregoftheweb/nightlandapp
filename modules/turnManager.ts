@@ -55,14 +55,7 @@ const doCombatTurn = (
     currentGameState.player.position
   );
 
-  // Check if Player Dead - exit to princess page and reset game
-  if (currentGameState.player.hp <= 0) {
-    console.log("💀 PLAYER DEFEATED - Resetting game");
-    setDeathMessage?.("You have been defeated in combat!");
-    gameDispatch({ type: "GAME_OVER" });
-    // Note: Navigation to /app/princess/index.tsx should be handled by the calling component
-    return;
-  }
+
 };
 
 // ==================== MOVEMENT TURN EXECUTION ====================
