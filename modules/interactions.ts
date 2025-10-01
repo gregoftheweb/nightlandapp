@@ -1,6 +1,7 @@
 // modules/interactions.ts - Handle item and object interactions
 import { GameState, Position, Item } from "../config/types";
 import { createItemInstance } from "../config/levels";
+import {COMBAT_STRINGS} from "@assets/copy/combat";
 
 // ==================== ITEM INTERACTIONS ====================
 
@@ -373,12 +374,20 @@ const handleGreatPowerEffects = (
 
   // Execute effects if awakened
   if (greatPower.effects) {
+         // Use your COMBAT_STRINGS function here
+        const deathMessage = COMBAT_STRINGS.soulSuckDeath.player(greatPower.name);
+
+        dispatch({
+          type: "ADD_COMBAT_LOG",
+          payload: { message: deathMessage },
+        });
+
     greatPower.effects.forEach((effect: any) => {
       console.log('Triggering Great Power effect:', effect);
 
       dispatch({
         type: 'TRIGGER_EFFECT',
-        payload: { effect, position: playerPos, source: 'greatPower' },
+        payload: { effect, position: playerPos, source: 'greatPower', message: deathMessage },
       });
     });
   }

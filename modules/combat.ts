@@ -1,6 +1,7 @@
 // modules/combat.ts - Enhanced d20 combat system with all combat logic
 import { GameState, Position, Monster } from "../config/types";
 import { getTextContent } from "./utils";
+import { COMBAT_STRINGS } from "@/assets/copy/combat";
 
 // Roll a d20
 const rollD20 = (): number => {
@@ -100,7 +101,23 @@ export const executeAttack = (
         return true;
       } else {
         // Player died - just dispatch GAME_OVER
-        dispatch({ type: "GAME_OVER" });
+        const killerName =
+          attacker.name || attacker.shortName || "unknown horror";
+
+        // Use your COMBAT_STRINGS function here
+        const deathMessage = COMBAT_STRINGS.death.player(killerName);
+
+        dispatch({
+          type: "ADD_COMBAT_LOG",
+          payload: { message: deathMessage },
+        });
+
+        // Send the message into GAME_OVER reducer
+        dispatch({
+          type: "GAME_OVER",
+          payload: { message: deathMessage },
+        });
+
         return true;
       }
     }
@@ -309,10 +326,14 @@ export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
 
   if (state.player.hp <= 0) {
     console.log("💀 Combat lost - player defeated!");
+
+    const killer = aliveMonsters[0]?.name || "unknown horror";
+
     dispatch({
       type: "ADD_COMBAT_LOG",
-      payload: { message: "Christos has been defeated!" },
+      payload: { message: COMBAT_STRINGS.death.player(killer) },
     });
+
     return true;
   }
 
@@ -410,7 +431,6 @@ export const setupCombat = (
   };
 
   console.log(`🎯 DISPATCHING SET_COMBAT with payload:`);
-
 
   dispatch({ type: "SET_COMBAT", payload: combatPayload });
 

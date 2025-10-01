@@ -255,14 +255,14 @@ export const reducer = (
       return {
         ...state,
         gameOver: true,
-        gameOverMessage: state.gameOverMessage || "You have been defeated.",
+        gameOverMessage: action.payload?.message || "You have been defeated.",
         inCombat: false,
         attackSlots: [],
         waitingMonsters: [],
         turnOrder: [],
         combatTurn: null,
         combatLog: [],
-        activeMonsters: [],  // <-- Add this to flush monsters immediately
+        activeMonsters: [], // <-- Add this to flush monsters immediately
       };
     }
 
@@ -431,7 +431,7 @@ export const reducer = (
 
     // ============ EFFECTS SYSTEM ============
     case "TRIGGER_EFFECT":
-      const { effect, position } = action.payload;
+      const { effect, position, souce, message } = action.payload;
       switch (effect.type) {
         case "swarm": {
           // Validate we have the necessary effect properties
@@ -577,8 +577,7 @@ export const reducer = (
               hp: 0,
             },
             gameOver: true,
-            gameOverMessage:
-              "Your soul has been consumed by the Watcher. The darkness claims another victim...",
+            gameOverMessage: message || "Your soul has been consumed by the Great Power.",
             inCombat: false,
             attackSlots: [],
             waitingMonsters: [],

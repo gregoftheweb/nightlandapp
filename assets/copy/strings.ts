@@ -1,4 +1,4 @@
-// src/resources/strings.ts
+// /assets/copy/strings.ts
 
 export const STRINGS = {
     splashScreen: {

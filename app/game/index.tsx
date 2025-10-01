@@ -27,7 +27,7 @@ const { width, height } = Dimensions.get("window");
 const MIN_MOVE_DISTANCE = 1;
 const HUD_HEIGHT = 60;
 const MOVEMENT_INTERVAL = 150;
-const GAME_OVER_DELAY = 4000;
+const GAME_OVER_DELAY = 7000;
 const GREAT_POWER_AWAKEN_DISTANCE = 3;
 
 type Direction = "up" | "down" | "left" | "right" | "stay" | null;

@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { STRINGS } from "../../assets/copy/strings";
+import { SPLASH_STRINGS } from "@/assets/copy/splashscreen";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -30,13 +30,13 @@ export default function PrincessScreen() {
     >
       <View style={styles.container}>
         <View style={styles.textContainer}>
-          <Text style={styles.text}>{STRINGS.princessScreen.text}</Text>
+          <Text style={styles.text}>{SPLASH_STRINGS.princessScreen.text}</Text>
         </View>
 
         <View style={styles.overlay}>
           <TouchableOpacity style={styles.button} onPress={handlePress}>
             <Text style={styles.buttonText}>
-              {STRINGS.princessScreen.buttonText}
+              {SPLASH_STRINGS.princessScreen.buttonText}
             </Text>
           </TouchableOpacity>
         </View>

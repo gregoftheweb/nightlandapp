@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { STRINGS } from '../assets/copy/strings';
+import { SPLASH_STRINGS } from "@/assets/copy/splashscreen";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -20,7 +21,7 @@ export default function SplashScreen() {
     >
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.button} onPress={handlePress}>
-          <Text style={styles.buttonText}>{STRINGS.splashScreen.buttonText}</Text>
+          <Text style={styles.buttonText}>{SPLASH_STRINGS.splashScreen.buttonText}</Text>
         </TouchableOpacity>
       </View>
     </ImageBackground>
