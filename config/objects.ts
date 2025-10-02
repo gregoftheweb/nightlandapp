@@ -9,6 +9,7 @@ import maguffinRockIMG from "@assets/images/maguffinRock.png";
 import shortSwordIMG from "@assets/images/shortSword.png";
 import potionIMG from "@assets/images/potion.png";
 import sanctuaryPoolImg from "@assets/images/poolofpeace.png";
+import footprintsIMG from "@assets/images/footprints-blue.png";
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
@@ -70,6 +71,16 @@ export const collectible: Record<string, GameObject> = {
   },
 };
 
+export const footstepTemplate = {
+  shortName: "footsteps",
+  name: "Footsteps of Persius",
+  description: "Faint tracks of Persius lie before you, leading you onward in the gloomy dust.",
+  width: 2,
+  height: 2,
+  image: footprintsIMG,
+  zIndex: 1,
+};
+
 // BUILDINGS TEMPLATES - Pure templates without position data
 export const buildings: Record<string, GameObject> = {
   redoubt: {
@@ -82,7 +93,7 @@ export const buildings: Record<string, GameObject> = {
     image: redoubtImg,
     active: true,
     zIndex: 0,
-      effects: [
+    effects: [
       {
         type: "recuperate",
         value: 10,
@@ -116,9 +127,9 @@ export const buildings: Record<string, GameObject> = {
     effects: [
       {
         type: "swarm",
-        monsterType: "abhuman", //shortname of monster
-        count: 4, //how many monsters spawn
-        range: 12, //how far away + - 5 grid squares to spawn
+        monsterType: "abhuman",
+        count: 4,
+        range: 12,
       },
     ],
   },
@@ -170,6 +181,7 @@ export const buildings: Record<string, GameObject> = {
       },
     ],
   },
+
 };
 
 // UTILITY FUNCTIONS TO GET TEMPLATES
@@ -199,6 +211,10 @@ export const getCollectibleTemplate = (
 
 export const getItemTemplate = (shortName: string): GameObject | undefined => {
   return weapons[shortName] || consumables[shortName];
+};
+
+export const getFootstepTemplate = () => {
+  return footstepTemplate;
 };
 
 // Get all templates combined (useful for lookups)

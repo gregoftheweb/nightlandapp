@@ -35,6 +35,7 @@ export interface GameObject {
   lastTrigger?: number;
   maxInstances?: number;
   zIndex?: number;
+  rotation?: number; // NEW: Rotation in degrees (0-360)
 }
 
 export interface Monster extends GameObject {
@@ -53,6 +54,7 @@ export interface Monster extends GameObject {
   uiSlot?: number;
   inCombatSlot?: boolean;
 }
+
 export interface GreatPower extends GameObject {
   id: string;
   name: string;
@@ -98,6 +100,7 @@ export interface LevelObjectInstance extends GameObject {
   interactionType?: "door" | "chest" | "npc" | "portal";
   locked?: boolean;
   keyRequired?: string;
+  rotation?: number; // NEW: Instance-specific rotation override
 }
 
 export interface Player {
@@ -124,6 +127,20 @@ export interface Player {
   level?: number;
   experience?: number;
   zIndex?: number;
+}
+
+// NEW: Footstep type - separate from buildings for performance
+export interface Footstep {
+  id: string;
+  shortName: string;
+  name: string;
+  description: string;
+  position: Position;
+  rotation: number; // 0-360 degrees
+  width: number;
+  height: number;
+  image: ImageSourcePropType;
+  zIndex: number;
 }
 
 export interface Effect {
@@ -237,24 +254,6 @@ export interface CompletionCondition {
   completed?: boolean;
 }
 
-export interface FootstepInstance {
-  id: number;
-  position: Position;
-  direction: number;
-  templateId: string;
-}
-
-export interface FootstepTemplate {
-  id: string;
-  name: string;
-  shortName: string;
-  size?: { width: number; height: number };
-  maxInstances: number;
-  description?: string;
-  image: string;
-  type?: string;
-}
-
 export interface BossEncounter {
   id: string;
 }
@@ -274,8 +273,7 @@ export interface Level {
   items: Item[];
   monsters: LevelMonsterInstance[];
   objects: LevelObjectInstance[];
-  footsteps: FootstepInstance[];
-  footstepsTemplate: FootstepTemplate;
+  footsteps?: Footstep[];
   greatPowers?: GreatPower[];
   bossEncounter?: BossEncounter;
   completionConditions?: CompletionCondition[];
@@ -283,6 +281,8 @@ export interface Level {
   version?: string;
   lastModified?: Date;
 }
+
+// Removed: FootstepInstance, FootstepTemplate - now using buildings with rotation
 
 export interface SaveGameMetadata {
   version: string;
@@ -347,9 +347,8 @@ export interface GameState {
   activeMonsters: Monster[];
   items: Item[];
   objects: LevelObjectInstance[];
+  footsteps: Footstep[];
   greatPowers: GreatPower[];
-  footsteps: FootstepInstance[];
-  footstepsTemplate: FootstepTemplate;
   levels: Record<string, Level>;
   weapons: Item[];
   monsters: LevelMonsterInstance[];

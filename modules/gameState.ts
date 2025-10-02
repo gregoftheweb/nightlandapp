@@ -1,6 +1,6 @@
 // modules/gameState.ts
 import { levels } from "../config/levels";
-import { GameState, Level, FootstepTemplate } from "../config/types";
+import { GameState, Level } from "../config/types";
 import { playerConfig } from "../config/player";
 import { reducer } from "./reducers";
 import { initializeStartingMonsters } from "./turnManager";
@@ -26,7 +26,6 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     objects: levelConfig.objects || [],
     greatPowers: levelConfig.greatPowers || [],
     footsteps: levelConfig.footsteps || [],
-    footstepsTemplate: levelConfig.footstepsTemplate || [],
     levels: { [levelId]: levelConfig },
     weapons: [
       {

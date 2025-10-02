@@ -6,12 +6,14 @@ import {
   LevelMonsterInstance,
   GreatPower,
   Item,
+  Footstep,
 } from "./types";
 import {
   getBuildingTemplate,
   getWeaponTemplate,
   getConsumableTemplate,
   getCollectibleTemplate,
+  getFootstepTemplate,
 } from "./objects";
 import { getMonsterTemplate, getGreatPowerTemplate } from "./monsters";
 
@@ -142,6 +144,33 @@ const createMonsterInstance = (
   };
 };
 
+// Helper function to create footstep instances from templates
+// Helper function to create footstep instances from templates
+const createFootstep = (
+  position: Position,
+  rotation: number,
+  overrides: Partial<Footstep> = {}
+): Footstep => {
+  const template = getFootstepTemplate();
+  if (!template) {
+    throw new Error(`Footstep template not found`);
+  }
+
+  return {
+    id: `${template.shortName}_${position.row}_${position.col}_${rotation}`,
+    position,
+    rotation,
+    shortName: template.shortName,
+    name: template.name,
+    description: template.description,
+    image: template.image,
+    zIndex: template.zIndex,
+    width: template.width ?? 1,
+    height: template.height ?? 1,
+    ...overrides,
+  };
+};
+
 // Helper function to create GreatPower instances for levels
 const createGreatPowerForLevel = (
   shortName: string,
@@ -189,11 +218,25 @@ export const levels: Record<string, Level> = {
     // OBJECTS - Buildings and structures (including pools)
     objects: [
       createObjectInstance("redoubt", { row: 390, col: 198 }),
-      createObjectInstance("healingPool", { row: 385, col: 20 }),
+      createObjectInstance("healingPool", { row: 375, col: 20 }),
       createObjectInstance("poisonPool", { row: 250, col: 250 }),
       createObjectInstance("cursedTotem", { row: 385, col: 210 }),
     ],
+    footsteps: [
+      // Start
+      createFootstep({ row: 391, col: 195 }, 290), // straight
 
+      // Moving westward (decreasing col)
+      createFootstep({ row: 385, col: 175 }, 280),
+      createFootstep({ row: 380, col: 155 }, 270),
+      createFootstep({ row: 380, col: 135 }, 270),
+      createFootstep({ row: 380, col: 115 }, 270),
+      createFootstep({ row: 380, col: 95 }, 270),
+      createFootstep({ row: 380, col: 75 }, 270),
+      createFootstep({ row: 380, col: 55 }, 270),
+      createFootstep({ row: 380, col: 35 }, 270),
+      // Arriving near pool
+    ],
     // GREAT POWERS - Boss-level entities
     greatPowers: [
       createGreatPowerForLevel(
@@ -220,33 +263,6 @@ export const levels: Record<string, Level> = {
         description: "Find the iron sword",
       },
     ],
-
-    footsteps: [
-      {
-        id: 1,
-        position: { row: 395, col: 200 },
-        direction: 0,
-        templateId: "footstepsPersius",
-      },
-      {
-        id: 26,
-        position: { row: 10, col: 215 },
-        direction: 310,
-        templateId: "footstepsPersius",
-      },
-    ],
-
-    footstepsTemplate: {
-      name: "Footsteps of Persius",
-      shortName: "footstepsPersius",
-      id: "footstepsPersius",
-      size: { width: 2, height: 2 },
-      description:
-        "You discover the faint tracks of your friend Persius in the dry dust of the Nightland. Your hope is forlorn, but meager as it is, there is some left that he might live..",
-      type: "object",
-      maxInstances: 100,
-      image: "assets/images/footprints-blue.png",
-    },
   },
 
   "2": {
@@ -272,9 +288,7 @@ export const levels: Record<string, Level> = {
     ],
 
     // OBJECTS - Buildings including pools
-    objects: [
-      createObjectInstance("poisonPool", { row: 150, col: 150 }),
-    ],
+    objects: [createObjectInstance("poisonPool", { row: 150, col: 150 })],
 
     greatPowers: [],
 
@@ -289,18 +303,5 @@ export const levels: Record<string, Level> = {
         description: "Reach the eastern exit",
       },
     ],
-
-    footsteps: [],
-
-    footstepsTemplate: {
-      name: "defaultFootstep",
-      id: "defaultFootstep",
-      shortName: "defaultFootstep",
-      size: { width: 1, height: 1 },
-      description: "Default footstep template",
-      image: "assets/images/footprints-blue.png",
-      type: "trail",
-      maxInstances: 150,
-    },
   },
 };

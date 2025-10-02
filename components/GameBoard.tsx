@@ -16,6 +16,7 @@ import {
   Item,
   GreatPower,
   Position,
+  Footstep,
 } from "@/config/types";
 import { InfoBox } from "./InfoBox";
 import { CombatDialog } from "./CombatDialog";
@@ -42,6 +43,7 @@ interface GameBoardProps {
   onBuildingTap?: (building: LevelObjectInstance) => void;
   onItemTap?: (item: Item) => void;
   onGreatPowerTap?: (greatPower: GreatPower) => void;
+  onFootstepTap?: (footstep: Footstep) => void;
 }
 
 export default function GameBoard({
@@ -52,6 +54,7 @@ export default function GameBoard({
   onBuildingTap,
   onItemTap,
   onGreatPowerTap,
+  onFootstepTap,
 }: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoData, setInfoData] = useState<{
@@ -288,6 +291,23 @@ export default function GameBoard({
     },
     [showInfo, onItemTap]
   );
+
+
+  const handleFootstepTap = useCallback(
+    (footstep: Footstep) => {
+      if (__DEV__) {
+        console.log("handleFootstepTap called, footstep:", footstep);
+      }
+      showInfo(
+        footstep.name || footstep.shortName || "Footstep",
+        footstep.description || "A trace left behind on the path.",
+        footstep.image as ImageSourcePropType
+      );
+      onFootstepTap?.(footstep);
+    },
+    [showInfo, onFootstepTap]
+  );
+
 
   // Background style (unchanged, but memoized for consistency)
   const getBackgroundStyle = useMemo(
@@ -591,6 +611,10 @@ export default function GameBoard({
           screenCol + objWidth > 0 &&
           screenCol < VIEWPORT_COLS;
         if (!inView) return null;
+
+        // Get rotation from instance, default to 0
+        const rotation = obj.rotation ?? 0;
+
         return (
           <TouchableOpacity
             key={`building-${obj.id}-${index}`}
@@ -607,7 +631,11 @@ export default function GameBoard({
           >
             <Image
               source={obj.image as ImageSourcePropType}
-              style={{ width: "100%", height: "100%" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                transform: [{ rotate: `${rotation}deg` }],
+              }}
               resizeMode="contain"
             />
           </TouchableOpacity>
@@ -621,10 +649,61 @@ export default function GameBoard({
     handleBuildingTap,
   ]);
 
+ const renderFootsteps = useMemo(() => {
+  if (!state.footsteps || state.footsteps.length === 0) return [];
+
+  return state.footsteps
+    .map((footstep, index) => {
+      if (!footstep.position) return null;
+
+      const screenRow = footstep.position.row - cameraOffset.offsetY;
+      const screenCol = footstep.position.col - cameraOffset.offsetX;
+      const footstepWidth = footstep.width || 1;
+      const footstepHeight = footstep.height || 1;
+
+      // Check if in viewport
+      const inView =
+        screenRow + footstepHeight > 0 &&
+        screenRow < VIEWPORT_ROWS &&
+        screenCol + footstepWidth > 0 &&
+        screenCol < VIEWPORT_COLS;
+
+      if (!inView) return null;
+
+      return (
+        <TouchableOpacity
+          key={`footstep-${footstep.id}-${index}`}
+          onPress={() => handleFootstepTap(footstep)}
+          activeOpacity={0.8}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: footstepWidth * CELL_SIZE,
+            height: footstepHeight * CELL_SIZE,
+            zIndex: footstep.zIndex || 1,
+          }}
+        >
+          <Image
+            source={footstep.image as ImageSourcePropType}
+            style={{
+              width: "100%",
+              height: "100%",
+              transform: [{ rotate: `${footstep.rotation}deg` }],
+            }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      );
+    })
+    .filter((item): item is React.ReactElement => item !== null);
+}, [state.footsteps, cameraOffset.offsetY, cameraOffset.offsetX]);
+
   // Memoized grid render (perf: batches entities + z-sort only if needed)
   const renderGrid = useMemo(() => {
     const gridCells = renderGridCells;
     const allEntities = [
+      ...renderFootsteps,
       ...renderBuildings,
       ...renderMonsters,
       ...renderGreatPowers,
@@ -656,6 +735,7 @@ export default function GameBoard({
     return [...gridCells, ...allEntities];
   }, [
     renderGridCells,
+    renderFootsteps,
     renderBuildings,
     renderMonsters,
     renderGreatPowers,

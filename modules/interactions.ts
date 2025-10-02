@@ -214,6 +214,12 @@ export const checkObjectInteractions = (
 
   // Check regular objects first
   const isChristosOnTopOfObject = state.objects?.find((obj: any) => {
+
+  // Skip footsteps entirely
+    if (obj.category === 'footstep' || obj.shortName === 'footsteps') {
+      return false;
+    }
+
     if (!obj.active) {
       console.log(`Object ${obj.name} is inactive, skipping`);
       return false;

@@ -19,7 +19,7 @@ import {
   handlePassTurn,
   initializeStartingMonsters,
 } from "../../modules/turnManager";
-import { Monster, LevelObjectInstance, Item, GreatPower } from "@/config/types";
+import { Monster, LevelObjectInstance, Item, GreatPower,Footstep } from "@/config/types";
 import { audioManager } from "../../modules/audioManager";
 
 // Constants
@@ -328,6 +328,13 @@ export default function Game() {
   const handlePlayerTap = useCallback(() => {}, []);
   const handleBuildingTap = useCallback(() => {}, []);
   const handleItemTap = useCallback(() => {}, []);
+
+  const handleFootstepTap = useCallback(
+  (footstep: Footstep) => {
+    console.log("Footstep tapped:", footstep.name, "ID:", footstep.id);
+  },
+  []
+);
 
   return (
     <Pressable
