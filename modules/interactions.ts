@@ -1,7 +1,8 @@
-// modules/interactions.ts - Handle item and object interactions
+// modules/interactions.ts - Optimized with spatial grid
 import { GameState, Position, Item } from "../config/types";
 import { createItemInstance } from "../config/levels";
-import {COMBAT_STRINGS} from "@assets/copy/combat";
+import { COMBAT_STRINGS } from "@assets/copy/combat";
+import { buildSpatialGrid, checkOverlap } from "./spacialGrid";
 
 // ==================== ITEM INTERACTIONS ====================
 
@@ -15,42 +16,29 @@ export const checkItemInteractions = (
   console.log(
     `🔍 CHECKING ITEM INTERACTIONS at position (${playerPos.row}, ${playerPos.col})`
   );
-  console.log(`Items available: ${state.items?.length || 0}`);
-  console.log(
-    `Current inventory size: ${state.player.inventory.length}/${state.player.maxInventorySize}`
-  );
 
-  if (state.items?.length > 0) {
-    console.log(
-      "Item details:",
-      state.items.map((item) => ({
-        name: item.name,
-        position: item.position,
-        active: item.active,
-        collectible: item.collectible,
-      }))
-    );
-  }
+  // Build spatial grid for efficient lookup
+  const grid = buildSpatialGrid(state, 10); // 10x10 cell size
 
-  // Find all collectible items at player's position
-  const collectibleAtPosition = state.items?.find((item: Item) => {
-    if (!item || !item.active || !item.collectible || !item.position)
+  // Only check items in nearby cells (massive performance boost)
+  const nearbyEntities = grid.getNearbyByType(playerPos, 'item', 1);
+  
+  console.log(`Found ${nearbyEntities.length} nearby items (filtered from ${state.items?.length || 0} total)`);
+
+  // Find collectible item at player's exact position
+  const collectibleAtPosition = nearbyEntities.find((entity) => {
+    const item = entity.data as Item;
+    
+    if (!item || !item.active || !item.collectible || !item.position) {
       return false;
+    }
 
-    const itemRowStart = item.position.row;
-    const itemColStart = item.position.col;
-    const itemWidth = item.size?.width || 1;
-    const itemHeight = item.size?.height || 1;
-    const itemRowEnd = itemRowStart + itemHeight - 1;
-    const itemColEnd = itemColStart + itemWidth - 1;
-
-    return (
-      item.active &&
-      item.collectible &&
-      playerPos.row >= itemRowStart &&
-      playerPos.row <= itemRowEnd &&
-      playerPos.col >= itemColStart &&
-      playerPos.col <= itemColEnd
+    // Check overlap with player position (player is 1x1)
+    return checkOverlap(
+      playerPos, 1, 1,
+      item.position, 
+      item.size?.width || 1, 
+      item.size?.height || 1
     );
   });
 
@@ -59,74 +47,45 @@ export const checkItemInteractions = (
     return;
   }
 
+  const item = collectibleAtPosition.data as Item;
+
   console.log(
-    `📦 Found collectible item: ${collectibleAtPosition.name} at (${collectibleAtPosition.position?.row}, ${collectibleAtPosition.position?.col})`
+    `📦 Found collectible item: ${item.name} at (${item.position?.row}, ${item.position?.col})`
   );
 
-  // Check if inventory has space (except for weapons which go to weapons array)
-  if (collectibleAtPosition.type !== "weapon") {
+  // Check inventory space
+  if (item.type !== "weapon") {
     if (state.player.inventory.length >= state.player.maxInventorySize) {
-      console.log(
-        `❌ Inventory full - cannot collect ${collectibleAtPosition.name}`
-      );
+      console.log(`❌ Inventory full - cannot collect ${item.name}`);
       return;
     }
   }
 
   // Handle splash screen
-  if (collectibleAtPosition.splash && setOverlay) {
+  if (item.splash && setOverlay) {
     setOverlay({
-      image: collectibleAtPosition.splash.image,
-      text: collectibleAtPosition.splash.text,
+      image: item.splash.image,
+      text: item.splash.text,
     });
   }
 
-  // Store current inventory for comparison
-  const inventoryBefore = [...state.player.inventory];
-  const weaponsBefore = [...state.player.weapons];
-
-  console.log(`📦 BEFORE COLLECTION:`);
-  console.log(
-    `  Inventory (${inventoryBefore.length}/${state.player.maxInventorySize}):`,
-    inventoryBefore.map((i) => ({ name: i.name, id: i.id }))
-  );
-  console.log(
-    `  Weapons (${weaponsBefore.length}/${state.player.maxWeaponsSize}):`,
-    weaponsBefore.map((w) => ({ id: w.id, equipped: w.equipped }))
-  );
-
-  // Handle item collection based on type
-  if (collectibleAtPosition.type === "weapon") {
-    handleWeaponCollection(collectibleAtPosition, state, dispatch);
+  // Handle collection
+  if (item.type === "weapon") {
+    handleWeaponCollection(item, state, dispatch);
   } else {
-    handleConsumableCollection(collectibleAtPosition, state, dispatch);
+    handleConsumableCollection(item, state, dispatch);
   }
 
-  // Remove the item from the game board
+  // Remove from gameboard
   dispatch({
     type: "REMOVE_ITEM_FROM_GAMEBOARD",
     payload: {
-      position: collectibleAtPosition.position,
-      shortName: collectibleAtPosition.shortName,
+      position: item.position,
+      shortName: item.shortName,
     },
   });
-  console.log(
-    `ITEMS REMAINING ON GAMEBOARD:`,
-    state.items.filter(
-      (item) =>
-        !(
-          item.position?.row === collectibleAtPosition.position?.row &&
-          item.position?.col === collectibleAtPosition.position?.col &&
-          item.shortName === collectibleAtPosition.shortName
-        )
-    ).length
-  );
-  console.log(
-    `✅ Item collection completed for: ${collectibleAtPosition.name}`
-  );
-  console.log(
-    `🗑️ Removing item from position (${collectibleAtPosition.position?.row}, ${collectibleAtPosition.position?.col})`
-  );
+
+  console.log(`✅ Item collection completed for: ${item.name}`);
 };
 
 // ==================== WEAPON COLLECTION ====================
@@ -138,13 +97,11 @@ const handleWeaponCollection = (
 ) => {
   console.log(`⚔️ Attempting to collect weapon: ${item.name}`);
 
-  // Check if weapons inventory has space
   if (state.player.weapons.length >= state.player.maxWeaponsSize) {
     console.log(`❌ Weapon inventory full - cannot collect ${item.name}`);
     return;
   }
 
-  // Create full inventory item from shortName
   const inventoryItem = createItemInstance(
     item.shortName,
     state.player.position
@@ -155,15 +112,12 @@ const handleWeaponCollection = (
     return;
   }
 
-  console.log(`✅ Adding weapon to inventory:`, inventoryItem);
-
-  // Dispatch full weapon object
   dispatch({
     type: "ADD_TO_WEAPONS",
     payload: { weapon: inventoryItem },
   });
 
-  console.log(`📦 Weapon added: ${inventoryItem.name} (shortName: ${item.shortName})`);
+  console.log(`📦 Weapon added: ${inventoryItem.name}`);
 };
 
 // ==================== CONSUMABLE COLLECTION ====================
@@ -175,18 +129,10 @@ const handleConsumableCollection = (
 ) => {
   console.log(`🧪 Attempting to collect consumable: ${item.name}`);
 
-  // Create a proper inventory item with unique ID
   const inventoryItem = createItemInstance(
     item.shortName,
     state.player.position
   );
-
-  console.log(`✅ Adding consumable to inventory:`, {
-    id: inventoryItem.id,
-    name: inventoryItem.name,
-    type: inventoryItem.type,
-    healAmount: inventoryItem.healAmount,
-  });
 
   dispatch({
     type: "ADD_TO_INVENTORY",
@@ -194,17 +140,10 @@ const handleConsumableCollection = (
   });
 
   console.log(`📦 Consumable added: ${item.name} (ID: ${inventoryItem.id})`);
-  console.log(
-    `CHRISTOS INVENTORY AFTER ADD:`,
-    [...state.player.inventory, inventoryItem].map((item: any) => ({
-      name: item.name,
-      id: item.id,
-      type: item.type,
-    }))
-  );
 };
 
 // ==================== OBJECT INTERACTIONS ====================
+
 export const checkObjectInteractions = (
   state: GameState,
   dispatch: (action: any) => void,
@@ -212,85 +151,73 @@ export const checkObjectInteractions = (
 ) => {
   console.log('Checking object interactions at playerPos:', playerPos);
 
-  // Check regular objects first
-  const isChristosOnTopOfObject = state.objects?.find((obj: any) => {
+  // Build spatial grid for efficient lookup
+  const grid = buildSpatialGrid(state, 10);
 
-  // Skip footsteps entirely
-    if (obj.category === 'footstep' || obj.shortName === 'footsteps') {
-      return false;
-    }
+  // Only check objects in nearby cells
+  const nearbyObjects = grid.getNearbyByType(playerPos, 'object', 1);
+  
+  console.log(`Found ${nearbyObjects.length} nearby objects (filtered from ${state.objects?.length || 0} total)`);
+
+  // Check regular objects
+  const collidingObject = nearbyObjects.find((entity) => {
+    const obj = entity.data as any;
 
     if (!obj.active) {
-      console.log(`Object ${obj.name} is inactive, skipping`);
       return false;
     }
 
+    // Check collision with collision mask if it exists
     if (obj.collisionMask) {
       return obj.collisionMask.some((mask: any) => {
-        const objRowStart = obj.position.row + mask.row;
-        const objColStart = obj.position.col + mask.col;
-        const objRowEnd = objRowStart + (mask.height || 1) - 1;
-        const objColEnd = objColStart + (mask.width || 1) - 1;
-
-        return (
-          playerPos.row >= objRowStart &&
-          playerPos.row <= objRowEnd &&
-          playerPos.col >= objColStart &&
-          playerPos.col <= objColEnd
+        const maskPos = {
+          row: obj.position.row + mask.row,
+          col: obj.position.col + mask.col
+        };
+        
+        return checkOverlap(
+          playerPos, 1, 1,
+          maskPos,
+          mask.width || 1,
+          mask.height || 1
         );
       });
-    } else {
-      const objRowStart = obj.position.row;
-      const objColStart = obj.position.col;
-      const objWidth = obj.size?.width || 1;
-      const objHeight = obj.size?.height || 1;
-      const objRowEnd = objRowStart + objHeight - 1;
-      const objColEnd = objColStart + objWidth - 1;
-
-      return (
-        playerPos.row >= objRowStart &&
-        playerPos.row <= objRowEnd &&
-        playerPos.col >= objColStart &&
-        playerPos.col <= objColEnd
-      );
-    }
-  });
-
-  // Check Great Powers
-  const isChristosOnTopOfGreatPower = state.level.greatPowers?.find((gp: any) => {
-    if (!gp.active) {
-      console.log(`Great Power ${gp.name} is inactive, skipping`);
-      return false;
     }
 
-    const gpRowStart = gp.position.row;
-    const gpColStart = gp.position.col;
-    const gpWidth = gp.width || 1;
-    const gpHeight = gp.height || 1;
-    const gpRowEnd = gpRowStart + gpHeight - 1;
-    const gpColEnd = gpColStart + gpWidth - 1;
-
-    return (
-      playerPos.row >= gpRowStart &&
-      playerPos.row <= gpRowEnd &&
-      playerPos.col >= gpColStart &&
-      playerPos.col <= gpColEnd
+    // Standard bounding box check
+    return checkOverlap(
+      playerPos, 1, 1,
+      obj.position,
+      obj.size?.width || 1,
+      obj.size?.height || 1
     );
   });
 
-  // Handle regular objects
-  if (isChristosOnTopOfObject) {
-    handleObjectEffects(isChristosOnTopOfObject, state, dispatch, playerPos);
+  // Check Great Powers (they have special handling)
+  const collidingGreatPower = state.level.greatPowers?.find((gp: any) => {
+    if (!gp.active) return false;
+
+    return checkOverlap(
+      playerPos, 1, 1,
+      gp.position,
+      gp.width || 1,
+      gp.height || 1
+    );
+  });
+
+  // Handle collisions
+  if (collidingObject) {
+    handleObjectEffects(collidingObject.data, state, dispatch, playerPos);
   } else {
-    // Turn off isHidden if not on any object
     dispatch({ type: 'CLEAR_HIDE' });
   }
 
-  // Handle Great Powers
-  if (isChristosOnTopOfGreatPower) {
-    handleGreatPowerEffects(isChristosOnTopOfGreatPower, state, dispatch, playerPos);
+  if (collidingGreatPower) {
+    handleGreatPowerEffects(collidingGreatPower, state, dispatch, playerPos);
   }
 };
+
+// ==================== EFFECT HANDLERS ====================
 
 const handleObjectEffects = (
   obj: any,
@@ -299,11 +226,9 @@ const handleObjectEffects = (
   playerPos: Position
 ) => {
   if (!obj.effects) {
-    console.log(`Object ${obj.name} has no effects`);
     return;
   }
 
-  // Check which effects need cooldowns (swarm and heal are one-time per cooldown)
   const needsCooldown = obj.effects.some((e: any) => 
     e.type === 'swarm' || e.type === 'heal'
   );
@@ -312,25 +237,21 @@ const handleObjectEffects = (
     const now = Date.now();
     const lastTrigger = obj.lastTrigger || 0;
     
-    // Cooldown check (50 seconds)
     if (now - lastTrigger <= 50000) {
-      console.log(`Cooldown active for ${obj.name}, exiting`);
+      console.log(`Cooldown active for ${obj.name}`);
       return;
     }
   }
 
   obj.effects.forEach((effect: any) => {
-    console.log('Triggering effect:', effect);
-
     dispatch({
       type: 'TRIGGER_EFFECT',
       payload: { effect, position: playerPos },
     });
 
-    // Log effect messages
     switch (effect.type) {
       case 'swarm':
-        console.log(`A swarm of ${effect.monsterType}s emerges from the ${obj.name}!`);
+        console.log(`A swarm of ${effect.monsterType}s emerges!`);
         break;
       case 'hide':
         console.log(`The ${obj.name} cloaks you in silence.`);
@@ -341,26 +262,20 @@ const handleObjectEffects = (
       case 'recuperate':
         console.log(`The ${obj.name} restores ${effect.amount || 5} HP!`);
         break;
-      default:
-        console.log(`Unhandled effect type: ${effect.type}`);
-        break;
     }
   });
 
-  // Only update lastTrigger for effects that need cooldown
   if (needsCooldown) {
-    const now = Date.now();
     dispatch({
       type: 'UPDATE_OBJECT',
       payload: {
         shortName: obj.shortName,
-        updates: { lastTrigger: now },
+        updates: { lastTrigger: Date.now() },
       },
     });
   }
 };
 
-// Handle Great Power effects
 const handleGreatPowerEffects = (
   greatPower: any,
   state: GameState,
@@ -369,31 +284,30 @@ const handleGreatPowerEffects = (
 ) => {
   console.log(`Player collided with Great Power: ${greatPower.name}`);
 
-  // Awaken the Great Power if not already awakened
   if (!greatPower.awakened && greatPower.awakenCondition === 'player_within_range') {
-    console.log(`Awakening Great Power: ${greatPower.name}`);
     dispatch({
       type: 'AWAKEN_GREAT_POWER',
       payload: { id: greatPower.id }
     });
   }
 
-  // Execute effects if awakened
   if (greatPower.effects) {
-         // Use your COMBAT_STRINGS function here
-        const deathMessage = COMBAT_STRINGS.soulSuckDeath.player(greatPower.name);
+    const deathMessage = COMBAT_STRINGS.soulSuckDeath.player(greatPower.name);
 
-        dispatch({
-          type: "ADD_COMBAT_LOG",
-          payload: { message: deathMessage },
-        });
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: { message: deathMessage },
+    });
 
     greatPower.effects.forEach((effect: any) => {
-      console.log('Triggering Great Power effect:', effect);
-
       dispatch({
         type: 'TRIGGER_EFFECT',
-        payload: { effect, position: playerPos, source: 'greatPower', message: deathMessage },
+        payload: { 
+          effect, 
+          position: playerPos, 
+          source: 'greatPower', 
+          message: deathMessage 
+        },
       });
     });
   }
@@ -418,18 +332,11 @@ export const getItemsAtPosition = (
   return items.filter((item) => {
     if (!item.active || !item.position) return false;
 
-    const itemRowStart = item.position.row;
-    const itemColStart = item.position.col;
-    const itemWidth = item.size?.width || 1;
-    const itemHeight = item.size?.height || 1;
-    const itemRowEnd = itemRowStart + itemHeight - 1;
-    const itemColEnd = itemColStart + itemWidth - 1;
-
-    return (
-      position.row >= itemRowStart &&
-      position.row <= itemRowEnd &&
-      position.col >= itemColStart &&
-      position.col <= itemColEnd
+    return checkOverlap(
+      position, 1, 1,
+      item.position,
+      item.size?.width || 1,
+      item.size?.height || 1
     );
   });
 };

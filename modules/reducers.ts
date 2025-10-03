@@ -4,8 +4,8 @@ import {
   CombatLogEntry,
   Monster,
   LevelMonsterInstance,
-  FootstepInstance,
   Position,
+  Footstep
 } from "../config/types";
 import { levels } from "../config/levels";
 import { initialState } from "./gameState";
@@ -27,9 +27,6 @@ export const reducer = (
         greatPowers: newLevelConfig.greatPowers || [],
         objects: newLevelConfig.objects || [],
         footsteps: newLevelConfig.footsteps || [],
-        footstepsTemplate: newLevelConfig.footstepsTemplate || {
-          maxInstances: 0,
-        },
         activeMonsters: [],
         attackSlots: [],
         waitingMonsters: [],
@@ -617,23 +614,7 @@ export const reducer = (
             : obj
         ),
       };
-    case "ADD_FOOTSTEPS":
-      const template = state.footstepsTemplate;
 
-      const newFootstep: FootstepInstance = {
-        id: state.footsteps.length + 1,
-        templateId: template?.id || "default",
-        position: action.position,
-        direction: action.direction,
-      };
-
-      return {
-        ...state,
-        footsteps: [...state.footsteps, newFootstep].slice(
-          0,
-          template?.maxInstances || 10
-        ),
-      };
 
     // ============ UI STATE ============
     case "UPDATE_DIALOG":
