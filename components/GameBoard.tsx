@@ -16,7 +16,7 @@ import {
   Item,
   GreatPower,
   Position,
-  Footstep,
+  NonCollisionObject,
 } from "@/config/types";
 import { InfoBox } from "./InfoBox";
 import { CombatDialog } from "./CombatDialog";
@@ -43,7 +43,7 @@ interface GameBoardProps {
   onBuildingTap?: (building: LevelObjectInstance) => void;
   onItemTap?: (item: Item) => void;
   onGreatPowerTap?: (greatPower: GreatPower) => void;
-  onFootstepTap?: (footstep: Footstep) => void;
+  onNonCollisionObjectTap?: (obj: NonCollisionObject) => void;
 }
 
 export default function GameBoard({
@@ -54,7 +54,7 @@ export default function GameBoard({
   onBuildingTap,
   onItemTap,
   onGreatPowerTap,
-  onFootstepTap,
+  onNonCollisionObjectTap,
 }: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoData, setInfoData] = useState<{
@@ -292,22 +292,20 @@ export default function GameBoard({
     [showInfo, onItemTap]
   );
 
-
-  const handleFootstepTap = useCallback(
-    (footstep: Footstep) => {
+  const handleNonCollisionObjectTap = useCallback(
+    (obj: NonCollisionObject) => {
       if (__DEV__) {
-        console.log("handleFootstepTap called, footstep:", footstep);
+        console.log("handleNonCollisionObjectTap called, obj:", obj);
       }
       showInfo(
-        footstep.name || footstep.shortName || "Footstep",
-        footstep.description || "A trace left behind on the path.",
-        footstep.image as ImageSourcePropType
+        obj.name || obj.shortName || "Object",
+        obj.description || "A decorative object in the world.",
+        obj.image as ImageSourcePropType
       );
-      onFootstepTap?.(footstep);
+      onNonCollisionObjectTap?.(obj);
     },
-    [showInfo, onFootstepTap]
+    [showInfo, onNonCollisionObjectTap]
   );
-
 
   // Background style (unchanged, but memoized for consistency)
   const getBackgroundStyle = useMemo(
@@ -649,61 +647,95 @@ export default function GameBoard({
     handleBuildingTap,
   ]);
 
- const renderFootsteps = useMemo(() => {
-  if (!state.footsteps || state.footsteps.length === 0) return [];
+  const renderNonCollisionObjects = useMemo(() => {
+    if (!state.nonCollisionObjects || state.nonCollisionObjects.length === 0)
+      return [];
 
-  return state.footsteps
-    .map((footstep, index) => {
-      if (!footstep.position) return null;
+    return state.nonCollisionObjects
+      .map((obj, index) => {
+        if (!obj.position) return null;
 
-      const screenRow = footstep.position.row - cameraOffset.offsetY;
-      const screenCol = footstep.position.col - cameraOffset.offsetX;
-      const footstepWidth = footstep.width || 1;
-      const footstepHeight = footstep.height || 1;
+        const screenRow = obj.position.row - cameraOffset.offsetY;
+        const screenCol = obj.position.col - cameraOffset.offsetX;
+        const objWidth = obj.width || 1;
+        const objHeight = obj.height || 1;
 
-      // Check if in viewport
-      const inView =
-        screenRow + footstepHeight > 0 &&
-        screenRow < VIEWPORT_ROWS &&
-        screenCol + footstepWidth > 0 &&
-        screenCol < VIEWPORT_COLS;
+        const inView =
+          screenRow + objHeight > 0 &&
+          screenRow < VIEWPORT_ROWS &&
+          screenCol + objWidth > 0 &&
+          screenCol < VIEWPORT_COLS;
 
-      if (!inView) return null;
+        if (!inView) return null;
 
-      return (
-        <TouchableOpacity
-          key={`footstep-${footstep.id}-${index}`}
-          onPress={() => handleFootstepTap(footstep)}
-          activeOpacity={0.8}
-          style={{
-            position: "absolute",
-            left: screenCol * CELL_SIZE,
-            top: screenRow * CELL_SIZE,
-            width: footstepWidth * CELL_SIZE,
-            height: footstepHeight * CELL_SIZE,
-            zIndex: footstep.zIndex || 1,
-          }}
-        >
+        // Check if object is interactable (defaults to true)
+        const isTappable = obj.canTap !== false;
+
+        const content = (
           <Image
-            source={footstep.image as ImageSourcePropType}
+            source={obj.image as ImageSourcePropType}
             style={{
               width: "100%",
               height: "100%",
-              transform: [{ rotate: `${footstep.rotation}deg` }],
+              transform: [{ rotate: `${obj.rotation}deg` }],
             }}
             resizeMode="contain"
           />
-        </TouchableOpacity>
-      );
-    })
-    .filter((item): item is React.ReactElement => item !== null);
-}, [state.footsteps, cameraOffset.offsetY, cameraOffset.offsetX]);
+        );
+
+        // If not interactable, render as View instead of TouchableOpacity
+        if (!isTappable) {
+          return (
+            <View
+              key={`noncollision-${obj.id}-${index}`}
+              style={{
+                position: "absolute",
+                left: screenCol * CELL_SIZE,
+                top: screenRow * CELL_SIZE,
+                width: objWidth * CELL_SIZE,
+                height: objHeight * CELL_SIZE,
+                zIndex: obj.zIndex || 1,
+              }}
+              pointerEvents="none" // Allows touches to pass through
+            >
+              {content}
+            </View>
+          );
+        }
+
+        // already returned ^^ if !isTappable
+        // isTappable version with TouchableOpacity
+        return (
+          <TouchableOpacity
+            key={`noncollision-${obj.id}-${index}`}
+            onPress={() => handleNonCollisionObjectTap(obj)}
+            activeOpacity={0.8}
+            style={{
+              position: "absolute",
+              left: screenCol * CELL_SIZE,
+              top: screenRow * CELL_SIZE,
+              width: objWidth * CELL_SIZE,
+              height: objHeight * CELL_SIZE,
+              zIndex: obj.zIndex || 1,
+            }}
+          >
+            {content}
+          </TouchableOpacity>
+        );
+      })
+      .filter((item): item is React.ReactElement => item !== null);
+  }, [
+    state.nonCollisionObjects,
+    cameraOffset.offsetY,
+    cameraOffset.offsetX,
+    handleNonCollisionObjectTap,
+  ]);
 
   // Memoized grid render (perf: batches entities + z-sort only if needed)
   const renderGrid = useMemo(() => {
     const gridCells = renderGridCells;
     const allEntities = [
-      ...renderFootsteps,
+      ...renderNonCollisionObjects,
       ...renderBuildings,
       ...renderMonsters,
       ...renderGreatPowers,
@@ -735,7 +767,7 @@ export default function GameBoard({
     return [...gridCells, ...allEntities];
   }, [
     renderGridCells,
-    renderFootsteps,
+    renderNonCollisionObjects,
     renderBuildings,
     renderMonsters,
     renderGreatPowers,

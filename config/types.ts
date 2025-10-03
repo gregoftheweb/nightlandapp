@@ -129,8 +129,7 @@ export interface Player {
   zIndex?: number;
 }
 
-// NEW: Footstep type - separate from buildings for performance
-export interface Footstep {
+export interface NonCollisionObject {
   id: string;
   shortName: string;
   name: string;
@@ -141,6 +140,8 @@ export interface Footstep {
   height: number;
   image: ImageSourcePropType;
   zIndex: number;
+  type: "footstep" | "river" | "decoration"; // Add more types as needed
+  canTap: boolean;
 }
 
 export interface Effect {
@@ -273,7 +274,7 @@ export interface Level {
   items: Item[];
   monsters: LevelMonsterInstance[];
   objects: LevelObjectInstance[];
-  footsteps?: Footstep[];
+  nonCollisionObjects?: NonCollisionObject[];
   greatPowers?: GreatPower[];
   bossEncounter?: BossEncounter;
   completionConditions?: CompletionCondition[];
@@ -347,7 +348,7 @@ export interface GameState {
   activeMonsters: Monster[];
   items: Item[];
   objects: LevelObjectInstance[];
-  footsteps: Footstep[];
+  nonCollisionObjects?: NonCollisionObject[];
   greatPowers: GreatPower[];
   levels: Record<string, Level>;
   weapons: Item[];

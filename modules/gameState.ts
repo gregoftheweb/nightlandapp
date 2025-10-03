@@ -25,7 +25,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     items: levelConfig.items || [],
     objects: levelConfig.objects || [],
     greatPowers: levelConfig.greatPowers || [],
-    footsteps: levelConfig.footsteps || [],
+    nonCollisionObjects: levelConfig.nonCollisionObjects || [], 
     levels: { [levelId]: levelConfig },
     weapons: [
       {
@@ -90,9 +90,7 @@ export const deserializeGameState = (serializedState: string): GameState => {
         ...parsedState.levels,
       },
       combatLog: parsedState.combatLog || [],
-      poolsTemplate: parsedState.poolsTemplate || [],
-      footsteps: parsedState.footsteps || [],
-      footstepsTemplate: parsedState.footstepsTemplate || { maxInstances: 0 },
+      nonCollisionObjects: parsedState.nonCollisionObjects || [], 
     };
   } catch (e) {
     console.error("Failed to deserialize game state:", e);

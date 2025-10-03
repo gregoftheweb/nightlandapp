@@ -6,14 +6,14 @@ import {
   LevelMonsterInstance,
   GreatPower,
   Item,
-  Footstep,
+  NonCollisionObject,
 } from "./types";
 import {
   getBuildingTemplate,
   getWeaponTemplate,
   getConsumableTemplate,
   getCollectibleTemplate,
-  getFootstepTemplate,
+  getNonCollisionTemplate,
 } from "./objects";
 import { getMonsterTemplate, getGreatPowerTemplate } from "./monsters";
 
@@ -144,32 +144,31 @@ const createMonsterInstance = (
   };
 };
 
-// Helper function to create footstep instances from templates
-// Helper function to create footstep instances from templates
-const createFootstep = (
+
+
+
+const createNonCollisionObject = (
+  templateName: string,
   position: Position,
   rotation: number,
-  overrides: Partial<Footstep> = {}
-): Footstep => {
-  const template = getFootstepTemplate();
+  overrides: Partial<NonCollisionObject> = {}
+): NonCollisionObject => {
+  const template = getNonCollisionTemplate(templateName);
   if (!template) {
-    throw new Error(`Footstep template not found`);
+    throw new Error(`NonCollisionObject template ${templateName} not found`);
   }
 
   return {
     id: `${template.shortName}_${position.row}_${position.col}_${rotation}`,
     position,
     rotation,
-    shortName: template.shortName,
-    name: template.name,
-    description: template.description,
-    image: template.image,
-    zIndex: template.zIndex,
-    width: template.width ?? 1,
-    height: template.height ?? 1,
+    ...template,
     ...overrides,
   };
 };
+
+
+
 
 // Helper function to create GreatPower instances for levels
 const createGreatPowerForLevel = (
@@ -222,20 +221,31 @@ export const levels: Record<string, Level> = {
       createObjectInstance("poisonPool", { row: 250, col: 250 }),
       createObjectInstance("cursedTotem", { row: 385, col: 210 }),
     ],
-    footsteps: [
+     nonCollisionObjects: [
       // Start
-      createFootstep({ row: 391, col: 195 }, 290), // straight
+       createNonCollisionObject('footsteps',{ row: 391, col: 195 }, 290), // straight
 
       // Moving westward (decreasing col)
-      createFootstep({ row: 385, col: 175 }, 280),
-      createFootstep({ row: 380, col: 155 }, 270),
-      createFootstep({ row: 380, col: 135 }, 270),
-      createFootstep({ row: 380, col: 115 }, 270),
-      createFootstep({ row: 380, col: 95 }, 270),
-      createFootstep({ row: 380, col: 75 }, 270),
-      createFootstep({ row: 380, col: 55 }, 270),
-      createFootstep({ row: 380, col: 35 }, 270),
+      createNonCollisionObject('footsteps', { row: 385, col: 175 }, 280),
+      createNonCollisionObject('footsteps', { row: 380, col: 155 }, 270),
+      createNonCollisionObject('footsteps', { row: 380, col: 135 }, 270),
+      createNonCollisionObject('footsteps', { row: 380, col: 115 }, 270),
+      createNonCollisionObject('footsteps', { row: 380, col: 95 }, 270),
+      createNonCollisionObject('footsteps', { row: 380, col: 75 }, 270),
+      createNonCollisionObject('footsteps', { row: 380, col: 55 }, 270),
+      createNonCollisionObject('footsteps', { row: 380, col: 35 }, 270),
       // Arriving near pool
+
+
+ createNonCollisionObject('river', { row: 360, col: 195 }, 0, {
+    canTap: false, // Override to disable tapping
+    width: 22, // Make it huge
+    height: 15,
+  }),
+      
+
+
+
     ],
     // GREAT POWERS - Boss-level entities
     greatPowers: [

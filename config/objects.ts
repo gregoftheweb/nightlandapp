@@ -1,5 +1,5 @@
 // config/objects.ts
-import { GameObject } from "./types";
+import { GameObject, NonCollisionObject } from "./types";
 
 import redoubtImg from "@assets/images/redoubt.png";
 import riverIMG from "@assets/images/river1.png";
@@ -71,15 +71,32 @@ export const collectible: Record<string, GameObject> = {
   },
 };
 
-export const footstepTemplate = {
-  shortName: "footsteps",
-  name: "Footsteps of Persius",
-  description: "Faint tracks of Persius lie before you, leading you onward in the gloomy dust.",
-  width: 2,
-  height: 2,
-  image: footprintsIMG,
-  zIndex: 1,
+export const nonCollisionTemplates: Record<string, Omit<NonCollisionObject, 'id' | 'position' | 'rotation'>> = {
+  footsteps: {
+    shortName: "footsteps",
+    name: "Footsteps of Persius",
+    description: "Faint tracks of Persius lie before you, leading you onward in the gloomy dust.",
+    width: 2,
+    height: 2,
+    image: footprintsIMG,
+    zIndex: 1,
+    type: 'footstep',
+    canTap: true,
+  },
+  river: {
+    shortName: "river",
+    name: "Ancient River",
+    description: "A dried riverbed from ages past.",
+    width: 2,
+    height: 2,
+    image: riverIMG,
+    zIndex: 0,
+    type: 'river',
+    canTap: false,
+  },
 };
+
+
 
 // BUILDINGS TEMPLATES - Pure templates without position data
 export const buildings: Record<string, GameObject> = {
@@ -181,7 +198,6 @@ export const buildings: Record<string, GameObject> = {
       },
     ],
   },
-
 };
 
 // UTILITY FUNCTIONS TO GET TEMPLATES
@@ -213,9 +229,12 @@ export const getItemTemplate = (shortName: string): GameObject | undefined => {
   return weapons[shortName] || consumables[shortName];
 };
 
-export const getFootstepTemplate = () => {
-  return footstepTemplate;
+
+export const getNonCollisionTemplate = (shortName: string) => {
+  return nonCollisionTemplates[shortName];
 };
+
+
 
 // Get all templates combined (useful for lookups)
 export const getAllObjectTemplates = (): Record<string, GameObject> => {
