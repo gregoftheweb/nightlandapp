@@ -141,7 +141,15 @@ export interface NonCollisionObject {
   image: ImageSourcePropType;
   zIndex: number;
   type: "footstep" | "river" | "decoration"; // Add more types as needed
-  canTap: boolean;
+  canTap: boolean;  
+  collisionMask?: Array<{
+    row: number;
+    col: number;
+    width?: number;
+    height?: number;
+  }>;
+  collisionEffects?: Effect[];
+  active: boolean;
 }
 
 export interface Effect {

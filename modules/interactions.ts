@@ -1,5 +1,5 @@
 // modules/interactions.ts - Optimized with spatial grid
-import { GameState, Position, Item } from "../config/types";
+import { GameState, Position, Item, NonCollisionObject } from "../config/types";
 import { createItemInstance } from "../config/levels";
 import { COMBAT_STRINGS } from "@assets/copy/combat";
 import { buildSpatialGrid, checkOverlap } from "./spacialGrid";
@@ -215,7 +215,40 @@ export const checkObjectInteractions = (
   if (collidingGreatPower) {
     handleGreatPowerEffects(collidingGreatPower, state, dispatch, playerPos);
   }
+
+
+   const collidingNonCollisionObject = state.nonCollisionObjects?.find((obj) => {
+    if (!obj.collisionMask || !obj.active) return false;
+
+    // Check if player is within any of the collision mask tiles
+    return obj.collisionMask.some((mask) => {
+      const maskPos = {
+        row: obj.position.row + mask.row,
+        col: obj.position.col + mask.col
+      };
+      
+      return checkOverlap(
+        playerPos, 1, 1,
+        maskPos,
+        mask.width || 1,
+        mask.height || 1
+      );
+    });
+  });
+
+  // Handle effects from non-collision object collision
+  if (collidingNonCollisionObject && collidingNonCollisionObject.collisionEffects) {
+    handleNonCollisionObjectEffects(
+      collidingNonCollisionObject, 
+      state, 
+      dispatch, 
+      playerPos
+    );
+  }
 };
+
+
+
 
 // ==================== EFFECT HANDLERS ====================
 
@@ -311,6 +344,32 @@ const handleGreatPowerEffects = (
       });
     });
   }
+};
+
+const handleNonCollisionObjectEffects = (
+  obj: NonCollisionObject,
+  state: GameState,
+  dispatch: (action: any) => void,
+  playerPos: Position
+) => {
+  if (!obj.collisionEffects) return;
+
+  obj.collisionEffects.forEach((effect) => {
+    dispatch({
+      type: 'TRIGGER_EFFECT',
+      payload: { effect, position: playerPos },
+    });
+
+    switch (effect.type) {
+      case 'heal':
+        console.log(`The ${obj.name} heals you for ${effect.value} HP!`);
+        break;
+      case 'poison':
+        console.log(`The ${obj.name} poisons you!`);
+        break;
+      // ... other effect types
+    }
+  });
 };
 
 // ==================== UTILITY FUNCTIONS ====================

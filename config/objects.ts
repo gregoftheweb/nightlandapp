@@ -82,6 +82,7 @@ export const nonCollisionTemplates: Record<string, Omit<NonCollisionObject, 'id'
     zIndex: 1,
     type: 'footstep',
     canTap: true,
+    active: true,
   },
   river: {
     shortName: "river",
@@ -93,6 +94,14 @@ export const nonCollisionTemplates: Record<string, Omit<NonCollisionObject, 'id'
     zIndex: 0,
     type: 'river',
     canTap: false,
+    active: true,
+    collisionEffects: [
+      {
+        type: "heal",
+        value: 5,
+        description: "The cool river water refreshes you.",
+      }
+    ],
   },
 };
 

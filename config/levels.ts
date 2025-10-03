@@ -144,9 +144,6 @@ const createMonsterInstance = (
   };
 };
 
-
-
-
 const createNonCollisionObject = (
   templateName: string,
   position: Position,
@@ -166,9 +163,6 @@ const createNonCollisionObject = (
     ...overrides,
   };
 };
-
-
-
 
 // Helper function to create GreatPower instances for levels
 const createGreatPowerForLevel = (
@@ -221,31 +215,38 @@ export const levels: Record<string, Level> = {
       createObjectInstance("poisonPool", { row: 250, col: 250 }),
       createObjectInstance("cursedTotem", { row: 385, col: 210 }),
     ],
-     nonCollisionObjects: [
+    nonCollisionObjects: [
       // Start
-       createNonCollisionObject('footsteps',{ row: 391, col: 195 }, 290), // straight
+      createNonCollisionObject("footsteps", { row: 391, col: 195 }, 290), // straight
 
       // Moving westward (decreasing col)
-      createNonCollisionObject('footsteps', { row: 385, col: 175 }, 280),
-      createNonCollisionObject('footsteps', { row: 380, col: 155 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 135 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 115 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 95 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 75 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 55 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 35 }, 270),
+      createNonCollisionObject("footsteps", { row: 385, col: 175 }, 280),
+      createNonCollisionObject("footsteps", { row: 380, col: 155 }, 270),
+      createNonCollisionObject("footsteps", { row: 380, col: 135 }, 270),
+      createNonCollisionObject("footsteps", { row: 380, col: 115 }, 270),
+      createNonCollisionObject("footsteps", { row: 380, col: 95 }, 270),
+      createNonCollisionObject("footsteps", { row: 380, col: 75 }, 270),
+      createNonCollisionObject("footsteps", { row: 380, col: 55 }, 270),
+      createNonCollisionObject("footsteps", { row: 380, col: 35 }, 270),
       // Arriving near pool
 
-
- createNonCollisionObject('river', { row: 360, col: 195 }, 0, {
-    canTap: false, // Override to disable tapping
-    width: 22, // Make it huge
-    height: 15,
-  }),
-      
-
-
-
+      createNonCollisionObject("river", { row: 360, col: 195 }, 0, {
+        canTap: false, // Override to disable tapping
+        width: 22, // Make it huge
+        height: 15,
+        collisionMask: [
+          { row: 360, col: 195, width: 2, height: 1 }, // Top bend
+          { row: 360, col: 196, width: 2, height: 1 },
+          { row: 360, col: 197, width: 2, height: 1 }, // Curves left
+        ],
+        collisionEffects: [
+          {
+            type: "heal",
+            value: 5,
+            description: "The ancient river's waters restore your vitality.",
+          },
+        ],
+      }),
     ],
     // GREAT POWERS - Boss-level entities
     greatPowers: [
