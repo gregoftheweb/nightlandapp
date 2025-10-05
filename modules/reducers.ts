@@ -436,10 +436,10 @@ export const reducer = (
 
       switch (effect.type) {
         case "swarm": {
-            console.log("SWARM effect received:", effect);
-  console.log("monsterType:", effect.monsterType);
-  console.log("count:", effect.count);
-  console.log("range:", effect.range);
+          console.log("SWARM effect received:", effect);
+          console.log("monsterType:", effect.monsterType);
+          console.log("count:", effect.count);
+          console.log("range:", effect.range);
           // Validate we have the necessary effect properties
           if (!effect.monsterType || !effect.count || !effect.range) {
             console.error("Swarm effect missing required properties:", effect);

@@ -126,6 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 2,
     borderColor: "#990000",
+    marginBottom: 10,
   },
   hpText: {
     color: "#990000",
@@ -146,22 +147,22 @@ const styles = StyleSheet.create({
   },
   turnButton: {
     position: "absolute",
-    bottom: 5,
+    bottom: 14,
     left: "50%",
-    marginLeft: -30, // Half of button width (60/2) to center perfectly
+    marginLeft: -30, 
   },
   turnButtonImage: {
-    width: 60,
-    height: 60,
+    width: 65,
+    height: 65,
     resizeMode: "contain",
   },
   inventoryButton: {
     position: "absolute",
-    bottom: 15, // Slightly higher than turn button to align with HUD
-    right: width * 0.28, // Position on the right side, matching HUD spacing
+    bottom: 24, 
+    right: width * 0.28, 
   },
   inventoryButtonImage: {
-    width: 40, // Slightly smaller than turn button, close to HUD height
+    width: 40, 
     height: 40,
     resizeMode: "contain",
   },
