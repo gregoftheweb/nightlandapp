@@ -1,13 +1,13 @@
-// utils/spatialGrid.ts
-import { Position, GameObject, Monster, Item, LevelObjectInstance, Footstep } from "../config/types";
+// /modules/spacialgrid.ts
+import { Position, GameObject, Monster, Item, LevelObjectInstance, NonCollisionObject } from "../config/types";
 
 export interface GridEntity {
   id: string;
   position: Position;
   width: number;
   height: number;
-  type: 'monster' | 'item' | 'object' | 'footstep';
-  data: Monster | Item | LevelObjectInstance | Footstep;
+  type: 'monster' | 'item' | 'object' | 'nonCollisionObject';
+  data: Monster | Item | LevelObjectInstance | NonCollisionObject;
 }
 
 export class SpatialGrid {
@@ -166,6 +166,29 @@ export function buildSpatialGrid(
         height: obj.size?.height || 1,
         type: 'object',
         data: obj
+      });
+    }
+  });
+
+
+  // Add non-collision objects (only those with collision masks)
+  gameState.nonCollisionObjects?.forEach((obj: NonCollisionObject) => {
+    if (obj.active && obj.position && obj.collisionMask && obj.collisionMask.length > 0) {
+      // Insert each collision mask tile separately for precise collision detection
+      obj.collisionMask.forEach((mask, index) => {
+        const maskPosition = {
+          row: obj.position.row + mask.row,
+          col: obj.position.col + mask.col
+        };
+        
+        grid.insert({
+          id: `${obj.id}-mask-${index}`,
+          position: maskPosition,
+          width: mask.width || 1,
+          height: mask.height || 1,
+          type: 'nonCollisionObject',
+          data: obj // Keep reference to parent object
+        });
       });
     }
   });

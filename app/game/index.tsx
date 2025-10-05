@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { View, StyleSheet, Dimensions, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -19,7 +25,13 @@ import {
   handlePassTurn,
   initializeStartingMonsters,
 } from "../../modules/turnManager";
-import { Monster, LevelObjectInstance, Item, GreatPower, NonCollisionObject } from "@/config/types";
+import {
+  Monster,
+  LevelObjectInstance,
+  Item,
+  GreatPower,
+  NonCollisionObject,
+} from "@/config/types";
 import { audioManager } from "../../modules/audioManager";
 
 // Constants
@@ -101,9 +113,9 @@ export default function Game() {
       const rawCol = (pageX - gridLeft) / CELL_SIZE + cameraOffset.offsetX;
       const rawRow = (pageY - gridTop) / CELL_SIZE + cameraOffset.offsetY;
 
-      return { 
-        tapCol: Math.floor(rawCol), 
-        tapRow: Math.floor(rawRow) 
+      return {
+        tapCol: Math.floor(rawCol),
+        tapRow: Math.floor(rawRow),
       };
     },
     [cameraOffset.offsetX, cameraOffset.offsetY]
@@ -132,9 +144,13 @@ export default function Game() {
         return deltaCol > 0 ? "right" : "left";
       } else {
         // Equal deltas - prioritize vertical movement
-        return deltaRow !== 0 
-          ? (deltaRow > 0 ? "down" : "up")
-          : (deltaCol > 0 ? "right" : "left");
+        return deltaRow !== 0
+          ? deltaRow > 0
+            ? "down"
+            : "up"
+          : deltaCol > 0
+          ? "right"
+          : "left";
       }
     },
     []
@@ -194,7 +210,7 @@ export default function Game() {
   const handlePress = useCallback(
     (event: any) => {
       if (state.inCombat || isOverlayVisible) return;
-      
+
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - HUD_HEIGHT) return;
 
@@ -224,7 +240,7 @@ export default function Game() {
   const handleLongPress = useCallback(
     (event: any) => {
       if (state.inCombat || isOverlayVisible) return;
-      
+
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - HUD_HEIGHT) return;
 
@@ -291,7 +307,12 @@ export default function Game() {
   const handleMonsterTap = useCallback(
     (monster: Monster) => {
       if (state.inCombat) {
-        console.log("Monster tapped during combat:", monster.name, "ID:", monster.id);
+        console.log(
+          "Monster tapped during combat:",
+          monster.name,
+          "ID:",
+          monster.id
+        );
         setTargetId(monster.id);
       }
     },
@@ -300,7 +321,12 @@ export default function Game() {
 
   const handleGreatPowerTap = useCallback(
     (greatPower: GreatPower) => {
-      console.log("Great Power tapped:", greatPower.name, "awakened:", greatPower.awakened);
+      console.log(
+        "Great Power tapped:",
+        greatPower.name,
+        "awakened:",
+        greatPower.awakened
+      );
 
       if (greatPower.awakened) return;
 
@@ -329,16 +355,9 @@ export default function Game() {
   const handleBuildingTap = useCallback(() => {}, []);
   const handleItemTap = useCallback(() => {}, []);
 
-
-  const handleNonCollisionObjectTap = useCallback(
-  (obj: NonCollisionObject) => {
+  const handleNonCollisionObjectTap = useCallback((obj: NonCollisionObject) => {
     console.log("Non-collision object tapped:", obj.name, "Type:", obj.type);
-  },
-  []
-);
-
-
-
+  }, []);
 
   return (
     <Pressable
@@ -356,6 +375,7 @@ export default function Game() {
           onBuildingTap={handleBuildingTap}
           onItemTap={handleItemTap}
           onGreatPowerTap={handleGreatPowerTap}
+          onNonCollisionObjectTap={handleNonCollisionObjectTap}
         />
         <PositionDisplay position={state.player.position} level={state.level} />
         <PlayerHUD
@@ -379,13 +399,13 @@ export default function Game() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#000" 
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
   },
-  gameContainer: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center" 
+  gameContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

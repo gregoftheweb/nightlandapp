@@ -5,7 +5,7 @@ import {
   Monster,
   LevelMonsterInstance,
   Position,
-  Footstep
+  NonCollisionObject,
 } from "../config/types";
 import { levels } from "../config/levels";
 import { initialState } from "./gameState";
@@ -26,7 +26,7 @@ export const reducer = (
         monsters: newLevelConfig.monsters || [],
         greatPowers: newLevelConfig.greatPowers || [],
         objects: newLevelConfig.objects || [],
-        footsteps: newLevelConfig.footsteps || [],
+        nonCollisionObjects: newLevelConfig.nonCollisionObjects || [],
         activeMonsters: [],
         attackSlots: [],
         waitingMonsters: [],
@@ -428,9 +428,18 @@ export const reducer = (
 
     // ============ EFFECTS SYSTEM ============
     case "TRIGGER_EFFECT":
-      const { effect, position, souce, message } = action.payload;
+      const { effect, position, source, message } = action.payload;
+
+      console.log("Effect type:", effect.type);
+      console.log("Effect value:", effect.value);
+      console.log("Current HP before:", state.player.hp);
+
       switch (effect.type) {
         case "swarm": {
+            console.log("SWARM effect received:", effect);
+  console.log("monsterType:", effect.monsterType);
+  console.log("count:", effect.count);
+  console.log("range:", effect.range);
           // Validate we have the necessary effect properties
           if (!effect.monsterType || !effect.count || !effect.range) {
             console.error("Swarm effect missing required properties:", effect);
@@ -574,7 +583,8 @@ export const reducer = (
               hp: 0,
             },
             gameOver: true,
-            gameOverMessage: message || "Your soul has been consumed by the Great Power.",
+            gameOverMessage:
+              message || "Your soul has been consumed by the Great Power.",
             inCombat: false,
             attackSlots: [],
             waitingMonsters: [],
@@ -614,7 +624,6 @@ export const reducer = (
             : obj
         ),
       };
-
 
     // ============ UI STATE ============
     case "UPDATE_DIALOG":

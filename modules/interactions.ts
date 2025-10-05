@@ -21,23 +21,29 @@ export const checkItemInteractions = (
   const grid = buildSpatialGrid(state, 10); // 10x10 cell size
 
   // Only check items in nearby cells (massive performance boost)
-  const nearbyEntities = grid.getNearbyByType(playerPos, 'item', 1);
-  
-  console.log(`Found ${nearbyEntities.length} nearby items (filtered from ${state.items?.length || 0} total)`);
+  const nearbyEntities = grid.getNearbyByType(playerPos, "item", 1);
+
+  console.log(
+    `Found ${nearbyEntities.length} nearby items (filtered from ${
+      state.items?.length || 0
+    } total)`
+  );
 
   // Find collectible item at player's exact position
   const collectibleAtPosition = nearbyEntities.find((entity) => {
     const item = entity.data as Item;
-    
+
     if (!item || !item.active || !item.collectible || !item.position) {
       return false;
     }
 
     // Check overlap with player position (player is 1x1)
     return checkOverlap(
-      playerPos, 1, 1,
-      item.position, 
-      item.size?.width || 1, 
+      playerPos,
+      1,
+      1,
+      item.position,
+      item.size?.width || 1,
       item.size?.height || 1
     );
   });
@@ -149,79 +155,22 @@ export const checkObjectInteractions = (
   dispatch: (action: any) => void,
   playerPos: Position
 ) => {
-  console.log('Checking object interactions at playerPos:', playerPos);
+  console.log("Checking object interactions at playerPos:", playerPos);
 
   // Build spatial grid for efficient lookup
   const grid = buildSpatialGrid(state, 10);
 
-  // Only check objects in nearby cells
-  const nearbyObjects = grid.getNearbyByType(playerPos, 'object', 1);
-  
-  console.log(`Found ${nearbyObjects.length} nearby objects (filtered from ${state.objects?.length || 0} total)`);
-
   // Check regular objects
-  const collidingObject = nearbyObjects.find((entity) => {
-    const obj = entity.data as any;
+  const nearbyObjects = grid.getNearbyByType(playerPos, "object", 1);
 
-    if (!obj.active) {
-      return false;
-    }
+const collidingObject = nearbyObjects.find((entity) => {
+  const obj = entity.data as any;
 
-    // Check collision with collision mask if it exists
-    if (obj.collisionMask) {
-      return obj.collisionMask.some((mask: any) => {
-        const maskPos = {
-          row: obj.position.row + mask.row,
-          col: obj.position.col + mask.col
-        };
-        
-        return checkOverlap(
-          playerPos, 1, 1,
-          maskPos,
-          mask.width || 1,
-          mask.height || 1
-        );
-      });
-    }
+  if (!obj.active) return false;
 
-    // Standard bounding box check
-    return checkOverlap(
-      playerPos, 1, 1,
-      obj.position,
-      obj.size?.width || 1,
-      obj.size?.height || 1
-    );
-  });
-
-  // Check Great Powers (they have special handling)
-  const collidingGreatPower = state.level.greatPowers?.find((gp: any) => {
-    if (!gp.active) return false;
-
-    return checkOverlap(
-      playerPos, 1, 1,
-      gp.position,
-      gp.width || 1,
-      gp.height || 1
-    );
-  });
-
-  // Handle collisions
-  if (collidingObject) {
-    handleObjectEffects(collidingObject.data, state, dispatch, playerPos);
-  } else {
-    dispatch({ type: 'CLEAR_HIDE' });
-  }
-
-  if (collidingGreatPower) {
-    handleGreatPowerEffects(collidingGreatPower, state, dispatch, playerPos);
-  }
-
-
-   const collidingNonCollisionObject = state.nonCollisionObjects?.find((obj) => {
-    if (!obj.collisionMask || !obj.active) return false;
-
-    // Check if player is within any of the collision mask tiles
-    return obj.collisionMask.some((mask) => {
+  // Check collision with collision mask if it exists
+  if (obj.collisionMask) {
+    return obj.collisionMask.some((mask: any) => {
       const maskPos = {
         row: obj.position.row + mask.row,
         col: obj.position.col + mask.col
@@ -234,21 +183,67 @@ export const checkObjectInteractions = (
         mask.height || 1
       );
     });
+  }
+
+  return checkOverlap(
+    playerPos, 1, 1,
+    obj.position,
+    obj.size?.width || 1,
+    obj.size?.height || 1
+  );
+});
+
+  // Check Great Powers
+  const collidingGreatPower = state.level.greatPowers?.find((gp: any) => {
+    if (!gp.active) return false;
+    return checkOverlap(
+      playerPos,
+      1,
+      1,
+      gp.position,
+      gp.width || 1,
+      gp.height || 1
+    );
   });
 
-  // Handle effects from non-collision object collision
-  if (collidingNonCollisionObject && collidingNonCollisionObject.collisionEffects) {
-    handleNonCollisionObjectEffects(
-      collidingNonCollisionObject, 
-      state, 
-      dispatch, 
-      playerPos
-    );
+  // Check non-collision objects (now using spatial grid!)
+  const nearbyNonCollisionObjects = grid.getNearbyByType(
+    playerPos,
+    "nonCollisionObject",
+    1
+  );
+
+  const collidingNonCollisionObject = nearbyNonCollisionObjects.find(
+    (entity) => {
+      // The grid entity position already represents the mask tile position
+      return checkOverlap(
+        playerPos,
+        1,
+        1,
+        entity.position,
+        entity.width,
+        entity.height
+      );
+    }
+  );
+
+  // Handle collisions
+  if (collidingObject) {
+    handleObjectEffects(collidingObject.data, state, dispatch, playerPos);
+  } else {
+    dispatch({ type: "CLEAR_HIDE" });
+  }
+
+  if (collidingGreatPower) {
+    handleGreatPowerEffects(collidingGreatPower, state, dispatch, playerPos);
+  }
+
+  if (collidingNonCollisionObject) {
+    // Get the parent object from the entity data
+    const obj = collidingNonCollisionObject.data as NonCollisionObject;
+    handleNonCollisionObjectEffects(obj, state, dispatch, playerPos);
   }
 };
-
-
-
 
 // ==================== EFFECT HANDLERS ====================
 
@@ -262,14 +257,14 @@ const handleObjectEffects = (
     return;
   }
 
-  const needsCooldown = obj.effects.some((e: any) => 
-    e.type === 'swarm' || e.type === 'heal'
+  const needsCooldown = obj.effects.some(
+    (e: any) => e.type === "swarm" || e.type === "heal"
   );
 
   if (needsCooldown) {
     const now = Date.now();
     const lastTrigger = obj.lastTrigger || 0;
-    
+
     if (now - lastTrigger <= 50000) {
       console.log(`Cooldown active for ${obj.name}`);
       return;
@@ -278,21 +273,21 @@ const handleObjectEffects = (
 
   obj.effects.forEach((effect: any) => {
     dispatch({
-      type: 'TRIGGER_EFFECT',
+      type: "TRIGGER_EFFECT",
       payload: { effect, position: playerPos },
     });
 
     switch (effect.type) {
-      case 'swarm':
+      case "swarm":
         console.log(`A swarm of ${effect.monsterType}s emerges!`);
         break;
-      case 'hide':
+      case "hide":
         console.log(`The ${obj.name} cloaks you in silence.`);
         break;
-      case 'heal':
+      case "heal":
         console.log(`The ${obj.name} restores your strength!`);
         break;
-      case 'recuperate':
+      case "recuperate":
         console.log(`The ${obj.name} restores ${effect.amount || 5} HP!`);
         break;
     }
@@ -300,7 +295,7 @@ const handleObjectEffects = (
 
   if (needsCooldown) {
     dispatch({
-      type: 'UPDATE_OBJECT',
+      type: "UPDATE_OBJECT",
       payload: {
         shortName: obj.shortName,
         updates: { lastTrigger: Date.now() },
@@ -317,10 +312,13 @@ const handleGreatPowerEffects = (
 ) => {
   console.log(`Player collided with Great Power: ${greatPower.name}`);
 
-  if (!greatPower.awakened && greatPower.awakenCondition === 'player_within_range') {
+  if (
+    !greatPower.awakened &&
+    greatPower.awakenCondition === "player_within_range"
+  ) {
     dispatch({
-      type: 'AWAKEN_GREAT_POWER',
-      payload: { id: greatPower.id }
+      type: "AWAKEN_GREAT_POWER",
+      payload: { id: greatPower.id },
     });
   }
 
@@ -334,12 +332,12 @@ const handleGreatPowerEffects = (
 
     greatPower.effects.forEach((effect: any) => {
       dispatch({
-        type: 'TRIGGER_EFFECT',
-        payload: { 
-          effect, 
-          position: playerPos, 
-          source: 'greatPower', 
-          message: deathMessage 
+        type: "TRIGGER_EFFECT",
+        payload: {
+          effect,
+          position: playerPos,
+          source: "greatPower",
+          message: deathMessage,
         },
       });
     });
@@ -356,15 +354,15 @@ const handleNonCollisionObjectEffects = (
 
   obj.collisionEffects.forEach((effect) => {
     dispatch({
-      type: 'TRIGGER_EFFECT',
+      type: "TRIGGER_EFFECT",
       payload: { effect, position: playerPos },
     });
 
     switch (effect.type) {
-      case 'heal':
+      case "heal":
         console.log(`The ${obj.name} heals you for ${effect.value} HP!`);
         break;
-      case 'poison':
+      case "poison":
         console.log(`The ${obj.name} poisons you!`);
         break;
       // ... other effect types
@@ -392,7 +390,9 @@ export const getItemsAtPosition = (
     if (!item.active || !item.position) return false;
 
     return checkOverlap(
-      position, 1, 1,
+      position,
+      1,
+      1,
       item.position,
       item.size?.width || 1,
       item.size?.height || 1

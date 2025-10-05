@@ -213,7 +213,7 @@ export const levels: Record<string, Level> = {
       createObjectInstance("redoubt", { row: 390, col: 198 }),
       createObjectInstance("healingPool", { row: 375, col: 20 }),
       createObjectInstance("poisonPool", { row: 250, col: 250 }),
-      createObjectInstance("cursedTotem", { row: 385, col: 210 }),
+      createObjectInstance("cursedTotem", { row: 385, col: 220 }),
     ],
     nonCollisionObjects: [
       // Start
@@ -230,19 +230,29 @@ export const levels: Record<string, Level> = {
       createNonCollisionObject("footsteps", { row: 380, col: 35 }, 270),
       // Arriving near pool
 
-      createNonCollisionObject("river", { row: 360, col: 195 }, 0, {
+      createNonCollisionObject("river", { row: 380, col: 195 }, 0, {
         canTap: false, // Override to disable tapping
         width: 22, // Make it huge
         height: 15,
         collisionMask: [
-          { row: 360, col: 195, width: 2, height: 1 }, // Top bend
-          { row: 360, col: 196, width: 2, height: 1 },
-          { row: 360, col: 197, width: 2, height: 1 }, // Curves left
+          { row: 0, col: 2, width: 1, height: 2 }, // Relative: starts at river position
+          { row: 2, col: 3, width: 2, height: 1 }, // 4 cols to the right
+          { row: 3, col: 4, width: 1, height: 1 }, // Second row, offset by 1
+          { row: 2, col: 5, width: 6, height: 1 },
+          { row: 1, col: 7, width: 2, height: 1 }, 
+          { row: 3, col: 10, width: 1, height: 1 }, 
+          { row: 4, col: 10, width: 3, height: 1 }, 
+          { row: 5, col: 12, width: 3, height: 1 },
+          { row: 6, col: 13, width: 2, height: 1 },
+          { row: 7, col: 14, width: 3, height: 1 },
+          { row: 8, col: 16, width: 3, height: 1 },
+          { row: 9, col: 17, width: 2, height: 2 },
+          { row: 11, col: 18, width: 1, height: 4 },
         ],
         collisionEffects: [
           {
             type: "heal",
-            value: 5,
+            amount: 5,
             description: "The ancient river's waters restore your vitality.",
           },
         ],
@@ -252,7 +262,7 @@ export const levels: Record<string, Level> = {
     greatPowers: [
       createGreatPowerForLevel(
         "watcher_se",
-        { row: 380, col: 190 },
+        { row: 380, col: 180 },
         {
           hp: 1000,
           maxHP: 1000,

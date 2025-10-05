@@ -647,118 +647,134 @@ export default function GameBoard({
     handleBuildingTap,
   ]);
 
- const renderNonCollisionObjects = useMemo(() => {
-  if (!state.nonCollisionObjects || state.nonCollisionObjects.length === 0) return [];
+  const renderNonCollisionObjects = useMemo(() => {
+    if (!state.nonCollisionObjects || state.nonCollisionObjects.length === 0)
+      return [];
 
-  const elements: React.ReactElement[] = [];
+    const elements: React.ReactElement[] = [];
 
-  state.nonCollisionObjects.forEach((obj, index) => {
-    if (!obj.position) return;
+    state.nonCollisionObjects.forEach((obj, index) => {
+      if (!obj.position) return;
 
-    const screenRow = obj.position.row - cameraOffset.offsetY;
-    const screenCol = obj.position.col - cameraOffset.offsetX;
-    const objWidth = obj.width || 1;
-    const objHeight = obj.height || 1;
+      const screenRow = obj.position.row - cameraOffset.offsetY;
+      const screenCol = obj.position.col - cameraOffset.offsetX;
+      const objWidth = obj.width || 1;
+      const objHeight = obj.height || 1;
 
-    const inView =
-      screenRow + objHeight > 0 &&
-      screenRow < VIEWPORT_ROWS &&
-      screenCol + objWidth > 0 &&
-      screenCol < VIEWPORT_COLS;
+      const inView =
+        screenRow + objHeight > 0 &&
+        screenRow < VIEWPORT_ROWS &&
+        screenCol + objWidth > 0 &&
+        screenCol < VIEWPORT_COLS;
 
-    if (!inView) return;
+      if (!inView) return;
 
-    const isInteractable = obj.canTap !== false;
+      const isInteractable = obj.canTap !== false;
 
-    // Render the main image (non-interactable if it has collision mask)
-    const hasCollisionMask = obj.collisionMask && obj.collisionMask.length > 0;
-    
-    if (!isInteractable || hasCollisionMask) {
-      elements.push(
-        <View
-          key={`noncollision-${obj.id}-${index}`}
-          style={{
-            position: "absolute",
-            left: screenCol * CELL_SIZE,
-            top: screenRow * CELL_SIZE,
-            width: objWidth * CELL_SIZE,
-            height: objHeight * CELL_SIZE,
-            zIndex: obj.zIndex || 1,
-          }}
-          pointerEvents="none"
-        >
-          <Image
-            source={obj.image as ImageSourcePropType}
-            style={{
-              width: "100%",
-              height: "100%",
-              transform: [{ rotate: `${obj.rotation}deg` }],
-            }}
-            resizeMode="contain"
-          />
-        </View>
-      );
-    } else {
-      // Regular interactable object without collision mask
-      elements.push(
-        <TouchableOpacity
-          key={`noncollision-${obj.id}-${index}`}
-          onPress={() => handleNonCollisionObjectTap(obj)}
-          activeOpacity={0.8}
-          style={{
-            position: "absolute",
-            left: screenCol * CELL_SIZE,
-            top: screenRow * CELL_SIZE,
-            width: objWidth * CELL_SIZE,
-            height: objHeight * CELL_SIZE,
-            zIndex: obj.zIndex || 1,
-          }}
-        >
-          <Image
-            source={obj.image as ImageSourcePropType}
-            style={{
-              width: "100%",
-              height: "100%",
-              transform: [{ rotate: `${obj.rotation}deg` }],
-            }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      );
-    }
+      // Render the main image (non-interactable if it has collision mask)
+      const hasCollisionMask =
+        obj.collisionMask && obj.collisionMask.length > 0;
 
-    // Render collision mask tiles 
-    if (hasCollisionMask) {
-      obj.collisionMask!.forEach((mask, maskIndex) => {
-        const maskScreenRow = screenRow + mask.row;
-        const maskScreenCol = screenCol + mask.col;
-        const maskWidth = mask.width || 1;
-        const maskHeight = mask.height || 1;
+      if (hasCollisionMask) {
+        console.log(
+          "Rendering collision mask for:",
+          obj.name,
+          "mask tiles:",
+          obj.collisionMask?.length
+        );
+      }
 
+      if (!isInteractable || hasCollisionMask) {
         elements.push(
-          <TouchableOpacity
-            key={`collision-mask-${obj.id}-${maskIndex}`}
-            onPress={() => handleNonCollisionObjectTap(obj)}
-            activeOpacity={0.3}
+          <View
+            key={`noncollision-${obj.id}-${index}`}
             style={{
               position: "absolute",
-              left: maskScreenCol * CELL_SIZE,
-              top: maskScreenRow * CELL_SIZE,
-              width: maskWidth * CELL_SIZE,
-              height: maskHeight * CELL_SIZE,
-              zIndex: (obj.zIndex || 1) + 1,
-              backgroundColor: 'rgba(0, 255, 255, 0.2)', // Debug visualization
-              borderWidth: 1,
-              borderColor: 'cyan',
+              left: screenCol * CELL_SIZE,
+              top: screenRow * CELL_SIZE,
+              width: objWidth * CELL_SIZE,
+              height: objHeight * CELL_SIZE,
+              zIndex: obj.zIndex || 1,
             }}
-          />
+            pointerEvents="none"
+          >
+            <Image
+              source={obj.image as ImageSourcePropType}
+              style={{
+                width: "100%",
+                height: "100%",
+                transform: [{ rotate: `${obj.rotation}deg` }],
+              }}
+              resizeMode="contain"
+            />
+          </View>
         );
-      });
-    }
-  });
+      } else {
+        // Regular interactable object without collision mask
+        elements.push(
+          <TouchableOpacity
+            key={`noncollision-${obj.id}-${index}`}
+            onPress={() => handleNonCollisionObjectTap(obj)}
+            activeOpacity={0.8}
+            style={{
+              position: "absolute",
+              left: screenCol * CELL_SIZE,
+              top: screenRow * CELL_SIZE,
+              width: objWidth * CELL_SIZE,
+              height: objHeight * CELL_SIZE,
+              zIndex: obj.zIndex || 1,
+            }}
+          >
+            <Image
+              source={obj.image as ImageSourcePropType}
+              style={{
+                width: "100%",
+                height: "100%",
+                transform: [{ rotate: `${obj.rotation}deg` }],
+              }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        );
+      }
 
-  return elements;
-}, [state.nonCollisionObjects, cameraOffset.offsetY, cameraOffset.offsetX, handleNonCollisionObjectTap]);
+      // Render collision mask tiles
+      if (hasCollisionMask) {
+        obj.collisionMask!.forEach((mask, maskIndex) => {
+          const maskScreenRow = screenRow + mask.row;
+          const maskScreenCol = screenCol + mask.col;
+          const maskWidth = mask.width || 1;
+          const maskHeight = mask.height || 1;
+
+          elements.push(
+            <TouchableOpacity
+              key={`collision-mask-${obj.id}-${maskIndex}`}
+              onPress={() => handleNonCollisionObjectTap(obj)}
+              activeOpacity={0.3}
+              style={{
+                position: "absolute",
+                left: maskScreenCol * CELL_SIZE,
+                top: maskScreenRow * CELL_SIZE,
+                width: maskWidth * CELL_SIZE,
+                height: maskHeight * CELL_SIZE,
+                zIndex: (obj.zIndex || 1) + 1,
+                // backgroundColor: "rgba(0, 255, 255, 0.2)", // Debug visualization
+                // borderWidth: 1,
+                // borderColor: "cyan",
+              }}
+            />
+          );
+        });
+      }
+    });
+
+    return elements;
+  }, [
+    state.nonCollisionObjects,
+    cameraOffset.offsetY,
+    cameraOffset.offsetX,
+    handleNonCollisionObjectTap,
+  ]);
 
   // Memoized grid render (perf: batches entities + z-sort only if needed)
   const renderGrid = useMemo(() => {
