@@ -30,7 +30,10 @@ export const COMBAT_CONSTANTS = {
   /** Maximum distance in cells for awakening a Great Power */
   GREAT_POWER_AWAKEN_DISTANCE: 3,
   
-  /** Default maximum number of monsters that can attack at once */
+  /** 
+   * Default maximum number of monsters that can attack at once
+   * Note: This is defined here for reference but the actual value is pulled from gameConfig.combat.maxAttackers in the game state
+   */
   MAX_ATTACKERS: 4,
 } as const;
 

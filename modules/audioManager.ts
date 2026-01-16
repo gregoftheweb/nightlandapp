@@ -104,7 +104,7 @@ class AudioManager {
       // (prevents race condition if unloadAsync was called during the checks above)
       if (!this.backgroundSound) {
         if (__DEV__) {
-          console.warn('Background sound became null before playback');
+          console.warn('Background sound became null before playback - possible race condition with cleanup/unload. Skipping playback.');
         }
         return;
       }
