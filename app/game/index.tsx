@@ -299,6 +299,10 @@ export default function Game() {
   }, []);
 
   const handleZapPress = useCallback(() => {
+    if (__DEV__) {
+      console.log("🎯 handleZapPress - rangedAttackMode:", state.rangedAttackMode, "targetedMonsterId:", state.targetedMonsterId);
+    }
+    
     // If ranged attack mode is OFF, turn it ON and target nearest enemy
     if (!state.rangedAttackMode) {
       // Get all living monsters (both active and in attack slots)
@@ -307,11 +311,18 @@ export default function Game() {
 
       if (!nearestMonster) {
         // No enemies available
+        if (__DEV__) {
+          console.log("🎯 No enemies found to target");
+        }
         dispatch({
           type: "ADD_COMBAT_LOG",
           payload: { message: "No enemies in range" },
         });
         return;
+      }
+
+      if (__DEV__) {
+        console.log("🎯 Entering ranged mode, targeting:", nearestMonster.name);
       }
 
       // Enter ranged attack mode and target the nearest enemy
@@ -328,11 +339,15 @@ export default function Game() {
       });
 
       if (__DEV__) {
-        console.log("Entered ranged attack mode, targeting:", nearestMonster.name);
+        console.log("🎯 Entered ranged attack mode, targeting:", nearestMonster.name);
       }
     } else {
       // If ranged attack mode is ON, execute the ranged attack
       if (!state.targetedMonsterId) {
+        if (__DEV__) {
+          console.log("🎯 No target, attempting auto-retarget");
+        }
+        
         // No target selected (maybe previous target died)
         // Try to auto-target the nearest monster
         const allMonsters = [...state.activeMonsters, ...state.attackSlots];
@@ -340,12 +355,19 @@ export default function Game() {
         
         if (!nearestMonster) {
           // No enemies available at all
+          if (__DEV__) {
+            console.log("🎯 No enemies for auto-retarget, clearing ranged mode");
+          }
           dispatch({
             type: "ADD_COMBAT_LOG",
             payload: { message: "No enemies in range" },
           });
           dispatch({ type: "CLEAR_RANGED_MODE" });
           return;
+        }
+        
+        if (__DEV__) {
+          console.log("🎯 Auto-targeting nearest:", nearestMonster.name);
         }
         
         // Auto-target the nearest monster
@@ -362,13 +384,21 @@ export default function Game() {
         });
         
         if (__DEV__) {
-          console.log("Auto-targeted nearest monster:", nearestMonster.name);
+          console.log("🎯 Auto-targeted nearest monster:", nearestMonster.name);
         }
         return;
       }
 
+      if (__DEV__) {
+        console.log("🎯 Executing ranged attack on target:", state.targetedMonsterId);
+      }
+
       // Execute the ranged attack
       executeRangedAttack(state, dispatch, state.targetedMonsterId);
+
+      if (__DEV__) {
+        console.log("🎯 Ranged attack executed, triggering enemy turn");
+      }
 
       // Don't clear ranged attack mode - keep targeting the same monster
       // Mode will be cleared when:
@@ -380,6 +410,10 @@ export default function Game() {
       // If not in combat, trigger enemy turn (similar to regular turn/move)
       if (!state.inCombat) {
         handlePassTurn(state, dispatch);
+      }
+      
+      if (__DEV__) {
+        console.log("🎯 handleZapPress complete");
       }
     }
   }, [state, dispatch]);

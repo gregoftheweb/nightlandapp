@@ -134,7 +134,7 @@ export default function GameBoard({
   // Handle combat start and log updates (dev logs wrapped)
   useEffect(() => {
     if (__DEV__) {
-      console.log("Combat effect running");
+      console.log("🎯 Combat effect running - inCombat:", state.inCombat, "combatLog.length:", state.combatLog.length, "previousCombatLogLength:", previousCombatLogLength);
     }
     if (state.inCombat && !previousInCombat && state.attackSlots.length > 0) {
       const firstMonster = state.attackSlots[0];
@@ -148,18 +148,21 @@ export default function GameBoard({
       setCombatInfoVisible(true);
       if (__DEV__) {
         console.log(
-          "Combat started (detected transition), showing CombatDialog with message:",
+          "🎯 Combat started (detected transition), showing CombatDialog with message:",
           combatStartMessage
         );
       }
     } else if (state.inCombat && state.combatLog.length > 0) {
       setCombatMessages(state.combatLog.map((log) => log.message));
       setCombatInfoVisible(true);
+      if (__DEV__) {
+        console.log("🎯 In combat, updating messages");
+      }
     } else if (!state.inCombat && previousInCombat) {
       setCombatInfoVisible(false);
       setCombatMessages([]);
       if (__DEV__) {
-        console.log("Combat ended (detected transition), hiding CombatDialog");
+        console.log("🎯 Combat ended (detected transition), hiding CombatDialog");
       }
     } else if (!state.inCombat && state.combatLog.length > previousCombatLogLength) {
       // Show combat dialog for ranged attacks (outside of combat)
@@ -167,18 +170,22 @@ export default function GameBoard({
       setCombatMessages(state.combatLog.map((log) => log.message));
       setCombatInfoVisible(true);
       if (__DEV__) {
-        console.log("Showing CombatDialog for ranged attack messages");
+        console.log("🎯 Showing CombatDialog for ranged attack messages");
       }
     } else if (!state.inCombat && state.combatLog.length === 0 && previousCombatLogLength > 0) {
       // Combat log was cleared (all monsters defeated in ranged mode)
       setCombatInfoVisible(false);
       setCombatMessages([]);
       if (__DEV__) {
-        console.log("Combat log cleared, hiding CombatDialog");
+        console.log("🎯 Combat log cleared, hiding CombatDialog");
       }
     }
     setPreviousInCombat(state.inCombat);
     setPreviousCombatLogLength(state.combatLog.length);
+    
+    if (__DEV__) {
+      console.log("🎯 Combat effect complete - combatInfoVisible:", state.inCombat || state.combatLog.length > 0);
+    }
   }, [state.inCombat, state.attackSlots, state.combatLog, previousInCombat]);
 
   // Game over effect (dev logs wrapped; no auto-close comment since updated InfoBox)

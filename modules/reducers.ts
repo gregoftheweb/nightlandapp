@@ -203,7 +203,7 @@ export const reducer = (
       };
 
     case "CLEAR_COMBAT_LOG":
-      logIfDev("CLEAR_COMBAT_LOG dispatched");
+      logIfDev("🎯 CLEAR_COMBAT_LOG dispatched");
       return {
         ...state,
         combatLog: [],
@@ -695,6 +695,7 @@ export const reducer = (
 
     // ============ RANGED ATTACK MODE ============
     case "TOGGLE_RANGED_MODE":
+      logIfDev(`🎯 TOGGLE_RANGED_MODE: active=${action.payload.active}, targetId=${action.payload.targetId}`);
       return {
         ...state,
         rangedAttackMode: action.payload.active,
@@ -702,12 +703,14 @@ export const reducer = (
       };
 
     case "SET_TARGET_MONSTER":
+      logIfDev(`🎯 SET_TARGET_MONSTER: monsterId=${action.payload.monsterId}`);
       return {
         ...state,
         targetedMonsterId: action.payload.monsterId,
       };
 
     case "CLEAR_RANGED_MODE":
+      logIfDev(`🎯 CLEAR_RANGED_MODE`);
       return {
         ...state,
         rangedAttackMode: false,
