@@ -159,10 +159,20 @@ export default function GameBoard({
         console.log("🎯 In combat, updating messages");
       }
     } else if (!state.inCombat && previousInCombat) {
-      setCombatInfoVisible(false);
-      setCombatMessages([]);
-      if (__DEV__) {
-        console.log("🎯 Combat ended (detected transition), hiding CombatDialog");
+      // Combat ended - hide dialog UNLESS we're in ranged mode with messages
+      if (!state.rangedAttackMode || state.combatLog.length === 0) {
+        setCombatInfoVisible(false);
+        setCombatMessages([]);
+        if (__DEV__) {
+          console.log("🎯 Combat ended (detected transition), hiding CombatDialog");
+        }
+      } else {
+        // Keep dialog visible if in ranged mode with messages
+        setCombatMessages(state.combatLog.map((log) => log.message));
+        setCombatInfoVisible(true);
+        if (__DEV__) {
+          console.log("🎯 Combat ended but ranged mode active with messages, keeping dialog visible");
+        }
       }
     } else if (!state.inCombat && state.combatLog.length > previousCombatLogLength) {
       // Show combat dialog for ranged attacks (outside of combat)
@@ -186,7 +196,7 @@ export default function GameBoard({
     if (__DEV__) {
       console.log("🎯 Combat effect complete - combatInfoVisible:", state.inCombat || state.combatLog.length > 0);
     }
-  }, [state.inCombat, state.attackSlots, state.combatLog, previousInCombat]);
+  }, [state.inCombat, state.attackSlots, state.combatLog, state.rangedAttackMode, previousInCombat]);
 
   // Game over effect (dev logs wrapped; no auto-close comment since updated InfoBox)
 
