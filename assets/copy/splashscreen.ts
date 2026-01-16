@@ -18,5 +18,8 @@ You say nothing and depart. For even though hopeless, you must try.`,
   deathScreen: {
     title: "Christos is dead.",
     buttonText: "Try Again",
+    slainByText: (killerName: string) => `\nSlain by the ${killerName}.\n\n`,
+    monstersKilledText: (count: number) => `Monsters killed: ${count}\n`,
+    distanceTraveledText: (distance: number) => `Distance traveled: ${distance} steps`,
   },
 } as const;

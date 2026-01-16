@@ -40,9 +40,9 @@ export default function DeathScreen() {
         <View style={styles.textContainer}>
           <Text style={styles.title}>{SPLASH_STRINGS.deathScreen.title}</Text>
           <Text style={styles.text}>
-            {`\nSlain by the ${killerName}.\n\n`}
-            {`Monsters killed: ${monstersKilled}\n`}
-            {`Distance traveled: ${distanceTraveled} steps`}
+            {SPLASH_STRINGS.deathScreen.slainByText(killerName)}
+            {SPLASH_STRINGS.deathScreen.monstersKilledText(monstersKilled)}
+            {SPLASH_STRINGS.deathScreen.distanceTraveledText(distanceTraveled)}
           </Text>
         </View>
 

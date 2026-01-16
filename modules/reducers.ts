@@ -96,7 +96,7 @@ export const reducer = (
           ...state.player,
           position: newPlayerPos,
         },
-        distanceTraveled: (state.distanceTraveled || 0) + distanceMoved,
+        ...(distanceMoved > 0 && { distanceTraveled: (state.distanceTraveled || 0) + distanceMoved }),
       };
 
     case "UPDATE_MOVE_COUNT":
