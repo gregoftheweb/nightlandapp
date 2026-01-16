@@ -207,7 +207,7 @@ export default function GameBoard({
     if (__DEV__) {
       console.log("🎯 Combat effect complete - combatInfoVisible:", state.inCombat || state.combatLog.length > 0);
     }
-  }, [state.inCombat, state.attackSlots, state.combatLog, state.rangedAttackMode, previousInCombat, previousRangedMode]);
+  }, [state.inCombat, state.attackSlots, state.combatLog, state.rangedAttackMode, previousInCombat]);
 
   // Game over effect (dev logs wrapped; no auto-close comment since updated InfoBox)
 
