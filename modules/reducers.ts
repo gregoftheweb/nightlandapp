@@ -351,6 +351,25 @@ export const reducer = (
         },
       };
 
+    case "EQUIP_RANGED_WEAPON":
+      // Equip a ranged weapon by ID
+      // Only one ranged weapon can be equipped at a time
+      const weaponId = action.payload.id;
+      
+      // Check if the weapon is in the ranged weapon inventory
+      if (!state.player.rangedWeaponInventoryIds.includes(weaponId)) {
+        logIfDev(`Weapon ${weaponId} not found in ranged weapon inventory`);
+        return state;
+      }
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          equippedRangedWeaponId: weaponId,
+        },
+      };
+
     case "DROP_WEAPON":
       const weaponId = action.payload.id;
       if (weaponId === "weapon-discos-001") {

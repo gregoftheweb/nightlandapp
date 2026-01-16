@@ -27,6 +27,9 @@ export const playerConfig: Player = {
     },
   ],
   maxWeaponsSize: 4,
+  meleeWeaponId: "weapon-discos-001", // Fixed melee weapon (Discos)
+  equippedRangedWeaponId: "weapon-valkyries-bow-001", // Default equipped ranged weapon
+  rangedWeaponInventoryIds: ["weapon-valkyries-bow-001", "weapon-shurikens-001"], // Starting ranged weapons
   isHidden: false,
   hideTurns: 0,
   soulKey: "7C6368627E64",

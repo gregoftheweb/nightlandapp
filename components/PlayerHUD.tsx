@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import turnButtonIMG from "@assets/images/buttonTurn.png";
 import attackButtonIMG from "@assets/images/buttonAttack.png";
 import inventoryButtonIMG from "@assets/images/buttonInventory.png";
+import zapButtonIMG from "@assets/images/buttonZap.png";
 
 const { width } = Dimensions.get("window");
 
@@ -25,6 +26,7 @@ interface PlayerHUDProps {
   onTurnPress?: () => void;
   onAttackPress?: () => void;
   onInventoryPress?: () => void; // New prop for inventory
+  onZapPress?: () => void; // New prop for zap button
 }
 
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
@@ -35,6 +37,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onTurnPress,
   onAttackPress,
   onInventoryPress, // New prop
+  onZapPress, // New prop
 }) => {
   const insets = useSafeAreaInsets();
 
@@ -59,6 +62,12 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
     onInventoryPress?.();
   };
 
+  const handleZapPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    event.stopPropagation();
+    // TODO: Implement special ability/power attack functionality
+    onZapPress?.();
+  };
+
   return (
     <View
       style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
@@ -77,6 +86,18 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
           />
         </TouchableOpacity>
       </View>
+
+      {/* Zap Button - Left of center */}
+      <TouchableOpacity
+        style={styles.zapButton}
+        onPress={handleZapPress}
+        activeOpacity={0.7}
+      >
+        <Image
+          source={zapButtonIMG}
+          style={styles.zapButtonImage}
+        />
+      </TouchableOpacity>
 
       {/* Dynamic Turn/Attack Button - Always centered */}
       <TouchableOpacity
@@ -154,6 +175,16 @@ const styles = StyleSheet.create({
   turnButtonImage: {
     width: 65,
     height: 65,
+    resizeMode: "contain",
+  },
+  zapButton: {
+    position: "absolute",
+    bottom: 24,
+    left: width * 0.28,
+  },
+  zapButtonImage: {
+    width: 40,
+    height: 40,
     resizeMode: "contain",
   },
   inventoryButton: {

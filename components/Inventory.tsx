@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import { useItem, canUseItem } from "@/modules/effects";
 
 const { width, height } = Dimensions.get("window");
 
+type TabType = "items" | "weapons";
+
 interface InventoryProps {
   visible: boolean;
   onClose: () => void;
@@ -29,6 +31,8 @@ export default function Inventory({
   inventory,
   showDialog,
 }: InventoryProps) {
+  const [activeTab, setActiveTab] = useState<TabType>("items");
+
   const handleClosePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
     event.stopPropagation(); // Prevent touch from bubbling to parent
     onClose();
@@ -84,6 +88,58 @@ export default function Inventory({
   const handleEquip = (item: Item) => {
     console.log("Equip weapon:", item.name);
     // TODO: Implement equip functionality
+  };
+
+  const handleEquipRangedWeapon = (weaponId: string) => {
+    console.log("Equipping ranged weapon:", weaponId);
+    dispatch({
+      type: "EQUIP_RANGED_WEAPON",
+      payload: { id: weaponId },
+    });
+  };
+
+  const getRangedWeapons = () => {
+    // Get all ranged weapons from inventory IDs
+    const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
+    return state.weapons.filter(
+      (weapon) => rangedWeaponIds.includes(weapon.id) && weapon.weaponType === "ranged"
+    );
+  };
+
+  const renderWeaponRow = (weapon: Item, index: number) => {
+    const isEquipped = weapon.id === state.player.equippedRangedWeaponId;
+    
+    return (
+      <View
+        key={`${weapon.id}_${index}`}
+        style={styles.inventoryItem}
+      >
+        <Text style={[
+          styles.itemName,
+          isEquipped && styles.equippedWeaponName
+        ]}>
+          {weapon.name}
+        </Text>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              isEquipped && styles.disabledButton
+            ]}
+            onPress={() => handleEquipRangedWeapon(weapon.id!)}
+            activeOpacity={isEquipped ? 1 : 0.7}
+            disabled={isEquipped}
+          >
+            <Text style={[
+              styles.actionButtonText,
+              isEquipped && styles.disabledButtonText
+            ]}>
+              {isEquipped ? "equipped" : "equip"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   };
 
   const renderInventoryItem = (item: Item, index: number) => {
@@ -165,17 +221,64 @@ export default function Inventory({
               <Text style={styles.closeText}>×</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Tab Bar */}
+          <View style={styles.tabBar}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === "items" && styles.activeTab
+              ]}
+              onPress={() => setActiveTab("items")}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.tabText,
+                activeTab === "items" && styles.activeTabText
+              ]}>
+                Items
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === "weapons" && styles.activeTab
+              ]}
+              onPress={() => setActiveTab("weapons")}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.tabText,
+                activeTab === "weapons" && styles.activeTabText
+              ]}>
+                Weapons
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.content}>
             <ScrollView
               style={styles.scrollView}
               showsVerticalScrollIndicator={false}
             >
-              {inventory.length === 0 ? (
-                <Text style={styles.emptyInventoryText}>
-                  Your inventory is empty
-                </Text>
+              {activeTab === "items" ? (
+                // Items Tab
+                inventory.length === 0 ? (
+                  <Text style={styles.emptyInventoryText}>
+                    Your inventory is empty
+                  </Text>
+                ) : (
+                  inventory.map((item, index) => renderInventoryItem(item, index))
+                )
               ) : (
-                inventory.map((item, index) => renderInventoryItem(item, index))
+                // Weapons Tab
+                getRangedWeapons().length === 0 ? (
+                  <Text style={styles.emptyInventoryText}>
+                    No ranged weapons in inventory
+                  </Text>
+                ) : (
+                  getRangedWeapons().map((weapon, index) => renderWeaponRow(weapon, index))
+                )
               )}
             </ScrollView>
           </View>
@@ -236,6 +339,31 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     textAlign: "center",
   },
+  tabBar: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.2)",
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+  },
+  activeTab: {
+    backgroundColor: "rgba(153, 0, 0, 0.3)",
+    borderBottomWidth: 2,
+    borderBottomColor: "#990000",
+  },
+  tabText: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  activeTabText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   content: {
     flex: 1,
     padding: 20,
@@ -260,6 +388,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     flex: 1,
+  },
+  equippedWeaponName: {
+    color: "#990000",
+    fontWeight: "bold",
   },
   actionButtons: {
     flexDirection: "row",
