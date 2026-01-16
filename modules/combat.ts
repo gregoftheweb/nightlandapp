@@ -514,12 +514,13 @@ const getEquippedRangedWeaponName = (state: GameState): string => {
  * @param state - Current game state
  * @param dispatch - Dispatch function for state updates
  * @param targetMonsterId - ID of the monster to attack
+ * @returns true if the target died, false otherwise
  */
 export const executeRangedAttack = (
   state: GameState,
   dispatch: any,
   targetMonsterId: string
-): void => {
+): boolean => {
   // Find the target monster in either activeMonsters or attackSlots
   let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0);
   
@@ -533,7 +534,7 @@ export const executeRangedAttack = (
       type: "ADD_COMBAT_LOG",
       payload: { message: "No target in range" },
     });
-    return;
+    return false;
   }
 
   const player = state.player;
@@ -615,6 +616,8 @@ export const executeRangedAttack = (
         dispatch({ type: "CLEAR_RANGED_MODE" });
         dispatch({ type: "CLEAR_COMBAT_LOG" });
       }
+      
+      return true; // Target died
     }
   } else {
     logIfDev(`   ❌ MISS!`);
@@ -623,4 +626,6 @@ export const executeRangedAttack = (
       payload: { message: "Miss!" },
     });
   }
+  
+  return false; // Target survived
 };

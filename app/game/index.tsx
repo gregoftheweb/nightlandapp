@@ -394,10 +394,10 @@ export default function Game() {
       }
 
       // Execute the ranged attack
-      executeRangedAttack(state, dispatch, state.targetedMonsterId);
+      const targetDied = executeRangedAttack(state, dispatch, state.targetedMonsterId);
 
       if (__DEV__) {
-        console.log("🎯 Ranged attack executed, triggering enemy turn");
+        console.log("🎯 Ranged attack executed, targetDied:", targetDied);
       }
 
       // Don't clear ranged attack mode - keep targeting the same monster
@@ -407,8 +407,9 @@ export default function Game() {
       // - Target dies and no other monsters exist
       // - Player manually retargets (handleMonsterTap)
 
-      // If not in combat, trigger enemy turn (similar to regular turn/move)
-      if (!state.inCombat) {
+      // If not in combat AND target didn't die, trigger enemy turn
+      // Skip handlePassTurn if target died to avoid stale state issues
+      if (!state.inCombat && !targetDied) {
         handlePassTurn(state, dispatch);
       }
       
