@@ -2,6 +2,13 @@
 import { GameState, Position, Monster } from "../config/types";
 import { setupCombat, checkForCombatCollision } from "./combat";
 
+// Development logging helper
+const logIfDev = (message: string, ...args: any[]) => {
+  if (__DEV__) {
+    console.log(message, ...args);
+  }
+};
+
 // ==================== PLAYER MOVEMENT ====================
 
 export const calculateNewPosition = (
@@ -28,7 +35,9 @@ export const calculateNewPosition = (
     case null:
       break;
     default:
-      console.warn(`Unhandled direction: ${direction}`);
+      if (__DEV__) {
+        console.warn(`Unhandled direction: ${direction}`);
+      }
       break;
   }
 
@@ -128,7 +137,7 @@ export const moveMonsters = (
       type: "MOVE_MONSTER",
       payload: { id: monster.id, position: newPos },
     });
-    console.log(`Monster ${monster.name} moved to (${newPos.row}, ${newPos.col})`);
+    logIfDev(`Monster ${monster.name} moved to (${newPos.row}, ${newPos.col})`);
   });
 };
 
