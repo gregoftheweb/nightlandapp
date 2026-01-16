@@ -294,6 +294,13 @@ export default function GameBoard({
     [showInfo, onMonsterTap, state.rangedAttackMode]
   );
 
+  const handleCombatDialogClose = useCallback(() => {
+    if (__DEV__) {
+      console.log("CombatDialog onClose called");
+    }
+    setCombatInfoVisible(false);
+  }, []);
+
   const handleGreatPowerTap = useCallback(
     (greatPower: GreatPower) => {
       if (__DEV__) {
@@ -969,12 +976,7 @@ export default function GameBoard({
       <CombatDialog
         visible={combatInfoVisible}
         messages={combatMessages}
-        onClose={() => {
-          if (__DEV__) {
-            console.log("CombatDialog onClose called");
-          }
-          setCombatInfoVisible(false);
-        }}
+        onClose={handleCombatDialogClose}
       />
     </View>
   );
