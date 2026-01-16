@@ -1,4 +1,12 @@
-// Test for self-healing mechanic
+/**
+ * Unit tests for the self-healing mechanic.
+ * 
+ * Tests verify that:
+ * - Players heal by the configured selfHealRate per turn
+ * - Healing only occurs when below max HP
+ * - Healing never exceeds max HP
+ * - No healing occurs when selfHealRate is 0 or undefined
+ */
 import { GameState, Level, Player } from '../../config/types';
 
 describe('Self-Healing Mechanic', () => {
@@ -74,14 +82,8 @@ describe('Self-Healing Mechanic', () => {
     } as GameState;
   };
 
-  beforeEach(() => {
-    mockDispatch.mockClear();
-  });
-
-  test('should heal player by selfHealRate when below max HP', () => {
-    const state = createMockGameState(50, 100, 1);
-    
-    // Simulate self-healing logic
+  // Helper to simulate self-healing logic (matches turnManager.ts implementation)
+  const simulateSelfHealing = (state: GameState, dispatch: jest.Mock) => {
     const selfHealRate = state.level.selfHealRate;
     if (selfHealRate && selfHealRate > 0) {
       const currentHP = state.player.hp;
@@ -91,7 +93,7 @@ describe('Self-Healing Mechanic', () => {
         const healAmount = Math.min(selfHealRate, maxHP - currentHP);
         const newHP = currentHP + healAmount;
 
-        mockDispatch({
+        dispatch({
           type: 'UPDATE_PLAYER',
           payload: {
             updates: { hp: newHP }
@@ -99,6 +101,15 @@ describe('Self-Healing Mechanic', () => {
         });
       }
     }
+  };
+
+  beforeEach(() => {
+    mockDispatch.mockClear();
+  });
+
+  test('should heal player by selfHealRate when below max HP', () => {
+    const state = createMockGameState(50, 100, 1);
+    simulateSelfHealing(state, mockDispatch);
 
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
@@ -110,25 +121,7 @@ describe('Self-Healing Mechanic', () => {
 
   test('should not heal when player is at max HP', () => {
     const state = createMockGameState(100, 100, 1);
-    
-    // Simulate self-healing logic
-    const selfHealRate = state.level.selfHealRate;
-    if (selfHealRate && selfHealRate > 0) {
-      const currentHP = state.player.hp;
-      const maxHP = state.player.maxHP;
-
-      if (currentHP < maxHP) {
-        const healAmount = Math.min(selfHealRate, maxHP - currentHP);
-        const newHP = currentHP + healAmount;
-
-        mockDispatch({
-          type: 'UPDATE_PLAYER',
-          payload: {
-            updates: { hp: newHP }
-          }
-        });
-      }
-    }
+    simulateSelfHealing(state, mockDispatch);
 
     // Should not dispatch when at max HP
     expect(mockDispatch).not.toHaveBeenCalled();
@@ -136,25 +129,7 @@ describe('Self-Healing Mechanic', () => {
 
   test('should not exceed max HP when healing', () => {
     const state = createMockGameState(99, 100, 5); // Heal rate is 5, but only 1 HP available
-    
-    // Simulate self-healing logic
-    const selfHealRate = state.level.selfHealRate;
-    if (selfHealRate && selfHealRate > 0) {
-      const currentHP = state.player.hp;
-      const maxHP = state.player.maxHP;
-
-      if (currentHP < maxHP) {
-        const healAmount = Math.min(selfHealRate, maxHP - currentHP);
-        const newHP = currentHP + healAmount;
-
-        mockDispatch({
-          type: 'UPDATE_PLAYER',
-          payload: {
-            updates: { hp: newHP }
-          }
-        });
-      }
-    }
+    simulateSelfHealing(state, mockDispatch);
 
     // Should heal by 1 (not 5) to cap at max HP
     expect(mockDispatch).toHaveBeenCalledWith({
@@ -167,25 +142,7 @@ describe('Self-Healing Mechanic', () => {
 
   test('should not heal when selfHealRate is 0', () => {
     const state = createMockGameState(50, 100, 0);
-    
-    // Simulate self-healing logic
-    const selfHealRate = state.level.selfHealRate;
-    if (selfHealRate && selfHealRate > 0) {
-      const currentHP = state.player.hp;
-      const maxHP = state.player.maxHP;
-
-      if (currentHP < maxHP) {
-        const healAmount = Math.min(selfHealRate, maxHP - currentHP);
-        const newHP = currentHP + healAmount;
-
-        mockDispatch({
-          type: 'UPDATE_PLAYER',
-          payload: {
-            updates: { hp: newHP }
-          }
-        });
-      }
-    }
+    simulateSelfHealing(state, mockDispatch);
 
     // Should not dispatch when selfHealRate is 0
     expect(mockDispatch).not.toHaveBeenCalled();
@@ -194,25 +151,7 @@ describe('Self-Healing Mechanic', () => {
   test('should not heal when selfHealRate is undefined', () => {
     const state = createMockGameState(50, 100, 0);
     state.level.selfHealRate = undefined;
-    
-    // Simulate self-healing logic
-    const selfHealRate = state.level.selfHealRate;
-    if (selfHealRate && selfHealRate > 0) {
-      const currentHP = state.player.hp;
-      const maxHP = state.player.maxHP;
-
-      if (currentHP < maxHP) {
-        const healAmount = Math.min(selfHealRate, maxHP - currentHP);
-        const newHP = currentHP + healAmount;
-
-        mockDispatch({
-          type: 'UPDATE_PLAYER',
-          payload: {
-            updates: { hp: newHP }
-          }
-        });
-      }
-    }
+    simulateSelfHealing(state, mockDispatch);
 
     // Should not dispatch when selfHealRate is undefined
     expect(mockDispatch).not.toHaveBeenCalled();
