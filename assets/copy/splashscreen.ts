@@ -16,9 +16,10 @@ You say nothing and depart. For even though hopeless, you must try.`,
   },
 
   deathScreen: {
-    title: "You Have Fallen in the Nightland",
-    subtitle: "Your journey ends here...",
-    retryButton: "Awaken again in the Redoubt",
-    quitButton: "Return to Main Menu",
+    title: "Christos is dead.",
+    buttonText: "Venture yet again out into the Night Land to face the horrors of the dark.....",
+    slainByText: (killerName: string) => `\nSlain by the ${killerName}.\n\n`,
+    monstersKilledText: (count: number) => `Monsters killed: ${count}\n`,
+    distanceTraveledText: (distance: number) => `Distance traveled: ${distance} steps`,
   },
 } as const;

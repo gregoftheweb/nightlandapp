@@ -103,6 +103,7 @@ export default function Layout() {
           >
             <Stack.Screen name="index" options={{ gestureEnabled: false }} />
             <Stack.Screen name="princess/index" />
+            <Stack.Screen name="death/index" />
             <Stack.Screen
               name="game/index"
               options={{

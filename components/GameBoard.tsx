@@ -44,6 +44,7 @@ interface GameBoardProps {
   onItemTap?: (item: Item) => void;
   onGreatPowerTap?: (greatPower: GreatPower) => void;
   onNonCollisionObjectTap?: (obj: NonCollisionObject) => void;
+  onDeathInfoBoxClose?: () => void;
 }
 
 export default function GameBoard({
@@ -55,6 +56,7 @@ export default function GameBoard({
   onItemTap,
   onGreatPowerTap,
   onNonCollisionObjectTap,
+  onDeathInfoBoxClose,
 }: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoData, setInfoData] = useState<{
@@ -885,6 +887,10 @@ export default function GameBoard({
             console.log("InfoBox onClose called, setting infoVisible to false");
           }
           setInfoVisible(false);
+          // If this is the death InfoBox, trigger navigation to death screen
+          if (infoData.name === "DEATH" && onDeathInfoBoxClose) {
+            onDeathInfoBoxClose();
+          }
         }}
       />
 

@@ -87,17 +87,10 @@ export default function Game() {
     if (!state.gameOver) return;
 
     if (__DEV__) {
-      console.log("Game Over detected, navigating to death screen");
+      console.log("Game Over detected");
     }
     audioManager.pauseBackgroundMusic();
-
-    const timeout = setTimeout(() => {
-      dispatch({ type: "RESET_GAME" });
-      router.push("/princess");
-    }, TIMING_CONSTANTS.GAME_OVER_DELAY);
-
-    return () => clearTimeout(timeout);
-  }, [state.gameOver, router, dispatch]);
+  }, [state.gameOver]);
 
   // Initialize starting monsters
   useEffect(() => {
@@ -371,6 +364,13 @@ export default function Game() {
     }
   }, []);
 
+  const handleDeathInfoBoxClose = useCallback(() => {
+    if (__DEV__) {
+      console.log("Death InfoBox closed, navigating to death screen immediately");
+    }
+    router.push("/death");
+  }, [router]);
+
   return (
     <Pressable
       style={styles.container}
@@ -388,6 +388,7 @@ export default function Game() {
           onItemTap={handleItemTap}
           onGreatPowerTap={handleGreatPowerTap}
           onNonCollisionObjectTap={handleNonCollisionObjectTap}
+          onDeathInfoBoxClose={handleDeathInfoBoxClose}
         />
         <PositionDisplay position={state.player.position} level={state.level} />
         <PlayerHUD
