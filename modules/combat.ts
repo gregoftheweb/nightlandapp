@@ -8,6 +8,11 @@ const rollD20 = (): number => {
   return Math.floor(Math.random() * 20) + 1;
 };
 
+// Roll a d6
+const rollD6 = (): number => {
+  return Math.floor(Math.random() * 6) + 1;
+};
+
 // ==================== COMBAT UTILITIES ====================
 
 const checkCollision = (pos1: Position, pos2: Position): boolean => {
@@ -491,6 +496,20 @@ export const checkForCombatCollision = (
 // ==================== RANGED ATTACK ====================
 
 /**
+ * Get the name of the player's equipped ranged weapon
+ * @param state - Current game state
+ * @returns The weapon name or a default
+ */
+const getEquippedRangedWeaponName = (state: GameState): string => {
+  if (!state.player.equippedRangedWeaponId) {
+    return "bow"; // Default fallback
+  }
+  
+  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId);
+  return weapon?.name || "ranged weapon";
+};
+
+/**
  * Execute a ranged attack from the player to a target monster
  * @param state - Current game state
  * @param dispatch - Dispatch function for state updates
@@ -518,7 +537,7 @@ export const executeRangedAttack = (
   }
 
   const player = state.player;
-  const weaponName = "ranged weapon"; // TODO: Get actual equipped ranged weapon name
+  const weaponName = getEquippedRangedWeaponName(state);
 
   // Log attempt
   const monsterName = targetMonster.name || targetMonster.shortName || "enemy";
@@ -539,8 +558,8 @@ export const executeRangedAttack = (
   );
 
   if (hit) {
-    // Calculate damage (simple: 1d6 for ranged, could be weapon-specific later)
-    const damageRoll = Math.floor(Math.random() * 6) + 1;
+    // Calculate damage using d6 dice roll
+    const damageRoll = rollD6();
     const totalDamage = damageRoll + Math.floor(player.attack / 2);
     const newHp = Math.max(0, targetMonster.hp - totalDamage);
 
