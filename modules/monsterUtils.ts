@@ -53,7 +53,7 @@ export const checkMonsterSpawn = (
 
     for (const monsterConfig of state.level.monsters) {
       // Skip if no spawn configuration
-      if (!monsterConfig.spawnRate || !monsterConfig.spawnChance || !monsterConfig.maxInstances) {
+      if (!monsterConfig.spawnRate || !monsterConfig.maxInstances) {
         continue;
       }
 
@@ -65,8 +65,8 @@ export const checkMonsterSpawn = (
         continue;
       }
 
-      // Use the spawn logic: Math.random() < spawnRate * spawnChance
-      if (Math.random() < monsterConfig.spawnRate * monsterConfig.spawnChance) {
+      // Use the spawn logic: Math.random() < spawnRate (percentage chance per turn)
+      if (Math.random() < monsterConfig.spawnRate) {
         const newMonster = createMonsterFromTemplate(monsterConfig.shortName, getSpawnPosition(state));
         if (!newMonster) {
           continue;

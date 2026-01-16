@@ -47,8 +47,7 @@ export interface Monster extends GameObject {
   ac: number;
   initiative?: number;
   moveRate: number;
-  spawnRate?: number;
-  spawnChance?: number;
+  spawnRate?: number; // Percentage chance (0.0 to 1.0) that monster spawns each turn
   maxInstances?: number;
   soulKey: string;
   uiSlot?: number;
