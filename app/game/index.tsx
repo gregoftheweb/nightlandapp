@@ -357,7 +357,7 @@ export default function Game() {
     if (!state.inCombat || !state.attackSlots) return;
 
     const targetMonster = targetId
-      ? state.attackSlots.find((m) => m.id === targetId)
+      ? state.attackSlots.find((m: Monster) => m.id === targetId)
       : state.attackSlots[0];
 
     if (!targetMonster) {

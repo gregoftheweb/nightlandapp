@@ -161,6 +161,9 @@ export const reducer = (
         turnOrder: action.payload.turnOrder,
         combatTurn: action.payload.combatTurn,
         combatLog: action.payload.inCombat ? state.combatLog || [] : [],
+        // Clear ranged attack mode when entering combat
+        rangedAttackMode: action.payload.inCombat ? false : state.rangedAttackMode,
+        targetedMonsterId: action.payload.inCombat ? null : state.targetedMonsterId,
       };
 
     case "START_COMBAT":
