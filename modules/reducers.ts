@@ -89,15 +89,20 @@ export const reducer = (
         return state;
       }
       const oldPosition = state.player.position;
-      const distanceMoved = Math.abs(newPlayerPos.row - oldPosition.row) + Math.abs(newPlayerPos.col - oldPosition.col);
-      return {
+      const newState = {
         ...state,
         player: {
           ...state.player,
           position: newPlayerPos,
         },
-        ...(distanceMoved > 0 && { distanceTraveled: (state.distanceTraveled || 0) + distanceMoved }),
       };
+      
+      const distanceMoved = Math.abs(newPlayerPos.row - oldPosition.row) + Math.abs(newPlayerPos.col - oldPosition.col);
+      if (distanceMoved > 0) {
+        newState.distanceTraveled = (state.distanceTraveled || 0) + distanceMoved;
+      }
+      
+      return newState;
 
     case "UPDATE_MOVE_COUNT":
       return { ...state, moveCount: action.payload.moveCount };
