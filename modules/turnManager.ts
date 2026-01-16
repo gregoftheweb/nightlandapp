@@ -154,30 +154,57 @@ const doTurnCleanup = (): void => {
   }
 
   // Apply self-healing if configured for the current level
-  const selfHealRate = currentGameState.level.selfHealRate;
-  if (selfHealRate && selfHealRate > 0) {
+  const turnsPerHitPoint = currentGameState.level.turnsPerHitPoint;
+  if (turnsPerHitPoint && turnsPerHitPoint > 0) {
     const currentHP = currentGameState.player.hp;
     const maxHP = currentGameState.player.maxHP;
 
     // Only heal if below max HP
     if (currentHP < maxHP) {
-      const healAmount = Math.min(selfHealRate, maxHP - currentHP);
-      const newHP = currentHP + healAmount;
+      // Initialize counter if not exists
+      const currentCounter = currentGameState.selfHealTurnCounter || 0;
+      const newCounter = currentCounter + 1;
 
-      gameDispatch({
-        type: "UPDATE_PLAYER",
-        payload: {
-          updates: { hp: newHP }
-        }
-      });
+      // Check if it's time to heal
+      if (newCounter >= turnsPerHitPoint) {
+        const newHP = Math.min(currentHP + 1, maxHP);
 
-      // Update local state for consistency
-      currentGameState = {
-        ...currentGameState,
-        player: { ...currentGameState.player, hp: newHP }
-      };
+        gameDispatch({
+          type: "UPDATE_PLAYER",
+          payload: {
+            updates: { hp: newHP }
+          }
+        });
 
-      logIfDev(`💚 Self-healing: ${currentHP} -> ${newHP} (+${healAmount} HP)`);
+        // Reset counter and update state
+        gameDispatch({
+          type: "UPDATE_SELF_HEAL_COUNTER",
+          payload: { counter: 0 }
+        });
+
+        // Update local state for consistency
+        currentGameState = {
+          ...currentGameState,
+          player: { ...currentGameState.player, hp: newHP },
+          selfHealTurnCounter: 0
+        };
+
+        logIfDev(`💚 Self-healing: ${currentHP} -> ${newHP} (+1 HP) [after ${turnsPerHitPoint} turns]`);
+      } else {
+        // Increment counter
+        gameDispatch({
+          type: "UPDATE_SELF_HEAL_COUNTER",
+          payload: { counter: newCounter }
+        });
+
+        // Update local state
+        currentGameState = {
+          ...currentGameState,
+          selfHealTurnCounter: newCounter
+        };
+
+        logIfDev(`💚 Self-healing: turn ${newCounter}/${turnsPerHitPoint} (${currentHP}/${maxHP} HP)`);
+      }
     } else {
       logIfDev(`💚 Self-healing: Already at max HP (${maxHP})`);
     }

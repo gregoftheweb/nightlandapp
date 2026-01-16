@@ -278,7 +278,7 @@ export interface Level {
   ambientLight?: number;
   weatherEffect?: string | null;
   backgroundMusic?: string;
-  selfHealRate?: number; // HP healed per turn (default: 0 for no self-healing)
+  turnsPerHitPoint?: number; // Number of turns needed to heal 1 HP (e.g., 5 = heal 1 HP every 5 turns)
   items: Item[];
   monsters: LevelMonsterInstance[];
   objects: LevelObjectInstance[];
@@ -377,4 +377,5 @@ export interface GameState {
   monstersKilled?: number;
   distanceTraveled?: number;
   killerName?: string;
+  selfHealTurnCounter?: number; // Tracks turns for self-healing mechanic
 }

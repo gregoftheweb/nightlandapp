@@ -2,10 +2,11 @@
  * Unit tests for the self-healing mechanic.
  * 
  * Tests verify that:
- * - Players heal by the configured selfHealRate per turn
+ * - Players heal 1 HP after the configured number of turns (turnsPerHitPoint)
  * - Healing only occurs when below max HP
  * - Healing never exceeds max HP
- * - No healing occurs when selfHealRate is 0 or undefined
+ * - Turn counter resets after healing
+ * - No healing occurs when turnsPerHitPoint is 0 or undefined
  */
 import { GameState, Level, Player } from '../../config/types';
 
@@ -17,14 +18,15 @@ describe('Self-Healing Mechanic', () => {
   const createMockGameState = (
     playerHP: number,
     playerMaxHP: number,
-    selfHealRate: number = 1
+    turnsPerHitPoint: number = 5,
+    selfHealTurnCounter: number = 0
   ): GameState => {
     const mockLevel: Level = {
       id: '1',
       name: 'Test Level',
       boardSize: { width: 400, height: 400 },
       playerSpawn: { row: 200, col: 200 },
-      selfHealRate,
+      turnsPerHitPoint,
       items: [],
       monsters: [],
       objects: [],
@@ -79,26 +81,41 @@ describe('Self-Healing Mechanic', () => {
       lastSaved: new Date(),
       playTime: 0,
       lastAction: '',
+      selfHealTurnCounter,
     } as GameState;
   };
 
   // Helper to simulate self-healing logic (matches turnManager.ts implementation)
   const simulateSelfHealing = (state: GameState, dispatch: jest.Mock) => {
-    const selfHealRate = state.level.selfHealRate;
-    if (selfHealRate && selfHealRate > 0) {
+    const turnsPerHitPoint = state.level.turnsPerHitPoint;
+    if (turnsPerHitPoint && turnsPerHitPoint > 0) {
       const currentHP = state.player.hp;
       const maxHP = state.player.maxHP;
 
       if (currentHP < maxHP) {
-        const healAmount = Math.min(selfHealRate, maxHP - currentHP);
-        const newHP = currentHP + healAmount;
+        const currentCounter = state.selfHealTurnCounter || 0;
+        const newCounter = currentCounter + 1;
 
-        dispatch({
-          type: 'UPDATE_PLAYER',
-          payload: {
-            updates: { hp: newHP }
-          }
-        });
+        if (newCounter >= turnsPerHitPoint) {
+          const newHP = Math.min(currentHP + 1, maxHP);
+
+          dispatch({
+            type: 'UPDATE_PLAYER',
+            payload: {
+              updates: { hp: newHP }
+            }
+          });
+
+          dispatch({
+            type: 'UPDATE_SELF_HEAL_COUNTER',
+            payload: { counter: 0 }
+          });
+        } else {
+          dispatch({
+            type: 'UPDATE_SELF_HEAL_COUNTER',
+            payload: { counter: newCounter }
+          });
+        }
       }
     }
   };
@@ -107,31 +124,50 @@ describe('Self-Healing Mechanic', () => {
     mockDispatch.mockClear();
   });
 
-  test('should heal player by selfHealRate when below max HP', () => {
-    const state = createMockGameState(50, 100, 1);
+  test('should increment counter but not heal before reaching turnsPerHitPoint', () => {
+    const state = createMockGameState(50, 100, 5, 0);
     simulateSelfHealing(state, mockDispatch);
 
+    // Should only update counter, not heal
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'UPDATE_SELF_HEAL_COUNTER',
+      payload: { counter: 1 }
+    });
+    expect(mockDispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'UPDATE_PLAYER' })
+    );
+  });
+
+  test('should heal 1 HP after reaching turnsPerHitPoint', () => {
+    const state = createMockGameState(50, 100, 5, 4); // Counter at 4, next turn should heal
+    simulateSelfHealing(state, mockDispatch);
+
+    // Should heal and reset counter
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
       payload: {
         updates: { hp: 51 }
       }
     });
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'UPDATE_SELF_HEAL_COUNTER',
+      payload: { counter: 0 }
+    });
   });
 
   test('should not heal when player is at max HP', () => {
-    const state = createMockGameState(100, 100, 1);
+    const state = createMockGameState(100, 100, 5, 4);
     simulateSelfHealing(state, mockDispatch);
 
-    // Should not dispatch when at max HP
+    // Should not dispatch anything when at max HP
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   test('should not exceed max HP when healing', () => {
-    const state = createMockGameState(99, 100, 5); // Heal rate is 5, but only 1 HP available
+    const state = createMockGameState(99, 100, 5, 4); // At 99/100, heal should cap at 100
     simulateSelfHealing(state, mockDispatch);
 
-    // Should heal by 1 (not 5) to cap at max HP
+    // Should heal to exactly max HP, not beyond
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
       payload: {
@@ -140,20 +176,33 @@ describe('Self-Healing Mechanic', () => {
     });
   });
 
-  test('should not heal when selfHealRate is 0', () => {
-    const state = createMockGameState(50, 100, 0);
+  test('should not heal when turnsPerHitPoint is 0', () => {
+    const state = createMockGameState(50, 100, 0, 0);
     simulateSelfHealing(state, mockDispatch);
 
-    // Should not dispatch when selfHealRate is 0
+    // Should not dispatch when turnsPerHitPoint is 0
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
-  test('should not heal when selfHealRate is undefined', () => {
-    const state = createMockGameState(50, 100, 0);
-    state.level.selfHealRate = undefined;
+  test('should not heal when turnsPerHitPoint is undefined', () => {
+    const state = createMockGameState(50, 100, 0, 0);
+    state.level.turnsPerHitPoint = undefined;
     simulateSelfHealing(state, mockDispatch);
 
-    // Should not dispatch when selfHealRate is undefined
+    // Should not dispatch when turnsPerHitPoint is undefined
     expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  test('should work with turnsPerHitPoint of 1 (heal every turn)', () => {
+    const state = createMockGameState(50, 100, 1, 0);
+    simulateSelfHealing(state, mockDispatch);
+
+    // Should heal immediately when turnsPerHitPoint is 1
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'UPDATE_PLAYER',
+      payload: {
+        updates: { hp: 51 }
+      }
+    });
   });
 });
