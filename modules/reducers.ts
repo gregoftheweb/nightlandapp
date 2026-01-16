@@ -242,6 +242,12 @@ export const reducer = (
         player: { ...state.player, hp: action.payload.hp },
       };
 
+    case "UPDATE_SELF_HEAL_COUNTER":
+      return {
+        ...state,
+        selfHealTurnCounter: action.payload.counter,
+      };
+
     case "UPDATE_MONSTER_HP":
       return {
         ...state,

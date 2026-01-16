@@ -153,6 +153,63 @@ const doTurnCleanup = (): void => {
     logIfDev("Christos is hidden");
   }
 
+  // Apply self-healing if configured for the current level
+  const turnsPerHitPoint = currentGameState.level.turnsPerHitPoint;
+  if (turnsPerHitPoint && turnsPerHitPoint > 0) {
+    const currentHP = currentGameState.player.hp;
+    const maxHP = currentGameState.player.maxHP;
+
+    // Only heal if below max HP
+    if (currentHP < maxHP) {
+      // Initialize counter if not exists
+      const currentCounter = currentGameState.selfHealTurnCounter || 0;
+      const newCounter = currentCounter + 1;
+
+      // Check if it's time to heal
+      if (newCounter >= turnsPerHitPoint) {
+        const newHP = Math.min(currentHP + 1, maxHP);
+
+        gameDispatch({
+          type: "UPDATE_PLAYER",
+          payload: {
+            updates: { hp: newHP }
+          }
+        });
+
+        // Reset counter and update state
+        gameDispatch({
+          type: "UPDATE_SELF_HEAL_COUNTER",
+          payload: { counter: 0 }
+        });
+
+        // Update local state for consistency
+        currentGameState = {
+          ...currentGameState,
+          player: { ...currentGameState.player, hp: newHP },
+          selfHealTurnCounter: 0
+        };
+
+        logIfDev(`💚 Self-healing: ${currentHP} -> ${newHP} (+1 HP) [after ${turnsPerHitPoint} turns]`);
+      } else {
+        // Increment counter
+        gameDispatch({
+          type: "UPDATE_SELF_HEAL_COUNTER",
+          payload: { counter: newCounter }
+        });
+
+        // Update local state
+        currentGameState = {
+          ...currentGameState,
+          selfHealTurnCounter: newCounter
+        };
+
+        logIfDev(`💚 Self-healing: turn ${newCounter}/${turnsPerHitPoint} (${currentHP}/${maxHP} HP)`);
+      }
+    } else {
+      logIfDev(`💚 Self-healing: Already at max HP (${maxHP})`);
+    }
+  }
+
   // Any other end-of-turn cleanup
 };
 
