@@ -160,6 +160,13 @@ export default function GameBoard({
       if (__DEV__) {
         console.log("Combat ended (detected transition), hiding CombatDialog");
       }
+    } else if (!state.inCombat && state.combatLog.length > 0) {
+      // Show combat dialog for ranged attacks (outside of combat)
+      setCombatMessages(state.combatLog.map((log) => log.message));
+      setCombatInfoVisible(true);
+      if (__DEV__) {
+        console.log("Showing CombatDialog for ranged attack messages");
+      }
     }
     setPreviousInCombat(state.inCombat);
   }, [state.inCombat, state.attackSlots, state.combatLog, previousInCombat]);
@@ -233,15 +240,18 @@ export default function GameBoard({
       if (__DEV__) {
         console.log("handleMonsterTap called, monster:", monster);
       }
-      showInfo(
-        monster.name || monster.shortName || "Monster",
-        monster.description ||
-          `A dangerous creature. HP: ${monster.hp || "Unknown"}`,
-        getMonsterImage(monster)
-      );
+      // Don't show info dialog if in ranged attack mode (player is retargeting)
+      if (!state.rangedAttackMode) {
+        showInfo(
+          monster.name || monster.shortName || "Monster",
+          monster.description ||
+            `A dangerous creature. HP: ${monster.hp || "Unknown"}`,
+          getMonsterImage(monster)
+        );
+      }
       onMonsterTap?.(monster);
     },
-    [showInfo, onMonsterTap]
+    [showInfo, onMonsterTap, state.rangedAttackMode]
   );
 
   const handleGreatPowerTap = useCallback(
