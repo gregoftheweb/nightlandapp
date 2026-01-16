@@ -597,6 +597,25 @@ export const executeRangedAttack = (
         type: "REMOVE_MONSTER",
         payload: { id: targetMonster.id },
       });
+      
+      // Check if all monsters are now dead (only in non-combat scenarios)
+      // We need to check the updated state after removal
+      const remainingMonsters = state.activeMonsters.filter(
+        (m) => m.id !== targetMonster.id && m.hp > 0
+      );
+      const remainingCombatMonsters = state.attackSlots.filter(
+        (m) => m.id !== targetMonster.id && m.hp > 0
+      );
+      
+      if (remainingMonsters.length === 0 && remainingCombatMonsters.length === 0 && !state.inCombat) {
+        // All monsters are dead, clear combat log after a short delay to allow messages to be seen
+        logIfDev("All monsters defeated with ranged attacks, will clear combat log");
+        setTimeout(() => {
+          dispatch({
+            type: "CLEAR_COMBAT_LOG",
+          });
+        }, 100);
+      }
     }
   } else {
     logIfDev(`   ❌ MISS!`);

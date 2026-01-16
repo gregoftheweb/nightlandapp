@@ -320,6 +320,13 @@ export default function Game() {
         payload: { active: true, targetId: nearestMonster.id },
       });
 
+      // Add targeting message to combat log
+      const monsterName = nearestMonster.name || nearestMonster.shortName || "enemy";
+      dispatch({
+        type: "ADD_COMBAT_LOG",
+        payload: { message: `Christos has the ${monsterName} in his sight!` },
+      });
+
       if (__DEV__) {
         console.log("Entered ranged attack mode, targeting:", nearestMonster.name);
       }

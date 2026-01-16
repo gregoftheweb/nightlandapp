@@ -169,6 +169,13 @@ export default function GameBoard({
       if (__DEV__) {
         console.log("Showing CombatDialog for ranged attack messages");
       }
+    } else if (!state.inCombat && state.combatLog.length === 0 && previousCombatLogLength > 0) {
+      // Combat log was cleared (all monsters defeated in ranged mode)
+      setCombatInfoVisible(false);
+      setCombatMessages([]);
+      if (__DEV__) {
+        console.log("Combat log cleared, hiding CombatDialog");
+      }
     }
     setPreviousInCombat(state.inCombat);
     setPreviousCombatLogLength(state.combatLog.length);

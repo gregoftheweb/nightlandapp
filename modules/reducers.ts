@@ -202,6 +202,13 @@ export const reducer = (
         ],
       };
 
+    case "CLEAR_COMBAT_LOG":
+      logIfDev("CLEAR_COMBAT_LOG dispatched");
+      return {
+        ...state,
+        combatLog: [],
+      };
+
     // ============ HEALTH SYSTEM ============
     case "UPDATE_PLAYER":
       return {
