@@ -160,8 +160,9 @@ export default function GameBoard({
       if (__DEV__) {
         console.log("Combat ended (detected transition), hiding CombatDialog");
       }
-    } else if (!state.inCombat && state.combatLog.length > 0) {
+    } else if (!state.inCombat && state.combatLog.length > 0 && state.rangedAttackMode !== undefined) {
       // Show combat dialog for ranged attacks (outside of combat)
+      // Only show if ranged attack mode was recently active (prevents showing stale messages)
       setCombatMessages(state.combatLog.map((log) => log.message));
       setCombatInfoVisible(true);
       if (__DEV__) {
@@ -169,7 +170,7 @@ export default function GameBoard({
       }
     }
     setPreviousInCombat(state.inCombat);
-  }, [state.inCombat, state.attackSlots, state.combatLog, previousInCombat]);
+  }, [state.inCombat, state.attackSlots, state.combatLog, state.rangedAttackMode, previousInCombat]);
 
   // Game over effect (dev logs wrapped; no auto-close comment since updated InfoBox)
 
@@ -240,7 +241,7 @@ export default function GameBoard({
       if (__DEV__) {
         console.log("handleMonsterTap called, monster:", monster);
       }
-      // Don't show info dialog if in ranged attack mode (player is retargeting)
+      // Don't show info dialog if in ranged attack mode (player is targeting/retargeting)
       if (!state.rangedAttackMode) {
         showInfo(
           monster.name || monster.shortName || "Monster",
