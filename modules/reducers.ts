@@ -152,7 +152,13 @@ export const reducer = (
 
     // ============ COMBAT SYSTEM ============
     case "SET_COMBAT":
-      logIfDev("SET_COMBAT dispatched, inCombat.");
+      logIfDev(`🎯 SET_COMBAT dispatched, inCombat: ${action.payload.inCombat}`);
+      
+      // If exiting combat and in ranged mode, check if there are any monsters left
+      const exitingCombat = !action.payload.inCombat && state.inCombat;
+      const hasRemainingMonsters = action.payload.attackSlots.length > 0 || 
+                                    state.activeMonsters.some(m => m.hp > 0);
+      
       return {
         ...state,
         inCombat: action.payload.inCombat,
@@ -161,9 +167,11 @@ export const reducer = (
         turnOrder: action.payload.turnOrder,
         combatTurn: action.payload.combatTurn,
         combatLog: action.payload.inCombat ? state.combatLog || [] : [],
-        // Clear ranged attack mode when entering combat
-        rangedAttackMode: action.payload.inCombat ? false : state.rangedAttackMode,
-        targetedMonsterId: action.payload.inCombat ? null : state.targetedMonsterId,
+        // Clear ranged attack mode when entering combat OR when exiting combat with no monsters left
+        rangedAttackMode: action.payload.inCombat ? false : 
+                         (exitingCombat && !hasRemainingMonsters ? false : state.rangedAttackMode),
+        targetedMonsterId: action.payload.inCombat ? null : 
+                          (exitingCombat && !hasRemainingMonsters ? null : state.targetedMonsterId),
       };
 
     case "START_COMBAT":
