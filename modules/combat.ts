@@ -608,12 +608,10 @@ export const executeRangedAttack = (
       );
       
       if (remainingMonsters.length === 0 && remainingCombatMonsters.length === 0 && !state.inCombat) {
-        // All monsters are dead, clear ranged mode and combat log after a short delay
-        logIfDev("All monsters defeated with ranged attacks, will clear ranged mode and combat log");
-        setTimeout(() => {
-          dispatch({ type: "CLEAR_RANGED_MODE" });
-          dispatch({ type: "CLEAR_COMBAT_LOG" });
-        }, 100);
+        // All monsters are dead, clear ranged mode
+        // Combat log will auto-clear after dialog shows messages (via CombatDialog auto-close)
+        logIfDev("All monsters defeated with ranged attacks, clearing ranged mode");
+        dispatch({ type: "CLEAR_RANGED_MODE" });
       }
     }
   } else {
