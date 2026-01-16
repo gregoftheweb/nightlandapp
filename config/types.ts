@@ -10,6 +10,8 @@ export interface Area {
   bottomRight: Position;
 }
 
+export type WeaponType = "melee" | "ranged";
+
 export interface GameObject {
   shortName: string;
   category: string;
@@ -18,6 +20,7 @@ export interface GameObject {
   damage?: number;
   hitBonus?: number;
   type?: string;
+  weaponType?: WeaponType; // For weapons: melee or ranged
   range?: number;
   width?: number;
   height?: number;
@@ -121,6 +124,9 @@ export interface Player {
   maxInventorySize: number;
   weapons: Array<{ id: string; equipped: boolean }>;
   maxWeaponsSize: number;
+  meleeWeaponId: string; // Fixed melee weapon (always "weapon-discos-001")
+  equippedRangedWeaponId: string | null; // Currently equipped ranged weapon
+  rangedWeaponInventoryIds: string[]; // Available ranged weapons
   soulKey: string;
   moveSpeed: number;
   level?: number;

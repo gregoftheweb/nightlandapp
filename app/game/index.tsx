@@ -281,6 +281,11 @@ export default function Game() {
     setInventoryVisible(false);
   }, []);
 
+  const handleZapPress = useCallback(() => {
+    // TODO: Implement special ability/power attack functionality
+    console.log("Zap button pressed - special ability not yet implemented");
+  }, []);
+
   const handleTurnPress = useCallback(() => {
     if (state.inCombat) return;
     handlePassTurn(state, dispatch);
@@ -398,6 +403,7 @@ export default function Game() {
           onTurnPress={handleTurnPress}
           onAttackPress={handleAttackPress}
           onInventoryPress={handleInventoryPress}
+          onZapPress={handleZapPress}
           inCombat={state.inCombat}
         />
         <Settings visible={settingsVisible} onClose={handleCloseSettings} />
