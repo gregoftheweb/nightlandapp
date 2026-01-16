@@ -38,6 +38,8 @@ import {
   TIMING_CONSTANTS,
   COMBAT_CONSTANTS,
 } from "../../constants/Game";
+import { findNearestMonster } from "../../modules/monsterUtils";
+import { executeRangedAttack } from "../../modules/combat";
 
 // Constants
 const { width, height } = Dimensions.get("window");
@@ -206,10 +208,19 @@ export default function Game() {
   // Press handlers
   const handlePress = useCallback(
     (event: any) => {
-      if (state.inCombat || isOverlayVisible) return;
+      if (isOverlayVisible) return;
 
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - UI_CONSTANTS.HUD_HEIGHT) return;
+
+      // If in ranged attack mode and player taps ground (not a monster), cancel mode
+      if (state.rangedAttackMode) {
+        dispatch({ type: "CLEAR_RANGED_MODE" });
+        // Then proceed with normal tap behavior
+      }
+
+      // Don't allow movement during combat
+      if (state.inCombat) return;
 
       const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
       const { row: playerRow, col: playerCol } = state.player.position;
@@ -227,10 +238,12 @@ export default function Game() {
     [
       state.inCombat,
       state.player.position,
+      state.rangedAttackMode,
       isOverlayVisible,
       calculateTapPosition,
       getMovementDirectionFromTap,
       performMove,
+      dispatch,
     ]
   );
 
@@ -274,17 +287,66 @@ export default function Game() {
   }, []);
 
   const handleInventoryPress = useCallback(() => {
+    // Exit ranged attack mode before opening inventory
+    if (state.rangedAttackMode) {
+      dispatch({ type: "CLEAR_RANGED_MODE" });
+    }
     if (!state.inCombat) setInventoryVisible(true);
-  }, [state.inCombat]);
+  }, [state.inCombat, state.rangedAttackMode, dispatch]);
 
   const handleCloseInventory = useCallback(() => {
     setInventoryVisible(false);
   }, []);
 
   const handleZapPress = useCallback(() => {
-    // TODO: Implement special ability/power attack functionality
-    console.log("Zap button pressed - special ability not yet implemented");
-  }, []);
+    // If ranged attack mode is OFF, turn it ON and target nearest enemy
+    if (!state.rangedAttackMode) {
+      // Get all living monsters (both active and in attack slots)
+      const allMonsters = [...state.activeMonsters, ...state.attackSlots];
+      const nearestMonster = findNearestMonster(state.player.position, allMonsters);
+
+      if (!nearestMonster) {
+        // No enemies available
+        dispatch({
+          type: "ADD_COMBAT_LOG",
+          payload: { message: "No enemies in range" },
+        });
+        return;
+      }
+
+      // Enter ranged attack mode and target the nearest enemy
+      dispatch({
+        type: "TOGGLE_RANGED_MODE",
+        payload: { active: true, targetId: nearestMonster.id },
+      });
+
+      if (__DEV__) {
+        console.log("Entered ranged attack mode, targeting:", nearestMonster.name);
+      }
+    } else {
+      // If ranged attack mode is ON, execute the ranged attack
+      if (!state.targetedMonsterId) {
+        // Edge case: mode is on but no target
+        dispatch({
+          type: "ADD_COMBAT_LOG",
+          payload: { message: "No target selected" },
+        });
+        dispatch({ type: "CLEAR_RANGED_MODE" });
+        return;
+      }
+
+      // Execute the ranged attack
+      executeRangedAttack(state, dispatch, state.targetedMonsterId);
+
+      // Clear ranged attack mode after shooting
+      dispatch({ type: "CLEAR_RANGED_MODE" });
+
+      // If not in combat, trigger enemy turn (similar to regular turn/move)
+      if (!state.inCombat) {
+        handlePassTurn(state, dispatch);
+      }
+    }
+  }, [state, dispatch]);
 
   const handleTurnPress = useCallback(() => {
     if (state.inCombat) return;
@@ -308,6 +370,19 @@ export default function Game() {
 
   const handleMonsterTap = useCallback(
     (monster: Monster) => {
+      // If in ranged attack mode, retarget to the tapped monster
+      if (state.rangedAttackMode) {
+        if (__DEV__) {
+          console.log("Retargeting to:", monster.name, "ID:", monster.id);
+        }
+        dispatch({
+          type: "SET_TARGET_MONSTER",
+          payload: { monsterId: monster.id },
+        });
+        return;
+      }
+
+      // If in combat (not ranged mode), set as combat target
       if (state.inCombat) {
         if (__DEV__) {
           console.log(
@@ -320,7 +395,7 @@ export default function Game() {
         setTargetId(monster.id);
       }
     },
-    [state.inCombat]
+    [state.inCombat, state.rangedAttackMode, dispatch]
   );
 
   const handleGreatPowerTap = useCallback(

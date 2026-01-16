@@ -392,6 +392,10 @@ export default function GameBoard({
           screenCol >= 0 &&
           screenCol < VIEWPORT_COLS;
         if (!inView) return null;
+        
+        // Check if this monster is the targeted monster for ranged attack
+        const isTargeted = state.targetedMonsterId === monster.id;
+        
         return (
           <TouchableOpacity
             key={`combat-monster-${monster.id}-${index}`}
@@ -408,7 +412,13 @@ export default function GameBoard({
           >
             <Image
               source={getMonsterImage(monster)}
-              style={styles.character}
+              style={[
+                styles.character,
+                isTargeted && {
+                  borderWidth: 1,
+                  borderColor: "yellow",
+                },
+              ]}
               resizeMode="contain"
             />
           </TouchableOpacity>
@@ -418,6 +428,7 @@ export default function GameBoard({
   }, [
     state.inCombat,
     state.attackSlots,
+    state.targetedMonsterId,
     cameraOffset.offsetY,
     cameraOffset.offsetX,
     handleMonsterTap,
@@ -474,6 +485,10 @@ export default function GameBoard({
           screenCol >= 0 &&
           screenCol < VIEWPORT_COLS;
         if (!inView) return null;
+        
+        // Check if this monster is the targeted monster for ranged attack
+        const isTargeted = state.targetedMonsterId === monster.id;
+        
         return (
           <TouchableOpacity
             key={`monster-${monster.id}-${index}`}
@@ -490,7 +505,13 @@ export default function GameBoard({
           >
             <Image
               source={getMonsterImage(monster)}
-              style={styles.character}
+              style={[
+                styles.character,
+                isTargeted && {
+                  borderWidth: 1,
+                  borderColor: "yellow",
+                },
+              ]}
               resizeMode="contain"
             />
           </TouchableOpacity>
@@ -499,6 +520,7 @@ export default function GameBoard({
       .filter((item): item is React.ReactElement => item !== null);
   }, [
     state.activeMonsters,
+    state.targetedMonsterId,
     cameraOffset.offsetY,
     cameraOffset.offsetX,
     handleMonsterTap,

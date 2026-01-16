@@ -234,6 +234,9 @@ export const reducer = (
           (monster) => monster.id !== action.payload.id
         ),
         monstersKilled: (state.monstersKilled || 0) + 1,
+        // If the removed monster was the targeted monster, clear ranged attack mode
+        rangedAttackMode: state.targetedMonsterId === action.payload.id ? false : state.rangedAttackMode,
+        targetedMonsterId: state.targetedMonsterId === action.payload.id ? null : state.targetedMonsterId,
       };
 
     case "UPDATE_PLAYER_HP":
@@ -679,6 +682,27 @@ export const reducer = (
 
     case "SET_AUDIO_STARTED":
       return { ...state, audioStarted: action.payload };
+
+    // ============ RANGED ATTACK MODE ============
+    case "TOGGLE_RANGED_MODE":
+      return {
+        ...state,
+        rangedAttackMode: action.payload.active,
+        targetedMonsterId: action.payload.active ? action.payload.targetId : null,
+      };
+
+    case "SET_TARGET_MONSTER":
+      return {
+        ...state,
+        targetedMonsterId: action.payload.monsterId,
+      };
+
+    case "CLEAR_RANGED_MODE":
+      return {
+        ...state,
+        rangedAttackMode: false,
+        targetedMonsterId: null,
+      };
 
     // ============ CLEANUP ============
     default:

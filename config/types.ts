@@ -384,4 +384,6 @@ export interface GameState {
   distanceTraveled?: number;
   killerName?: string;
   selfHealTurnCounter?: number; // Tracks turns for self-healing mechanic
+  rangedAttackMode?: boolean; // True when player is in ranged attack targeting mode
+  targetedMonsterId?: string | null; // ID of the currently targeted monster for ranged attack
 }

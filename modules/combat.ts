@@ -487,3 +487,103 @@ export const checkForCombatCollision = (
   }
   return false;
 };
+
+// ==================== RANGED ATTACK ====================
+
+/**
+ * Execute a ranged attack from the player to a target monster
+ * @param state - Current game state
+ * @param dispatch - Dispatch function for state updates
+ * @param targetMonsterId - ID of the monster to attack
+ */
+export const executeRangedAttack = (
+  state: GameState,
+  dispatch: any,
+  targetMonsterId: string
+): void => {
+  // Find the target monster in either activeMonsters or attackSlots
+  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0);
+  
+  if (!targetMonster) {
+    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.hp > 0);
+  }
+
+  if (!targetMonster) {
+    logIfDev("No valid target for ranged attack");
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: { message: "No target in range" },
+    });
+    return;
+  }
+
+  const player = state.player;
+  const weaponName = "ranged weapon"; // TODO: Get actual equipped ranged weapon name
+
+  // Log attempt
+  const monsterName = targetMonster.name || targetMonster.shortName || "enemy";
+  dispatch({
+    type: "ADD_COMBAT_LOG",
+    payload: { message: `Christos attempts a shot with ${weaponName} at ${monsterName}.` },
+  });
+
+  logIfDev(`\n🏹 Christos ranged attack on ${monsterName}:`);
+
+  // Perform hit/miss roll using d20 system
+  const attackRoll = rollD20();
+  const totalAttack = attackRoll + player.attack;
+  const hit = totalAttack >= targetMonster.ac;
+
+  logIfDev(
+    `   Roll: ${attackRoll} + Attack: ${player.attack} = ${totalAttack} vs AC: ${targetMonster.ac}`
+  );
+
+  if (hit) {
+    // Calculate damage (simple: 1d6 for ranged, could be weapon-specific later)
+    const damageRoll = Math.floor(Math.random() * 6) + 1;
+    const totalDamage = damageRoll + Math.floor(player.attack / 2);
+    const newHp = Math.max(0, targetMonster.hp - totalDamage);
+
+    logIfDev(
+      `   💥 HIT! Damage: ${damageRoll} + ${Math.floor(
+        player.attack / 2
+      )} = ${totalDamage}`
+    );
+    logIfDev(`   ${monsterName} HP: ${targetMonster.hp} → ${newHp}`);
+
+    // Log hit and damage
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: { message: "Hit!" },
+    });
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: { message: `${monsterName} takes ${totalDamage} damage.` },
+    });
+
+    // Update monster HP
+    dispatch({
+      type: "UPDATE_MONSTER",
+      payload: { id: targetMonster.id, updates: { hp: newHp } },
+    });
+
+    // Check if monster dies
+    if (newHp <= 0) {
+      logIfDev(`💀 ${monsterName} is defeated!`);
+      dispatch({
+        type: "ADD_COMBAT_LOG",
+        payload: { message: `${monsterName} dies.` },
+      });
+      dispatch({
+        type: "REMOVE_MONSTER",
+        payload: { id: targetMonster.id },
+      });
+    }
+  } else {
+    logIfDev(`   ❌ MISS!`);
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: { message: "Miss!" },
+    });
+  }
+};
