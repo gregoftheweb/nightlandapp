@@ -5,17 +5,14 @@ import { handleMoveMonsters } from "./monsterUtils";
 import { handleCombatTurn } from "./combat";
 import { calculateNewPosition } from "./movement";
 import { checkItemInteractions, checkObjectInteractions } from "./interactions";
+import { SPAWN_CONSTANTS } from "../constants/Game";
+import { logIfDev } from "./utils";
 
 // ==================== MODULE-LEVEL STATE (Preserved for combat/monster flow integrity) ====================
 let currentGameState: GameState;
 let gameDispatch: (action: any) => void;
 let inCombat: boolean = false;
 let turnType: "combat" | "move" | "non-move-turn" = "non-move-turn";
-
-// ==================== CONSTANTS ====================
-const INITIAL_ABHUMAN_SPAWNS = 2;
-const SPAWN_BASE_DISTANCE = 15;
-const SPAWN_RANDOM_DISTANCE = 10;
 
 // ==================== UTILITY FUNCTIONS ====================
 
@@ -29,12 +26,6 @@ const determineTurnType = (
     return "move";
   }
   return "non-move-turn";
-};
-
-const logIfDev = (message: string, ...args: any[]) => {
-  if (__DEV__) {
-    console.log(message, ...args);
-  }
 };
 
 // ==================== COMBAT TURN EXECUTION ====================
@@ -317,9 +308,9 @@ export const initializeStartingMonsters = (
     const timestamp = Date.now(); // Ensure uniqueness across restarts/game overs
 
     // Spawn exactly INITIAL_ABHUMAN_SPAWNS abhumans for testing
-    for (let i = 0; i < INITIAL_ABHUMAN_SPAWNS; i++) {
+    for (let i = 0; i < SPAWN_CONSTANTS.INITIAL_ABHUMAN_SPAWNS; i++) {
       const angle = Math.random() * 2 * Math.PI;
-      const distance = SPAWN_BASE_DISTANCE + Math.random() * SPAWN_RANDOM_DISTANCE; // Closer for testing
+      const distance = SPAWN_CONSTANTS.SPAWN_BASE_DISTANCE + Math.random() * SPAWN_CONSTANTS.SPAWN_RANDOM_DISTANCE; // Closer for testing
 
       let spawnRow = Math.round(
         state.player.position.row + Math.sin(angle) * distance

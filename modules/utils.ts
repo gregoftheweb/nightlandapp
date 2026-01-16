@@ -2,6 +2,15 @@
 import { Position } from "../config/types";
 import textContent from "../assets/copy/textcontent";
 
+/**
+ * Development logging helper - only logs in development mode
+ * Use this instead of console.log to prevent expensive console operations in production
+ */
+export const logIfDev = (message: string, ...args: any[]) => {
+  if (__DEV__) {
+    console.log(message, ...args);
+  }
+};
 
 export function moveToward(entity: any, targetRow: number, targetCol: number, speed: number = 1, gridWidth: number = 49, gridHeight: number = 49) {
     let dRow = targetRow - entity.position.row;

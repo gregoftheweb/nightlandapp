@@ -1,6 +1,7 @@
 // modules/movement.ts - All movement-related logic
 import { GameState, Position, Monster } from "../config/types";
 import { setupCombat, checkForCombatCollision } from "./combat";
+import { logIfDev } from "./utils";
 
 // ==================== PLAYER MOVEMENT ====================
 
@@ -28,7 +29,9 @@ export const calculateNewPosition = (
     case null:
       break;
     default:
-      console.warn(`Unhandled direction: ${direction}`);
+      if (__DEV__) {
+        console.warn(`Unhandled direction: ${direction}`);
+      }
       break;
   }
 
@@ -128,7 +131,7 @@ export const moveMonsters = (
       type: "MOVE_MONSTER",
       payload: { id: monster.id, position: newPos },
     });
-    console.log(`Monster ${monster.name} moved to (${newPos.row}, ${newPos.col})`);
+    logIfDev(`Monster ${monster.name} moved to (${newPos.row}, ${newPos.col})`);
   });
 };
 

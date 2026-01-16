@@ -10,6 +10,7 @@ import {
 import { levels } from "../config/levels";
 import { initialState } from "./gameState";
 import { createMonsterFromTemplate } from "../modules/monsterUtils";
+import { logIfDev } from "./utils";
 
 export const reducer = (
   state: GameState = initialState,
@@ -45,7 +46,7 @@ export const reducer = (
     // ============ PLAYER MOVEMENT ============
     case "MOVE_PLAYER":
       if (state.inCombat) {
-        console.log("Player cannot move while in combat");
+        logIfDev("Player cannot move while in combat");
         return state;
       }
       let newPlayerPos;
@@ -54,7 +55,9 @@ export const reducer = (
       } else if (action.payload.direction) {
         const currentPos = state.player.position;
         if (!currentPos) {
-          console.error("Player position is undefined!");
+          if (__DEV__) {
+            console.error("Player position is undefined!");
+          }
           return state;
         }
         let newRow = currentPos.row;
@@ -73,12 +76,16 @@ export const reducer = (
             newCol = Math.min(state.gridWidth - 1, currentPos.col + 1);
             break;
           default:
-            console.warn("Unknown direction:", action.payload.direction);
+            if (__DEV__) {
+              console.warn("Unknown direction:", action.payload.direction);
+            }
             return state;
         }
         newPlayerPos = { row: newRow, col: newCol };
       } else {
-        console.error("MOVE_PLAYER: No position or direction provided");
+        if (__DEV__) {
+          console.error("MOVE_PLAYER: No position or direction provided");
+        }
         return state;
       }
       return {
@@ -112,7 +119,7 @@ export const reducer = (
 
     case "SPAWN_MONSTER":
       const newMonster = action.payload.monster;
-      console.log("Spawning monster:", newMonster.name);
+      logIfDev("Spawning monster:", newMonster.name);
       return {
         ...state,
         activeMonsters: [...state.activeMonsters, newMonster],
@@ -137,7 +144,7 @@ export const reducer = (
 
     // ============ COMBAT SYSTEM ============
     case "SET_COMBAT":
-      console.log("SET_COMBAT dispatched, inCombat.");
+      logIfDev("SET_COMBAT dispatched, inCombat.");
       return {
         ...state,
         inCombat: action.payload.inCombat,
@@ -171,7 +178,7 @@ export const reducer = (
 
     // ============ COMBAT LOG ============
     case "ADD_COMBAT_LOG":
-      console.log("ADD_COMBAT_LOG dispatched:", action.payload);
+      logIfDev("ADD_COMBAT_LOG dispatched:", action.payload);
       return {
         ...state,
         combatLog: [
@@ -331,7 +338,7 @@ export const reducer = (
     case "DROP_WEAPON":
       const weaponId = action.payload.id;
       if (weaponId === "weapon-discos-001") {
-        console.log("Cannot drop the Discos!");
+        logIfDev("Cannot drop the Discos!");
         return state;
       }
 
@@ -339,7 +346,9 @@ export const reducer = (
         (w) => w.id === action.payload.id
       );
       if (!weaponDetails) {
-        console.warn(`Weapon with ID ${weaponId} not found`);
+        if (__DEV__) {
+          console.warn(`Weapon with ID ${weaponId} not found`);
+        }
         return state;
       }
 
@@ -401,7 +410,7 @@ export const reducer = (
     }
 
     case "REMOVE_ITEM_FROM_GAMEBOARD":
-      console.log(
+      logIfDev(
         `Removing item from gameboard: ${action.payload.shortName} from position (${action.payload.position.row}, ${action.payload.position.col})`
       );
       return {
@@ -430,19 +439,21 @@ export const reducer = (
     case "TRIGGER_EFFECT":
       const { effect, position, source, message } = action.payload;
 
-      console.log("Effect type:", effect.type);
-      console.log("Effect value:", effect.value);
-      console.log("Current HP before:", state.player.hp);
+      logIfDev("Effect type:", effect.type);
+      logIfDev("Effect value:", effect.value);
+      logIfDev("Current HP before:", state.player.hp);
 
       switch (effect.type) {
         case "swarm": {
-          console.log("SWARM effect received:", effect);
-          console.log("monsterType:", effect.monsterType);
-          console.log("count:", effect.count);
-          console.log("range:", effect.range);
+          logIfDev("SWARM effect received:", effect);
+          logIfDev("monsterType:", effect.monsterType);
+          logIfDev("count:", effect.count);
+          logIfDev("range:", effect.range);
           // Validate we have the necessary effect properties
           if (!effect.monsterType || !effect.count || !effect.range) {
-            console.error("Swarm effect missing required properties:", effect);
+            if (__DEV__) {
+              console.error("Swarm effect missing required properties:", effect);
+            }
             return state;
           }
 
@@ -494,7 +505,7 @@ export const reducer = (
 
             if (monster) {
               newMonsters.push(monster);
-              console.log(
+              logIfDev(
                 `Swarm spawned ${monster.name} at ${spawnRow},${spawnCol}`
               );
             }
@@ -575,7 +586,7 @@ export const reducer = (
           };
         }
         case "soulsuck": {
-          console.log("SOULSUCK EFFECT TRIGGERED - Player soul consumed!");
+          logIfDev("SOULSUCK EFFECT TRIGGERED - Player soul consumed!");
           return {
             ...state,
             player: {
@@ -634,7 +645,9 @@ export const reducer = (
 
     // ============ CLEANUP ============
     default:
-      console.warn(`Unhandled action type: ${action.type}`);
+      if (__DEV__) {
+        console.warn(`Unhandled action type: ${action.type}`);
+      }
       return state || initialState;
   }
 };

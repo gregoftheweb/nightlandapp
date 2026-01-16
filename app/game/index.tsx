@@ -33,14 +33,14 @@ import {
   NonCollisionObject,
 } from "@/config/types";
 import { audioManager } from "../../modules/audioManager";
+import {
+  UI_CONSTANTS,
+  TIMING_CONSTANTS,
+  COMBAT_CONSTANTS,
+} from "../../constants/Game";
 
 // Constants
 const { width, height } = Dimensions.get("window");
-const MIN_MOVE_DISTANCE = 1;
-const HUD_HEIGHT = 60;
-const MOVEMENT_INTERVAL = 150;
-const GAME_OVER_DELAY = 7000;
-const GREAT_POWER_AWAKEN_DISTANCE = 3;
 
 type Direction = "up" | "down" | "left" | "right" | "stay" | null;
 
@@ -86,13 +86,15 @@ export default function Game() {
   useEffect(() => {
     if (!state.gameOver) return;
 
-    console.log("Game Over detected, navigating to death screen");
+    if (__DEV__) {
+      console.log("Game Over detected, navigating to death screen");
+    }
     audioManager.pauseBackgroundMusic();
 
     const timeout = setTimeout(() => {
       dispatch({ type: "RESET_GAME" });
       router.push("/princess");
-    }, GAME_OVER_DELAY);
+    }, TIMING_CONSTANTS.GAME_OVER_DELAY);
 
     return () => clearTimeout(timeout);
   }, [state.gameOver, router, dispatch]);
@@ -100,7 +102,9 @@ export default function Game() {
   // Initialize starting monsters
   useEffect(() => {
     if (state.activeMonsters.length === 0 && state.moveCount === 0) {
-      console.log("Initializing starting monsters");
+      if (__DEV__) {
+        console.log("Initializing starting monsters");
+      }
       initializeStartingMonsters(state, dispatch);
     }
   }, [state.activeMonsters.length, state.moveCount, state, dispatch]);
@@ -182,7 +186,7 @@ export default function Game() {
           return;
         }
         performMove(currentDirection.current);
-      }, MOVEMENT_INTERVAL);
+      }, TIMING_CONSTANTS.MOVEMENT_INTERVAL);
     },
     [performMove]
   );
@@ -212,7 +216,7 @@ export default function Game() {
       if (state.inCombat || isOverlayVisible) return;
 
       const { pageX, pageY } = event.nativeEvent;
-      if (pageY > height - HUD_HEIGHT) return;
+      if (pageY > height - UI_CONSTANTS.HUD_HEIGHT) return;
 
       const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
       const { row: playerRow, col: playerCol } = state.player.position;
@@ -222,7 +226,7 @@ export default function Game() {
         tapCol,
         playerRow,
         playerCol,
-        MIN_MOVE_DISTANCE
+        UI_CONSTANTS.MIN_MOVE_DISTANCE
       );
 
       if (direction) performMove(direction);
@@ -242,7 +246,7 @@ export default function Game() {
       if (state.inCombat || isOverlayVisible) return;
 
       const { pageX, pageY } = event.nativeEvent;
-      if (pageY > height - HUD_HEIGHT) return;
+      if (pageY > height - UI_CONSTANTS.HUD_HEIGHT) return;
 
       const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
       const { row: playerRow, col: playerCol } = state.player.position;
@@ -252,7 +256,7 @@ export default function Game() {
         tapCol,
         playerRow,
         playerCol,
-        MIN_MOVE_DISTANCE
+        UI_CONSTANTS.MIN_MOVE_DISTANCE
       );
 
       if (direction) startLongPressInterval(direction);
@@ -307,12 +311,14 @@ export default function Game() {
   const handleMonsterTap = useCallback(
     (monster: Monster) => {
       if (state.inCombat) {
-        console.log(
-          "Monster tapped during combat:",
-          monster.name,
-          "ID:",
-          monster.id
-        );
+        if (__DEV__) {
+          console.log(
+            "Monster tapped during combat:",
+            monster.name,
+            "ID:",
+            monster.id
+          );
+        }
         setTargetId(monster.id);
       }
     },
@@ -321,12 +327,14 @@ export default function Game() {
 
   const handleGreatPowerTap = useCallback(
     (greatPower: GreatPower) => {
-      console.log(
-        "Great Power tapped:",
-        greatPower.name,
-        "awakened:",
-        greatPower.awakened
-      );
+      if (__DEV__) {
+        console.log(
+          "Great Power tapped:",
+          greatPower.name,
+          "awakened:",
+          greatPower.awakened
+        );
+      }
 
       if (greatPower.awakened) return;
 
@@ -337,10 +345,12 @@ export default function Game() {
         Math.abs(playerPos.col - powerPos.col);
 
       if (
-        distance <= GREAT_POWER_AWAKEN_DISTANCE &&
+        distance <= COMBAT_CONSTANTS.GREAT_POWER_AWAKEN_DISTANCE &&
         greatPower.awakenCondition === "player_within_range"
       ) {
-        console.log("Awakening Great Power:", greatPower.name);
+        if (__DEV__) {
+          console.log("Awakening Great Power:", greatPower.name);
+        }
         dispatch({
           type: "AWAKEN_GREAT_POWER",
           payload: { greatPowerId: greatPower.id },
@@ -356,7 +366,9 @@ export default function Game() {
   const handleItemTap = useCallback(() => {}, []);
 
   const handleNonCollisionObjectTap = useCallback((obj: NonCollisionObject) => {
-    console.log("Non-collision object tapped:", obj.name, "Type:", obj.type);
+    if (__DEV__) {
+      console.log("Non-collision object tapped:", obj.name, "Type:", obj.type);
+    }
   }, []);
 
   return (

@@ -20,7 +20,9 @@ class AudioManager {
         playThroughEarpieceAndroid: false,
       });
       
-      console.log('Audio mode set successfully');
+      if (__DEV__) {
+        console.log('Audio mode set successfully');
+      }
     } catch (error) {
       console.error('Failed to initialize audio:', error);
     }
@@ -36,7 +38,9 @@ class AudioManager {
         await this.backgroundSound.unloadAsync();
       }
 
-      console.log('Loading background music...');
+      if (__DEV__) {
+        console.log('Loading background music...');
+      }
       const { sound } = await Audio.Sound.createAsync(
         require('../assets/sounds/ambient-background.wav'),
         {
@@ -48,7 +52,9 @@ class AudioManager {
 
       this.backgroundSound = sound;
       this.isLoading = false;
-      console.log('Background music loaded successfully');
+      if (__DEV__) {
+        console.log('Background music loaded successfully');
+      }
       
       // If we were requested to play before loading completed, play now
       if (this.shouldAutoPlay && this.isEnabled) {
@@ -63,30 +69,50 @@ class AudioManager {
   }
 
   async playBackgroundMusic() {
-    console.log('playBackgroundMusic called, enabled:', this.isEnabled, 'hasSound:', !!this.backgroundSound, 'isPlaying:', this.isBackgroundPlaying, 'isLoading:', this.isLoading);
+    if (__DEV__) {
+      console.log('playBackgroundMusic called, enabled:', this.isEnabled, 'hasSound:', !!this.backgroundSound, 'isPlaying:', this.isBackgroundPlaying, 'isLoading:', this.isLoading);
+    }
     
     if (!this.isEnabled) {
-      console.log('Skipping playback - audio disabled');
+      if (__DEV__) {
+        console.log('Skipping playback - audio disabled');
+      }
       return;
     }
 
     // If still loading, set flag to auto-play when ready
     if (this.isLoading || !this.backgroundSound) {
-      console.log('Audio still loading, will auto-play when ready');
+      if (__DEV__) {
+        console.log('Audio still loading, will auto-play when ready');
+      }
       this.shouldAutoPlay = true;
       return;
     }
 
     if (this.isBackgroundPlaying) {
-      console.log('Already playing');
+      if (__DEV__) {
+        console.log('Already playing');
+      }
       return;
     }
 
     try {
-      console.log('Attempting to play background music...');
+      if (__DEV__) {
+        console.log('Attempting to play background music...');
+      }
+      // Double-check sound object still exists after async operations
+      // (prevents race condition if unloadAsync was called during the checks above)
+      if (!this.backgroundSound) {
+        if (__DEV__) {
+          console.warn('Background sound became null before playback - possible race condition with cleanup/unload. Skipping playback.');
+        }
+        return;
+      }
       await this.backgroundSound.playAsync();
       this.isBackgroundPlaying = true;
-      console.log('Background music started successfully');
+      if (__DEV__) {
+        console.log('Background music started successfully');
+      }
     } catch (error) {
       console.error('Failed to play background music:', error);
     }
@@ -100,7 +126,9 @@ class AudioManager {
     try {
       await this.backgroundSound.pauseAsync();
       this.isBackgroundPlaying = false;
-      console.log('Background music paused');
+      if (__DEV__) {
+        console.log('Background music paused');
+      }
     } catch (error) {
       console.error('Failed to pause background music:', error);
     }
@@ -114,7 +142,9 @@ class AudioManager {
     try {
       await this.backgroundSound.stopAsync();
       this.isBackgroundPlaying = false;
-      console.log('Background music stopped');
+      if (__DEV__) {
+        console.log('Background music stopped');
+      }
     } catch (error) {
       console.error('Failed to stop background music:', error);
     }

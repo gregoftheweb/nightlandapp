@@ -1,6 +1,6 @@
 // modules/combat.ts - Enhanced d20 combat system with all combat logic
 import { GameState, Position, Monster } from "../config/types";
-import { getTextContent } from "./utils";
+import { getTextContent, logIfDev } from "./utils";
 import { COMBAT_STRINGS } from "@/assets/copy/combat";
 
 // Roll a d20
@@ -25,8 +25,8 @@ export const executeAttack = (
   const totalAttack = attackRoll + attacker.attack;
   const hit = totalAttack >= defender.ac;
 
-  console.log(`\n🎲 ${attacker.name} attacks ${defender.name}:`);
-  console.log(
+  logIfDev(`\n🎲 ${attacker.name} attacks ${defender.name}:`);
+  logIfDev(
     `   Roll: ${attackRoll} + Attack: ${attacker.attack} = ${totalAttack} vs AC: ${defender.ac}`
   );
 
@@ -35,12 +35,12 @@ export const executeAttack = (
     const totalDamage = damageRoll + Math.floor(attacker.attack / 2);
     const newHp = Math.max(0, defender.hp - totalDamage);
 
-    console.log(
+    logIfDev(
       `   💥 HIT! Damage: ${damageRoll} + ${Math.floor(
         attacker.attack / 2
       )} = ${totalDamage}`
     );
-    console.log(`   ${defender.name} HP: ${defender.hp} → ${newHp}`);
+    logIfDev(`   ${defender.name} HP: ${defender.hp} → ${newHp}`);
 
     // Create different messages for Christos vs monsters
     let combatMessage = "";
@@ -78,7 +78,7 @@ export const executeAttack = (
 
     // Check if defender is dead
     if (newHp <= 0) {
-      console.log(`💀 ${defender.name} is defeated!`);
+      logIfDev(`💀 ${defender.name} is defeated!`);
 
       let deathMessage = "";
       if (attacker.id === "christos") {
@@ -122,7 +122,7 @@ export const executeAttack = (
       }
     }
   } else {
-    console.log(`   ❌ MISS!`);
+    logIfDev(`   ❌ MISS!`);
 
     // Create different miss messages for Christos vs monsters
     let missMessage = "";
@@ -150,13 +150,13 @@ export const processCombatTurn = (
   targetId?: string
 ): void => {
   if (!state.inCombat || !state.attackSlots || state.attackSlots.length === 0) {
-    console.log("No combat to process");
+    logIfDev("No combat to process");
     return;
   }
 
-  console.log(`\n⚔️ COMBAT ROUND STARTING (Turn ${state.moveCount + 1})`);
-  console.log(`   Player HP: ${state.player.hp}/${state.player.maxHP}`);
-  console.log(`   Monsters in combat: ${state.attackSlots.length}`);
+  logIfDev(`\n⚔️ COMBAT ROUND STARTING (Turn ${state.moveCount + 1})`);
+  logIfDev(`   Player HP: ${state.player.hp}/${state.player.maxHP}`);
+  logIfDev(`   Monsters in combat: ${state.attackSlots.length}`);
 
   const combatOrder = [state.player, ...state.attackSlots];
 
@@ -164,7 +164,7 @@ export const processCombatTurn = (
     if (entity.hp <= 0) continue;
 
     if (entity.id === "christos") {
-      console.log(`\n👤 ${entity.name}'s turn:`);
+      logIfDev(`\n👤 ${entity.name}'s turn:`);
       let targetMonster = null;
       if (targetId) {
         targetMonster = state.attackSlots.find(
@@ -191,17 +191,17 @@ export const processCombatTurn = (
           });
         }
       } else {
-        console.log(`   No valid target for ${entity.name}'s attack`);
+        logIfDev(`   No valid target for ${entity.name}'s attack`);
         dispatch({
           type: "ADD_COMBAT_LOG",
           payload: { message: `${entity.name} has no target to attack!` },
         });
       }
     } else {
-      console.log(`\n👹 ${entity.name}'s turn:`);
+      logIfDev(`\n👹 ${entity.name}'s turn:`);
       const playerDied = executeAttack(entity, state.player, dispatch);
       if (playerDied) {
-        console.log("💀 GAME OVER - Player defeated!");
+        logIfDev("💀 GAME OVER - Player defeated!");
         return;
       }
     }
@@ -210,11 +210,11 @@ export const processCombatTurn = (
   // Move waiting monsters into empty attack slots
   moveWaitingMonstersToAttackSlots(state, dispatch);
 
-  console.log(`\n📊 COMBAT ROUND COMPLETE`);
-  console.log(`   Player HP: ${state.player.hp}/${state.player.maxHP}`);
+  logIfDev(`\n📊 COMBAT ROUND COMPLETE`);
+  logIfDev(`   Player HP: ${state.player.hp}/${state.player.maxHP}`);
   state.attackSlots.forEach((monster: any) => {
     if (monster.hp > 0) {
-      console.log(`   ${monster.name} HP: ${monster.hp}/${monster.maxHP}`);
+      logIfDev(`   ${monster.name} HP: ${monster.hp}/${monster.maxHP}`);
     }
   });
 };
@@ -305,7 +305,7 @@ export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
   const aliveMonsters = state.attackSlots?.filter((m: any) => m.hp > 0) || [];
 
   if (aliveMonsters.length === 0) {
-    console.log("🏆 Combat won - all monsters defeated!");
+    logIfDev("🏆 Combat won - all monsters defeated!");
     dispatch({
       type: "ADD_COMBAT_LOG",
       payload: { message: "All enemies defeated!" },
@@ -325,7 +325,7 @@ export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
   }
 
   if (state.player.hp <= 0) {
-    console.log("💀 Combat lost - player defeated!");
+    logIfDev("💀 Combat lost - player defeated!");
 
     const killer = aliveMonsters[0]?.name || "unknown horror";
 
@@ -348,9 +348,9 @@ export const setupCombat = (
   monster: Monster,
   playerPosOverride?: Position
 ): void => {
-  console.log(`\n⚔️ SETTING UP COMBAT with ${monster.name}`);
-  console.log(`📊 BEFORE SETUP - state.attackSlots:`, state.attackSlots);
-  console.log(`📊 BEFORE SETUP - state.inCombat:`, state.inCombat);
+  logIfDev(`\n⚔️ SETTING UP COMBAT with ${monster.name}`);
+  logIfDev(`📊 BEFORE SETUP - state.attackSlots:`, state.attackSlots);
+  logIfDev(`📊 BEFORE SETUP - state.inCombat:`, state.inCombat);
 
   let newAttackSlots = [...(state.attackSlots || [])];
   let newWaitingMonsters = [...(state.waitingMonsters || [])];
@@ -384,11 +384,11 @@ export const setupCombat = (
 
       newAttackSlots.push(combatMonster);
 
-      console.log(
+      logIfDev(
         `✅ ADDED TO ATTACK SLOTS - Monster: ${monster.name}, ID: ${monster.id}, Slot: ${nextUISlot}`
       );
-      console.log(`📊 NEW attackSlots array length:`, newAttackSlots.length);
-      console.log(
+      logIfDev(`📊 NEW attackSlots array length:`, newAttackSlots.length);
+      logIfDev(
         `📊 NEW attackSlots IDs:`,
         newAttackSlots.map((m) => m.id)
       );
@@ -404,7 +404,7 @@ export const setupCombat = (
         payload: { message: `${monster.name} enters combat!` },
       });
 
-      console.log(
+      logIfDev(
         `✅ Monster ${monster.name} assigned to attack slot ${nextUISlot}`
       );
     } else {
@@ -415,7 +415,7 @@ export const setupCombat = (
     // Add to waiting monsters
     if (!newWaitingMonsters.some((m: any) => m.id === monster.id)) {
       newWaitingMonsters.push(monster);
-      console.log(`Monster ${monster.name} added to waiting queue`);
+      logIfDev(`Monster ${monster.name} added to waiting queue`);
     }
     return;
   }
@@ -430,7 +430,7 @@ export const setupCombat = (
     combatTurn: newTurnOrder[0] || state.player,
   };
 
-  console.log(`🎯 DISPATCHING SET_COMBAT with payload:`);
+  logIfDev(`🎯 DISPATCHING SET_COMBAT with payload:`);
 
   dispatch({ type: "SET_COMBAT", payload: combatPayload });
 
@@ -448,7 +448,7 @@ export const setupCombat = (
     payload: { message: getTextContent("combatStart", [monster.name]) },
   });
 
-  console.log(
+  logIfDev(
     `⚔️ Combat initiated! ${newAttackSlots.length} monsters in attack slots`
   );
 };
@@ -463,11 +463,11 @@ export const handleCombatTurn = (
   setDeathMessage?: (message: string) => void // Can remove this parameter now
 ): void => {
   if (!state.inCombat) {
-    console.warn("handleCombatTurn called but not in combat");
+    logIfDev("handleCombatTurn called but not in combat");
     return;
   }
 
-  console.log(`\n⚔️ PROCESSING COMBAT ACTION: ${action}`);
+  logIfDev(`\n⚔️ PROCESSING COMBAT ACTION: ${action}`);
   processCombatTurn(state, dispatch, targetId);
   checkCombatEnd(state, dispatch);
 };
