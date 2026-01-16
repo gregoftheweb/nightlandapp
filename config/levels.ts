@@ -203,8 +203,8 @@ export const levels: Record<string, Level> = {
 
     // MONSTERS - Individual spawn configurations per level
     monsters: [
-      createMonsterInstance("abhuman", 0.2, 2),
-      createMonsterInstance("night_hound", 0.15, 3),
+      createMonsterInstance("abhuman", 0.04, 3),
+      createMonsterInstance("night_hound", 0.02, 2),
     ],
 
     // OBJECTS - Buildings and structures (including pools)
