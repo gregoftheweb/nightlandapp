@@ -71,6 +71,7 @@ export default function GameBoard({
   const [combatInfoVisible, setCombatInfoVisible] = useState(false);
   const [combatMessages, setCombatMessages] = useState<string[]>([]);
   const [previousInCombat, setPreviousInCombat] = useState(false);
+  const [previousCombatLogLength, setPreviousCombatLogLength] = useState(0);
 
   // Memoized entity position maps for O(1) lookups (perf: replaces linear scans)
   const monsterPositionMap = useMemo(() => {
@@ -160,9 +161,9 @@ export default function GameBoard({
       if (__DEV__) {
         console.log("Combat ended (detected transition), hiding CombatDialog");
       }
-    } else if (!state.inCombat && state.combatLog.length > 0 && state.rangedAttackMode !== undefined) {
+    } else if (!state.inCombat && state.combatLog.length > previousCombatLogLength && state.combatLog.length > 0) {
       // Show combat dialog for ranged attacks (outside of combat)
-      // Only show if ranged attack mode was recently active (prevents showing stale messages)
+      // Only show when new messages are added (prevents showing stale messages)
       setCombatMessages(state.combatLog.map((log) => log.message));
       setCombatInfoVisible(true);
       if (__DEV__) {
@@ -170,7 +171,8 @@ export default function GameBoard({
       }
     }
     setPreviousInCombat(state.inCombat);
-  }, [state.inCombat, state.attackSlots, state.combatLog, state.rangedAttackMode, previousInCombat]);
+    setPreviousCombatLogLength(state.combatLog.length);
+  }, [state.inCombat, state.attackSlots, state.combatLog, previousInCombat, previousCombatLogLength]);
 
   // Game over effect (dev logs wrapped; no auto-close comment since updated InfoBox)
 
