@@ -23,12 +23,15 @@ import { CombatDialog } from "./CombatDialog";
 import { getTextContent } from "../modules/utils";
 import { getItemTemplate } from "@/config/objects";
 import deadChristosIMG from "@assets/images/deadChristos.png";
+import Projectile from "./Projectile";
 
 const { width, height } = Dimensions.get("window");
 
-const CELL_SIZE = 32;
+export const CELL_SIZE = 32;
 const VIEWPORT_COLS = Math.floor(width / CELL_SIZE);
 const VIEWPORT_ROWS = Math.floor(height / CELL_SIZE);
+
+export { VIEWPORT_ROWS, VIEWPORT_COLS };
 
 // Background tile configuration
 const BACKGROUND_TILE_SIZE = 320;
@@ -45,6 +48,7 @@ interface GameBoardProps {
   onGreatPowerTap?: (greatPower: GreatPower) => void;
   onNonCollisionObjectTap?: (obj: NonCollisionObject) => void;
   onDeathInfoBoxClose?: () => void;
+  onProjectileComplete?: (projectileId: string) => void;
 }
 
 export default function GameBoard({
@@ -57,6 +61,7 @@ export default function GameBoard({
   onGreatPowerTap,
   onNonCollisionObjectTap,
   onDeathInfoBoxClose,
+  onProjectileComplete,
 }: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoData, setInfoData] = useState<{
@@ -857,6 +862,28 @@ export default function GameBoard({
     handleNonCollisionObjectTap,
   ]);
 
+  // Render active projectiles
+  const renderProjectiles = useMemo(() => {
+    if (!state.activeProjectiles || state.activeProjectiles.length === 0) {
+      return [];
+    }
+
+    return state.activeProjectiles.map((projectile) => (
+      <Projectile
+        key={projectile.id}
+        id={projectile.id}
+        startX={projectile.startX}
+        startY={projectile.startY}
+        endX={projectile.endX}
+        endY={projectile.endY}
+        angleDeg={projectile.angleDeg}
+        color={projectile.color}
+        durationMs={projectile.durationMs}
+        onComplete={onProjectileComplete || (() => {})}
+      />
+    ));
+  }, [state.activeProjectiles, onProjectileComplete]);
+
   // Memoized grid render (perf: batches entities + z-sort only if needed)
   const renderGrid = useMemo(() => {
     const gridCells = renderGridCells;
@@ -955,6 +982,9 @@ export default function GameBoard({
 
       {/* Game Content */}
       <View style={styles.gameContent}>{renderGrid}</View>
+
+      {/* Projectiles - render above game content */}
+      {renderProjectiles}
 
       <InfoBox
         visible={infoVisible}

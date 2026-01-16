@@ -93,6 +93,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     distanceTraveled: 0,
     rangedAttackMode: false,
     targetedMonsterId: null,
+    activeProjectiles: [],
   };
 };
 
@@ -123,6 +124,7 @@ export const deserializeGameState = (serializedState: string): GameState => {
       },
       combatLog: parsedState.combatLog || [],
       nonCollisionObjects: parsedState.nonCollisionObjects || [], 
+      activeProjectiles: parsedState.activeProjectiles || [],
     };
   } catch (e) {
     console.error("Failed to deserialize game state:", e);

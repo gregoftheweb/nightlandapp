@@ -39,6 +39,7 @@ export interface GameObject {
   maxInstances?: number;
   zIndex?: number;
   rotation?: number; // NEW: Rotation in degrees (0-360)
+  projectileColor?: string; // Hex color for ranged weapon projectile
 }
 
 export interface Monster extends GameObject {
@@ -347,6 +348,18 @@ export interface CombatLogEntry {
   turn: number;
 }
 
+export interface Projectile {
+  id: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  angleDeg: number;
+  color: string;
+  createdAt: number;
+  durationMs: number;
+}
+
 export interface GameState {
   gameOver?: boolean;
   level: Level;
@@ -386,4 +399,5 @@ export interface GameState {
   selfHealTurnCounter?: number; // Tracks turns for self-healing mechanic
   rangedAttackMode?: boolean; // True when player is in ranged attack targeting mode
   targetedMonsterId?: string | null; // ID of the currently targeted monster for ranged attack
+  activeProjectiles: Projectile[]; // Active projectiles being animated
 }
