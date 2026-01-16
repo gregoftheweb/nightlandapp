@@ -333,20 +333,49 @@ export default function Game() {
     } else {
       // If ranged attack mode is ON, execute the ranged attack
       if (!state.targetedMonsterId) {
-        // Edge case: mode is on but no target
+        // No target selected (maybe previous target died)
+        // Try to auto-target the nearest monster
+        const allMonsters = [...state.activeMonsters, ...state.attackSlots];
+        const nearestMonster = findNearestMonster(state.player.position, allMonsters);
+        
+        if (!nearestMonster) {
+          // No enemies available at all
+          dispatch({
+            type: "ADD_COMBAT_LOG",
+            payload: { message: "No enemies in range" },
+          });
+          dispatch({ type: "CLEAR_RANGED_MODE" });
+          return;
+        }
+        
+        // Auto-target the nearest monster
+        dispatch({
+          type: "SET_TARGET_MONSTER",
+          payload: { monsterId: nearestMonster.id },
+        });
+        
+        // Add targeting message
+        const monsterName = nearestMonster.name || nearestMonster.shortName || "enemy";
         dispatch({
           type: "ADD_COMBAT_LOG",
-          payload: { message: "No target selected" },
+          payload: { message: `Christos has the ${monsterName} in his sight!` },
         });
-        dispatch({ type: "CLEAR_RANGED_MODE" });
+        
+        if (__DEV__) {
+          console.log("Auto-targeted nearest monster:", nearestMonster.name);
+        }
         return;
       }
 
       // Execute the ranged attack
       executeRangedAttack(state, dispatch, state.targetedMonsterId);
 
-      // Clear ranged attack mode after shooting
-      dispatch({ type: "CLEAR_RANGED_MODE" });
+      // Don't clear ranged attack mode - keep targeting the same monster
+      // Mode will be cleared when:
+      // - Player taps ground (handlePress)
+      // - Player taps inventory (handleInventoryPress)
+      // - Target dies and no other monsters exist
+      // - Player manually retargets (handleMonsterTap)
 
       // If not in combat, trigger enemy turn (similar to regular turn/move)
       if (!state.inCombat) {

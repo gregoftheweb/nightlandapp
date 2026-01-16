@@ -244,8 +244,8 @@ export const reducer = (
           (monster) => monster.id !== action.payload.id
         ),
         monstersKilled: (state.monstersKilled || 0) + 1,
-        // If the removed monster was the targeted monster, clear ranged attack mode
-        rangedAttackMode: state.targetedMonsterId === action.payload.id ? false : state.rangedAttackMode,
+        // If the removed monster was the targeted monster, clear the target but keep ranged mode on
+        // This allows the player to retarget another monster without re-entering ranged mode
         targetedMonsterId: state.targetedMonsterId === action.payload.id ? null : state.targetedMonsterId,
       };
 
