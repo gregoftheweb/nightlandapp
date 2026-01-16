@@ -109,7 +109,6 @@ export const createItemInstance = (
 const createMonsterInstance = (
   monsterShortName: string,
   spawnRate: number,
-  spawnChance: number,
   maxInstances: number,
   position: Position = { row: 0, col: 0 }
 ): LevelMonsterInstance => {
@@ -137,8 +136,7 @@ const createMonsterInstance = (
     soulKey: template.soulKey ?? "000000",
     initiative: template.initiative ?? 0,
     // SPAWN CONFIGURATION - SET PER LEVEL
-    spawnRate,
-    spawnChance,
+    spawnRate, // Percentage chance (0.0 to 1.0) that monster spawns each turn
     maxInstances,
     spawned: false,
   };
@@ -204,8 +202,8 @@ export const levels: Record<string, Level> = {
 
     // MONSTERS - Individual spawn configurations per level
     monsters: [
-      createMonsterInstance("abhuman", 0, 0.2, 2),
-      createMonsterInstance("night_hound", 0, 0.15, 3),
+      createMonsterInstance("abhuman", 0.2, 2),
+      createMonsterInstance("night_hound", 0.15, 3),
     ],
 
     // OBJECTS - Buildings and structures (including pools)
@@ -353,8 +351,8 @@ export const levels: Record<string, Level> = {
 
     // DIFFERENT SPAWN SETTINGS FOR LEVEL 2
     monsters: [
-      createMonsterInstance("night_hound", 0.25, 0.4, 6),
-      createMonsterInstance("abhuman", 0.1, 0.15, 1),
+      createMonsterInstance("night_hound", 0.1, 6),
+      createMonsterInstance("abhuman", 0.015, 1),
     ],
 
     // OBJECTS - Buildings including pools
