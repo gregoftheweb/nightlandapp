@@ -39,7 +39,7 @@ import {
   COMBAT_CONSTANTS,
 } from "../../constants/Game";
 import { findNearestMonster } from "../../modules/monsterUtils";
-import { executeRangedAttack, processRangedAttackImpact } from "../../modules/combat";
+import { executeRangedAttack, processRangedAttackImpact, checkCombatEnd } from "../../modules/combat";
 
 // Constants
 const { width, height } = Dimensions.get("window");
@@ -323,6 +323,11 @@ export default function Game() {
       // Process the impact if we have a target
       if (targetMonsterId) {
         const targetDied = processRangedAttackImpact(stateRef.current, dispatch, targetMonsterId);
+
+        // Check if combat should end (if in combat and all monsters defeated)
+        if (stateRef.current.inCombat) {
+          checkCombatEnd(stateRef.current, dispatch);
+        }
 
         // If not in combat AND target didn't die, trigger enemy turn
         if (!stateRef.current.inCombat && !targetDied) {
