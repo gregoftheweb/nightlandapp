@@ -66,6 +66,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
         type: "weapon",
         weaponType: "ranged",
         collectible: true,
+        projectileColor: "#FFD700", // Bright gold arrow
       },
       {
         id: "weapon-shurikens-001",
@@ -79,6 +80,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
         type: "weapon",
         weaponType: "ranged",
         collectible: true,
+        projectileColor: "#C0C0C0", // Silvery steel
       },
     ],
     monsters: levelConfig.monsters || [],
