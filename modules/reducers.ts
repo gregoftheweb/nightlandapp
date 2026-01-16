@@ -152,7 +152,18 @@ export const reducer = (
 
     // ============ COMBAT SYSTEM ============
     case "SET_COMBAT":
-      logIfDev("SET_COMBAT dispatched, inCombat.");
+      logIfDev(`🎯 SET_COMBAT dispatched, inCombat: ${action.payload.inCombat}`);
+      
+      // Check if we're exiting combat
+      const exitingCombat = !action.payload.inCombat && state.inCombat;
+      // Check if there are any living monsters remaining
+      const hasRemainingMonsters = action.payload.attackSlots.length > 0 || 
+                                    state.activeMonsters.some(m => m.hp > 0 && m.active !== false);
+      
+      // Determine if we should clear ranged mode
+      // Clear when: entering combat OR exiting combat with no monsters left
+      const shouldClearRangedMode = action.payload.inCombat || (exitingCombat && !hasRemainingMonsters);
+      
       return {
         ...state,
         inCombat: action.payload.inCombat,
@@ -161,6 +172,9 @@ export const reducer = (
         turnOrder: action.payload.turnOrder,
         combatTurn: action.payload.combatTurn,
         combatLog: action.payload.inCombat ? state.combatLog || [] : [],
+        // Clear ranged attack mode when entering combat OR when exiting combat with no monsters left
+        rangedAttackMode: shouldClearRangedMode ? false : state.rangedAttackMode,
+        targetedMonsterId: shouldClearRangedMode ? null : state.targetedMonsterId,
       };
 
     case "START_COMBAT":
@@ -199,6 +213,13 @@ export const reducer = (
         ],
       };
 
+    case "CLEAR_COMBAT_LOG":
+      logIfDev("🎯 CLEAR_COMBAT_LOG dispatched");
+      return {
+        ...state,
+        combatLog: [],
+      };
+
     // ============ HEALTH SYSTEM ============
     case "UPDATE_PLAYER":
       return {
@@ -234,6 +255,9 @@ export const reducer = (
           (monster) => monster.id !== action.payload.id
         ),
         monstersKilled: (state.monstersKilled || 0) + 1,
+        // If the removed monster was the targeted monster, clear the target but keep ranged mode on
+        // This allows the player to retarget another monster without re-entering ranged mode
+        targetedMonsterId: state.targetedMonsterId === action.payload.id ? null : state.targetedMonsterId,
       };
 
     case "UPDATE_PLAYER_HP":
@@ -679,6 +703,30 @@ export const reducer = (
 
     case "SET_AUDIO_STARTED":
       return { ...state, audioStarted: action.payload };
+
+    // ============ RANGED ATTACK MODE ============
+    case "TOGGLE_RANGED_MODE":
+      logIfDev(`🎯 TOGGLE_RANGED_MODE: active=${action.payload.active}, targetId=${action.payload.targetId}`);
+      return {
+        ...state,
+        rangedAttackMode: action.payload.active,
+        targetedMonsterId: action.payload.active ? action.payload.targetId : null,
+      };
+
+    case "SET_TARGET_MONSTER":
+      logIfDev(`🎯 SET_TARGET_MONSTER: monsterId=${action.payload.monsterId}`);
+      return {
+        ...state,
+        targetedMonsterId: action.payload.monsterId,
+      };
+
+    case "CLEAR_RANGED_MODE":
+      logIfDev(`🎯 CLEAR_RANGED_MODE`);
+      return {
+        ...state,
+        rangedAttackMode: false,
+        targetedMonsterId: null,
+      };
 
     // ============ CLEANUP ============
     default:

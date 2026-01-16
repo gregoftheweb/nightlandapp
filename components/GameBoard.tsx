@@ -71,6 +71,8 @@ export default function GameBoard({
   const [combatInfoVisible, setCombatInfoVisible] = useState(false);
   const [combatMessages, setCombatMessages] = useState<string[]>([]);
   const [previousInCombat, setPreviousInCombat] = useState(false);
+  const [previousCombatLogLength, setPreviousCombatLogLength] = useState(0);
+  const [previousRangedMode, setPreviousRangedMode] = useState(false);
 
   // Memoized entity position maps for O(1) lookups (perf: replaces linear scans)
   const monsterPositionMap = useMemo(() => {
@@ -133,9 +135,20 @@ export default function GameBoard({
   // Handle combat start and log updates (dev logs wrapped)
   useEffect(() => {
     if (__DEV__) {
-      console.log("Combat effect running");
+      console.log("🎯 Combat effect running - inCombat:", state.inCombat, "combatLog.length:", state.combatLog.length, "previousCombatLogLength:", previousCombatLogLength, "rangedAttackMode:", state.rangedAttackMode);
     }
-    if (state.inCombat && !previousInCombat && state.attackSlots.length > 0) {
+    
+    // PRIORITY 1: Check if we just entered ranged attack mode (MUST be first to show dialog immediately)
+    if (state.rangedAttackMode && !previousRangedMode && state.combatLog.length > 0) {
+      // Just entered ranged mode - show dialog immediately with targeting message
+      setCombatMessages(state.combatLog.map((log) => log.message));
+      setCombatInfoVisible(true);
+      if (__DEV__) {
+        console.log("🎯 Entered ranged attack mode, showing CombatDialog immediately with targeting message");
+      }
+    }
+    // PRIORITY 2: Check if combat just started
+    else if (state.inCombat && !previousInCombat && state.attackSlots.length > 0) {
       const firstMonster = state.attackSlots[0];
       const monsterName =
         firstMonster.name || firstMonster.shortName || "Monster";
@@ -147,22 +160,56 @@ export default function GameBoard({
       setCombatInfoVisible(true);
       if (__DEV__) {
         console.log(
-          "Combat started (detected transition), showing CombatDialog with message:",
+          "🎯 Combat started (detected transition), showing CombatDialog with message:",
           combatStartMessage
         );
       }
     } else if (state.inCombat && state.combatLog.length > 0) {
       setCombatMessages(state.combatLog.map((log) => log.message));
       setCombatInfoVisible(true);
+      if (__DEV__) {
+        console.log("🎯 In combat, updating messages");
+      }
     } else if (!state.inCombat && previousInCombat) {
+      // Combat ended - hide dialog UNLESS we're in ranged mode with messages
+      if (!state.rangedAttackMode || state.combatLog.length === 0) {
+        setCombatInfoVisible(false);
+        setCombatMessages([]);
+        if (__DEV__) {
+          console.log("🎯 Combat ended (detected transition), hiding CombatDialog");
+        }
+      } else {
+        // Keep dialog visible if in ranged mode with messages
+        setCombatMessages(state.combatLog.map((log) => log.message));
+        setCombatInfoVisible(true);
+        if (__DEV__) {
+          console.log("🎯 Combat ended but ranged mode active with messages, keeping dialog visible");
+        }
+      }
+    } else if (!state.inCombat && state.combatLog.length > previousCombatLogLength) {
+      // Show combat dialog for ranged attacks (outside of combat)
+      // Only show when new messages are added (prevents showing stale messages)
+      setCombatMessages(state.combatLog.map((log) => log.message));
+      setCombatInfoVisible(true);
+      if (__DEV__) {
+        console.log("🎯 Showing CombatDialog for ranged attack messages");
+      }
+    } else if (!state.inCombat && state.combatLog.length === 0 && previousCombatLogLength > 0) {
+      // Combat log was cleared (all monsters defeated in ranged mode)
       setCombatInfoVisible(false);
       setCombatMessages([]);
       if (__DEV__) {
-        console.log("Combat ended (detected transition), hiding CombatDialog");
+        console.log("🎯 Combat log cleared, hiding CombatDialog");
       }
     }
     setPreviousInCombat(state.inCombat);
-  }, [state.inCombat, state.attackSlots, state.combatLog, previousInCombat]);
+    setPreviousCombatLogLength(state.combatLog.length);
+    setPreviousRangedMode(state.rangedAttackMode || false);
+    
+    if (__DEV__) {
+      console.log("🎯 Combat effect complete - combatInfoVisible:", state.inCombat || state.combatLog.length > 0);
+    }
+  }, [state.inCombat, state.attackSlots, state.combatLog, state.rangedAttackMode, previousInCombat]);
 
   // Game over effect (dev logs wrapped; no auto-close comment since updated InfoBox)
 
@@ -233,16 +280,26 @@ export default function GameBoard({
       if (__DEV__) {
         console.log("handleMonsterTap called, monster:", monster);
       }
-      showInfo(
-        monster.name || monster.shortName || "Monster",
-        monster.description ||
-          `A dangerous creature. HP: ${monster.hp || "Unknown"}`,
-        getMonsterImage(monster)
-      );
+      // Don't show info dialog if in ranged attack mode (player is targeting/retargeting)
+      if (!state.rangedAttackMode) {
+        showInfo(
+          monster.name || monster.shortName || "Monster",
+          monster.description ||
+            `A dangerous creature. HP: ${monster.hp || "Unknown"}`,
+          getMonsterImage(monster)
+        );
+      }
       onMonsterTap?.(monster);
     },
-    [showInfo, onMonsterTap]
+    [showInfo, onMonsterTap, state.rangedAttackMode]
   );
+
+  const handleCombatDialogClose = useCallback(() => {
+    if (__DEV__) {
+      console.log("CombatDialog onClose called");
+    }
+    setCombatInfoVisible(false);
+  }, []);
 
   const handleGreatPowerTap = useCallback(
     (greatPower: GreatPower) => {
@@ -392,6 +449,10 @@ export default function GameBoard({
           screenCol >= 0 &&
           screenCol < VIEWPORT_COLS;
         if (!inView) return null;
+        
+        // Check if this monster is the targeted monster for ranged attack
+        const isTargeted = state.targetedMonsterId === monster.id;
+        
         return (
           <TouchableOpacity
             key={`combat-monster-${monster.id}-${index}`}
@@ -408,7 +469,13 @@ export default function GameBoard({
           >
             <Image
               source={getMonsterImage(monster)}
-              style={styles.character}
+              style={[
+                styles.character,
+                isTargeted && {
+                  borderWidth: 1,
+                  borderColor: "yellow",
+                },
+              ]}
               resizeMode="contain"
             />
           </TouchableOpacity>
@@ -418,6 +485,7 @@ export default function GameBoard({
   }, [
     state.inCombat,
     state.attackSlots,
+    state.targetedMonsterId,
     cameraOffset.offsetY,
     cameraOffset.offsetX,
     handleMonsterTap,
@@ -474,6 +542,10 @@ export default function GameBoard({
           screenCol >= 0 &&
           screenCol < VIEWPORT_COLS;
         if (!inView) return null;
+        
+        // Check if this monster is the targeted monster for ranged attack
+        const isTargeted = state.targetedMonsterId === monster.id;
+        
         return (
           <TouchableOpacity
             key={`monster-${monster.id}-${index}`}
@@ -490,7 +562,13 @@ export default function GameBoard({
           >
             <Image
               source={getMonsterImage(monster)}
-              style={styles.character}
+              style={[
+                styles.character,
+                isTargeted && {
+                  borderWidth: 1,
+                  borderColor: "yellow",
+                },
+              ]}
               resizeMode="contain"
             />
           </TouchableOpacity>
@@ -499,6 +577,7 @@ export default function GameBoard({
       .filter((item): item is React.ReactElement => item !== null);
   }, [
     state.activeMonsters,
+    state.targetedMonsterId,
     cameraOffset.offsetY,
     cameraOffset.offsetX,
     handleMonsterTap,
@@ -897,12 +976,7 @@ export default function GameBoard({
       <CombatDialog
         visible={combatInfoVisible}
         messages={combatMessages}
-        onClose={() => {
-          if (__DEV__) {
-            console.log("CombatDialog onClose called");
-          }
-          setCombatInfoVisible(false);
-        }}
+        onClose={handleCombatDialogClose}
       />
     </View>
   );

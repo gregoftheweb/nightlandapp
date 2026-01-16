@@ -91,6 +91,8 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     lastAction: "",
     monstersKilled: 0,
     distanceTraveled: 0,
+    rangedAttackMode: false,
+    targetedMonsterId: null,
   };
 };
 

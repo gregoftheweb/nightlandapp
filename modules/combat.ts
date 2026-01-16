@@ -8,6 +8,11 @@ const rollD20 = (): number => {
   return Math.floor(Math.random() * 20) + 1;
 };
 
+// Roll a d6
+const rollD6 = (): number => {
+  return Math.floor(Math.random() * 6) + 1;
+};
+
 // ==================== COMBAT UTILITIES ====================
 
 const checkCollision = (pos1: Position, pos2: Position): boolean => {
@@ -486,4 +491,141 @@ export const checkForCombatCollision = (
     }
   }
   return false;
+};
+
+// ==================== RANGED ATTACK ====================
+
+/**
+ * Get the name of the player's equipped ranged weapon
+ * @param state - Current game state
+ * @returns The weapon name or a default
+ */
+const getEquippedRangedWeaponName = (state: GameState): string => {
+  if (!state.player.equippedRangedWeaponId) {
+    return "bow"; // Default fallback
+  }
+  
+  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId);
+  return weapon?.name || "ranged weapon";
+};
+
+/**
+ * Execute a ranged attack from the player to a target monster
+ * @param state - Current game state
+ * @param dispatch - Dispatch function for state updates
+ * @param targetMonsterId - ID of the monster to attack
+ * @returns true if the target died, false otherwise
+ */
+export const executeRangedAttack = (
+  state: GameState,
+  dispatch: any,
+  targetMonsterId: string
+): boolean => {
+  // Find the target monster in either activeMonsters or attackSlots
+  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0);
+  
+  if (!targetMonster) {
+    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.hp > 0);
+  }
+
+  if (!targetMonster) {
+    logIfDev("No valid target for ranged attack");
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: { message: "No target in range" },
+    });
+    return false;
+  }
+
+  const player = state.player;
+  const weaponName = getEquippedRangedWeaponName(state);
+
+  // Log attempt
+  const monsterName = targetMonster.name || targetMonster.shortName || "enemy";
+  dispatch({
+    type: "ADD_COMBAT_LOG",
+    payload: { message: `Christos attempts a shot with ${weaponName} at ${monsterName}.` },
+  });
+
+  logIfDev(`\n🏹 Christos ranged attack on ${monsterName}:`);
+
+  // Perform hit/miss roll using d20 system
+  const attackRoll = rollD20();
+  const totalAttack = attackRoll + player.attack;
+  const hit = totalAttack >= targetMonster.ac;
+
+  logIfDev(
+    `   Roll: ${attackRoll} + Attack: ${player.attack} = ${totalAttack} vs AC: ${targetMonster.ac}`
+  );
+
+  if (hit) {
+    // Calculate damage using d6 dice roll
+    const damageRoll = rollD6();
+    const totalDamage = damageRoll + Math.floor(player.attack / 2);
+    const newHp = Math.max(0, targetMonster.hp - totalDamage);
+
+    logIfDev(
+      `   💥 HIT! Damage: ${damageRoll} + ${Math.floor(
+        player.attack / 2
+      )} = ${totalDamage}`
+    );
+    logIfDev(`   ${monsterName} HP: ${targetMonster.hp} → ${newHp}`);
+
+    // Log hit and damage
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: { message: "Hit!" },
+    });
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: { message: `${monsterName} takes ${totalDamage} damage.` },
+    });
+
+    // Update monster HP
+    dispatch({
+      type: "UPDATE_MONSTER",
+      payload: { id: targetMonster.id, updates: { hp: newHp } },
+    });
+
+    // Check if monster dies
+    if (newHp <= 0) {
+      logIfDev(`💀 ${monsterName} is defeated!`);
+      dispatch({
+        type: "ADD_COMBAT_LOG",
+        payload: { message: `${monsterName} dies.` },
+      });
+      dispatch({
+        type: "REMOVE_MONSTER",
+        payload: { id: targetMonster.id },
+      });
+      
+      // Check if all monsters are now dead (only in non-combat scenarios)
+      // We need to check the updated state after removal
+      const remainingMonsters = state.activeMonsters.filter(
+        (m) => m.id !== targetMonster.id && m.hp > 0
+      );
+      const remainingCombatMonsters = state.attackSlots.filter(
+        (m) => m.id !== targetMonster.id && m.hp > 0
+      );
+      
+      logIfDev(`🎯 After kill - remaining active: ${remainingMonsters.length}, combat: ${remainingCombatMonsters.length}, inCombat: ${state.inCombat}`);
+      
+      if (remainingMonsters.length === 0 && remainingCombatMonsters.length === 0 && !state.inCombat) {
+        // All monsters are dead, clear ranged mode and combat log
+        logIfDev("🎯 All monsters defeated with ranged attacks, clearing ranged mode and combat log");
+        dispatch({ type: "CLEAR_RANGED_MODE" });
+        dispatch({ type: "CLEAR_COMBAT_LOG" });
+      }
+      
+      return true; // Target died
+    }
+  } else {
+    logIfDev(`   ❌ MISS!`);
+    dispatch({
+      type: "ADD_COMBAT_LOG",
+      payload: { message: "Miss!" },
+    });
+  }
+  
+  return false; // Target survived
 };
