@@ -153,6 +153,36 @@ const doTurnCleanup = (): void => {
     logIfDev("Christos is hidden");
   }
 
+  // Apply self-healing if configured for the current level
+  const selfHealRate = currentGameState.level.selfHealRate;
+  if (selfHealRate && selfHealRate > 0) {
+    const currentHP = currentGameState.player.hp;
+    const maxHP = currentGameState.player.maxHP;
+
+    // Only heal if below max HP
+    if (currentHP < maxHP) {
+      const healAmount = Math.min(selfHealRate, maxHP - currentHP);
+      const newHP = currentHP + healAmount;
+
+      gameDispatch({
+        type: "UPDATE_PLAYER",
+        payload: {
+          updates: { hp: newHP }
+        }
+      });
+
+      // Update local state for consistency
+      currentGameState = {
+        ...currentGameState,
+        player: { ...currentGameState.player, hp: newHP }
+      };
+
+      logIfDev(`💚 Self-healing: ${currentHP} -> ${newHP} (+${healAmount} HP)`);
+    } else {
+      logIfDev(`💚 Self-healing: Already at max HP (${maxHP})`);
+    }
+  }
+
   // Any other end-of-turn cleanup
 };
 

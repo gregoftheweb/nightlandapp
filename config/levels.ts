@@ -192,6 +192,7 @@ export const levels: Record<string, Level> = {
     ambientLight: 0.2,
     weatherEffect: null,
     backgroundMusic: "nightland_ambient",
+    selfHealRate: 1, // Christos heals 1 HP per turn
 
     // ITEMS - Created from templates with specific positions
     items: [
@@ -346,6 +347,7 @@ export const levels: Record<string, Level> = {
     ambientLight: 0.15,
     weatherEffect: "mist",
     backgroundMusic: "watching_grounds",
+    selfHealRate: 1, // Christos heals 1 HP per turn
 
     items: [],
 

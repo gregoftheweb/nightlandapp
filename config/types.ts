@@ -278,6 +278,7 @@ export interface Level {
   ambientLight?: number;
   weatherEffect?: string | null;
   backgroundMusic?: string;
+  selfHealRate?: number; // HP healed per turn (default: 0 for no self-healing)
   items: Item[];
   monsters: LevelMonsterInstance[];
   objects: LevelObjectInstance[];
