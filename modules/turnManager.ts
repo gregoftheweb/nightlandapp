@@ -155,18 +155,14 @@ const doTurnCleanup = (): void => {
 
   // Apply self-healing if configured for the current level
   const selfHealRate = currentGameState.level.selfHealRate;
-  logIfDev(`[Self-Heal] Checking self-healing - selfHealRate: ${selfHealRate}`);
-  
   if (selfHealRate && selfHealRate > 0) {
     const currentHP = currentGameState.player.hp;
     const maxHP = currentGameState.player.maxHP;
-    logIfDev(`[Self-Heal] Current HP: ${currentHP}, Max HP: ${maxHP}`);
 
     // Only heal if below max HP
     if (currentHP < maxHP) {
       const healAmount = Math.min(selfHealRate, maxHP - currentHP);
       const newHP = currentHP + healAmount;
-      logIfDev(`[Self-Heal] Healing ${healAmount} HP: ${currentHP} -> ${newHP}`);
 
       gameDispatch({
         type: "UPDATE_PLAYER",
@@ -183,11 +179,8 @@ const doTurnCleanup = (): void => {
 
       logIfDev(`💚 Self-healing: ${currentHP} -> ${newHP} (+${healAmount} HP)`);
     } else {
-      logIfDev(`[Self-Heal] Already at max HP (${maxHP})`);
       logIfDev(`💚 Self-healing: Already at max HP (${maxHP})`);
     }
-  } else {
-    logIfDev(`[Self-Heal] Self-healing disabled or not configured (selfHealRate: ${selfHealRate})`);
   }
 
   // Any other end-of-turn cleanup
