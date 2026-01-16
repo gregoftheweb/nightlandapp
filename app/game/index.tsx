@@ -86,7 +86,9 @@ export default function Game() {
   useEffect(() => {
     if (!state.gameOver) return;
 
-    console.log("Game Over detected, navigating to death screen");
+    if (__DEV__) {
+      console.log("Game Over detected, navigating to death screen");
+    }
     audioManager.pauseBackgroundMusic();
 
     const timeout = setTimeout(() => {
@@ -100,7 +102,9 @@ export default function Game() {
   // Initialize starting monsters
   useEffect(() => {
     if (state.activeMonsters.length === 0 && state.moveCount === 0) {
-      console.log("Initializing starting monsters");
+      if (__DEV__) {
+        console.log("Initializing starting monsters");
+      }
       initializeStartingMonsters(state, dispatch);
     }
   }, [state.activeMonsters.length, state.moveCount, state, dispatch]);
@@ -307,12 +311,14 @@ export default function Game() {
   const handleMonsterTap = useCallback(
     (monster: Monster) => {
       if (state.inCombat) {
-        console.log(
-          "Monster tapped during combat:",
-          monster.name,
-          "ID:",
-          monster.id
-        );
+        if (__DEV__) {
+          console.log(
+            "Monster tapped during combat:",
+            monster.name,
+            "ID:",
+            monster.id
+          );
+        }
         setTargetId(monster.id);
       }
     },
@@ -321,12 +327,14 @@ export default function Game() {
 
   const handleGreatPowerTap = useCallback(
     (greatPower: GreatPower) => {
-      console.log(
-        "Great Power tapped:",
-        greatPower.name,
-        "awakened:",
-        greatPower.awakened
-      );
+      if (__DEV__) {
+        console.log(
+          "Great Power tapped:",
+          greatPower.name,
+          "awakened:",
+          greatPower.awakened
+        );
+      }
 
       if (greatPower.awakened) return;
 
@@ -340,7 +348,9 @@ export default function Game() {
         distance <= COMBAT_CONSTANTS.GREAT_POWER_AWAKEN_DISTANCE &&
         greatPower.awakenCondition === "player_within_range"
       ) {
-        console.log("Awakening Great Power:", greatPower.name);
+        if (__DEV__) {
+          console.log("Awakening Great Power:", greatPower.name);
+        }
         dispatch({
           type: "AWAKEN_GREAT_POWER",
           payload: { greatPowerId: greatPower.id },
@@ -356,7 +366,9 @@ export default function Game() {
   const handleItemTap = useCallback(() => {}, []);
 
   const handleNonCollisionObjectTap = useCallback((obj: NonCollisionObject) => {
-    console.log("Non-collision object tapped:", obj.name, "Type:", obj.type);
+    if (__DEV__) {
+      console.log("Non-collision object tapped:", obj.name, "Type:", obj.type);
+    }
   }, []);
 
   return (
