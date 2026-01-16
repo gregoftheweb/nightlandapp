@@ -138,7 +138,7 @@ export default function GameBoard({
       console.log("🎯 Combat effect running - inCombat:", state.inCombat, "combatLog.length:", state.combatLog.length, "previousCombatLogLength:", previousCombatLogLength, "rangedAttackMode:", state.rangedAttackMode);
     }
     
-    // Check if we just entered ranged attack mode
+    // PRIORITY 1: Check if we just entered ranged attack mode (MUST be first to show dialog immediately)
     if (state.rangedAttackMode && !previousRangedMode && state.combatLog.length > 0) {
       // Just entered ranged mode - show dialog immediately with targeting message
       setCombatMessages(state.combatLog.map((log) => log.message));
@@ -146,7 +146,9 @@ export default function GameBoard({
       if (__DEV__) {
         console.log("🎯 Entered ranged attack mode, showing CombatDialog immediately with targeting message");
       }
-    } else if (state.inCombat && !previousInCombat && state.attackSlots.length > 0) {
+    }
+    // PRIORITY 2: Check if combat just started
+    else if (state.inCombat && !previousInCombat && state.attackSlots.length > 0) {
       const firstMonster = state.attackSlots[0];
       const monsterName =
         firstMonster.name || firstMonster.shortName || "Monster";
