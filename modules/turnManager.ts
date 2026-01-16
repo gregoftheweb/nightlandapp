@@ -146,6 +146,7 @@ const executeSpellsAndEffects = (): void => {
 // ==================== CLEANUP ====================
 
 const doTurnCleanup = (): void => {
+  console.log(`[Turn Cleanup] Starting cleanup`);
   logIfDev(`🧹 TURN CLEANUP`);
 
   // Update hidden status if needed
