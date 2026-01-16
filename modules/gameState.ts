@@ -61,6 +61,8 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     lastSaved: new Date(),
     playTime: 0,
     lastAction: "",
+    monstersKilled: 0,
+    distanceTraveled: 0,
   };
 };
 

@@ -16,9 +16,7 @@ You say nothing and depart. For even though hopeless, you must try.`,
   },
 
   deathScreen: {
-    title: "You Have Fallen in the Nightland",
-    subtitle: "Your journey ends here...",
-    retryButton: "Awaken again in the Redoubt",
-    quitButton: "Return to Main Menu",
+    title: "Christos is dead.",
+    buttonText: "Try Again",
   },
 } as const;

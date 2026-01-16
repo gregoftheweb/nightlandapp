@@ -92,8 +92,7 @@ export default function Game() {
     audioManager.pauseBackgroundMusic();
 
     const timeout = setTimeout(() => {
-      dispatch({ type: "RESET_GAME" });
-      router.push("/princess");
+      router.push("/death");
     }, TIMING_CONSTANTS.GAME_OVER_DELAY);
 
     return () => clearTimeout(timeout);

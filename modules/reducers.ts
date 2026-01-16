@@ -88,12 +88,15 @@ export const reducer = (
         }
         return state;
       }
+      const oldPosition = state.player.position;
+      const distanceMoved = Math.abs(newPlayerPos.row - oldPosition.row) + Math.abs(newPlayerPos.col - oldPosition.col);
       return {
         ...state,
         player: {
           ...state.player,
           position: newPlayerPos,
         },
+        distanceTraveled: (state.distanceTraveled || 0) + distanceMoved,
       };
 
     case "UPDATE_MOVE_COUNT":
@@ -225,6 +228,7 @@ export const reducer = (
         waitingMonsters: state.waitingMonsters.filter(
           (monster) => monster.id !== action.payload.id
         ),
+        monstersKilled: (state.monstersKilled || 0) + 1,
       };
 
     case "UPDATE_PLAYER_HP":
@@ -260,6 +264,7 @@ export const reducer = (
         ...state,
         gameOver: true,
         gameOverMessage: action.payload?.message || "You have been defeated.",
+        killerName: action.payload?.killerName || "unknown horror",
         inCombat: false,
         attackSlots: [],
         waitingMonsters: [],

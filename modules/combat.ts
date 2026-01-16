@@ -112,10 +112,10 @@ export const executeAttack = (
           payload: { message: deathMessage },
         });
 
-        // Send the message into GAME_OVER reducer
+        // Send the message and killer name into GAME_OVER reducer
         dispatch({
           type: "GAME_OVER",
-          payload: { message: deathMessage },
+          payload: { message: deathMessage, killerName: killerName },
         });
 
         return true;

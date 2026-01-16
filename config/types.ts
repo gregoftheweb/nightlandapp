@@ -373,4 +373,7 @@ export interface GameState {
   dialogData?: any;
   audioStarted?: boolean;
   gameOverMessage?: string;
+  monstersKilled?: number;
+  distanceTraveled?: number;
+  killerName?: string;
 }
