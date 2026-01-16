@@ -100,7 +100,8 @@ class AudioManager {
       if (__DEV__) {
         console.log('Attempting to play background music...');
       }
-      // Double-check sound object exists (prevents race condition)
+      // Double-check sound object still exists after async operations
+      // (prevents race condition if unloadAsync was called during the checks above)
       if (!this.backgroundSound) {
         if (__DEV__) {
           console.warn('Background sound became null before playback');

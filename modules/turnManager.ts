@@ -6,6 +6,7 @@ import { handleCombatTurn } from "./combat";
 import { calculateNewPosition } from "./movement";
 import { checkItemInteractions, checkObjectInteractions } from "./interactions";
 import { SPAWN_CONSTANTS } from "../constants/Game";
+import { logIfDev } from "./utils";
 
 // ==================== MODULE-LEVEL STATE (Preserved for combat/monster flow integrity) ====================
 let currentGameState: GameState;
@@ -25,12 +26,6 @@ const determineTurnType = (
     return "move";
   }
   return "non-move-turn";
-};
-
-const logIfDev = (message: string, ...args: any[]) => {
-  if (__DEV__) {
-    console.log(message, ...args);
-  }
 };
 
 // ==================== COMBAT TURN EXECUTION ====================

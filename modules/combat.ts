@@ -1,14 +1,7 @@
 // modules/combat.ts - Enhanced d20 combat system with all combat logic
 import { GameState, Position, Monster } from "../config/types";
-import { getTextContent } from "./utils";
+import { getTextContent, logIfDev } from "./utils";
 import { COMBAT_STRINGS } from "@/assets/copy/combat";
-
-// Development logging helper
-const logIfDev = (message: string, ...args: any[]) => {
-  if (__DEV__) {
-    console.log(message, ...args);
-  }
-};
 
 // Roll a d20
 const rollD20 = (): number => {

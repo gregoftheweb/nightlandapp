@@ -1,13 +1,7 @@
 // modules/movement.ts - All movement-related logic
 import { GameState, Position, Monster } from "../config/types";
 import { setupCombat, checkForCombatCollision } from "./combat";
-
-// Development logging helper
-const logIfDev = (message: string, ...args: any[]) => {
-  if (__DEV__) {
-    console.log(message, ...args);
-  }
-};
+import { logIfDev } from "./utils";
 
 // ==================== PLAYER MOVEMENT ====================
 

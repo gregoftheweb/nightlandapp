@@ -10,13 +10,7 @@ import {
 import { levels } from "../config/levels";
 import { initialState } from "./gameState";
 import { createMonsterFromTemplate } from "../modules/monsterUtils";
-
-// Development logging helper
-const logIfDev = (message: string, ...args: any[]) => {
-  if (__DEV__) {
-    console.log(message, ...args);
-  }
-};
+import { logIfDev } from "./utils";
 
 export const reducer = (
   state: GameState = initialState,
