@@ -1083,5 +1083,3 @@ const styles = StyleSheet.create({
     top: CELL_SIZE * 0.1,
   },
 });
-
-export { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE };
