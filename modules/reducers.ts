@@ -201,9 +201,9 @@ export const reducer = (
 
     // ============ HEALTH SYSTEM ============
     case "UPDATE_PLAYER":
-      console.log(`[Reducer] UPDATE_PLAYER received:`, action.payload.updates);
+      logIfDev(`[Reducer] UPDATE_PLAYER received:`, action.payload.updates);
       const updatedPlayer = { ...state.player, ...action.payload.updates };
-      console.log(`[Reducer] Player HP after update: ${updatedPlayer.hp}`);
+      logIfDev(`[Reducer] Player HP after update: ${updatedPlayer.hp}`);
       return {
         ...state,
         player: updatedPlayer,
