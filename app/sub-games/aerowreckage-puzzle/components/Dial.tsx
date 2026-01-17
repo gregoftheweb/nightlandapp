@@ -15,6 +15,11 @@ const ROTATION_SENSITIVITY = 0.4; // Slow down input for heavier feel (0.4 = 40%
 const MAX_STEP_JUMP = 1; // Maximum number of steps dial can move in one update (only 1 for smooth click-by-click)
 const TICK_ANIMATION_DURATION = 90; // ms - duration for dial to animate to next tick position
 
+// Detent/sticky dial parameters for realistic safe feel
+const COMMIT_THRESHOLD = 0.12; // Radians of deliberate movement required to commit to next tick (prevents jiggle)
+const DIRECTION_CONFIDENCE_DECAY = 0.85; // How quickly direction scores decay (0.85 = 15% decay per move)
+const DIRECTION_DOMINANCE_MARGIN = 0.03; // Minimum score difference to establish dominant direction
+
 // Calculate responsive dial size based on screen dimensions
 const getDialSize = (width: number, height: number) => {
   const aspectRatio = height / width;
@@ -63,6 +68,12 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
   const lastThetaRef = useRef<number | null>(null); // Last raw atan2 angle for unwrapping
   const grabOffsetRef = useRef<number>(0); // Offset to handle grab at arbitrary position
   
+  // Detent/sticky behavior - Direction tracking for deliberate movement
+  const directionScoreCW = useRef(0); // Confidence score for clockwise movement
+  const directionScoreCCW = useRef(0); // Confidence score for counter-clockwise movement
+  const lastCommittedDir = useRef<'CW' | 'CCW' | null>(null); // Last committed direction
+  const commitAccumulator = useRef(0); // Accumulated movement toward commit threshold
+  
   // Animated display angle for smooth tick transitions
   const displayAngleAnimated = useRef(new Animated.Value(
     (currentNumber / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI + DIAL_ORIENTATION_OFFSET
@@ -106,6 +117,12 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
         
         lastThetaRef.current = touchAngle;
         tickAccumulatorRef.current = 0; // Reset accumulator on new grab
+        
+        // Reset detent/sticky state on new grab
+        directionScoreCW.current = 0;
+        directionScoreCCW.current = 0;
+        commitAccumulator.current = 0;
+        // Keep lastCommittedDir to maintain directional consistency across re-grabs
       },
       onPanResponderMove: (evt) => {
         const { locationX, locationY } = evt.nativeEvent;
@@ -130,34 +147,66 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
           // Apply sensitivity to slow down rotation
           deltaTheta *= ROTATION_SENSITIVITY;
           
-          // Accumulate fractional rotation
-          tickAccumulatorRef.current += deltaTheta;
+          // Update direction confidence scores
+          // Decay existing scores slightly to favor recent movement
+          directionScoreCW.current *= DIRECTION_CONFIDENCE_DECAY;
+          directionScoreCCW.current *= DIRECTION_CONFIDENCE_DECAY;
           
-          // Calculate tick angle (angle per number on dial)
-          const tickAngle = (2 * Math.PI) / PUZZLE_CONFIG.totalNumbers;
-          
-          // Check if we've accumulated enough to cross a tick
-          let stepsToMove = 0;
-          while (tickAccumulatorRef.current >= tickAngle) {
-            stepsToMove++;
-            tickAccumulatorRef.current -= tickAngle;
-          }
-          while (tickAccumulatorRef.current <= -tickAngle) {
-            stepsToMove--;
-            tickAccumulatorRef.current += tickAngle;
+          // Add to the score based on this move's direction
+          // In our coordinate system: positive deltaTheta = CW, negative = CCW
+          const absDelta = Math.abs(deltaTheta);
+          if (deltaTheta > 0) {
+            directionScoreCW.current += absDelta;
+          } else if (deltaTheta < 0) {
+            directionScoreCCW.current += absDelta;
           }
           
-          if (stepsToMove !== 0) {
-            // Clamp to MAX_STEP_JUMP to prevent wild jumps (now limited to 1 for smooth feel)
-            if (Math.abs(stepsToMove) > MAX_STEP_JUMP) {
-              stepsToMove = Math.sign(stepsToMove) * MAX_STEP_JUMP;
-            }
+          // Determine dominant direction (if clear)
+          let dominantDir: 'CW' | 'CCW' | null = null;
+          if (directionScoreCW.current > directionScoreCCW.current + DIRECTION_DOMINANCE_MARGIN) {
+            dominantDir = 'CW';
+          } else if (directionScoreCCW.current > directionScoreCW.current + DIRECTION_DOMINANCE_MARGIN) {
+            dominantDir = 'CCW';
+          }
+          
+          // Accumulate movement toward commit threshold
+          // Only accumulate in the dominant direction
+          if (dominantDir === 'CW' && deltaTheta > 0) {
+            commitAccumulator.current += absDelta;
+          } else if (dominantDir === 'CCW' && deltaTheta < 0) {
+            commitAccumulator.current += absDelta;
+          } else {
+            // Movement in non-dominant direction: slightly reduce accumulator (jiggle/reversal)
+            commitAccumulator.current = Math.max(0, commitAccumulator.current - absDelta * 0.5);
+          }
+          
+          // Check if we should commit to advancing a tick
+          // Rules for committing:
+          // 1. Must have accumulated enough deliberate movement (COMMIT_THRESHOLD)
+          // 2. Must have a clear dominant direction
+          // 3. Dominant direction must match lastCommittedDir OR lastCommittedDir is null
+          //    OR we have enough confidence to reverse direction (both scores reset means clear reversal)
+          
+          const canCommit = commitAccumulator.current >= COMMIT_THRESHOLD && dominantDir !== null;
+          const directionMatches = lastCommittedDir.current === null || 
+                                   lastCommittedDir.current === dominantDir ||
+                                   (directionScoreCW.current < 0.05 && directionScoreCCW.current < 0.05); // Both low = clear reversal
+          
+          if (canCommit && directionMatches) {
+            // Commit to advancing one tick in the dominant direction
+            const stepDirection = dominantDir === 'CW' ? 1 : -1;
             
             // Update index with wrap-around
-            let newIndex = currentIndexRef.current + stepsToMove;
+            let newIndex = currentIndexRef.current + stepDirection;
             newIndex = ((newIndex % PUZZLE_CONFIG.totalNumbers) + PUZZLE_CONFIG.totalNumbers) % PUZZLE_CONFIG.totalNumbers;
             
             currentIndexRef.current = newIndex;
+            
+            // Update last committed direction
+            lastCommittedDir.current = dominantDir;
+            
+            // Reset commit accumulator after successful commit
+            commitAccumulator.current = 0;
             
             // Convert index to angle and notify parent
             const newAngle = (newIndex / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
@@ -179,8 +228,12 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
         // Notify parent we stopped dragging
         onDragEnd();
         lastThetaRef.current = null;
-        // Reset accumulator to avoid drift
+        // Reset detent state on release
         tickAccumulatorRef.current = 0;
+        directionScoreCW.current = 0;
+        directionScoreCCW.current = 0;
+        commitAccumulator.current = 0;
+        // Keep lastCommittedDir to maintain directional consistency if user re-grabs quickly
       },
     })
   ).current;
