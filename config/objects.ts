@@ -253,6 +253,11 @@ export const buildings: Record<string, GameObject> = {
         type: "hide",
       },
     ],
+    subGame: {
+      subGameName: "aerowreckage-puzzle",
+      ctaLabel: "Investigate",
+      requiresPlayerOnObject: true,
+    },
   },
 };
 

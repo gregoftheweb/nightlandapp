@@ -20,10 +20,11 @@ import {
 } from "@/config/types";
 import { InfoBox } from "./InfoBox";
 import { CombatDialog } from "./CombatDialog";
-import { getTextContent } from "../modules/utils";
+import { getTextContent, isPlayerOnObject } from "../modules/utils";
 import { getItemTemplate } from "@/config/objects";
 import deadChristosIMG from "@assets/images/deadChristos.png";
 import Projectile from "./Projectile";
+import { enterSubGame } from "@/lib/subGames";
 
 const { width, height } = Dimensions.get("window");
 
@@ -68,10 +69,14 @@ export default function GameBoard({
     name: string;
     description: string;
     image?: ImageSourcePropType;
+    ctaLabel?: string;
+    onCtaPress?: () => void;
   }>({
     name: "",
     description: "",
     image: undefined,
+    ctaLabel: undefined,
+    onCtaPress: undefined,
   });
   const [combatInfoVisible, setCombatInfoVisible] = useState(false);
   const [combatMessages, setCombatMessages] = useState<string[]>([]);
@@ -244,16 +249,23 @@ export default function GameBoard({
 
   // Memoized showInfo (perf: avoids closure recreation; dev log wrapped)
   const showInfo = useCallback(
-    (name: string, description: string, image?: ImageSourcePropType) => {
+    (
+      name: string,
+      description: string,
+      image?: ImageSourcePropType,
+      ctaLabel?: string,
+      onCtaPress?: () => void
+    ) => {
       if (__DEV__) {
         console.log("showInfo called:", {
           name,
           description,
           image,
+          ctaLabel,
           infoVisible,
         });
       }
-      setInfoData({ name, description, image });
+      setInfoData({ name, description, image, ctaLabel, onCtaPress });
       setInfoVisible(true);
     },
     [infoVisible]
@@ -331,14 +343,63 @@ export default function GameBoard({
       if (__DEV__) {
         console.log("handleBuildingTap called, building:", building);
       }
-      showInfo(
-        building.name || building.shortName || "Building",
-        building.description || "An interesting structure in the world.",
-        building.image as ImageSourcePropType
-      );
+      
+      // Check if building has sub-game launch config
+      const launch = building.subGame;
+      // Get dimensions from size object or fallback to width/height properties
+      const buildingWidth = building.size?.width || building.width || 1;
+      const buildingHeight = building.size?.height || building.height || 1;
+      
+      const playerOnObject = launch && building.position
+        ? isPlayerOnObject(
+            state.player.position,
+            building.position,
+            buildingWidth,
+            buildingHeight
+          )
+        : false;
+      
+      const canLaunch = launch && (!launch.requiresPlayerOnObject || playerOnObject);
+      
+      if (__DEV__) {
+        console.log("Sub-game check:", {
+          hasSubGame: !!launch,
+          subGameName: launch?.subGameName,
+          requiresPlayerOnObject: launch?.requiresPlayerOnObject,
+          playerPosition: state.player.position,
+          buildingPosition: building.position,
+          buildingSize: { width: buildingWidth, height: buildingHeight },
+          playerOnObject,
+          canLaunch,
+        });
+      }
+      
+      if (canLaunch && launch) {
+        // Show InfoBox with CTA button
+        const handleCtaPress = () => {
+          setInfoVisible(false);
+          enterSubGame(launch.subGameName, { objectId: building.id });
+        };
+        
+        showInfo(
+          building.name || building.shortName || "Building",
+          building.description || "An interesting structure in the world.",
+          building.image as ImageSourcePropType,
+          launch.ctaLabel,
+          handleCtaPress
+        );
+      } else {
+        // Show InfoBox without CTA
+        showInfo(
+          building.name || building.shortName || "Building",
+          building.description || "An interesting structure in the world.",
+          building.image as ImageSourcePropType
+        );
+      }
+      
       onBuildingTap?.(building);
     },
-    [showInfo, onBuildingTap]
+    [showInfo, onBuildingTap, state.player.position]
   );
 
   const handleItemTap = useCallback(
@@ -991,6 +1052,8 @@ export default function GameBoard({
         name={infoData.name}
         description={infoData.description}
         image={infoData.image}
+        ctaLabel={infoData.ctaLabel}
+        onCtaPress={infoData.onCtaPress}
         onClose={() => {
           if (__DEV__) {
             console.log("InfoBox onClose called, setting infoVisible to false");

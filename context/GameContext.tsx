@@ -1,5 +1,5 @@
 // /context/GameContext.tsx
-import React, { createContext, useContext, ReactNode, useReducer } from "react";
+import React, { createContext, useContext, ReactNode, useReducer, useState } from "react";
 import {
   deserializeGameState,
   createInitialGameState,
@@ -11,6 +11,8 @@ interface GameContextType {
   state: GameState;
   dispatch: (action: any) => void;
   setOverlay: (overlay: any) => void;
+  rpgResumeNonce: number;
+  signalRpgResume: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -29,11 +31,19 @@ export const GameProvider = ({
     : createInitialGameState();
 
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [rpgResumeNonce, setRpgResumeNonce] = useState(0);
 
   const setOverlay = (overlay: any) => console.log("Overlay:", overlay);
+  
+  const signalRpgResume = () => {
+    setRpgResumeNonce((prev) => prev + 1);
+    if (__DEV__) {
+      console.log('[GameContext] RPG resume signaled, nonce:', rpgResumeNonce + 1);
+    }
+  };
 
   return (
-    <GameContext.Provider value={{ state, dispatch, setOverlay }}>
+    <GameContext.Provider value={{ state, dispatch, setOverlay, rpgResumeNonce, signalRpgResume }}>
       {children}
     </GameContext.Provider>
   );

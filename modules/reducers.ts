@@ -745,6 +745,17 @@ export const reducer = (
         ),
       };
 
+    // ============ SUB-GAME MANAGEMENT ============
+    case "SET_SUB_GAME_COMPLETED":
+      logIfDev(`🎮 SET_SUB_GAME_COMPLETED: ${action.payload.subGameName} = ${action.payload.completed}`);
+      return {
+        ...state,
+        subGamesCompleted: {
+          ...(state.subGamesCompleted || {}),
+          [action.payload.subGameName]: action.payload.completed,
+        },
+      };
+
     // ============ CLEANUP ============
     default:
       if (__DEV__) {

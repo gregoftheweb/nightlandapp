@@ -12,6 +12,28 @@ export const logIfDev = (message: string, ...args: any[]) => {
   }
 };
 
+/**
+ * Check if the player is standing on an object
+ * @param playerPos - The player's position
+ * @param objectPos - The object's position
+ * @param objectWidth - The object's width (default: 1)
+ * @param objectHeight - The object's height (default: 1)
+ * @returns true if player position is within object bounds
+ */
+export function isPlayerOnObject(
+  playerPos: Position,
+  objectPos: Position,
+  objectWidth: number = 1,
+  objectHeight: number = 1
+): boolean {
+  return (
+    playerPos.row >= objectPos.row &&
+    playerPos.row < objectPos.row + objectHeight &&
+    playerPos.col >= objectPos.col &&
+    playerPos.col < objectPos.col + objectWidth
+  );
+}
+
 export function moveToward(entity: any, targetRow: number, targetCol: number, speed: number = 1, gridWidth: number = 49, gridHeight: number = 49) {
     let dRow = targetRow - entity.position.row;
     let dCol = targetCol - entity.position.col;
