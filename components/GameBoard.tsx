@@ -346,7 +346,7 @@ export default function GameBoard({
       
       // Check if building has sub-game launch config
       const launch = building.subGame;
-      const playerOnObject = launch
+      const playerOnObject = launch && building.position
         ? isPlayerOnObject(
             state.player.position,
             building.position,
