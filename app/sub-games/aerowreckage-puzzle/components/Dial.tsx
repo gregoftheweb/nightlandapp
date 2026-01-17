@@ -13,10 +13,10 @@ const TICK_MARKS = 8; // Decorative tick marks on rotating dial
 const DIAL_ORIENTATION_OFFSET = -Math.PI / 2; // -90 degrees to align number 0 at 12 o'clock (top)
 const ROTATION_SENSITIVITY = 0.4; // Slow down input for heavier feel (0.4 = 40% of finger movement)
 const MAX_STEP_JUMP = 1; // Maximum number of steps dial can move in one update (only 1 for smooth click-by-click)
-const TICK_ANIMATION_DURATION = 90; // ms - duration for dial to animate to next tick position
+const TICK_ANIMATION_DURATION = 150; // ms - duration for dial to animate to next tick position (increased for slower, more deliberate feel)
 
 // Detent/sticky dial parameters for realistic safe feel
-const COMMIT_THRESHOLD = 0.12; // Radians of deliberate movement required to commit to next tick (prevents jiggle)
+const COMMIT_THRESHOLD = 0.18; // Radians of deliberate movement required to commit to next tick (increased from 0.12 to slow down clicks)
 const DIRECTION_CONFIDENCE_DECAY = 0.85; // How quickly direction scores decay (0.85 = 15% decay per move)
 const DIRECTION_DOMINANCE_MARGIN = 0.03; // Minimum score difference to establish dominant direction
 
@@ -260,13 +260,12 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
             transform: [
               { rotate: `${angle}deg` },
               { translateY: -(dialSize / 2 - 20) },
-              // Counter-rotate to keep text upright
-              // We need to counter-rotate by the marker's angle position
-              // The dial rotation is handled by the parent container
+              // Counter-rotate to keep text upright AND synchronized with center number
+              // Counter-rotate by: marker angle + dial rotation (interpolated)
               {
                 rotate: displayAngleAnimated.interpolate({
-                  inputRange: [-Math.PI * 4, Math.PI * 4],
-                  outputRange: [`${-angle + 720}deg`, `${-angle - 720}deg`],
+                  inputRange: [-Math.PI * 2, Math.PI * 2],
+                  outputRange: [`${-angle + 360}deg`, `${-angle - 360}deg`],
                 }),
               },
             ],
