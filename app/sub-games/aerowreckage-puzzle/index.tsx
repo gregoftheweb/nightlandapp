@@ -204,7 +204,7 @@ export default function AeroWreckagePuzzle() {
         {attemptResult && (
           <FeedbackModal
             visible={modalVisible}
-            type={attemptResult.type as any}
+            type={attemptResult.type}
             message={attemptResult.message}
             hint={attemptResult.hint}
             onDismiss={handleModalDismiss}

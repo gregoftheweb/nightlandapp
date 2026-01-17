@@ -195,58 +195,36 @@ export function usePuzzleState() {
     if (isLastStep) {
       // Safe opened! Success pattern
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
-      setState(prev => ({
-        ...prev,
-        currentStepIndex: newStepIndex,
-        stepHistory: [...prev.stepHistory, prev.currentNumber],
-        isOpened: true,
-        lastRotationDirection: null,
-      }));
-      
-      // Reset tolerance tracking
-      inToleranceSinceRef.current = null;
-      
-      // Save immediately
-      setSubGameSave(SAVE_KEY, {
-        ...state,
-        currentStepIndex: newStepIndex,
-        stepHistory: [...state.stepHistory, state.currentNumber],
-        isOpened: true,
-        lastRotationDirection: null,
-      });
-      
-      return {
-        success: true,
-        message: 'The safe groans open…',
-        type: 'safe_opened'
-      };
-    } else {
-      // Step completed, move to next
-      setState(prev => ({
-        ...prev,
-        currentStepIndex: newStepIndex,
-        stepHistory: [...prev.stepHistory, prev.currentNumber],
-        lastRotationDirection: null,
-      }));
-      
-      // Reset tolerance tracking for next step
-      inToleranceSinceRef.current = null;
-      
-      // Save immediately
-      setSubGameSave(SAVE_KEY, {
-        ...state,
-        currentStepIndex: newStepIndex,
-        stepHistory: [...state.stepHistory, state.currentNumber],
-        lastRotationDirection: null,
-      });
-      
-      return {
-        success: true,
-        message: 'Click… Tumblers set.',
-        type: 'step_locked'
-      };
     }
+    
+    // Update state
+    const newState = {
+      ...state,
+      currentStepIndex: newStepIndex,
+      stepHistory: [...state.stepHistory, state.currentNumber],
+      isOpened: isLastStep,
+      lastRotationDirection: null,
+    };
+    
+    setState(newState);
+    
+    // Reset tolerance tracking for next step
+    inToleranceSinceRef.current = null;
+    
+    // Save immediately (bypass throttle for important state changes)
+    setSubGameSave(SAVE_KEY, newState);
+    
+    return isLastStep
+      ? {
+          success: true,
+          message: 'The safe groans open…',
+          type: 'safe_opened'
+        }
+      : {
+          success: true,
+          message: 'Click… Tumblers set.',
+          type: 'step_locked'
+        };
   }, [state]);
   
   // Cleanup on unmount

@@ -7,7 +7,7 @@ import { THEME } from '../theme';
 
 interface FeedbackModalProps {
   visible: boolean;
-  type: 'step_locked' | 'wrong_attempt' | 'safe_opened';
+  type: 'step_locked' | 'safe_opened' | 'wrong_direction' | 'wrong_number' | 'insufficient_dwell' | 'already_opened' | 'error';
   message: string;
   hint?: string;
   onDismiss: () => void;
