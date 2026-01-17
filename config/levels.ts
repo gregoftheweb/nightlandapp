@@ -1,4 +1,11 @@
 //config/levels.ts
+/**
+ * Level configurations for the Nightland game.
+ * 
+ * This module defines all game levels with their entities, objectives, and settings.
+ * Uses helper functions and type-safe IDs for improved maintainability.
+ */
+
 import {
   Level,
   Position,
@@ -16,6 +23,8 @@ import {
   getNonCollisionTemplate,
 } from "./objects";
 import { getMonsterTemplate, getGreatPowerTemplate } from "./monsters";
+import { LevelId } from "./levelTypes";
+import { loadSpawnTable, validateLevel } from "./levelHelpers";
 
 // Helper function to create object instances from building templates
 const createObjectInstance = (
@@ -181,7 +190,11 @@ const createGreatPowerForLevel = (
   };
 };
 
-export const levels: Record<string, Level> = {
+/**
+ * Level registry with type-safe IDs.
+ * All levels are validated on module load to catch configuration errors early.
+ */
+export const levels: Record<LevelId, Level> = {
   "1": {
     id: "1",
     name: "The Dark Outer Wastes",
@@ -201,11 +214,8 @@ export const levels: Record<string, Level> = {
       createItemInstance("maguffinRock", { row: 390, col: 210 }),
     ],
 
-    // MONSTERS - Individual spawn configurations per level
-    monsters: [
-      createMonsterInstance("abhuman", 0.04, 3),
-      createMonsterInstance("night_hound", 0.02, 2),
-    ],
+    // MONSTERS - Use spawn table for normalized configurations
+    monsters: loadSpawnTable("wasteland_common", createMonsterInstance),
 
     // OBJECTS - Buildings and structures (including pools)
     objects: [
@@ -341,7 +351,7 @@ export const levels: Record<string, Level> = {
     description:
       "Venture deeper into the Nightland where ancient eyes follow your every move.",
     boardSize: { width: 600, height: 500 },
-    playerSpawn: { row: 590, col: 50 },
+    playerSpawn: { row: 490, col: 50 }, // Fixed: was 590, out of bounds for height 500
     requiredLevel: 2,
     recommendedLevel: 3,
     experienceReward: 250,
@@ -352,11 +362,8 @@ export const levels: Record<string, Level> = {
 
     items: [],
 
-    // DIFFERENT SPAWN SETTINGS FOR LEVEL 2
-    monsters: [
-      createMonsterInstance("night_hound", 0.1, 6),
-      createMonsterInstance("abhuman", 0.015, 1),
-    ],
+    // MONSTERS - Use spawn table for normalized configurations
+    monsters: loadSpawnTable("grounds_common", createMonsterInstance),
 
     // OBJECTS - Buildings including pools
     objects: [createObjectInstance("poisonPool", { row: 150, col: 150 })],
@@ -376,3 +383,28 @@ export const levels: Record<string, Level> = {
     ],
   },
 };
+
+// Validate all levels at module load to catch configuration errors early
+// Using forEach with array spread to avoid ES2017 Object.values requirement
+[levels["1"], levels["2"]].forEach(validateLevel);
+
+/**
+ * Type-safe level retrieval function.
+ * Prefer this over direct access to get compile-time ID validation.
+ * 
+ * @param id Level identifier
+ * @returns Level configuration
+ * 
+ * @example
+ * ```typescript
+ * const level = getLevel("1");  // Type-safe
+ * // const bad = getLevel("99"); // TypeScript error
+ * ```
+ */
+export function getLevel(id: LevelId): Level {
+  const level = levels[id];
+  if (!level) {
+    throw new Error(`Level ${id} not found in registry`);
+  }
+  return level;
+}
