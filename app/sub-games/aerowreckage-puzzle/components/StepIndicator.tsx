@@ -5,6 +5,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { PUZZLE_CONFIG } from '../config';
 import { THEME } from '../theme';
+import { subGameTheme } from '../../_shared/subGameTheme';
 
 interface StepIndicatorProps {
   currentStepIndex: number;
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
   },
   stepActive: {
     backgroundColor: THEME.dialCenter,
-    borderColor: THEME.brass,
+    borderColor: subGameTheme.blue,
     borderWidth: 3,
   },
   stepCompleted: {
@@ -108,7 +109,7 @@ const styles = StyleSheet.create({
     color: THEME.textMuted,
   },
   stepNumberActive: {
-    color: THEME.brass,
+    color: subGameTheme.blue,
   },
   stepNumberCompleted: {
     fontSize: 18,
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     fontWeight: 'bold',
-    color: THEME.success,
+    color: subGameTheme.red,
     letterSpacing: 2,
   },
 });

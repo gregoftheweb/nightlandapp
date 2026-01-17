@@ -4,6 +4,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { THEME } from '../theme';
+import { subGameTheme } from '../../_shared/subGameTheme';
 
 interface FeedbackModalProps {
   visible: boolean;
@@ -75,8 +76,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   modalSuccess: {
-    borderColor: THEME.success,
-    shadowColor: THEME.success,
+    borderColor: subGameTheme.red,
+    shadowColor: subGameTheme.red,
   },
   message: {
     fontSize: 18,
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   messageSuccess: {
-    color: THEME.success,
+    color: subGameTheme.red,
   },
   hint: {
     fontSize: 14,
@@ -107,8 +108,8 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   buttonSuccess: {
-    backgroundColor: THEME.success,
-    borderColor: THEME.success,
+    backgroundColor: subGameTheme.red,
+    borderColor: subGameTheme.red,
   },
   buttonText: {
     fontSize: 16,
