@@ -51,7 +51,7 @@ export const weapons: Record<string, GameObject> = {
     weaponType: "ranged",
     range: 10,
     active: true,
-    projectileColor: "#FFD700", // Bright gold arrow
+    projectileColor: "#0ce9e9ff", // Bright cyan arrow
   },
   shurikens: {
     shortName: "shurikens",

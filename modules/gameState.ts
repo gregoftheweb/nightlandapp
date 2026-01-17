@@ -66,7 +66,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
         type: "weapon",
         weaponType: "ranged",
         collectible: true,
-        projectileColor: "#FFD700", // Bright gold arrow
+        projectileColor: "#0ce9e9ff", // Bright cyan arrow
       },
       {
         id: "weapon-shurikens-001",
