@@ -7,15 +7,19 @@ import { exitSubGame } from '@/lib/subGames';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { Dial } from './components/Dial';
 import { StepIndicator } from './components/StepIndicator';
+import { FeedbackModal } from './components/FeedbackModal';
 import { THEME } from './theme';
+import { AttemptResult } from './types';
 
 type GamePage = 'intro' | 'puzzle' | 'success';
 
 export default function AeroWreckagePuzzle() {
   const router = useRouter();
   const { state: gameState, dispatch, signalRpgResume } = useGameContext();
-  const { state, isLoading, updateAngle, resetPuzzle } = usePuzzleState();
+  const { state, isLoading, updateAngle, resetPuzzle, attemptLock, setDragging } = usePuzzleState();
   const [currentPage, setCurrentPage] = useState<GamePage>('intro');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [attemptResult, setAttemptResult] = useState<AttemptResult | null>(null);
 
   useEffect(() => {
     if (__DEV__) {
@@ -53,6 +57,37 @@ export default function AeroWreckagePuzzle() {
       console.log('[AeroWreckagePuzzle] Player leaving without unlocking');
     }
     exitSubGame({ completed: false });
+  };
+
+  const handleTryCombination = () => {
+    const result = attemptLock();
+    setAttemptResult(result);
+    setModalVisible(true);
+    
+    // If safe opened, navigate to success page after a delay
+    if (result.type === 'safe_opened') {
+      setTimeout(() => {
+        setModalVisible(false);
+        setCurrentPage('success');
+      }, 2000);
+    }
+  };
+
+  const handleCenterTap = () => {
+    handleTryCombination();
+  };
+
+  const handleDragStart = () => {
+    setDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setDragging(false);
+  };
+
+  const handleModalDismiss = () => {
+    setModalVisible(false);
+    // Don't navigate if safe opened - that's handled in handleTryCombination
   };
 
   const handleReturnToQuest = () => {
@@ -121,8 +156,6 @@ export default function AeroWreckagePuzzle() {
 
   // Page 2: Puzzle
   if (currentPage === 'puzzle') {
-    const isDwelling = state.dwellStartTime !== null;
-
     return (
       <View style={styles.container}>
         <View style={styles.puzzleContent}>
@@ -141,12 +174,22 @@ export default function AeroWreckagePuzzle() {
               currentAngle={state.currentAngle}
               currentNumber={state.currentNumber}
               onAngleChange={updateAngle}
-              isDwelling={isDwelling}
+              onCenterTap={handleCenterTap}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
             />
           </View>
 
-          {/* Exit Button at Bottom */}
+          {/* Buttons at Bottom */}
           <View style={styles.bottomButtonContainer}>
+            <TouchableOpacity
+              style={styles.tryButton}
+              onPress={handleTryCombination}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.tryButtonText}>Try Combination</Text>
+            </TouchableOpacity>
+            
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={handleLeaveWithoutUnlocking}
@@ -156,6 +199,17 @@ export default function AeroWreckagePuzzle() {
             </TouchableOpacity>
           </View>
         </View>
+        
+        {/* Feedback Modal */}
+        {attemptResult && (
+          <FeedbackModal
+            visible={modalVisible}
+            type={attemptResult.type as any}
+            message={attemptResult.message}
+            hint={attemptResult.hint}
+            onDismiss={handleModalDismiss}
+          />
+        )}
       </View>
     );
   }
@@ -280,5 +334,26 @@ const styles = StyleSheet.create({
   bottomButtonContainer: {
     paddingBottom: 30,
     paddingHorizontal: 20,
+    gap: 12,
+  },
+  tryButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    backgroundColor: THEME.brass,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: THEME.brassLight,
+    shadowColor: THEME.brass,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  tryButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: THEME.background,
+    textAlign: 'center',
+    letterSpacing: 1,
   },
 });

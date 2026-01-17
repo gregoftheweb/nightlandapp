@@ -3,10 +3,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
-import { PuzzleState, DialDirection } from '../types';
+import { PuzzleState, DialDirection, AttemptResult } from '../types';
 import { PUZZLE_CONFIG, SAVE_KEY, INITIAL_STATE } from '../config';
 import { getSubGameSave, setSubGameSave, clearSubGameSave } from '../../_shared';
 import { angleToNumber, getRotationDirection, isWithinTolerance } from '../utils';
+
+const HAPTIC_TICK_MIN_INTERVAL_MS = 50; // Minimum 50ms between ticks for crisp feel
 
 export function usePuzzleState() {
   const [state, setState] = useState<PuzzleState>(INITIAL_STATE);
@@ -14,9 +16,12 @@ export function usePuzzleState() {
   
   // Refs for tracking
   const lastNumberRef = useRef<number>(0);
-  const dwellTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTickNumberRef = useRef<number>(0);
+  const lastTickTimeRef = useRef<number>(0);
   const saveThrottleRef = useRef<NodeJS.Timeout | null>(null);
   const lastAngleRef = useRef<number>(0);
+  const isDraggingRef = useRef<boolean>(false);
+  const inToleranceSinceRef = useRef<number | null>(null);
   
   // Load saved state on mount
   useEffect(() => {
@@ -57,20 +62,19 @@ export function usePuzzleState() {
     }, 250);
   }, [state]);
   
-  const clearDwellTimer = () => {
-    if (dwellTimerRef.current) {
-      clearTimeout(dwellTimerRef.current);
-      dwellTimerRef.current = null;
-    }
-  };
-  
   const resetPuzzle = async () => {
-    clearDwellTimer();
     await clearSubGameSave(SAVE_KEY);
     setState(INITIAL_STATE);
     lastNumberRef.current = 0;
     lastAngleRef.current = 0;
+    lastTickNumberRef.current = 0;
+    lastTickTimeRef.current = 0;
+    inToleranceSinceRef.current = null;
   };
+  
+  const setDragging = useCallback((dragging: boolean) => {
+    isDraggingRef.current = dragging;
+  }, []);
   
   const updateAngle = useCallback((newAngle: number) => {
     const newNumber = angleToNumber(newAngle);
@@ -80,11 +84,19 @@ export function usePuzzleState() {
     // Update last angle
     lastAngleRef.current = newAngle;
     
-    // Trigger haptic tick if crossing into a new number
-    if (newNumber !== lastNumberRef.current) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      lastNumberRef.current = newNumber;
+    // Trigger haptic tick if crossing into a new number (only while dragging)
+    if (isDraggingRef.current && newNumber !== lastTickNumberRef.current) {
+      const now = Date.now();
+      const timeSinceLastTick = now - lastTickTimeRef.current;
+      
+      if (timeSinceLastTick >= HAPTIC_TICK_MIN_INTERVAL_MS) {
+        Haptics.selectionAsync(); // Light tick sound
+        lastTickNumberRef.current = newNumber;
+        lastTickTimeRef.current = now;
+      }
     }
+    
+    lastNumberRef.current = newNumber;
     
     // If puzzle is already opened, just update angle/number
     if (state.isOpened) {
@@ -100,77 +112,85 @@ export function usePuzzleState() {
     const currentStep = PUZZLE_CONFIG.codeSteps[state.currentStepIndex];
     if (!currentStep) return;
     
-    // Check if rotation direction changed (reset if wrong direction)
-    if (rotationDirection && state.lastRotationDirection && rotationDirection !== state.lastRotationDirection) {
-      // Direction changed - check if it matches the required direction
-      if (rotationDirection !== currentStep.direction) {
-        // Wrong direction! Cancel dwell and provide feedback
-        clearDwellTimer();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        
-        setState(prev => ({
-          ...prev,
-          currentAngle: newAngle,
-          currentNumber: newNumber,
-          lastRotationDirection: rotationDirection,
-          dwellStartTime: null,
-        }));
-        return;
-      }
-    }
-    
     // Update rotation direction if we have movement
     const newRotationDirection = rotationDirection || state.lastRotationDirection;
     
     // Check if we're within tolerance of the target
     const withinTolerance = isWithinTolerance(newNumber, currentStep.target);
     
+    // Track tolerance dwell time
     if (withinTolerance && newRotationDirection === currentStep.direction) {
-      // Start or continue dwell timer
-      if (state.dwellStartTime === null) {
-        const dwellStartTime = Date.now();
-        setState(prev => ({
-          ...prev,
-          currentAngle: newAngle,
-          currentNumber: newNumber,
-          lastRotationDirection: newRotationDirection,
-          dwellStartTime,
-        }));
-        
-        // Set timer to lock this step
-        dwellTimerRef.current = setTimeout(() => {
-          lockStep();
-        }, currentStep.dwellMs);
-      } else {
-        // Already dwelling, just update angle/number
-        setState(prev => ({
-          ...prev,
-          currentAngle: newAngle,
-          currentNumber: newNumber,
-          lastRotationDirection: newRotationDirection,
-        }));
+      if (inToleranceSinceRef.current === null) {
+        inToleranceSinceRef.current = Date.now();
       }
     } else {
-      // Left tolerance zone - cancel dwell
-      clearDwellTimer();
-      setState(prev => ({
-        ...prev,
-        currentAngle: newAngle,
-        currentNumber: newNumber,
-        lastRotationDirection: newRotationDirection,
-        dwellStartTime: null,
-      }));
+      inToleranceSinceRef.current = null;
     }
+    
+    // Just update state, no auto-locking
+    setState(prev => ({
+      ...prev,
+      currentAngle: newAngle,
+      currentNumber: newNumber,
+      lastRotationDirection: newRotationDirection,
+    }));
   }, [state]);
   
-  const lockStep = useCallback(() => {
-    clearDwellTimer();
+  const attemptLock = useCallback((): AttemptResult => {
+    if (state.isOpened) {
+      return { success: false, message: 'Safe already opened', type: 'already_opened' };
+    }
     
+    const currentStep = PUZZLE_CONFIG.codeSteps[state.currentStepIndex];
+    if (!currentStep) {
+      return { success: false, message: 'No more steps', type: 'error' };
+    }
+    
+    const currentNumber = state.currentNumber;
+    const currentDirection = state.lastRotationDirection;
+    
+    // Check direction
+    if (!currentDirection || currentDirection !== currentStep.direction) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return {
+        success: false,
+        message: 'Not yet…',
+        hint: `Try rotating ${currentStep.direction === 'L' ? 'left' : 'right'}`,
+        type: 'wrong_direction'
+      };
+    }
+    
+    // Check if within tolerance
+    if (!isWithinTolerance(currentNumber, currentStep.target)) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return {
+        success: false,
+        message: 'Wrong position',
+        hint: 'Try the next mark',
+        type: 'wrong_number'
+      };
+    }
+    
+    // Check dwell time
+    const now = Date.now();
+    const dwellTime = inToleranceSinceRef.current ? now - inToleranceSinceRef.current : 0;
+    
+    if (dwellTime < currentStep.dwellMs) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return {
+        success: false,
+        message: 'Hold steady…',
+        hint: 'Keep the dial on this number a bit longer before trying',
+        type: 'insufficient_dwell'
+      };
+    }
+    
+    // Success! Lock this step
     const newStepIndex = state.currentStepIndex + 1;
     const isLastStep = newStepIndex >= PUZZLE_CONFIG.codeSteps.length;
     
-    // Medium haptic for successful lock
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Heavy haptic for successful lock (safe clunk)
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     
     if (isLastStep) {
       // Safe opened! Success pattern
@@ -181,25 +201,57 @@ export function usePuzzleState() {
         currentStepIndex: newStepIndex,
         stepHistory: [...prev.stepHistory, prev.currentNumber],
         isOpened: true,
-        dwellStartTime: null,
         lastRotationDirection: null,
       }));
+      
+      // Reset tolerance tracking
+      inToleranceSinceRef.current = null;
+      
+      // Save immediately
+      setSubGameSave(SAVE_KEY, {
+        ...state,
+        currentStepIndex: newStepIndex,
+        stepHistory: [...state.stepHistory, state.currentNumber],
+        isOpened: true,
+        lastRotationDirection: null,
+      });
+      
+      return {
+        success: true,
+        message: 'The safe groans open…',
+        type: 'safe_opened'
+      };
     } else {
       // Step completed, move to next
       setState(prev => ({
         ...prev,
         currentStepIndex: newStepIndex,
         stepHistory: [...prev.stepHistory, prev.currentNumber],
-        dwellStartTime: null,
         lastRotationDirection: null,
       }));
+      
+      // Reset tolerance tracking for next step
+      inToleranceSinceRef.current = null;
+      
+      // Save immediately
+      setSubGameSave(SAVE_KEY, {
+        ...state,
+        currentStepIndex: newStepIndex,
+        stepHistory: [...state.stepHistory, state.currentNumber],
+        lastRotationDirection: null,
+      });
+      
+      return {
+        success: true,
+        message: 'Click… Tumblers set.',
+        type: 'step_locked'
+      };
     }
   }, [state]);
   
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      clearDwellTimer();
       if (saveThrottleRef.current) {
         clearTimeout(saveThrottleRef.current);
       }
@@ -211,5 +263,7 @@ export function usePuzzleState() {
     isLoading,
     updateAngle,
     resetPuzzle,
+    attemptLock,
+    setDragging,
   };
 }

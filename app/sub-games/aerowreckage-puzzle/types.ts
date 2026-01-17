@@ -37,3 +37,13 @@ export interface PuzzleConfig {
   tolerance: number;
   tickStepSize: number;
 }
+
+/**
+ * Result of an attempt to lock a step
+ */
+export interface AttemptResult {
+  success: boolean;
+  message: string;
+  hint?: string;
+  type: 'step_locked' | 'safe_opened' | 'wrong_direction' | 'wrong_number' | 'insufficient_dwell' | 'already_opened' | 'error';
+}

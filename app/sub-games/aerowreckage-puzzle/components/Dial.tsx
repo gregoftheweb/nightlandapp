@@ -2,7 +2,7 @@
 // Rotatable dial with gesture handling
 
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, PanResponder, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, PanResponder, Animated, Dimensions, TouchableOpacity } from 'react-native';
 import { PUZZLE_CONFIG } from '../config';
 import { THEME } from '../theme';
 import { normalizeAngle, formatDialNumber } from '../utils';
@@ -33,10 +33,12 @@ interface DialProps {
   currentAngle: number;
   currentNumber: number;
   onAngleChange: (angle: number) => void;
-  isDwelling: boolean;
+  onCenterTap: () => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }
 
-export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }: DialProps) {
+export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, onDragStart, onDragEnd }: DialProps) {
   const [dimensions, setDimensions] = useState(() => {
     const window = Dimensions.get('window');
     return { width: window.width, height: window.height };
@@ -60,6 +62,9 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (evt) => {
+        // Notify parent we're dragging
+        onDragStart();
+        
         // Store initial touch position
         const { locationX, locationY } = evt.nativeEvent;
         const centerX = dialSize / 2;
@@ -89,7 +94,8 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
         onAngleChange(newAngle);
       },
       onPanResponderRelease: () => {
-        // No momentum - just stop
+        // Notify parent we stopped dragging
+        onDragEnd();
       },
     })
   ).current;
@@ -123,6 +129,11 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
   
   return (
     <View style={styles.container}>
+      {/* Fixed indicator at 12 o'clock (top center) - OUTSIDE dial */}
+      <View style={styles.fixedIndicator} pointerEvents="none">
+        <View style={styles.indicatorTriangle} />
+      </View>
+      
       <View
         style={[styles.dial, { width: dialSize, height: dialSize }]}
         {...panResponder.panHandlers}
@@ -137,7 +148,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
             {markers}
           </View>
           
-          {/* Rotating inner dial */}
+          {/* Rotating inner dial - NO POINTER INSIDE */}
           <Animated.View
             style={[
               styles.innerDial,
@@ -146,10 +157,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
               },
             ]}
           >
-            {/* Pointer/indicator line */}
-            <View style={[styles.pointer, { height: dialSize / 2 - 50 }]} />
-            
-            {/* Tick marks */}
+            {/* Tick marks only - no pointer */}
             {Array.from({ length: TICK_MARKS }).map((_, i) => (
               <View
                 key={i}
@@ -166,10 +174,14 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
             ))}
           </Animated.View>
           
-          {/* Center hub */}
-          <View style={[styles.center, isDwelling && styles.centerDwelling]}>
+          {/* Center hub - TAPPABLE */}
+          <TouchableOpacity
+            style={styles.center}
+            onPress={onCenterTap}
+            activeOpacity={0.7}
+          >
             <Text style={styles.currentNumber}>{formatDialNumber(currentNumber)}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -181,6 +193,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 30,
+    position: 'relative',
+  },
+  fixedIndicator: {
+    position: 'absolute',
+    top: 20,
+    zIndex: 10,
+    alignItems: 'center',
+  },
+  indicatorTriangle: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderTopWidth: 18,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: THEME.pointerColor,
+    shadowColor: THEME.pointerColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 10,
   },
   dial: {
     borderRadius: 1000,
@@ -233,18 +267,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pointer: {
-    position: 'absolute',
-    width: 4,
-    backgroundColor: THEME.pointerColor,
-    top: 10,
-    borderRadius: 2,
-    shadowColor: THEME.pointerColor,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-    elevation: 4,
-  },
   tickMark: {
     position: 'absolute',
     width: 2,
@@ -269,10 +291,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 6,
-  },
-  centerDwelling: {
-    borderColor: THEME.warning,
-    shadowColor: THEME.warning,
+    zIndex: 5,
   },
   currentNumber: {
     fontSize: 24,
