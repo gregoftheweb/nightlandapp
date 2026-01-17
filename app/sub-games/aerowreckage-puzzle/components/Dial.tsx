@@ -1,5 +1,5 @@
 // app/sub-games/aerowreckage-puzzle/components/Dial.tsx
-// Rotatable dial with gesture handling - Discrete tick model for stability
+// Rotatable dial with gesture handling - Discrete tick model with smooth animation
 
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, PanResponder, Animated, Dimensions, TouchableOpacity } from 'react-native';
@@ -11,8 +11,9 @@ const CENTER_SIZE = 60;
 const NUMBER_MARKERS = 12; // Major number markers around the dial
 const TICK_MARKS = 8; // Decorative tick marks on rotating dial
 const DIAL_ORIENTATION_OFFSET = -Math.PI / 2; // -90 degrees to align number 0 at 12 o'clock (top)
-const ROTATION_SENSITIVITY = 0.5; // Reduce rotation speed for better control (0.5 = half speed)
-const MAX_STEP_JUMP = 2; // Maximum number of steps dial can move in one update (prevents wild jumps)
+const ROTATION_SENSITIVITY = 0.4; // Slow down input for heavier feel (0.4 = 40% of finger movement)
+const MAX_STEP_JUMP = 1; // Maximum number of steps dial can move in one update (only 1 for smooth click-by-click)
+const TICK_ANIMATION_DURATION = 90; // ms - duration for dial to animate to next tick position
 
 // Calculate responsive dial size based on screen dimensions
 const getDialSize = (width: number, height: number) => {
@@ -56,17 +57,24 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
     return () => subscription?.remove();
   }, []);
   
-  // Discrete tick dial model
-  // Store current index (0 to totalNumbers-1) and fractional accumulator
+  // Discrete tick dial model - Index is the single source of truth for the number
   const currentIndexRef = useRef(currentNumber);
   const tickAccumulatorRef = useRef(0); // Fractional angle between ticks
   const lastThetaRef = useRef<number | null>(null); // Last raw atan2 angle for unwrapping
   const grabOffsetRef = useRef<number>(0); // Offset to handle grab at arbitrary position
   
+  // Animated display angle for smooth tick transitions
+  const displayAngleAnimated = useRef(new Animated.Value(
+    (currentNumber / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI + DIAL_ORIENTATION_OFFSET
+  )).current;
+  
   // Sync with parent's currentNumber when it changes externally (e.g., on load)
   useEffect(() => {
     currentIndexRef.current = currentNumber;
-  }, [currentNumber]);
+    // Immediately update display angle when externally changed (e.g., on load)
+    const targetAngle = (currentNumber / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI + DIAL_ORIENTATION_OFFSET;
+    displayAngleAnimated.setValue(targetAngle);
+  }, [currentNumber, displayAngleAnimated]);
   
   const panResponder = useRef(
     PanResponder.create({
@@ -140,7 +148,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
           }
           
           if (stepsToMove !== 0) {
-            // Clamp to MAX_STEP_JUMP to prevent wild jumps
+            // Clamp to MAX_STEP_JUMP to prevent wild jumps (now limited to 1 for smooth feel)
             if (Math.abs(stepsToMove) > MAX_STEP_JUMP) {
               stepsToMove = Math.sign(stepsToMove) * MAX_STEP_JUMP;
             }
@@ -154,6 +162,14 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
             // Convert index to angle and notify parent
             const newAngle = (newIndex / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
             onAngleChange(newAngle);
+            
+            // Animate display angle to new target for smooth click-by-click feel
+            const targetAngle = newAngle + DIAL_ORIENTATION_OFFSET;
+            Animated.timing(displayAngleAnimated, {
+              toValue: targetAngle,
+              duration: TICK_ANIMATION_DURATION,
+              useNativeDriver: true,
+            }).start();
           }
         }
         
@@ -163,16 +179,17 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
         // Notify parent we stopped dragging
         onDragEnd();
         lastThetaRef.current = null;
-        // Keep accumulator for potential sub-tick positioning if needed
+        // Reset accumulator to avoid drift
+        tickAccumulatorRef.current = 0;
       },
     })
   ).current;
   
-  // Rotation for display - use index for deterministic rendering
-  // Add small fractional component from accumulator for smooth sub-tick motion
-  const tickAngle = (2 * Math.PI) / PUZZLE_CONFIG.totalNumbers;
-  const displayAngle = (currentIndexRef.current * tickAngle) + tickAccumulatorRef.current + DIAL_ORIENTATION_OFFSET;
-  const rotation = (displayAngle * 180) / Math.PI;
+  // Rotation for display - use animated value for smooth transitions
+  const rotationInterpolated = displayAngleAnimated.interpolate({
+    inputRange: [-Math.PI, Math.PI],
+    outputRange: ['-180deg', '180deg'],
+  });
   
   // Generate number markers around the dial
   const markers = [];
@@ -182,7 +199,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
     const angle = (number / PUZZLE_CONFIG.totalNumbers) * 360;
     
     markers.push(
-      <View
+      <Animated.View
         key={i}
         style={[
           styles.marker,
@@ -190,13 +207,21 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
             transform: [
               { rotate: `${angle}deg` },
               { translateY: -(dialSize / 2 - 20) },
-              { rotate: `${-angle - rotation}deg` }, // Counter-rotate by both marker angle AND dial rotation to keep text upright
+              // Counter-rotate to keep text upright
+              // We need to counter-rotate by the marker's angle position
+              // The dial rotation is handled by the parent container
+              {
+                rotate: displayAngleAnimated.interpolate({
+                  inputRange: [-Math.PI * 4, Math.PI * 4],
+                  outputRange: [`${-angle + 720}deg`, `${-angle - 720}deg`],
+                }),
+              },
             ],
           },
         ]}
       >
         <Text style={styles.markerText}>{formatDialNumber(number)}</Text>
-      </View>
+      </Animated.View>
     );
   }
   
@@ -221,7 +246,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
             style={[
               styles.innerDial,
               {
-                transform: [{ rotate: `${rotation}deg` }],
+                transform: [{ rotate: rotationInterpolated }],
               },
             ]}
           >
