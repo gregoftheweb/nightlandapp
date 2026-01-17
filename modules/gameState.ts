@@ -43,6 +43,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     rangedAttackMode: false,
     targetedMonsterId: null,
     activeProjectiles: [],
+    subGamesCompleted: {},
   };
 };
 

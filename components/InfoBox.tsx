@@ -7,6 +7,8 @@ interface InfoBoxProps {
   description: string;
   image?: ImageSourcePropType;
   onClose: () => void;
+  ctaLabel?: string;
+  onCtaPress?: () => void;
 }
 
 export const InfoBox: React.FC<InfoBoxProps> = ({
@@ -14,7 +16,9 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
   name,
   description,
   image,
-  onClose
+  onClose,
+  ctaLabel,
+  onCtaPress
 }) => {
   const [opacity] = useState(new Animated.Value(0));
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -75,6 +79,16 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
           )}
           
           <Text style={styles.description}>{description}</Text>
+          
+          {ctaLabel && onCtaPress && (
+            <TouchableOpacity
+              style={styles.ctaButton}
+              onPress={onCtaPress}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.ctaButtonText}>{ctaLabel}</Text>
+            </TouchableOpacity>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -148,5 +162,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginTop: 10,
+  },
+  ctaButton: {
+    marginTop: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#ff0000',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#990000',
+  },
+  ctaButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
   },
 });

@@ -12,6 +12,17 @@ export interface Area {
 
 export type WeaponType = "melee" | "ranged";
 
+export interface SubGameLaunch {
+  subGameName: string;      // maps to /sub-games/<subGameName>
+  ctaLabel: string;         // label for InfoBox button
+  requiresPlayerOnObject?: boolean; // default true
+}
+
+export interface SubGameResult {
+  completed: boolean;
+  data?: any; // Optional result data from sub-game
+}
+
 export interface GameObject {
   shortName: string;
   category: string;
@@ -40,6 +51,7 @@ export interface GameObject {
   zIndex?: number;
   rotation?: number; // NEW: Rotation in degrees (0-360)
   projectileColor?: string; // Hex color for ranged weapon projectile
+  subGame?: SubGameLaunch; // Optional sub-game launch config
 }
 
 export interface Monster extends GameObject {
@@ -400,4 +412,5 @@ export interface GameState {
   rangedAttackMode?: boolean; // True when player is in ranged attack targeting mode
   targetedMonsterId?: string | null; // ID of the currently targeted monster for ranged attack
   activeProjectiles: Projectile[]; // Active projectiles being animated
+  subGamesCompleted?: Record<string, boolean>; // Track completed sub-games
 }
