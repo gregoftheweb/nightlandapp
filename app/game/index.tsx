@@ -60,6 +60,7 @@ export default function Game() {
   const stateRef = useRef(state);
   const longPressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentDirection = useRef<Direction>(null);
+  const lastZapPressTime = useRef<number>(0);
 
   // Keep state ref in sync
   useEffect(() => {
@@ -339,6 +340,19 @@ export default function Game() {
   );
 
   const handleZapPress = useCallback(() => {
+    // Throttle rapid button presses to prevent overwhelming the system
+    const now = Date.now();
+    const timeSinceLastPress = now - lastZapPressTime.current;
+    
+    if (timeSinceLastPress < TIMING_CONSTANTS.ZAP_BUTTON_THROTTLE) {
+      if (__DEV__) {
+        console.log("🎯 handleZapPress throttled - too soon since last press:", timeSinceLastPress, "ms");
+      }
+      return;
+    }
+    
+    lastZapPressTime.current = now;
+    
     if (__DEV__) {
       console.log("🎯 handleZapPress - rangedAttackMode:", state.rangedAttackMode, "targetedMonsterId:", state.targetedMonsterId, "inCombat:", state.inCombat);
     }
