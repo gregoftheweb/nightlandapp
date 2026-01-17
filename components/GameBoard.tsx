@@ -357,6 +357,19 @@ export default function GameBoard({
       
       const canLaunch = launch && (!launch.requiresPlayerOnObject || playerOnObject);
       
+      if (__DEV__) {
+        console.log("Sub-game check:", {
+          hasSubGame: !!launch,
+          subGameName: launch?.subGameName,
+          requiresPlayerOnObject: launch?.requiresPlayerOnObject,
+          playerPosition: state.player.position,
+          buildingPosition: building.position,
+          buildingSize: { width: building.width, height: building.height },
+          playerOnObject,
+          canLaunch,
+        });
+      }
+      
       if (canLaunch && launch) {
         // Show InfoBox with CTA button
         const handleCtaPress = () => {

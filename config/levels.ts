@@ -53,6 +53,7 @@ const createObjectInstance = (
     },
     zIndex: template.zIndex,
     effects: template.effects,
+    subGame: template.subGame,
     ...overrides,
   };
 };
