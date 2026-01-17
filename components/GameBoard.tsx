@@ -346,12 +346,16 @@ export default function GameBoard({
       
       // Check if building has sub-game launch config
       const launch = building.subGame;
+      // Get dimensions from size object or fallback to width/height properties
+      const buildingWidth = building.size?.width || building.width || 1;
+      const buildingHeight = building.size?.height || building.height || 1;
+      
       const playerOnObject = launch && building.position
         ? isPlayerOnObject(
             state.player.position,
             building.position,
-            building.width,
-            building.height
+            buildingWidth,
+            buildingHeight
           )
         : false;
       
@@ -364,7 +368,7 @@ export default function GameBoard({
           requiresPlayerOnObject: launch?.requiresPlayerOnObject,
           playerPosition: state.player.position,
           buildingPosition: building.position,
-          buildingSize: { width: building.width, height: building.height },
+          buildingSize: { width: buildingWidth, height: buildingHeight },
           playerOnObject,
           canLaunch,
         });
