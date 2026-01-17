@@ -246,6 +246,16 @@ export default function AeroWreckagePuzzle() {
           >
             <Text style={styles.primaryButtonText}>He returns to the quest.</Text>
           </TouchableOpacity>
+          
+          {__DEV__ && (
+            <TouchableOpacity
+              style={styles.debugButton}
+              onPress={handleResetPuzzle}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.debugButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
