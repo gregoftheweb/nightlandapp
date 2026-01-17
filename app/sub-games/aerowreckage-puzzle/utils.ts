@@ -57,10 +57,10 @@ export function getRotationDirection(angleDelta: number): DialDirection | null {
     normalizedDelta += 2 * Math.PI;
   }
   
-  // In standard math coordinates:
-  // Positive angle delta = counter-clockwise rotation
-  // Negative angle delta = clockwise rotation
-  return normalizedDelta > 0 ? 'CCW' : 'CW';
+  // In standard math coordinates (Y-axis points DOWN on screen):
+  // Positive angle delta = clockwise rotation (numbers increasing visually clockwise)
+  // Negative angle delta = counter-clockwise rotation (numbers decreasing visually counter-clockwise)
+  return normalizedDelta > 0 ? 'CW' : 'CCW';
 }
 
 /**

@@ -190,7 +190,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
             transform: [
               { rotate: `${angle}deg` },
               { translateY: -(dialSize / 2 - 20) },
-              { rotate: `${-angle}deg` }, // Counter-rotate to keep text upright
+              { rotate: `${-angle - rotation}deg` }, // Counter-rotate by both marker angle AND dial rotation to keep text upright
             ],
           },
         ]}

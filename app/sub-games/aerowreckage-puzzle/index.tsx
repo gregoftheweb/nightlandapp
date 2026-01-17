@@ -52,6 +52,14 @@ export default function AeroWreckagePuzzle() {
     exitSubGame({ completed: false });
   };
 
+  const handleResetPuzzle = async () => {
+    if (__DEV__) {
+      console.log('[AeroWreckagePuzzle] Resetting puzzle for testing');
+    }
+    await resetPuzzle();
+    setCurrentPage('intro');
+  };
+
   const handleLeaveWithoutUnlocking = () => {
     if (__DEV__) {
       console.log('[AeroWreckagePuzzle] Player leaving without unlocking');
@@ -148,6 +156,16 @@ export default function AeroWreckagePuzzle() {
             >
               <Text style={styles.secondaryButtonText}>He leaves the treasure untouched.</Text>
             </TouchableOpacity>
+            
+            {__DEV__ && (
+              <TouchableOpacity
+                style={styles.debugButton}
+                onPress={handleResetPuzzle}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.debugButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -355,5 +373,20 @@ const styles = StyleSheet.create({
     color: THEME.background,
     textAlign: 'center',
     letterSpacing: 1,
+  },
+  debugButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#444',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#666',
+    marginTop: 10,
+  },
+  debugButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#aaa',
+    textAlign: 'center',
   },
 });
