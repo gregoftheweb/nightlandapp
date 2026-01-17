@@ -10,6 +10,7 @@ import shortSwordIMG from "@assets/images/shortSword.png";
 import potionIMG from "@assets/images/potion.png";
 import sanctuaryPoolImg from "@assets/images/poolofpeace.png";
 import footprintsIMG from "@assets/images/footprints-blue.png";
+import aeroWreckageIMG from "@assets/images/aero-wreckage.png";
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
@@ -234,6 +235,22 @@ export const buildings: Record<string, GameObject> = {
       {
         type: "poison",
         value: 10,
+      },
+    ],
+  },
+  aeroWreckage: {
+    shortName: "aeroWreckage",
+    category: "building",
+    name: "Aero-Wreckage",
+    description: "The twisted remnants of a long-lost crashed aerocraft from a forgotten age of the Redoubt. Ancient metal and strange devices lie scattered among the wreckage, relics of a time when humanity soared above the Night Land.",
+    width: 4,
+    height: 4,
+    image: aeroWreckageIMG,
+    active: true,
+    zIndex: 0,
+    effects: [
+      {
+        type: "hide",
       },
     ],
   },
