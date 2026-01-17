@@ -24,7 +24,7 @@ export default function AeroWreckagePuzzle() {
     dispatch({
       type: 'SET_SUB_GAME_COMPLETED',
       payload: {
-        subGameName: 'aerowreckagePuzzle',
+        subGameName: 'aerowreckage-puzzle',
         completed: true,
       },
     });
