@@ -260,12 +260,15 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
             transform: [
               { rotate: `${angle}deg` },
               { translateY: -(dialSize / 2 - 20) },
-              // Counter-rotate to keep text upright AND synchronized with center number
-              // Counter-rotate by: marker angle + dial rotation (interpolated)
+              // Counter-rotate to keep text upright
+              // The text rotates by +angle to position around circle,
+              // then must counter-rotate by -angle AND -dialRotation to stay upright
+              // This ensures the number at top (under red triangle) always matches center
+              { rotate: `${-angle}deg` },
               {
                 rotate: displayAngleAnimated.interpolate({
-                  inputRange: [-Math.PI * 2, Math.PI * 2],
-                  outputRange: [`${-angle + 360}deg`, `${-angle - 360}deg`],
+                  inputRange: [-Math.PI, Math.PI],
+                  outputRange: ['180deg', '-180deg'],
                 }),
               },
             ],
