@@ -227,7 +227,7 @@ export default function AeroWreckagePuzzle() {
                   onPress={handleLeaveWithoutUnlocking}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.primaryButtonText}>Leave</Text>
+                  <Text style={styles.primaryButtonText}>Leave Without Unlocking</Text>
                 </TouchableOpacity>
               </View>
             </BottomActionBar>
