@@ -8,8 +8,13 @@ import { usePuzzleState } from './hooks/usePuzzleState';
 import { Dial } from './components/Dial';
 import { StepIndicator } from './components/StepIndicator';
 import { FeedbackModal } from './components/FeedbackModal';
+import { BackgroundImage } from '../_shared/BackgroundImage';
 import { THEME } from './theme';
 import { AttemptResult } from './types';
+
+// Import background images
+const bgIntro = require('@/assets/images/aerowreck-safe1.png');
+const bgPuzzle = require('@/assets/images/aerowreck-safe2.png');
 
 type GamePage = 'intro' | 'puzzle' | 'success';
 
@@ -131,104 +136,108 @@ export default function AeroWreckagePuzzle() {
   // Page 1: Introduction
   if (currentPage === 'intro') {
     return (
-      <View style={styles.container}>
-        <View style={styles.centeredContent}>
-          <Text style={styles.flavorText}>
-            You find a dust covered safe under some strewn wreckage of the ancient craft.
-          </Text>
-          <Text style={styles.flavorTextSecondary}>
-            Christos ponders the treasure within?
-          </Text>
+      <BackgroundImage source={bgIntro}>
+        <View style={styles.container}>
+          <View style={styles.centeredContent}>
+            <Text style={styles.flavorText}>
+              You find a dust covered safe under some strewn wreckage of the ancient craft.
+            </Text>
+            <Text style={styles.flavorTextSecondary}>
+              Christos ponders the treasure within?
+            </Text>
 
-          <View style={styles.buttonGroup}>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleAttemptOpen}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.primaryButtonText}>He attempts to open it.</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={handleLeaveTreasure}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.secondaryButtonText}>He leaves the treasure untouched.</Text>
-            </TouchableOpacity>
-            
-            {__DEV__ && (
+            <View style={styles.buttonGroup}>
               <TouchableOpacity
-                style={styles.debugButton}
-                onPress={handleResetPuzzle}
+                style={styles.primaryButton}
+                onPress={handleAttemptOpen}
                 activeOpacity={0.7}
               >
-                <Text style={styles.debugButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
+                <Text style={styles.primaryButtonText}>He attempts to open it.</Text>
               </TouchableOpacity>
-            )}
+
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={handleLeaveTreasure}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.secondaryButtonText}>He leaves the treasure untouched.</Text>
+              </TouchableOpacity>
+              
+              {__DEV__ && (
+                <TouchableOpacity
+                  style={styles.debugButton}
+                  onPress={handleResetPuzzle}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.debugButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
-      </View>
+      </BackgroundImage>
     );
   }
 
   // Page 2: Puzzle
   if (currentPage === 'puzzle') {
     return (
-      <View style={styles.container}>
-        <View style={styles.puzzleContent}>
-          {/* Step Progress at Top */}
-          <View style={styles.stepContainer}>
-            <StepIndicator
-              currentStepIndex={state.currentStepIndex}
-              stepHistory={state.stepHistory}
-              isOpened={state.isOpened}
-            />
-          </View>
+      <BackgroundImage source={bgPuzzle}>
+        <View style={styles.container}>
+          <View style={styles.puzzleContent}>
+            {/* Step Progress at Top */}
+            <View style={styles.stepContainer}>
+              <StepIndicator
+                currentStepIndex={state.currentStepIndex}
+                stepHistory={state.stepHistory}
+                isOpened={state.isOpened}
+              />
+            </View>
 
-          {/* Dial Centered */}
-          <View style={styles.dialContainer}>
-            <Dial
-              currentAngle={state.currentAngle}
-              currentNumber={state.currentNumber}
-              onAngleChange={updateAngle}
-              onCenterTap={handleCenterTap}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            />
-          </View>
+            {/* Dial Centered */}
+            <View style={styles.dialContainer}>
+              <Dial
+                currentAngle={state.currentAngle}
+                currentNumber={state.currentNumber}
+                onAngleChange={updateAngle}
+                onCenterTap={handleCenterTap}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              />
+            </View>
 
-          {/* Buttons at Bottom */}
-          <View style={styles.bottomButtonContainer}>
-            <TouchableOpacity
-              style={styles.tryButton}
-              onPress={handleTryCombination}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.tryButtonText}>Try Combination</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={handleLeaveWithoutUnlocking}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.secondaryButtonText}>Christos leaves without unlocking.</Text>
-            </TouchableOpacity>
+            {/* Buttons at Bottom */}
+            <View style={styles.bottomButtonContainer}>
+              <TouchableOpacity
+                style={styles.tryButton}
+                onPress={handleTryCombination}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.tryButtonText}>Try Combination</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={handleLeaveWithoutUnlocking}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.secondaryButtonText}>Christos leaves without unlocking.</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+          
+          {/* Feedback Modal */}
+          {attemptResult && (
+            <FeedbackModal
+              visible={modalVisible}
+              type={attemptResult.type}
+              message={attemptResult.message}
+              hint={attemptResult.hint}
+              onDismiss={handleModalDismiss}
+            />
+          )}
         </View>
-        
-        {/* Feedback Modal */}
-        {attemptResult && (
-          <FeedbackModal
-            visible={modalVisible}
-            type={attemptResult.type}
-            message={attemptResult.message}
-            hint={attemptResult.hint}
-            onDismiss={handleModalDismiss}
-          />
-        )}
-      </View>
+      </BackgroundImage>
     );
   }
 
@@ -265,7 +274,7 @@ export default function AeroWreckagePuzzle() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: THEME.background,
+    backgroundColor: 'transparent',
   },
   loadingContainer: {
     flex: 1,
