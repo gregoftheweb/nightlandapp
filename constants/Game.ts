@@ -21,6 +21,9 @@ export const TIMING_CONSTANTS = {
   
   /** Delay in milliseconds before navigating to death screen after game over */
   GAME_OVER_DELAY: 7000,
+  
+  /** Minimum time in milliseconds between ranged attack button presses (throttle) */
+  ZAP_BUTTON_THROTTLE: 300,
 } as const;
 
 /**

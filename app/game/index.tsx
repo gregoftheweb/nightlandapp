@@ -343,9 +343,8 @@ export default function Game() {
     // Throttle rapid button presses to prevent overwhelming the system
     const now = Date.now();
     const timeSinceLastPress = now - lastZapPressTime.current;
-    const THROTTLE_MS = 300; // Minimum time between presses
     
-    if (timeSinceLastPress < THROTTLE_MS) {
+    if (timeSinceLastPress < TIMING_CONSTANTS.ZAP_BUTTON_THROTTLE) {
       if (__DEV__) {
         console.log("🎯 handleZapPress throttled - too soon since last press:", timeSinceLastPress, "ms");
       }
