@@ -10,6 +10,9 @@ import { normalizeAngle, formatDialNumber } from '../utils';
 const { width } = Dimensions.get('window');
 const DIAL_SIZE = Math.min(width * 0.7, 300);
 const CENTER_SIZE = 60;
+const NUMBER_MARKERS = 12; // Major number markers around the dial
+const TICK_MARKS = 8; // Decorative tick marks on rotating dial
+const DIAL_ORIENTATION_OFFSET = Math.PI / 2; // 90 degrees to align pointer upward
 
 interface DialProps {
   currentAngle: number;
@@ -51,7 +54,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
         const touchAngle = Math.atan2(dy, dx);
         
         // Update rotation
-        const newAngle = normalizeAngle(touchAngle + Math.PI / 2);
+        const newAngle = normalizeAngle(touchAngle + DIAL_ORIENTATION_OFFSET);
         rotationRef.current = newAngle;
         onAngleChange(newAngle);
       },
@@ -65,8 +68,8 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
   
   // Generate number markers around the dial
   const markers = [];
-  const step = PUZZLE_CONFIG.totalNumbers / 12; // Show 12 major markers
-  for (let i = 0; i < 12; i++) {
+  const step = PUZZLE_CONFIG.totalNumbers / NUMBER_MARKERS;
+  for (let i = 0; i < NUMBER_MARKERS; i++) {
     const number = Math.round(i * step) % PUZZLE_CONFIG.totalNumbers;
     const angle = (number / PUZZLE_CONFIG.totalNumbers) * 360;
     
@@ -117,14 +120,14 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
             <View style={styles.pointer} />
             
             {/* Tick marks */}
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: TICK_MARKS }).map((_, i) => (
               <View
                 key={i}
                 style={[
                   styles.tickMark,
                   {
                     transform: [
-                      { rotate: `${i * 45}deg` },
+                      { rotate: `${i * (360 / TICK_MARKS)}deg` },
                       { translateY: -(DIAL_SIZE / 2 - 40) },
                     ],
                   },
