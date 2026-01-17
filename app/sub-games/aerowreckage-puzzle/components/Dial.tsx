@@ -1,5 +1,5 @@
 // app/sub-games/aerowreckage-puzzle/components/Dial.tsx
-// Rotatable dial with gesture handling
+// Rotatable dial with gesture handling - Discrete tick model for stability
 
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, PanResponder, Animated, Dimensions, TouchableOpacity } from 'react-native';
@@ -12,6 +12,7 @@ const NUMBER_MARKERS = 12; // Major number markers around the dial
 const TICK_MARKS = 8; // Decorative tick marks on rotating dial
 const DIAL_ORIENTATION_OFFSET = Math.PI / 2; // 90 degrees to align pointer upward
 const ROTATION_SENSITIVITY = 0.5; // Reduce rotation speed for better control (0.5 = half speed)
+const MAX_STEP_JUMP = 2; // Maximum number of steps dial can move in one update (prevents wild jumps)
 
 // Calculate responsive dial size based on screen dimensions
 const getDialSize = (width: number, height: number) => {
@@ -29,6 +30,21 @@ const getDialSize = (width: number, height: number) => {
   // For landscape screens
   return Math.min(height * 0.6, 280);
 };
+
+/**
+ * Calculate circular distance between two indices
+ * Returns signed distance (-N/2 to +N/2) taking shortest path
+ */
+function circularDistance(from: number, to: number, total: number): number {
+  const diff = to - from;
+  const absDiff = Math.abs(diff);
+  
+  if (absDiff <= total / 2) {
+    return diff;
+  } else {
+    return diff > 0 ? diff - total : diff + total;
+  }
+}
 
 interface DialProps {
   currentAngle: number;
@@ -55,9 +71,17 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
     return () => subscription?.remove();
   }, []);
   
-  const panRef = useRef(new Animated.Value(0)).current;
-  const accumulatedAngleRef = useRef(currentAngle); // Continuous angle (can exceed 2π)
+  // Discrete tick dial model
+  // Store current index (0 to totalNumbers-1) and fractional accumulator
+  const currentIndexRef = useRef(currentNumber);
+  const tickAccumulatorRef = useRef(0); // Fractional angle between ticks
   const lastThetaRef = useRef<number | null>(null); // Last raw atan2 angle for unwrapping
+  const grabOffsetRef = useRef<number>(0); // Offset to handle grab at arbitrary position
+  
+  // Sync with parent's currentNumber when it changes externally (e.g., on load)
+  useEffect(() => {
+    currentIndexRef.current = currentNumber;
+  }, [currentNumber]);
   
   const panResponder = useRef(
     PanResponder.create({
@@ -67,7 +91,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
         // Notify parent we're dragging
         onDragStart();
         
-        // Store initial touch position and reset unwrap tracking
+        // Calculate touch angle
         const { locationX, locationY } = evt.nativeEvent;
         const centerX = dialSize / 2;
         const centerY = dialSize / 2;
@@ -76,9 +100,15 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
         const dy = locationY - centerY;
         const touchAngle = Math.atan2(dy, dx);
         
-        // Initialize tracking
+        // Initialize tracking - "grab" at current dial position
+        // Calculate current visual angle from index
+        const currentVisualAngle = (currentIndexRef.current / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
+        
+        // Calculate grab offset so touch position maps to current dial angle
+        grabOffsetRef.current = currentVisualAngle - touchAngle;
+        
         lastThetaRef.current = touchAngle;
-        accumulatedAngleRef.current = currentAngle;
+        tickAccumulatorRef.current = 0; // Reset accumulator on new grab
       },
       onPanResponderMove: (evt) => {
         const { locationX, locationY } = evt.nativeEvent;
@@ -103,26 +133,57 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
           // Apply sensitivity to slow down rotation
           deltaTheta *= ROTATION_SENSITIVITY;
           
-          // Accumulate angle (can be outside [0, 2π])
-          accumulatedAngleRef.current += deltaTheta;
+          // Accumulate fractional rotation
+          tickAccumulatorRef.current += deltaTheta;
+          
+          // Calculate tick angle (angle per number on dial)
+          const tickAngle = (2 * Math.PI) / PUZZLE_CONFIG.totalNumbers;
+          
+          // Check if we've accumulated enough to cross a tick
+          let stepsToMove = 0;
+          while (tickAccumulatorRef.current >= tickAngle) {
+            stepsToMove++;
+            tickAccumulatorRef.current -= tickAngle;
+          }
+          while (tickAccumulatorRef.current <= -tickAngle) {
+            stepsToMove--;
+            tickAccumulatorRef.current += tickAngle;
+          }
+          
+          if (stepsToMove !== 0) {
+            // Clamp to MAX_STEP_JUMP to prevent wild jumps
+            if (Math.abs(stepsToMove) > MAX_STEP_JUMP) {
+              stepsToMove = Math.sign(stepsToMove) * MAX_STEP_JUMP;
+            }
+            
+            // Update index with wrap-around
+            let newIndex = currentIndexRef.current + stepsToMove;
+            newIndex = ((newIndex % PUZZLE_CONFIG.totalNumbers) + PUZZLE_CONFIG.totalNumbers) % PUZZLE_CONFIG.totalNumbers;
+            
+            currentIndexRef.current = newIndex;
+            
+            // Convert index to angle and notify parent
+            const newAngle = (newIndex / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
+            onAngleChange(newAngle);
+          }
         }
         
         lastThetaRef.current = theta;
-        
-        // Send normalized angle to parent for number calculation
-        const newAngle = normalizeAngle(accumulatedAngleRef.current + DIAL_ORIENTATION_OFFSET);
-        onAngleChange(newAngle);
       },
       onPanResponderRelease: () => {
         // Notify parent we stopped dragging
         onDragEnd();
         lastThetaRef.current = null;
+        // Keep accumulator for potential sub-tick positioning if needed
       },
     })
   ).current;
   
-  // Rotation for display (use the raw accumulated angle for smooth continuous rotation)
-  const rotation = ((accumulatedAngleRef.current + DIAL_ORIENTATION_OFFSET) * 180) / Math.PI;
+  // Rotation for display - use index for deterministic rendering
+  // Add small fractional component from accumulator for smooth sub-tick motion
+  const tickAngle = (2 * Math.PI) / PUZZLE_CONFIG.totalNumbers;
+  const displayAngle = (currentIndexRef.current * tickAngle) + tickAccumulatorRef.current + DIAL_ORIENTATION_OFFSET;
+  const rotation = (displayAngle * 180) / Math.PI;
   
   // Generate number markers around the dial
   const markers = [];
