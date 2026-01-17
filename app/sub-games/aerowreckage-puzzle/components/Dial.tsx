@@ -2,7 +2,7 @@
 // Rotatable dial with gesture handling
 
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, PanResponder, Animated, Dimensions, TouchableOpacity } from 'react';
+import { View, Text, StyleSheet, PanResponder, Animated, Dimensions, TouchableOpacity } from 'react-native';
 import { PUZZLE_CONFIG } from '../config';
 import { THEME } from '../theme';
 import { normalizeAngle, formatDialNumber } from '../utils';
