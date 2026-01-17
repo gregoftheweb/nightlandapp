@@ -167,7 +167,7 @@ export default function AeroWreckagePuzzle() {
                 onPress={handleAttemptOpen}
                 activeOpacity={0.7}
               >
-                <Text style={styles.primaryButtonText}>He attempts to open it.</Text>
+                <Text style={styles.primaryButtonText}>Attempt to Open It</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -175,7 +175,7 @@ export default function AeroWreckagePuzzle() {
                 onPress={handleLeaveTreasure}
                 activeOpacity={0.7}
               >
-                <Text style={styles.primaryButtonText}>He leaves the treasure untouched.</Text>
+                <Text style={styles.primaryButtonText}>Leave It Untouched</Text>
               </TouchableOpacity>
             </View>
           </BottomActionBar>
@@ -272,7 +272,7 @@ export default function AeroWreckagePuzzle() {
             onPress={handleReturnToQuest}
             activeOpacity={0.7}
           >
-            <Text style={styles.primaryButtonText}>He returns to the quest.</Text>
+            <Text style={styles.primaryButtonText}>Return to Quest</Text>
           </TouchableOpacity>
         </BottomActionBar>
       </View>

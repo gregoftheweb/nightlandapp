@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   buttonSuccess: {
     backgroundColor: subGameTheme.red,
-    borderColor: subGameTheme.red,
+    borderColor: subGameTheme.blue,
   },
   buttonText: {
     fontSize: 16,
