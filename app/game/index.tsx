@@ -340,7 +340,19 @@ export default function Game() {
 
   const handleZapPress = useCallback(() => {
     if (__DEV__) {
-      console.log("🎯 handleZapPress - rangedAttackMode:", state.rangedAttackMode, "targetedMonsterId:", state.targetedMonsterId);
+      console.log("🎯 handleZapPress - rangedAttackMode:", state.rangedAttackMode, "targetedMonsterId:", state.targetedMonsterId, "inCombat:", state.inCombat);
+    }
+    
+    // Hard-stop: Don't allow ranged attack mode when in melee combat
+    if (state.inCombat) {
+      if (__DEV__) {
+        console.log("🎯 Cannot use ranged attack in melee combat");
+      }
+      dispatch({
+        type: "ADD_COMBAT_LOG",
+        payload: { message: "Cannot use ranged attacks in melee combat!" },
+      });
+      return;
     }
     
     // If ranged attack mode is OFF, turn it ON and target nearest enemy
