@@ -1,23 +1,29 @@
 // app/sub-games/aerowreckage-puzzle/index.tsx
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGameContext } from '@/context/GameContext';
 import { exitSubGame } from '@/lib/subGames';
+import { usePuzzleState } from './hooks/usePuzzleState';
+import { Dial } from './components/Dial';
+import { StepIndicator } from './components/StepIndicator';
+import { InstructionOverlay } from './components/InstructionOverlay';
+import { THEME } from './theme';
 
 export default function AeroWreckagePuzzle() {
   const router = useRouter();
-  const { state, dispatch, signalRpgResume } = useGameContext();
+  const { state: gameState, dispatch, signalRpgResume } = useGameContext();
+  const { state, isLoading, updateAngle, resetPuzzle } = usePuzzleState();
 
   useEffect(() => {
     if (__DEV__) {
-      console.log('[AeroWreckagePuzzle] Mounted, current gamestate:', state);
+      console.log('[AeroWreckagePuzzle] Mounted, current gamestate:', gameState);
     }
-  }, [state]);
+  }, [gameState]);
 
-  const handleWin = () => {
+  const handleCollect = () => {
     if (__DEV__) {
-      console.log('[AeroWreckagePuzzle] Player won! Updating gamestate...');
+      console.log('[AeroWreckagePuzzle] Player collected maguffin! Updating gamestate...');
     }
 
     // Update gamestate: mark aerowreckage puzzle as completed
@@ -36,23 +42,86 @@ export default function AeroWreckagePuzzle() {
     exitSubGame({ completed: true });
   };
 
+  const handleExit = () => {
+    if (__DEV__) {
+      console.log('[AeroWreckagePuzzle] Player exiting without completion');
+    }
+
+    // Exit without marking as completed
+    exitSubGame({ completed: false });
+  };
+
+  const handleReset = async () => {
+    if (__DEV__) {
+      console.log('[AeroWreckagePuzzle] Resetting puzzle');
+    }
+    await resetPuzzle();
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={THEME.brass} />
+        <Text style={styles.loadingText}>Loading puzzle...</Text>
+      </View>
+    );
+  }
+
+  const isDwelling = state.dwellStartTime !== null;
+
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Aero-Wreckage Puzzle</Text>
-        <Text style={styles.description}>
-          You investigate the ancient aerocraft wreckage. Strange devices and
-          mysterious mechanisms lie before you.
-        </Text>
-        
-        <TouchableOpacity
-          style={styles.winButton}
-          onPress={handleWin}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.winButtonText}>I Win</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Instructions */}
+        <InstructionOverlay isOpened={state.isOpened} />
+
+        {/* Step Progress */}
+        <StepIndicator
+          currentStepIndex={state.currentStepIndex}
+          stepHistory={state.stepHistory}
+          isOpened={state.isOpened}
+        />
+
+        {/* Dial */}
+        <Dial
+          currentAngle={state.currentAngle}
+          currentNumber={state.currentNumber}
+          onAngleChange={updateAngle}
+          isDwelling={isDwelling}
+        />
+
+        {/* Action Buttons */}
+        <View style={styles.buttonContainer}>
+          {state.isOpened ? (
+            <TouchableOpacity
+              style={styles.collectButton}
+              onPress={handleCollect}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.collectButtonText}>Collect Maguffin</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={handleReset}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.resetButtonText}>Reset Puzzle</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.exitButton}
+            onPress={handleExit}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.exitButtonText}>Exit</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -60,41 +129,74 @@ export default function AeroWreckagePuzzle() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: THEME.background,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+    gap: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: THEME.background,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 20,
   },
-  content: {
-    padding: 20,
-    maxWidth: 400,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ff0000',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  description: {
+  loadingText: {
     fontSize: 16,
-    color: '#ff0000',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
+    color: THEME.textSecondary,
   },
-  winButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    backgroundColor: '#ff0000',
+  buttonContainer: {
+    gap: 12,
+    paddingHorizontal: 20,
+  },
+  collectButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    backgroundColor: THEME.success,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#990000',
+    borderColor: THEME.success,
+    shadowColor: THEME.success,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  winButtonText: {
+  collectButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: THEME.background,
+    textAlign: 'center',
+    letterSpacing: 1,
+  },
+  resetButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    backgroundColor: THEME.backgroundSecondary,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: THEME.brass,
+  },
+  resetButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: THEME.brass,
+    textAlign: 'center',
+  },
+  exitButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    backgroundColor: THEME.backgroundSecondary,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: THEME.textMuted,
+  },
+  exitButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: THEME.textSecondary,
     textAlign: 'center',
   },
 });
