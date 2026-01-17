@@ -213,6 +213,7 @@ export const levels: Record<string, Level> = {
       createObjectInstance("healingPool", { row: 375, col: 20 }),
       createObjectInstance("poisonPool", { row: 250, col: 250 }),
       createObjectInstance("cursedTotem", { row: 385, col: 220 }),
+      createObjectInstance("aeroWreckage", { row: 340, col: 298 }),
     ],
     nonCollisionObjects: [
       // Start
