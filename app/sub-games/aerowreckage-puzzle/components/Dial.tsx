@@ -249,10 +249,9 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
   const step = PUZZLE_CONFIG.totalNumbers / NUMBER_MARKERS;
   for (let i = 0; i < NUMBER_MARKERS; i++) {
     const number = Math.round(i * step) % PUZZLE_CONFIG.totalNumbers;
-    // Markers are inside the rotating dial, so their base position is already rotated by the dial
-    // We position them in standard 0-360 coordinates (0 at 3 o'clock)
-    // The dial rotation will then move them to align with the coordinate system
-    const angleRad = (number / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
+    // Markers are inside the rotating dial - position them opposite to DIAL_ORIENTATION_OFFSET
+    // to counteract the dial's base rotation and align number 0 at 12 o'clock
+    const angleRad = (number / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI - DIAL_ORIENTATION_OFFSET;
     const angle = (angleRad * 180 / Math.PI);
     
     markers.push(
