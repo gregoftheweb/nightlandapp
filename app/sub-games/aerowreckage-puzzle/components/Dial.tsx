@@ -2,7 +2,7 @@
 // Rotatable dial with gesture handling
 
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, PanResponder, Animated, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, PanResponder, Animated, Dimensions, TouchableOpacity } from 'react';
 import { PUZZLE_CONFIG } from '../config';
 import { THEME } from '../theme';
 import { normalizeAngle, formatDialNumber } from '../utils';
@@ -11,6 +11,7 @@ const CENTER_SIZE = 60;
 const NUMBER_MARKERS = 12; // Major number markers around the dial
 const TICK_MARKS = 8; // Decorative tick marks on rotating dial
 const DIAL_ORIENTATION_OFFSET = Math.PI / 2; // 90 degrees to align pointer upward
+const ROTATION_SENSITIVITY = 0.5; // Reduce rotation speed for better control (0.5 = half speed)
 
 // Calculate responsive dial size based on screen dimensions
 const getDialSize = (width: number, height: number) => {
@@ -55,7 +56,8 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
   }, []);
   
   const panRef = useRef(new Animated.Value(0)).current;
-  const rotationRef = useRef(currentAngle);
+  const accumulatedAngleRef = useRef(currentAngle); // Continuous angle (can exceed 2π)
+  const lastThetaRef = useRef<number | null>(null); // Last raw atan2 angle for unwrapping
   
   const panResponder = useRef(
     PanResponder.create({
@@ -65,42 +67,62 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
         // Notify parent we're dragging
         onDragStart();
         
-        // Store initial touch position
+        // Store initial touch position and reset unwrap tracking
         const { locationX, locationY } = evt.nativeEvent;
         const centerX = dialSize / 2;
         const centerY = dialSize / 2;
         
-        // Calculate initial angle from center
         const dx = locationX - centerX;
         const dy = locationY - centerY;
         const touchAngle = Math.atan2(dy, dx);
         
-        // Store offset between current rotation and touch angle
-        rotationRef.current = currentAngle;
+        // Initialize tracking
+        lastThetaRef.current = touchAngle;
+        accumulatedAngleRef.current = currentAngle;
       },
       onPanResponderMove: (evt) => {
         const { locationX, locationY } = evt.nativeEvent;
         const centerX = dialSize / 2;
         const centerY = dialSize / 2;
         
-        // Calculate angle from center to touch point
         const dx = locationX - centerX;
         const dy = locationY - centerY;
-        const touchAngle = Math.atan2(dy, dx);
+        const theta = Math.atan2(dy, dx);
         
-        // Update rotation
-        const newAngle = normalizeAngle(touchAngle + DIAL_ORIENTATION_OFFSET);
-        rotationRef.current = newAngle;
+        if (lastThetaRef.current !== null) {
+          // Calculate delta with unwrapping to handle 2π discontinuity
+          let deltaTheta = theta - lastThetaRef.current;
+          
+          // Unwrap: if we crossed the boundary, adjust
+          if (deltaTheta > Math.PI) {
+            deltaTheta -= 2 * Math.PI;
+          } else if (deltaTheta < -Math.PI) {
+            deltaTheta += 2 * Math.PI;
+          }
+          
+          // Apply sensitivity to slow down rotation
+          deltaTheta *= ROTATION_SENSITIVITY;
+          
+          // Accumulate angle (can be outside [0, 2π])
+          accumulatedAngleRef.current += deltaTheta;
+        }
+        
+        lastThetaRef.current = theta;
+        
+        // Send normalized angle to parent for number calculation
+        const newAngle = normalizeAngle(accumulatedAngleRef.current + DIAL_ORIENTATION_OFFSET);
         onAngleChange(newAngle);
       },
       onPanResponderRelease: () => {
         // Notify parent we stopped dragging
         onDragEnd();
+        lastThetaRef.current = null;
       },
     })
   ).current;
   
-  const rotation = (currentAngle * 180) / Math.PI;
+  // Rotation for display (use the raw accumulated angle for smooth continuous rotation)
+  const rotation = ((accumulatedAngleRef.current + DIAL_ORIENTATION_OFFSET) * 180) / Math.PI;
   
   // Generate number markers around the dial
   const markers = [];
@@ -143,12 +165,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
           {/* Outer ring */}
           <View style={styles.outerRing} />
           
-          {/* Number markers */}
-          <View style={styles.markersContainer}>
-            {markers}
-          </View>
-          
-          {/* Rotating inner dial - NO POINTER INSIDE */}
+          {/* Rotating inner dial with numbers and tick marks */}
           <Animated.View
             style={[
               styles.innerDial,
@@ -157,7 +174,12 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
               },
             ]}
           >
-            {/* Tick marks only - no pointer */}
+            {/* Number markers - INSIDE rotating dial */}
+            <View style={styles.markersContainer}>
+              {markers}
+            </View>
+            
+            {/* Tick marks */}
             {Array.from({ length: TICK_MARKS }).map((_, i) => (
               <View
                 key={i}
