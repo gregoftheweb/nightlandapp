@@ -1,19 +1,21 @@
 // app/sub-games/aerowreckage-puzzle/index.tsx
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGameContext } from '@/context/GameContext';
 import { exitSubGame } from '@/lib/subGames';
 import { usePuzzleState } from './hooks/usePuzzleState';
 import { Dial } from './components/Dial';
 import { StepIndicator } from './components/StepIndicator';
-import { InstructionOverlay } from './components/InstructionOverlay';
 import { THEME } from './theme';
+
+type GamePage = 'intro' | 'puzzle' | 'success';
 
 export default function AeroWreckagePuzzle() {
   const router = useRouter();
   const { state: gameState, dispatch, signalRpgResume } = useGameContext();
   const { state, isLoading, updateAngle, resetPuzzle } = usePuzzleState();
+  const [currentPage, setCurrentPage] = useState<GamePage>('intro');
 
   useEffect(() => {
     if (__DEV__) {
@@ -21,9 +23,41 @@ export default function AeroWreckagePuzzle() {
     }
   }, [gameState]);
 
-  const handleCollect = () => {
+  // If puzzle was already opened, go to success page
+  useEffect(() => {
+    if (!isLoading && state.isOpened) {
+      setCurrentPage('success');
+    }
+  }, [isLoading, state.isOpened]);
+
+  // When puzzle opens, transition to success page
+  useEffect(() => {
+    if (state.isOpened && currentPage === 'puzzle') {
+      setCurrentPage('success');
+    }
+  }, [state.isOpened, currentPage]);
+
+  const handleAttemptOpen = () => {
+    setCurrentPage('puzzle');
+  };
+
+  const handleLeaveTreasure = () => {
     if (__DEV__) {
-      console.log('[AeroWreckagePuzzle] Player collected maguffin! Updating gamestate...');
+      console.log('[AeroWreckagePuzzle] Player leaving treasure untouched');
+    }
+    exitSubGame({ completed: false });
+  };
+
+  const handleLeaveWithoutUnlocking = () => {
+    if (__DEV__) {
+      console.log('[AeroWreckagePuzzle] Player leaving without unlocking');
+    }
+    exitSubGame({ completed: false });
+  };
+
+  const handleReturnToQuest = () => {
+    if (__DEV__) {
+      console.log('[AeroWreckagePuzzle] Player returning to quest after success');
     }
 
     // Update gamestate: mark aerowreckage puzzle as completed
@@ -42,86 +76,106 @@ export default function AeroWreckagePuzzle() {
     exitSubGame({ completed: true });
   };
 
-  const handleExit = () => {
-    if (__DEV__) {
-      console.log('[AeroWreckagePuzzle] Player exiting without completion');
-    }
-
-    // Exit without marking as completed
-    exitSubGame({ completed: false });
-  };
-
-  const handleReset = async () => {
-    if (__DEV__) {
-      console.log('[AeroWreckagePuzzle] Resetting puzzle');
-    }
-    await resetPuzzle();
-  };
-
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={THEME.brass} />
-        <Text style={styles.loadingText}>Loading puzzle...</Text>
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
 
-  const isDwelling = state.dwellStartTime !== null;
+  // Page 1: Introduction
+  if (currentPage === 'intro') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.centeredContent}>
+          <Text style={styles.flavorText}>
+            You find a dust covered safe under some strewn wreckage of the ancient craft.
+          </Text>
+          <Text style={styles.flavorTextSecondary}>
+            Christos ponders the treasure within?
+          </Text>
 
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleAttemptOpen}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.primaryButtonText}>He attempts to open it.</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleLeaveTreasure}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.secondaryButtonText}>He leaves the treasure untouched.</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // Page 2: Puzzle
+  if (currentPage === 'puzzle') {
+    const isDwelling = state.dwellStartTime !== null;
+
+    return (
+      <View style={styles.container}>
+        <View style={styles.puzzleContent}>
+          {/* Step Progress at Top */}
+          <View style={styles.stepContainer}>
+            <StepIndicator
+              currentStepIndex={state.currentStepIndex}
+              stepHistory={state.stepHistory}
+              isOpened={state.isOpened}
+            />
+          </View>
+
+          {/* Dial Centered */}
+          <View style={styles.dialContainer}>
+            <Dial
+              currentAngle={state.currentAngle}
+              currentNumber={state.currentNumber}
+              onAngleChange={updateAngle}
+              isDwelling={isDwelling}
+            />
+          </View>
+
+          {/* Exit Button at Bottom */}
+          <View style={styles.bottomButtonContainer}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleLeaveWithoutUnlocking}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.secondaryButtonText}>Christos leaves without unlocking?</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // Page 3: Success
   return (
     <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Instructions */}
-        <InstructionOverlay isOpened={state.isOpened} />
+      <View style={styles.centeredContent}>
+        <Text style={styles.successText}>Christos Succeeds!</Text>
 
-        {/* Step Progress */}
-        <StepIndicator
-          currentStepIndex={state.currentStepIndex}
-          stepHistory={state.stepHistory}
-          isOpened={state.isOpened}
-        />
-
-        {/* Dial */}
-        <Dial
-          currentAngle={state.currentAngle}
-          currentNumber={state.currentNumber}
-          onAngleChange={updateAngle}
-          isDwelling={isDwelling}
-        />
-
-        {/* Action Buttons */}
-        <View style={styles.buttonContainer}>
-          {state.isOpened ? (
-            <TouchableOpacity
-              style={styles.collectButton}
-              onPress={handleCollect}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.collectButtonText}>Collect Maguffin</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.resetButton}
-              onPress={handleReset}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.resetButtonText}>Reset Puzzle</Text>
-            </TouchableOpacity>
-          )}
-
+        <View style={styles.buttonGroup}>
           <TouchableOpacity
-            style={styles.exitButton}
-            onPress={handleExit}
+            style={styles.primaryButton}
+            onPress={handleReturnToQuest}
             activeOpacity={0.7}
           >
-            <Text style={styles.exitButtonText}>Exit</Text>
+            <Text style={styles.primaryButtonText}>He returns to the quest.</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -130,11 +184,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: THEME.background,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-    gap: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -147,45 +196,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: THEME.textSecondary,
   },
-  buttonContainer: {
-    gap: 12,
-    paddingHorizontal: 20,
+  centeredContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    gap: 30,
   },
-  collectButton: {
+  flavorText: {
+    fontSize: 18,
+    color: THEME.textPrimary,
+    textAlign: 'center',
+    lineHeight: 28,
+    marginBottom: 10,
+  },
+  flavorTextSecondary: {
+    fontSize: 16,
+    color: THEME.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    fontStyle: 'italic',
+  },
+  successText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: THEME.success,
+    textAlign: 'center',
+    letterSpacing: 2,
+  },
+  buttonGroup: {
+    width: '100%',
+    gap: 16,
+    marginTop: 20,
+  },
+  primaryButton: {
     paddingVertical: 16,
     paddingHorizontal: 32,
-    backgroundColor: THEME.success,
+    backgroundColor: THEME.brass,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: THEME.success,
-    shadowColor: THEME.success,
+    borderColor: THEME.brassLight,
+    shadowColor: THEME.brass,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
   },
-  collectButtonText: {
-    fontSize: 18,
+  primaryButtonText: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: THEME.background,
     textAlign: 'center',
-    letterSpacing: 1,
   },
-  resetButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    backgroundColor: THEME.backgroundSecondary,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: THEME.brass,
-  },
-  resetButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: THEME.brass,
-    textAlign: 'center',
-  },
-  exitButton: {
+  secondaryButton: {
     paddingVertical: 14,
     paddingHorizontal: 28,
     backgroundColor: THEME.backgroundSecondary,
@@ -193,10 +256,29 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: THEME.textMuted,
   },
-  exitButtonText: {
-    fontSize: 16,
+  secondaryButtonText: {
+    fontSize: 15,
     fontWeight: '600',
     color: THEME.textSecondary,
     textAlign: 'center',
+  },
+  puzzleContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  stepContainer: {
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  dialContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 300,
+  },
+  bottomButtonContainer: {
+    paddingBottom: 30,
+    paddingHorizontal: 20,
   },
 });

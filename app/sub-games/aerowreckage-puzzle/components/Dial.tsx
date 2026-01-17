@@ -7,8 +7,25 @@ import { PUZZLE_CONFIG } from '../config';
 import { THEME } from '../theme';
 import { normalizeAngle, formatDialNumber } from '../utils';
 
-const { width } = Dimensions.get('window');
-const DIAL_SIZE = Math.min(width * 0.7, 300);
+const { width, height } = Dimensions.get('window');
+const aspectRatio = height / width;
+
+// Responsive dial sizing based on screen aspect ratio
+const getDialSize = () => {
+  const minDimension = Math.min(width, height);
+  // For square screens (aspect ratio close to 1), use smaller percentage
+  if (aspectRatio >= 0.9 && aspectRatio <= 1.1) {
+    return Math.min(minDimension * 0.5, 250);
+  }
+  // For portrait screens, allow slightly larger
+  if (aspectRatio > 1.1) {
+    return Math.min(width * 0.65, 280);
+  }
+  // For landscape screens
+  return Math.min(height * 0.6, 280);
+};
+
+const DIAL_SIZE = getDialSize();
 const CENTER_SIZE = 60;
 const NUMBER_MARKERS = 12; // Major number markers around the dial
 const TICK_MARKS = 8; // Decorative tick marks on rotating dial
