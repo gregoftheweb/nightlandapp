@@ -1,18 +1,22 @@
 // app/sub-games/aerowreckage-puzzle/components/Dial.tsx
 // Rotatable dial with gesture handling
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, PanResponder, Animated, Dimensions } from 'react-native';
 import { PUZZLE_CONFIG } from '../config';
 import { THEME } from '../theme';
 import { normalizeAngle, formatDialNumber } from '../utils';
 
-const { width, height } = Dimensions.get('window');
-const aspectRatio = height / width;
+const CENTER_SIZE = 60;
+const NUMBER_MARKERS = 12; // Major number markers around the dial
+const TICK_MARKS = 8; // Decorative tick marks on rotating dial
+const DIAL_ORIENTATION_OFFSET = Math.PI / 2; // 90 degrees to align pointer upward
 
-// Responsive dial sizing based on screen aspect ratio
-const getDialSize = () => {
+// Calculate responsive dial size based on screen dimensions
+const getDialSize = (width: number, height: number) => {
+  const aspectRatio = height / width;
   const minDimension = Math.min(width, height);
+  
   // For square screens (aspect ratio close to 1), use smaller percentage
   if (aspectRatio >= 0.9 && aspectRatio <= 1.1) {
     return Math.min(minDimension * 0.5, 250);
@@ -25,12 +29,6 @@ const getDialSize = () => {
   return Math.min(height * 0.6, 280);
 };
 
-const DIAL_SIZE = getDialSize();
-const CENTER_SIZE = 60;
-const NUMBER_MARKERS = 12; // Major number markers around the dial
-const TICK_MARKS = 8; // Decorative tick marks on rotating dial
-const DIAL_ORIENTATION_OFFSET = Math.PI / 2; // 90 degrees to align pointer upward
-
 interface DialProps {
   currentAngle: number;
   currentNumber: number;
@@ -39,6 +37,21 @@ interface DialProps {
 }
 
 export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }: DialProps) {
+  const [dimensions, setDimensions] = useState(() => {
+    const window = Dimensions.get('window');
+    return { width: window.width, height: window.height };
+  });
+  
+  const dialSize = getDialSize(dimensions.width, dimensions.height);
+  
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setDimensions({ width: window.width, height: window.height });
+    });
+    
+    return () => subscription?.remove();
+  }, []);
+  
   const panRef = useRef(new Animated.Value(0)).current;
   const rotationRef = useRef(currentAngle);
   
@@ -49,8 +62,8 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
       onPanResponderGrant: (evt) => {
         // Store initial touch position
         const { locationX, locationY } = evt.nativeEvent;
-        const centerX = DIAL_SIZE / 2;
-        const centerY = DIAL_SIZE / 2;
+        const centerX = dialSize / 2;
+        const centerY = dialSize / 2;
         
         // Calculate initial angle from center
         const dx = locationX - centerX;
@@ -62,8 +75,8 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
       },
       onPanResponderMove: (evt) => {
         const { locationX, locationY } = evt.nativeEvent;
-        const centerX = DIAL_SIZE / 2;
-        const centerY = DIAL_SIZE / 2;
+        const centerX = dialSize / 2;
+        const centerY = dialSize / 2;
         
         // Calculate angle from center to touch point
         const dx = locationX - centerX;
@@ -98,7 +111,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
           {
             transform: [
               { rotate: `${angle}deg` },
-              { translateY: -(DIAL_SIZE / 2 - 20) },
+              { translateY: -(dialSize / 2 - 20) },
             ],
           },
         ]}
@@ -111,7 +124,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
   return (
     <View style={styles.container}>
       <View
-        style={[styles.dial, { width: DIAL_SIZE, height: DIAL_SIZE }]}
+        style={[styles.dial, { width: dialSize, height: dialSize }]}
         {...panResponder.panHandlers}
       >
         {/* Dial background with geometric pattern */}
@@ -134,7 +147,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
             ]}
           >
             {/* Pointer/indicator line */}
-            <View style={styles.pointer} />
+            <View style={[styles.pointer, { height: dialSize / 2 - 50 }]} />
             
             {/* Tick marks */}
             {Array.from({ length: TICK_MARKS }).map((_, i) => (
@@ -145,7 +158,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, isDwelling }:
                   {
                     transform: [
                       { rotate: `${i * (360 / TICK_MARKS)}deg` },
-                      { translateY: -(DIAL_SIZE / 2 - 40) },
+                      { translateY: -(dialSize / 2 - 40) },
                     ],
                   },
                 ]}
@@ -223,7 +236,6 @@ const styles = StyleSheet.create({
   pointer: {
     position: 'absolute',
     width: 4,
-    height: DIAL_SIZE / 2 - 50,
     backgroundColor: THEME.pointerColor,
     top: 10,
     borderRadius: 2,

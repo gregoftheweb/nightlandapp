@@ -1,6 +1,6 @@
 // app/sub-games/aerowreckage-puzzle/index.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGameContext } from '@/context/GameContext';
 import { exitSubGame } from '@/lib/subGames';
@@ -152,7 +152,7 @@ export default function AeroWreckagePuzzle() {
               onPress={handleLeaveWithoutUnlocking}
               activeOpacity={0.7}
             >
-              <Text style={styles.secondaryButtonText}>Christos leaves without unlocking?</Text>
+              <Text style={styles.secondaryButtonText}>Christos leaves without unlocking.</Text>
             </TouchableOpacity>
           </View>
         </View>
