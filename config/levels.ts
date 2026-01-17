@@ -351,7 +351,7 @@ export const levels: Record<LevelId, Level> = {
     description:
       "Venture deeper into the Nightland where ancient eyes follow your every move.",
     boardSize: { width: 600, height: 500 },
-    playerSpawn: { row: 590, col: 50 },
+    playerSpawn: { row: 490, col: 50 }, // Fixed: was 590, out of bounds for height 500
     requiredLevel: 2,
     recommendedLevel: 3,
     experienceReward: 250,
