@@ -21,7 +21,6 @@ export function usePuzzleState() {
   const saveThrottleRef = useRef<NodeJS.Timeout | null>(null);
   const lastAngleRef = useRef<number>(0);
   const isDraggingRef = useRef<boolean>(false);
-  const inToleranceSinceRef = useRef<number | null>(null);
   
   // Load saved state on mount
   useEffect(() => {
@@ -69,7 +68,6 @@ export function usePuzzleState() {
     lastAngleRef.current = 0;
     lastTickNumberRef.current = 0;
     lastTickTimeRef.current = 0;
-    inToleranceSinceRef.current = null;
   };
   
   const setDragging = useCallback((dragging: boolean) => {
@@ -108,24 +106,8 @@ export function usePuzzleState() {
       return;
     }
     
-    // Check if we're on the current step
-    const currentStep = PUZZLE_CONFIG.codeSteps[state.currentStepIndex];
-    if (!currentStep) return;
-    
     // Update rotation direction if we have movement
     const newRotationDirection = rotationDirection || state.lastRotationDirection;
-    
-    // Check if we're within tolerance of the target
-    const withinTolerance = isWithinTolerance(newNumber, currentStep.target);
-    
-    // Track tolerance dwell time
-    if (withinTolerance && newRotationDirection === currentStep.direction) {
-      if (inToleranceSinceRef.current === null) {
-        inToleranceSinceRef.current = Date.now();
-      }
-    } else {
-      inToleranceSinceRef.current = null;
-    }
     
     // Just update state, no auto-locking
     setState(prev => ({
@@ -172,21 +154,8 @@ export function usePuzzleState() {
       };
     }
     
-    // Check dwell time
-    const now = Date.now();
-    const dwellTime = inToleranceSinceRef.current ? now - inToleranceSinceRef.current : 0;
-    
-    if (dwellTime < currentStep.dwellMs) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return {
-        success: false,
-        message: 'Hold steady…',
-        hint: 'Keep the dial on this number a bit longer before trying',
-        type: 'insufficient_dwell'
-      };
-    }
-    
     // Success! Lock this step
+    // Only checking direction and position - no dwell time requirement
     const newStepIndex = state.currentStepIndex + 1;
     const isLastStep = newStepIndex >= PUZZLE_CONFIG.codeSteps.length;
     
@@ -208,9 +177,6 @@ export function usePuzzleState() {
     };
     
     setState(newState);
-    
-    // Reset tolerance tracking for next step
-    inToleranceSinceRef.current = null;
     
     // Save immediately (bypass throttle for important state changes)
     setSubGameSave(SAVE_KEY, newState);
