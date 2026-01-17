@@ -5,14 +5,14 @@ import { PuzzleConfig } from './types';
 
 /**
  * Dead Dial puzzle configuration
- * Code sequence: L-28, R-15, L-7
+ * Code sequence: CCW-28, CW-15, CCW-7
  */
 export const PUZZLE_CONFIG: PuzzleConfig = {
   totalNumbers: 40,
   codeSteps: [
-    { direction: 'L', target: 28, dwellMs: 400 },
-    { direction: 'R', target: 15, dwellMs: 400 },
-    { direction: 'L', target: 7, dwellMs: 400 },
+    { direction: 'CCW', target: 28, dwellMs: 400 },
+    { direction: 'CW', target: 15, dwellMs: 400 },
+    { direction: 'CCW', target: 7, dwellMs: 400 },
   ],
   tolerance: 0.5, // Must be within 0.5 numbers of target
   tickStepSize: 1, // Haptic tick every 1 number

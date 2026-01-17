@@ -44,7 +44,9 @@ export function StepIndicator({ currentStepIndex, stepHistory, isOpened }: StepI
                   </Text>
                 )}
               </View>
-              <Text style={styles.stepDirection}>{step.direction}</Text>
+              <Text style={styles.stepDirection}>
+                {step.direction === 'CW' ? 'Clockwise' : 'Counter-Clockwise'}
+              </Text>
             </View>
           );
         })}

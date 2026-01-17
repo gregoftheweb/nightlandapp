@@ -42,7 +42,7 @@ export function numberToAngle(number: number, totalNumbers: number = PUZZLE_CONF
 /**
  * Determine rotation direction from angle delta
  * @param angleDelta - Change in angle (current - previous)
- * @returns 'L' for counter-clockwise (left), 'R' for clockwise (right), or null if no rotation
+ * @returns 'CW' for clockwise, 'CCW' for counter-clockwise, or null if no rotation
  */
 export function getRotationDirection(angleDelta: number): DialDirection | null {
   if (Math.abs(angleDelta) < 0.01) {
@@ -57,8 +57,10 @@ export function getRotationDirection(angleDelta: number): DialDirection | null {
     normalizedDelta += 2 * Math.PI;
   }
   
-  // Counter-clockwise (left) is positive, clockwise (right) is negative
-  return normalizedDelta > 0 ? 'L' : 'R';
+  // In standard math coordinates:
+  // Positive angle delta = counter-clockwise rotation
+  // Negative angle delta = clockwise rotation
+  return normalizedDelta > 0 ? 'CCW' : 'CW';
 }
 
 /**

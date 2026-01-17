@@ -10,7 +10,7 @@ import { normalizeAngle, formatDialNumber } from '../utils';
 const CENTER_SIZE = 60;
 const NUMBER_MARKERS = 12; // Major number markers around the dial
 const TICK_MARKS = 8; // Decorative tick marks on rotating dial
-const DIAL_ORIENTATION_OFFSET = Math.PI / 2; // 90 degrees to align pointer upward
+const DIAL_ORIENTATION_OFFSET = -Math.PI / 2; // -90 degrees to align number 0 at 12 o'clock (top)
 const ROTATION_SENSITIVITY = 0.5; // Reduce rotation speed for better control (0.5 = half speed)
 const MAX_STEP_JUMP = 2; // Maximum number of steps dial can move in one update (prevents wild jumps)
 
@@ -190,6 +190,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
             transform: [
               { rotate: `${angle}deg` },
               { translateY: -(dialSize / 2 - 20) },
+              { rotate: `${-angle}deg` }, // Counter-rotate to keep text upright
             ],
           },
         ]}

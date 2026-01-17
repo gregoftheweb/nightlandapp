@@ -3,8 +3,9 @@
 
 /**
  * Direction for dial rotation
+ * CW = Clockwise, CCW = Counter-Clockwise
  */
-export type DialDirection = 'L' | 'R';
+export type DialDirection = 'CW' | 'CCW';
 
 /**
  * A single step in the safe code sequence

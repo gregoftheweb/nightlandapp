@@ -152,10 +152,11 @@ export function usePuzzleState() {
     // Check direction
     if (!currentDirection || currentDirection !== currentStep.direction) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      const directionText = currentStep.direction === 'CW' ? 'clockwise' : 'counter-clockwise';
       return {
         success: false,
         message: 'Not yet…',
-        hint: `Try rotating ${currentStep.direction === 'L' ? 'left' : 'right'}`,
+        hint: `Try rotating ${directionText}`,
         type: 'wrong_direction'
       };
     }
