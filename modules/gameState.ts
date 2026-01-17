@@ -66,6 +66,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
         type: "weapon",
         weaponType: "ranged",
         collectible: true,
+        projectileColor: "#0ce9e9ff", // Bright cyan arrow
       },
       {
         id: "weapon-shurikens-001",
@@ -79,6 +80,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
         type: "weapon",
         weaponType: "ranged",
         collectible: true,
+        projectileColor: "#C0C0C0", // Silvery steel
       },
     ],
     monsters: levelConfig.monsters || [],
@@ -93,6 +95,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     distanceTraveled: 0,
     rangedAttackMode: false,
     targetedMonsterId: null,
+    activeProjectiles: [],
   };
 };
 
@@ -123,6 +126,7 @@ export const deserializeGameState = (serializedState: string): GameState => {
       },
       combatLog: parsedState.combatLog || [],
       nonCollisionObjects: parsedState.nonCollisionObjects || [], 
+      activeProjectiles: parsedState.activeProjectiles || [],
     };
   } catch (e) {
     console.error("Failed to deserialize game state:", e);

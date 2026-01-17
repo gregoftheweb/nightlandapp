@@ -39,7 +39,7 @@ import {
   COMBAT_CONSTANTS,
 } from "../../constants/Game";
 import { findNearestMonster } from "../../modules/monsterUtils";
-import { executeRangedAttack } from "../../modules/combat";
+import { executeRangedAttack, processRangedAttackImpact, checkCombatEnd } from "../../modules/combat";
 
 // Constants
 const { width, height } = Dimensions.get("window");
@@ -52,6 +52,9 @@ export default function Game() {
   const [inventoryVisible, setInventoryVisible] = useState(false);
   const [targetId, setTargetId] = useState<string | undefined>();
   const router = useRouter();
+
+  // Map to track projectile ID -> target monster ID for impact handling
+  const projectileTargets = useRef<Map<string, string>>(new Map());
 
   // Refs
   const stateRef = useRef(state);
@@ -298,6 +301,43 @@ export default function Game() {
     setInventoryVisible(false);
   }, []);
 
+  // Handler for when a projectile animation completes
+  const handleProjectileComplete = useCallback(
+    (projectileId: string) => {
+      // Get the target monster ID for this projectile
+      const targetMonsterId = projectileTargets.current.get(projectileId);
+      
+      if (__DEV__) {
+        console.log("🎯 Projectile complete:", projectileId, "target:", targetMonsterId);
+      }
+
+      // Remove projectile from state
+      dispatch({
+        type: "REMOVE_PROJECTILE",
+        payload: { id: projectileId },
+      });
+
+      // Remove from tracking map
+      projectileTargets.current.delete(projectileId);
+
+      // Process the impact if we have a target
+      if (targetMonsterId) {
+        const targetDied = processRangedAttackImpact(stateRef.current, dispatch, targetMonsterId);
+
+        // Check if combat should end (if in combat and all monsters defeated)
+        if (stateRef.current.inCombat) {
+          checkCombatEnd(stateRef.current, dispatch);
+        }
+
+        // If not in combat AND target didn't die, trigger enemy turn
+        if (!stateRef.current.inCombat && !targetDied) {
+          handlePassTurn(stateRef.current, dispatch);
+        }
+      }
+    },
+    [dispatch]
+  );
+
   const handleZapPress = useCallback(() => {
     if (__DEV__) {
       console.log("🎯 handleZapPress - rangedAttackMode:", state.rangedAttackMode, "targetedMonsterId:", state.targetedMonsterId);
@@ -393,31 +433,55 @@ export default function Game() {
         console.log("🎯 Executing ranged attack on target:", state.targetedMonsterId);
       }
 
-      // Execute the ranged attack
-      const targetDied = executeRangedAttack(state, dispatch, state.targetedMonsterId);
-
-      if (__DEV__) {
-        console.log("🎯 Ranged attack executed, targetDied:", targetDied);
+      // Find the target monster to get its position
+      let targetMonster = state.activeMonsters.find(
+        (m) => m.id === state.targetedMonsterId && m.hp > 0
+      );
+      if (!targetMonster) {
+        targetMonster = state.attackSlots.find(
+          (m) => m.id === state.targetedMonsterId && m.hp > 0
+        );
       }
 
-      // Don't clear ranged attack mode - keep targeting the same monster
-      // Mode will be cleared when:
-      // - Player taps ground (handlePress)
-      // - Player taps inventory (handleInventoryPress)
-      // - Target dies and no other monsters exist
-      // - Player manually retargets (handleMonsterTap)
-
-      // If not in combat AND target didn't die, trigger enemy turn
-      // Skip handlePassTurn if target died to avoid stale state issues
-      if (!state.inCombat && !targetDied) {
-        handlePassTurn(state, dispatch);
+      if (!targetMonster) {
+        if (__DEV__) {
+          console.log("🎯 Target not found, clearing ranged mode");
+        }
+        dispatch({ type: "CLEAR_RANGED_MODE" });
+        return;
       }
-      
+
+      // Calculate screen positions for player and monster
+      const playerScreenX = (state.player.position.col - cameraOffset.offsetX) * CELL_SIZE + CELL_SIZE / 2;
+      const playerScreenY = (state.player.position.row - cameraOffset.offsetY) * CELL_SIZE + CELL_SIZE / 2;
+      const monsterScreenX = (targetMonster.position.col - cameraOffset.offsetX) * CELL_SIZE + CELL_SIZE / 2;
+      const monsterScreenY = (targetMonster.position.row - cameraOffset.offsetY) * CELL_SIZE + CELL_SIZE / 2;
+
+      // Execute the ranged attack (spawns projectile)
+      const projectileId = executeRangedAttack(
+        state,
+        dispatch,
+        state.targetedMonsterId,
+        playerScreenX,
+        playerScreenY,
+        monsterScreenX,
+        monsterScreenY
+      );
+
+      if (projectileId) {
+        // Track the projectile -> target mapping for impact processing
+        projectileTargets.current.set(projectileId, state.targetedMonsterId);
+        
+        if (__DEV__) {
+          console.log("🎯 Projectile spawned:", projectileId);
+        }
+      }
+
       if (__DEV__) {
         console.log("🎯 handleZapPress complete");
       }
     }
-  }, [state, dispatch]);
+  }, [state, dispatch, cameraOffset]);
 
   const handleTurnPress = useCallback(() => {
     if (state.inCombat) return;
@@ -540,6 +604,7 @@ export default function Game() {
           onGreatPowerTap={handleGreatPowerTap}
           onNonCollisionObjectTap={handleNonCollisionObjectTap}
           onDeathInfoBoxClose={handleDeathInfoBoxClose}
+          onProjectileComplete={handleProjectileComplete}
         />
         <PositionDisplay position={state.player.position} level={state.level} />
         <PlayerHUD

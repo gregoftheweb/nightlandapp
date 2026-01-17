@@ -510,17 +510,41 @@ const getEquippedRangedWeaponName = (state: GameState): string => {
 };
 
 /**
+ * Get the projectile color for the equipped ranged weapon
+ * @param state - Current game state
+ * @returns The projectile color or a default
+ */
+const getEquippedRangedWeaponProjectileColor = (state: GameState): string => {
+  if (!state.player.equippedRangedWeaponId) {
+    return "#FFFFFF"; // Default white
+  }
+  
+  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId);
+  return weapon?.projectileColor || "#FFFFFF";
+};
+
+/**
  * Execute a ranged attack from the player to a target monster
+ * This spawns a projectile and returns the projectile ID
+ * The actual hit/miss/damage calculation happens when the projectile completes
  * @param state - Current game state
  * @param dispatch - Dispatch function for state updates
  * @param targetMonsterId - ID of the monster to attack
- * @returns true if the target died, false otherwise
+ * @param playerScreenX - Player's screen X coordinate (in pixels)
+ * @param playerScreenY - Player's screen Y coordinate (in pixels)
+ * @param monsterScreenX - Monster's screen X coordinate (in pixels)
+ * @param monsterScreenY - Monster's screen Y coordinate (in pixels)
+ * @returns Projectile ID if spawned, null otherwise
  */
 export const executeRangedAttack = (
   state: GameState,
   dispatch: any,
-  targetMonsterId: string
-): boolean => {
+  targetMonsterId: string,
+  playerScreenX: number,
+  playerScreenY: number,
+  monsterScreenX: number,
+  monsterScreenY: number
+): string | null => {
   // Find the target monster in either activeMonsters or attackSlots
   let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0);
   
@@ -534,11 +558,12 @@ export const executeRangedAttack = (
       type: "ADD_COMBAT_LOG",
       payload: { message: "No target in range" },
     });
-    return false;
+    return null;
   }
 
   const player = state.player;
   const weaponName = getEquippedRangedWeaponName(state);
+  const projectileColor = getEquippedRangedWeaponProjectileColor(state);
 
   // Log attempt
   const monsterName = targetMonster.name || targetMonster.shortName || "enemy";
@@ -548,6 +573,69 @@ export const executeRangedAttack = (
   });
 
   logIfDev(`\n🏹 Christos ranged attack on ${monsterName}:`);
+
+  // Calculate projectile trajectory
+  const dx = monsterScreenX - playerScreenX;
+  const dy = monsterScreenY - playerScreenY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+
+  // Calculate duration based on distance (faster for short distances, slower for long)
+  const pixelsPerMs = 0.5; // Speed of projectile
+  const durationMs = Math.max(120, Math.min(450, distance / pixelsPerMs));
+
+  // Create projectile
+  const projectileId = `projectile-${Date.now()}-${Math.random()}`;
+  const projectile = {
+    id: projectileId,
+    startX: playerScreenX,
+    startY: playerScreenY,
+    endX: monsterScreenX,
+    endY: monsterScreenY,
+    angleDeg,
+    color: projectileColor,
+    createdAt: Date.now(),
+    durationMs,
+  };
+
+  // Spawn projectile
+  dispatch({
+    type: "ADD_PROJECTILE",
+    payload: projectile,
+  });
+
+  logIfDev(`🎯 Projectile spawned: id=${projectileId}, duration=${durationMs}ms, angle=${angleDeg}°`);
+
+  return projectileId;
+};
+
+/**
+ * Process the hit/miss/damage for a ranged attack after projectile impact
+ * This is called when the projectile animation completes
+ * @param state - Current game state
+ * @param dispatch - Dispatch function for state updates
+ * @param targetMonsterId - ID of the monster to attack
+ * @returns true if the target died, false otherwise
+ */
+export const processRangedAttackImpact = (
+  state: GameState,
+  dispatch: any,
+  targetMonsterId: string
+): boolean => {
+  // Find the target monster in either activeMonsters or attackSlots
+  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0);
+  
+  if (!targetMonster) {
+    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.hp > 0);
+  }
+
+  if (!targetMonster) {
+    logIfDev("Target no longer exists for ranged attack impact");
+    return false;
+  }
+
+  const player = state.player;
+  const monsterName = targetMonster.name || targetMonster.shortName || "enemy";
 
   // Perform hit/miss roll using d20 system
   const attackRoll = rollD20();
@@ -598,24 +686,6 @@ export const executeRangedAttack = (
         type: "REMOVE_MONSTER",
         payload: { id: targetMonster.id },
       });
-      
-      // Check if all monsters are now dead (only in non-combat scenarios)
-      // We need to check the updated state after removal
-      const remainingMonsters = state.activeMonsters.filter(
-        (m) => m.id !== targetMonster.id && m.hp > 0
-      );
-      const remainingCombatMonsters = state.attackSlots.filter(
-        (m) => m.id !== targetMonster.id && m.hp > 0
-      );
-      
-      logIfDev(`🎯 After kill - remaining active: ${remainingMonsters.length}, combat: ${remainingCombatMonsters.length}, inCombat: ${state.inCombat}`);
-      
-      if (remainingMonsters.length === 0 && remainingCombatMonsters.length === 0 && !state.inCombat) {
-        // All monsters are dead, clear ranged mode and combat log
-        logIfDev("🎯 All monsters defeated with ranged attacks, clearing ranged mode and combat log");
-        dispatch({ type: "CLEAR_RANGED_MODE" });
-        dispatch({ type: "CLEAR_COMBAT_LOG" });
-      }
       
       return true; // Target died
     }

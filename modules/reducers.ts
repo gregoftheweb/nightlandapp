@@ -728,6 +728,23 @@ export const reducer = (
         targetedMonsterId: null,
       };
 
+    // ============ PROJECTILE MANAGEMENT ============
+    case "ADD_PROJECTILE":
+      logIfDev(`🎯 ADD_PROJECTILE: id=${action.payload.id}`);
+      return {
+        ...state,
+        activeProjectiles: [...state.activeProjectiles, action.payload],
+      };
+
+    case "REMOVE_PROJECTILE":
+      logIfDev(`🎯 REMOVE_PROJECTILE: id=${action.payload.id}`);
+      return {
+        ...state,
+        activeProjectiles: state.activeProjectiles.filter(
+          (p) => p.id !== action.payload.id
+        ),
+      };
+
     // ============ CLEANUP ============
     default:
       if (__DEV__) {
