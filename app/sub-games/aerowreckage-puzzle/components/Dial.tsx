@@ -31,21 +31,6 @@ const getDialSize = (width: number, height: number) => {
   return Math.min(height * 0.6, 280);
 };
 
-/**
- * Calculate circular distance between two indices
- * Returns signed distance (-N/2 to +N/2) taking shortest path
- */
-function circularDistance(from: number, to: number, total: number): number {
-  const diff = to - from;
-  const absDiff = Math.abs(diff);
-  
-  if (absDiff <= total / 2) {
-    return diff;
-  } else {
-    return diff > 0 ? diff - total : diff + total;
-  }
-}
-
 interface DialProps {
   currentAngle: number;
   currentNumber: number;
@@ -104,7 +89,11 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
         // Calculate current visual angle from index
         const currentVisualAngle = (currentIndexRef.current / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
         
-        // Calculate grab offset so touch position maps to current dial angle
+        // Calculate grab offset to maintain current dial position
+        // This offset ensures that when the user touches the dial at any position,
+        // the dial continues from its current number without jumping.
+        // Formula: offset = currentAngle - touchAngle
+        // When applied in future moves, touchAngle + offset = currentAngle (maintained)
         grabOffsetRef.current = currentVisualAngle - touchAngle;
         
         lastThetaRef.current = touchAngle;
