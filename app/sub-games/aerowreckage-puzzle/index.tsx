@@ -15,6 +15,7 @@ import { AttemptResult } from './types';
 // Import background images
 const bgIntro = require('@/assets/images/aerowreck-safe1.png');
 const bgPuzzle = require('@/assets/images/aerowreck-safe2.png');
+const bgSuccess = require('@/assets/images/aerowreck-safe3.png');
 
 type GamePage = 'intro' | 'puzzle' | 'success';
 
@@ -243,31 +244,33 @@ export default function AeroWreckagePuzzle() {
 
   // Page 3: Success
   return (
-    <View style={styles.container}>
-      <View style={styles.centeredContent}>
-        <Text style={styles.successText}>Christos Succeeds!</Text>
+    <BackgroundImage source={bgSuccess}>
+      <View style={styles.container}>
+        <View style={styles.centeredContent}>
+          <Text style={styles.successText}>Christos Succeeds!</Text>
 
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={handleReturnToQuest}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.primaryButtonText}>He returns to the quest.</Text>
-          </TouchableOpacity>
-          
-          {__DEV__ && (
+          <View style={styles.buttonGroup}>
             <TouchableOpacity
-              style={styles.debugButton}
-              onPress={handleResetPuzzle}
+              style={styles.primaryButton}
+              onPress={handleReturnToQuest}
               activeOpacity={0.7}
             >
-              <Text style={styles.debugButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
+              <Text style={styles.primaryButtonText}>He returns to the quest.</Text>
             </TouchableOpacity>
-          )}
+            
+            {__DEV__ && (
+              <TouchableOpacity
+                style={styles.debugButton}
+                onPress={handleResetPuzzle}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.debugButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
-    </View>
+    </BackgroundImage>
   );
 }
 
