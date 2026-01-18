@@ -9,7 +9,9 @@ import { Dial } from './components/Dial';
 import { StepIndicator } from './components/StepIndicator';
 import { FeedbackModal } from './components/FeedbackModal';
 import { BackgroundImage } from '../_shared/BackgroundImage';
+import { BottomActionBar } from '../_shared/BottomActionBar';
 import { THEME } from './theme';
+import { subGameTheme } from '../_shared/subGameTheme';
 import { AttemptResult } from './types';
 
 // Import background images
@@ -139,42 +141,44 @@ export default function AeroWreckagePuzzle() {
     return (
       <BackgroundImage source={bgIntro}>
         <View style={styles.container}>
-          <View style={styles.centeredContent}>
+          <View style={styles.contentArea}>
             <Text style={styles.flavorText}>
               You find a dust covered safe under some strewn wreckage of the ancient craft.
             </Text>
             <Text style={styles.flavorTextSecondary}>
               Christos ponders the treasure within?
             </Text>
+          </View>
 
-            <View style={styles.buttonGroup}>
+          <BottomActionBar>
+            {__DEV__ && (
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={handleResetPuzzle}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.resetButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
+              </TouchableOpacity>
+            )}
+            
+            <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={handleAttemptOpen}
                 activeOpacity={0.7}
               >
-                <Text style={styles.primaryButtonText}>He attempts to open it.</Text>
+                <Text style={styles.primaryButtonText}>Attempt to Open It</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.secondaryButton}
+                style={styles.primaryButton}
                 onPress={handleLeaveTreasure}
                 activeOpacity={0.7}
               >
-                <Text style={styles.secondaryButtonText}>He leaves the treasure untouched.</Text>
+                <Text style={styles.primaryButtonText}>Leave It Untouched</Text>
               </TouchableOpacity>
-              
-              {__DEV__ && (
-                <TouchableOpacity
-                  style={styles.debugButton}
-                  onPress={handleResetPuzzle}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.debugButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
-                </TouchableOpacity>
-              )}
             </View>
-          </View>
+          </BottomActionBar>
         </View>
       </BackgroundImage>
     );
@@ -208,23 +212,25 @@ export default function AeroWreckagePuzzle() {
             </View>
 
             {/* Buttons at Bottom */}
-            <View style={styles.bottomButtonContainer}>
-              <TouchableOpacity
-                style={styles.tryButton}
-                onPress={handleTryCombination}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.tryButtonText}>Try Combination</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={handleLeaveWithoutUnlocking}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.secondaryButtonText}>Christos leaves without unlocking.</Text>
-              </TouchableOpacity>
-            </View>
+            <BottomActionBar>
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={handleTryCombination}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.primaryButtonText}>Try Combination</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={handleLeaveWithoutUnlocking}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.primaryButtonText}>Leave Without Unlocking</Text>
+                </TouchableOpacity>
+              </View>
+            </BottomActionBar>
           </View>
           
           {/* Feedback Modal */}
@@ -246,29 +252,29 @@ export default function AeroWreckagePuzzle() {
   return (
     <BackgroundImage source={bgSuccess}>
       <View style={styles.container}>
-        <View style={styles.centeredContent}>
+        <View style={styles.contentArea}>
           <Text style={styles.successText}>Christos Succeeds!</Text>
+        </View>
 
-          <View style={styles.buttonGroup}>
+        <BottomActionBar>
+          {__DEV__ && (
             <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleReturnToQuest}
+              style={styles.resetButton}
+              onPress={handleResetPuzzle}
               activeOpacity={0.7}
             >
-              <Text style={styles.primaryButtonText}>He returns to the quest.</Text>
+              <Text style={styles.resetButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
             </TouchableOpacity>
-            
-            {__DEV__ && (
-              <TouchableOpacity
-                style={styles.debugButton}
-                onPress={handleResetPuzzle}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.debugButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
+          )}
+          
+          <TouchableOpacity
+            style={[styles.primaryButton, styles.primaryButtonFull]}
+            onPress={handleReturnToQuest}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.primaryButtonText}>Return to Quest</Text>
+          </TouchableOpacity>
+        </BottomActionBar>
       </View>
     </BackgroundImage>
   );
@@ -290,12 +296,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: THEME.textSecondary,
   },
-  centeredContent: {
+  contentArea: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 30,
-    gap: 30,
+    gap: 20,
   },
   flavorText: {
     fontSize: 18,
@@ -314,46 +320,52 @@ const styles = StyleSheet.create({
   successText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: THEME.success,
+    color: subGameTheme.red,
     textAlign: 'center',
     letterSpacing: 2,
   },
-  buttonGroup: {
-    width: '100%',
-    gap: 16,
-    marginTop: 20,
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 14,
   },
   primaryButton: {
+    flex: 1,
     paddingVertical: 16,
-    paddingHorizontal: 32,
-    backgroundColor: THEME.brass,
-    borderRadius: 8,
+    paddingHorizontal: 20,
+    backgroundColor: subGameTheme.red,
+    borderRadius: 14,
     borderWidth: 2,
-    borderColor: THEME.brassLight,
-    shadowColor: THEME.brass,
+    borderColor: subGameTheme.blue,
+    shadowColor: subGameTheme.red,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
   },
+  primaryButtonFull: {
+    flex: 0,
+    alignSelf: 'stretch',
+  },
   primaryButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: THEME.background,
+    color: subGameTheme.black,
     textAlign: 'center',
   },
-  secondaryButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    backgroundColor: THEME.backgroundSecondary,
-    borderRadius: 8,
+  resetButton: {
+    alignSelf: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    backgroundColor: 'transparent',
+    borderRadius: 10,
     borderWidth: 2,
-    borderColor: THEME.textMuted,
+    borderColor: subGameTheme.blue,
+    marginBottom: 10,
   },
-  secondaryButtonText: {
-    fontSize: 15,
+  resetButtonText: {
+    fontSize: 13,
     fontWeight: '600',
-    color: THEME.textSecondary,
+    color: subGameTheme.blue,
     textAlign: 'center',
   },
   puzzleContent: {
@@ -370,45 +382,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: 300,
-  },
-  bottomButtonContainer: {
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  tryButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    backgroundColor: THEME.brass,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: THEME.brassLight,
-    shadowColor: THEME.brass,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  tryButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: THEME.background,
-    textAlign: 'center',
-    letterSpacing: 1,
-  },
-  debugButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: '#444',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#666',
-    marginTop: 10,
-  },
-  debugButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#aaa',
-    textAlign: 'center',
   },
 });
