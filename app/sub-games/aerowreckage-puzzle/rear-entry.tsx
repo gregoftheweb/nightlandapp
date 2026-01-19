@@ -42,7 +42,7 @@ export default function AeroWreckageRearEntry() {
       <View style={styles.container}>
         <View style={styles.contentArea}>
           <Text style={styles.flavorText}>
-            You find a dust covered safe under some strewn wreckage of the ancient craft.
+            Christos finds a dust covered safe under some strewn wreckage of the ancient craft.
           </Text>
           <Text style={styles.flavorTextSecondary}>
             Christos ponders the treasure within?

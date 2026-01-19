@@ -1,21 +1,21 @@
 // app/sub-games/aerowreckage-puzzle/cockpit-closeup.tsx
 // Screen [3]: Cockpit close-up with etched combination
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { BackgroundImage } from '../_shared/BackgroundImage';
-import { BottomActionBar } from '../_shared/BottomActionBar';
-import { subGameTheme } from '../_shared/subGameTheme';
-import { THEME } from './theme';
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
+import { BackgroundImage } from "../_shared/BackgroundImage";
+import { BottomActionBar } from "../_shared/BottomActionBar";
+import { subGameTheme } from "../_shared/subGameTheme";
+import { THEME } from "./theme";
 
-const bgCockpitCloseup = require('@/assets/images/aerowreck-safe6.png');
+const bgCockpitCloseup = require("@/assets/images/aerowreck-safe6.png");
 
 export default function AeroWreckageCockpitCloseup() {
   const router = useRouter();
 
   const handleContinueExploration = () => {
     if (__DEV__) {
-      console.log('[AeroWreckageCockpitCloseup] Continuing exploration');
+      console.log("[AeroWreckageCockpitCloseup] Continuing exploration");
     }
     router.back();
   };
@@ -24,15 +24,21 @@ export default function AeroWreckageCockpitCloseup() {
     <BackgroundImage source={bgCockpitCloseup}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          <Text style={styles.flavorText}>
-            You lean in closer. Among the intricate brass work, you notice something unusual—numbers carefully etched into the metal panel, as if left by a previous explorer or perhaps the craft's final crew.
-          </Text>
-          <Text style={styles.comboText}>
-            28-15-7
-          </Text>
-          <Text style={styles.flavorTextSecondary}>
-            A combination? What could it unlock?
-          </Text>
+          <View
+            style={{
+              flex: 1,
+              alignSelf: "stretch",
+              justifyContent: "flex-start",
+              alignItems: "flex-start",
+              paddingTop: "10%",
+            }}
+          >
+            <Text style={styles.flavorText}>
+              Christos leans in closer. Among the intricate brass work, there is
+              something unusual there etched in the panel, as if left by a
+              previous explorer or perhaps the craft's final crew.
+            </Text>
+          </View>
         </View>
 
         <BottomActionBar>
@@ -52,39 +58,39 @@ export default function AeroWreckageCockpitCloseup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   contentArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 30,
     gap: 20,
   },
   flavorText: {
     fontSize: 18,
     color: THEME.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 28,
     marginBottom: 10,
   },
   comboText: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: THEME.brass,
-    textAlign: 'center',
+    textAlign: "center",
     letterSpacing: 4,
     marginVertical: 10,
-    textShadowColor: 'rgba(212, 175, 55, 0.5)',
+    textShadowColor: "rgba(212, 175, 55, 0.5)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   flavorTextSecondary: {
     fontSize: 16,
     color: THEME.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 24,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   primaryButton: {
     paddingVertical: 16,
@@ -100,12 +106,12 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   primaryButtonFull: {
-    alignSelf: 'stretch',
+    alignSelf: "stretch",
   },
   primaryButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: subGameTheme.black,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
