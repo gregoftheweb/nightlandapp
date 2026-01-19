@@ -3,13 +3,18 @@
 //
 // Layout Behavior:
 // - Base layer: Always shows puzzle-background.png texture (full screen, cover mode)
-// - Foreground layer: Optional screen-specific image, sized to match screen width
-//   while preserving aspect ratio, centered vertically
+// - Foreground layer: Optional screen-specific image, always sized to screen width
+//   with height calculated from aspect ratio, centered vertically
 // - Overlay: Semi-transparent dark layer for text readability (above both backgrounds)
 // - Content: Children render on top of everything
 //
-// This allows non-portrait images to display without distortion, with the
-// puzzle background visible in any letterbox areas.
+// Image Sizing:
+// - Width is always set to screen width
+// - Height is calculated from intrinsic aspect ratio
+// - If image is shorter than screen: vertically centered with letterbox areas showing
+//   puzzle background
+// - If image is taller than screen: vertically centered, overflow parts are clipped
+//   (center portion visible)
 
 import React from 'react';
 import { View, Image, ImageBackground, StyleSheet, ImageSourcePropType, useWindowDimensions } from 'react-native';
@@ -53,32 +58,20 @@ export function BackgroundImage({
       if (resolved && resolved.width && resolved.height) {
         const aspectRatio = resolved.width / resolved.height;
         
-        // Size to screen width, compute height from aspect ratio
+        // Always size to screen width, compute height from aspect ratio
         const displayedWidth = screenWidth;
-        let displayedHeight = displayedWidth / aspectRatio;
+        const displayedHeight = displayedWidth / aspectRatio;
         
-        // If image would be taller than screen, clamp to screen height
-        // and adjust width accordingly to avoid overflow
-        if (displayedHeight > screenHeight) {
-          displayedHeight = screenHeight;
-          const adjustedWidth = displayedHeight * aspectRatio;
-          foregroundStyle = {
-            width: adjustedWidth,
-            height: displayedHeight,
-            position: 'absolute' as const,
-            left: (screenWidth - adjustedWidth) / 2,
-            top: 0,
-          };
-        } else {
-          // Image fits vertically - center it
-          foregroundStyle = {
-            width: displayedWidth,
-            height: displayedHeight,
-            position: 'absolute' as const,
-            left: 0,
-            top: (screenHeight - displayedHeight) / 2,
-          };
-        }
+        // Always center vertically
+        // If taller than screen, parts will be cut off (overflow hidden by container)
+        // If shorter than screen, letterbox areas show puzzle background
+        foregroundStyle = {
+          width: displayedWidth,
+          height: displayedHeight,
+          position: 'absolute' as const,
+          left: 0,
+          top: (screenHeight - displayedHeight) / 2,
+        };
       }
     } catch (error) {
       // If we can't resolve dimensions, fall back to cover mode
@@ -129,6 +122,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     position: 'relative',
+    overflow: 'hidden',
   },
   baseBackground: {
     ...StyleSheet.absoluteFillObject,
