@@ -4,6 +4,7 @@
 package.json.working
 *.working
 *.bak
+*.backup
 *.blech
 *.blech2
 package-lock.json

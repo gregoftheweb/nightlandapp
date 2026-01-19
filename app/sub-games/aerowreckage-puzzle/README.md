@@ -1,7 +1,7 @@
 # Dead Dial Safe-Cracking Puzzle
 
 ## Overview
-The Dead Dial is a tactile safe-cracking puzzle sub-game for the aerowreckage scenario. Players must rotate a virtual dial to input a three-number combination, with specific direction changes and timing requirements.
+The Dead Dial is a tactile safe-cracking puzzle sub-game for the aerowreckage scenario. Players explore a ruined ancient aerocraft, discovering clues in the cockpit that help them crack a safe in the rear section. The puzzle features multiple screens with exploration choices and a tactile dial-based safe-cracking mechanism.
 
 ## File Structure
 
@@ -10,21 +10,131 @@ app/sub-games/
 ├── _shared/                          # Shared utilities for all sub-games
 │   ├── index.ts                      # Barrel export
 │   ├── persistence.ts                # AsyncStorage helpers
+│   ├── BackgroundImage.tsx           # Background image component
+│   ├── BottomActionBar.tsx           # Bottom action bar component
 │   └── types.ts                      # Shared TypeScript types
 │
 └── aerowreckage-puzzle/              # Dead Dial puzzle implementation
     ├── components/
     │   ├── Dial.tsx                  # Rotatable dial with gesture handling
     │   ├── InstructionOverlay.tsx    # Flavor text and instructions
-    │   └── StepIndicator.tsx         # Progress visualization
+    │   ├── StepIndicator.tsx         # Progress visualization
+    │   └── FeedbackModal.tsx         # Feedback modal for attempts
     ├── hooks/
     │   └── usePuzzleState.ts         # State management and validation
+    ├── index.tsx                     # Entry router (redirects to entry or success)
+    ├── entry.tsx                     # Screen [1]: Main fuselage interior choice screen
+    ├── cockpit.tsx                   # Screen [2]: Cockpit overview
+    ├── cockpit-closeup.tsx           # Screen [3]: Cockpit closeup (shows combo)
+    ├── rear-entry.tsx                # Screen [A]: Rear section with safe
+    ├── safe.tsx                      # Screen [B]: Safe-cracking puzzle
+    ├── success.tsx                   # Screen [C]: Success screen
     ├── config.ts                     # Puzzle configuration
-    ├── index.tsx                     # Main screen component
     ├── theme.ts                      # Art-deco color palette
     ├── types.ts                      # Puzzle-specific types
     └── utils.ts                      # Helper functions
 ```
+
+## Screen Flow & Navigation
+
+### Route Map
+- `/sub-games/aerowreckage-puzzle` → `index.tsx` (router)
+  - Routes to `entry.tsx` if puzzle not completed
+  - Routes to `success.tsx` if puzzle already completed
+- `/sub-games/aerowreckage-puzzle/entry` → Screen [1]: Main entry
+- `/sub-games/aerowreckage-puzzle/cockpit` → Screen [2]: Cockpit overview
+- `/sub-games/aerowreckage-puzzle/cockpit-closeup` → Screen [3]: Cockpit closeup with combo
+- `/sub-games/aerowreckage-puzzle/rear-entry` → Screen [A]: Rear section with safe
+- `/sub-games/aerowreckage-puzzle/safe` → Screen [B]: Safe puzzle
+- `/sub-games/aerowreckage-puzzle/success` → Screen [C]: Success
+
+### Navigation Flow
+
+```
+InfoBox "Investigate" → index.tsx (router)
+                            ↓
+                     [Puzzle completed?]
+                      ↙            ↘
+                   NO              YES
+                    ↓               ↓
+              entry.tsx         success.tsx
+           (Screen [1] - NEW!)  (Screen [C])
+                    ↓
+        ┌───────────┼───────────┐
+        ↓           ↓           ↓
+   "Explore    "Exit       "Explore
+   cockpit"    without     the rear"
+        ↓      exploring"      ↓
+        ↓           ↓           ↓
+  cockpit.tsx   [Exit to   rear-entry.tsx
+  (Screen [2])    RPG]     (Screen [A])
+        ↓                       ↓
+  "Look more              ┌─────┴─────┐
+   closely"               ↓           ↓
+        ↓            "Attempt    "Leave it
+        ↓            to open"    untouched"
+cockpit-closeup.tsx      ↓           ↓
+  (Screen [3])      safe.tsx    [Back to
+   Shows combo:     (Screen [B])  entry.tsx]
+   "28-15-7"            ↓
+        ↓          [Complete
+        ↓           puzzle]
+  "Continue"           ↓
+   exploration"   success.tsx
+        ↓         (Screen [C])
+ [Back to              ↓
+ cockpit.tsx]    "Return to Quest"
+                       ↓
+                  [Exit to RPG
+                   as completed]
+```
+
+### Screen Details
+
+#### Screen [1]: Main Entry (entry.tsx)
+- **Background**: `aerowreck-safe4.png`
+- **Description**: Ruined fuselage interior with art deco details, torn hull, wires
+- **Buttons**:
+  - "Explore the cockpit" → Navigate to Screen [2]
+  - "Exit without exploring" → Exit to RPG
+  - "Explore the rear" → Navigate to Screen [A]
+  - Dev Reset button (dev mode only)
+
+#### Screen [2]: Cockpit Overview (cockpit.tsx)
+- **Background**: `aerowreck-safe5.png`
+- **Description**: Ruined cockpit with shattered glass, brass art-deco instruments
+- **Buttons**:
+  - "Look more closely" → Navigate to Screen [3]
+  - "Return back to entrance" → Navigate back to Screen [1]
+
+#### Screen [3]: Cockpit Closeup (cockpit-closeup.tsx)
+- **Background**: `aerowreck-safe6.png`
+- **Description**: Shows etched combo "28-15-7" on metal panel
+- **Buttons**:
+  - "Continue exploration" → Navigate back to Screen [2]
+
+#### Screen [A]: Rear Entry (rear-entry.tsx)
+- **Background**: `aerowreck-safe1.png`
+- **Description**: Dusty safe under wreckage
+- **Buttons**:
+  - "Attempt to Open It" → Navigate to Screen [B]
+  - "Leave It Untouched" → Navigate back to Screen [1] (changed from exiting to RPG)
+  - Dev Reset button (dev mode only)
+
+#### Screen [B]: Safe Puzzle (safe.tsx)
+- **Background**: `aerowreck-safe2.png`
+- **Interactive**: Rotatable dial with 3-step combination (L-28, R-15, L-7)
+- **Buttons**:
+  - "Try Combination" → Attempt to unlock
+  - "Leave Without Unlocking" → Exit to RPG
+- **Auto-navigation**: Navigates to Screen [C] on successful unlock
+
+#### Screen [C]: Success (success.tsx)
+- **Background**: `aerowreck-safe3.png`
+- **Description**: "Christos Succeeds!" message
+- **Buttons**:
+  - "Return to Quest" → Exit to RPG (marks puzzle as completed)
+  - Dev Reset button (dev mode only)
 
 ## Features
 
@@ -107,27 +217,42 @@ export const THEME = {
 
 The puzzle integrates with the existing sub-game framework:
 
-1. **Entry**: Called via `enterSubGame('aerowreckage-puzzle')`
-2. **Context**: Accesses `GameContext` for shared state
-3. **Exit**: Calls `exitSubGame()` and `signalRpgResume()`
-4. **Completion**: Sets `subGamesCompleted['aerowreckage-puzzle'] = true`
+1. **Entry**: Called via `enterSubGame('aerowreckage-puzzle')` from InfoBox
+2. **Routing**: `index.tsx` routes to appropriate screen based on puzzle state
+3. **Context**: Accesses `GameContext` for shared state
+4. **Exit**: Calls `exitSubGame()` and `signalRpgResume()`
+5. **Completion**: Sets `subGamesCompleted['aerowreckage-puzzle'] = true`
 
 ## Usage
 
 ### Playing the Puzzle
-1. Tap and drag the dial to rotate
-2. Watch the center number and step indicators
-3. Rotate to the first target (28) in the LEFT direction
-4. Hold steady for 400ms to lock it in
-5. Repeat for remaining steps (R-15, L-7)
-6. Collect the maguffin when safe opens
+
+**Exploration Phase:**
+1. Start at the main fuselage interior (Screen [1])
+2. Choose to explore the cockpit to discover the combination "28-15-7"
+   - OR go directly to the rear to attempt the safe
+3. Navigate through cockpit screens to find the etched combination
+4. Return to entrance and explore the rear section
+
+**Safe-Cracking Phase:**
+1. Find the safe in the rear section (Screen [A])
+2. Attempt to open it (Screen [B])
+3. Rotate the dial to input the combination:
+   - First: Turn LEFT to 28 and hold for 400ms
+   - Second: Turn RIGHT to 15 and hold for 400ms
+   - Third: Turn LEFT to 7 and hold for 400ms
+4. Tap "Try Combination" or tap the dial center
+5. Collect the reward when the safe opens (Screen [C])
 
 ### Resetting
-- Tap "Reset Puzzle" to clear progress and start over
+- Tap "Reset Puzzle" (dev mode only) to clear progress and restart
+- Reset from any screen returns to the entry screen
 - Exit and re-enter to resume from saved state
 
 ### Exiting
-- Tap "Exit" to return to main game
+- "Exit without exploring" from entry screen → returns to main game
+- "Leave Without Unlocking" from safe screen → returns to main game
+- "Return to Quest" from success screen → returns to main game (marks completed)
 - Progress is automatically saved
 
 ## Technical Details
