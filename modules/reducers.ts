@@ -375,6 +375,28 @@ export const reducer = (
         },
       };
 
+    case "ADD_RANGED_WEAPON": {
+      // Add a ranged weapon to the player's inventory
+      const weaponId = action.payload.id;
+      
+      // Check if weapon is already in inventory
+      if (state.player.rangedWeaponInventoryIds.includes(weaponId)) {
+        logIfDev(`Weapon ${weaponId} is already in ranged weapon inventory`);
+        return state;
+      }
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          rangedWeaponInventoryIds: [
+            ...state.player.rangedWeaponInventoryIds,
+            weaponId,
+          ],
+        },
+      };
+    }
+
     case "EQUIP_RANGED_WEAPON": {
       // Equip a ranged weapon by ID
       // Only one ranged weapon can be equipped at a time
