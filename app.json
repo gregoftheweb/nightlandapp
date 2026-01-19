@@ -15,7 +15,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.gobyrne.nightlandapp"
     },
     "web": {
       "bundler": "metro",
@@ -42,6 +43,12 @@
     },
     "assetBundlePatterns": [
       "**/*"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1fd7ac4f-da05-4d85-af97-a325426fe7c5"
+      }
+    }
   }
 }
