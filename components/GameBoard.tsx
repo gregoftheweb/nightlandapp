@@ -49,6 +49,7 @@ interface GameBoardProps {
   onNonCollisionObjectTap?: (obj: NonCollisionObject) => void;
   onDeathInfoBoxClose?: () => void;
   onProjectileComplete?: (projectileId: string) => void;
+  onShowInfoRef?: React.MutableRefObject<((name: string, description: string, image?: ImageSourcePropType, ctaLabel?: string, onCtaPress?: () => void) => void) | null>;
 }
 
 export default function GameBoard({
@@ -62,6 +63,7 @@ export default function GameBoard({
   onNonCollisionObjectTap,
   onDeathInfoBoxClose,
   onProjectileComplete,
+  onShowInfoRef,
 }: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoData, setInfoData] = useState<{
@@ -269,6 +271,13 @@ export default function GameBoard({
     },
     [infoVisible]
   );
+
+  // Expose showInfo to parent component via ref
+  useEffect(() => {
+    if (onShowInfoRef) {
+      onShowInfoRef.current = showInfo;
+    }
+  }, [showInfo, onShowInfoRef]);
 
   // Memoized handlers (perf: stable refs for child props/optimizations)
   const handlePlayerTap = useCallback(() => {

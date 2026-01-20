@@ -56,6 +56,9 @@ export default function Game() {
   // Map to track projectile ID -> target monster ID for impact handling
   const projectileTargets = useRef<Map<string, string>>(new Map());
 
+  // Ref to access GameBoard's showInfo function
+  const showInfoRef = useRef<((name: string, description: string, image?: any, ctaLabel?: string, onCtaPress?: () => void) => void) | null>(null);
+
   // Refs
   const stateRef = useRef(state);
   const longPressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -239,6 +242,117 @@ export default function Game() {
    * 6. Non-collision objects
    */
 
+  // Helper functions to show InfoBox for different object types
+  const showPlayerInfo = useCallback(() => {
+    if (!showInfoRef.current) return;
+    const player = state.player;
+    const weaponInfo = player.weapons?.length
+      ? ` | Weapon: ${player.weapons[0].id}`
+      : "";
+    showInfoRef.current(
+      player.name || "Christos",
+      `${
+        player.description || "The brave hero of the Last Redoubt."
+      }\n\n Level: ${state.level.name}\n${state.level.description}\n${
+        player.position.row
+      }- ${player.position.col}`,
+      player.image || require("../assets/images/christos.png")
+    );
+  }, [state.player, state.level]);
+
+  const showMonsterInfo = useCallback((monster: Monster) => {
+    if (!showInfoRef.current) return;
+    // Don't show info dialog if in ranged attack mode (player is targeting/retargeting)
+    if (state.rangedAttackMode) {
+      // In ranged mode, retarget instead
+      dispatch({
+        type: "SET_TARGET_MONSTER",
+        payload: { monsterId: monster.id },
+      });
+      return;
+    }
+
+    const monsterImage = monster.image || require("../assets/images/abhuman.png");
+    showInfoRef.current(
+      monster.name || monster.shortName || "Monster",
+      monster.description ||
+        `A dangerous creature. HP: ${monster.hp || "Unknown"}`,
+      monsterImage
+    );
+  }, [state.rangedAttackMode, dispatch]);
+
+  const showGreatPowerInfo = useCallback((greatPower: GreatPower) => {
+    if (!showInfoRef.current) return;
+    const statusInfo = greatPower.awakened ? "AWAKENED" : "Sleeping";
+    const greatPowerImage = greatPower.image || require("../assets/images/watcherse.png");
+    showInfoRef.current(
+      greatPower.name || greatPower.shortName || "Great Power",
+      `${
+        greatPower.description || "An ancient entity of immense power."
+      }\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${
+        greatPower.maxHP
+      }\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`,
+      greatPowerImage
+    );
+  }, []);
+
+  const showItemInfo = useCallback((item: Item) => {
+    if (!showInfoRef.current) return;
+    const itemImage = item.image || require("../assets/images/potion.png");
+    showInfoRef.current(
+      item.name || item.shortName || "Item",
+      item.description || "An object of interest.",
+      itemImage
+    );
+  }, []);
+
+  const showBuildingInfo = useCallback((building: LevelObjectInstance) => {
+    if (!showInfoRef.current) return;
+    
+    // Check if building has sub-game launch config
+    const launch = building.subGame;
+    const buildingWidth = building.size?.width || building.width || 1;
+    const buildingHeight = building.size?.height || building.height || 1;
+    
+    const playerOnObject = launch && building.position
+      ? (state.player.position.row >= building.position.row &&
+         state.player.position.row < building.position.row + buildingHeight &&
+         state.player.position.col >= building.position.col &&
+         state.player.position.col < building.position.col + buildingWidth)
+      : false;
+    
+    const canLaunch = launch && (!launch.requiresPlayerOnObject || playerOnObject);
+    
+    if (canLaunch && launch) {
+      const handleCtaPress = () => {
+        enterSubGame(launch.subGameName, { objectId: building.id });
+      };
+      
+      showInfoRef.current(
+        building.name || building.shortName || "Building",
+        building.description || "An interesting structure in the world.",
+        building.image,
+        launch.ctaLabel,
+        handleCtaPress
+      );
+    } else {
+      showInfoRef.current(
+        building.name || building.shortName || "Building",
+        building.description || "An interesting structure in the world.",
+        building.image
+      );
+    }
+  }, [state.player.position]);
+
+  const showNonCollisionObjectInfo = useCallback((obj: NonCollisionObject) => {
+    if (!showInfoRef.current) return;
+    showInfoRef.current(
+      obj.name || obj.shortName || "Object",
+      obj.description || "A decorative object in the world.",
+      obj.image
+    );
+  }, []);
+
   // Press handlers
   const handlePress = useCallback(
     (event: any) => {
@@ -300,27 +414,36 @@ export default function Game() {
       const objectAtPoint = getObjectAtPoint(tapRow, tapCol, state);
 
       if (objectAtPoint) {
-        // Long press on object - set flag and trigger appropriate handler
+        // Long press on object - set flag and show InfoBox
         didLongPress.current = true;
 
-        // Call the appropriate handler based on object type
+        // Call the appropriate info display function based on object type
         switch (objectAtPoint.type) {
           case 'player':
+            showPlayerInfo();
+            // Also call the callback for any game logic
             handlePlayerTap();
             break;
           case 'monster':
+            showMonsterInfo(objectAtPoint.data);
+            // Also call the callback for targeting logic
             handleMonsterTap(objectAtPoint.data);
             break;
           case 'greatPower':
+            showGreatPowerInfo(objectAtPoint.data);
+            // Also call the callback for awakening logic
             handleGreatPowerTap(objectAtPoint.data);
             break;
           case 'item':
+            showItemInfo(objectAtPoint.data);
             handleItemTap(objectAtPoint.data);
             break;
           case 'building':
+            showBuildingInfo(objectAtPoint.data);
             handleBuildingTap(objectAtPoint.data);
             break;
           case 'nonCollisionObject':
+            showNonCollisionObjectInfo(objectAtPoint.data);
             handleNonCollisionObjectTap(objectAtPoint.data);
             break;
         }
@@ -348,6 +471,12 @@ export default function Game() {
       calculateTapPosition,
       getMovementDirectionFromTap,
       startLongPressInterval,
+      showPlayerInfo,
+      showMonsterInfo,
+      showGreatPowerInfo,
+      showItemInfo,
+      showBuildingInfo,
+      showNonCollisionObjectInfo,
       handlePlayerTap,
       handleMonsterTap,
       handleGreatPowerTap,
@@ -707,6 +836,7 @@ export default function Game() {
           onNonCollisionObjectTap={handleNonCollisionObjectTap}
           onDeathInfoBoxClose={handleDeathInfoBoxClose}
           onProjectileComplete={handleProjectileComplete}
+          onShowInfoRef={showInfoRef}
         />
         <PositionDisplay position={state.player.position} level={state.level} />
         <PlayerHUD
