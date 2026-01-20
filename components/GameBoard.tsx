@@ -940,6 +940,9 @@ export default function GameBoard({
         angleDeg={projectile.angleDeg}
         color={projectile.color}
         durationMs={projectile.durationMs}
+        lengthPx={projectile.lengthPx}
+        thicknessPx={projectile.thicknessPx}
+        glow={projectile.glow}
         onComplete={onProjectileComplete || (() => {})}
       />
     ));
