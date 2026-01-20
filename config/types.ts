@@ -51,6 +51,9 @@ export interface GameObject {
   zIndex?: number;
   rotation?: number; // NEW: Rotation in degrees (0-360)
   projectileColor?: string; // Hex color for ranged weapon projectile
+  projectileLengthPx?: number; // Optional length of projectile in pixels
+  projectileThicknessPx?: number; // Optional thickness of projectile in pixels
+  projectileGlow?: boolean; // Optional glow effect for projectile
   subGame?: SubGameLaunch; // Optional sub-game launch config
 }
 
@@ -370,6 +373,9 @@ export interface Projectile {
   color: string;
   createdAt: number;
   durationMs: number;
+  lengthPx?: number; // Optional length override for laser bolts
+  thicknessPx?: number; // Optional thickness override
+  glow?: boolean; // Optional glow effect
 }
 
 export interface GameState {

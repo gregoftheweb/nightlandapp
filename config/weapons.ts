@@ -77,14 +77,17 @@ export const weaponsCatalog: Item[] = [
     shortName: "lazer_pistol",
     name: "Lazer Pistol",
     description:
-      "A high-tech energy weapon salvaged from the aerowreckage. Fires concentrated beams of blue light.",
+      "A high-tech energy weapon salvaged from the aerowreckage. Fires concentrated beams of orange light.",
     damage: 7,
     hitBonus: 2,
     effects: [],
     type: "weapon",
     weaponType: "ranged",
     collectible: true,
-    projectileColor: "#0589fc", // Blue accent matching UI theme
+    projectileColor: "#ff7a00", // Bright orange laser bolt
+    projectileLengthPx: 32, // Longer laser bolt (vs default 12px)
+    projectileThicknessPx: 4, // Slightly thicker (vs default 3px)
+    projectileGlow: true, // Add glow effect
   },
 ];
 

@@ -524,6 +524,32 @@ const getEquippedRangedWeaponProjectileColor = (state: GameState): string => {
 };
 
 /**
+ * Get the projectile style (dimensions, glow) for the equipped ranged weapon
+ * @param state - Current game state
+ * @returns Object containing projectile style properties
+ */
+const getEquippedRangedWeaponProjectileStyle = (state: GameState): {
+  lengthPx?: number;
+  thicknessPx?: number;
+  glow?: boolean;
+} => {
+  if (!state.player.equippedRangedWeaponId) {
+    return {};
+  }
+  
+  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId);
+  if (!weapon) {
+    return {};
+  }
+  
+  return {
+    lengthPx: weapon.projectileLengthPx,
+    thicknessPx: weapon.projectileThicknessPx,
+    glow: weapon.projectileGlow,
+  };
+};
+
+/**
  * Execute a ranged attack from the player to a target monster
  * This spawns a projectile and returns the projectile ID
  * The actual hit/miss/damage calculation happens when the projectile completes
@@ -564,6 +590,7 @@ export const executeRangedAttack = (
   const player = state.player;
   const weaponName = getEquippedRangedWeaponName(state);
   const projectileColor = getEquippedRangedWeaponProjectileColor(state);
+  const projectileStyle = getEquippedRangedWeaponProjectileStyle(state);
 
   // Log attempt
   const monsterName = targetMonster.name || targetMonster.shortName || "enemy";
@@ -596,6 +623,9 @@ export const executeRangedAttack = (
     color: projectileColor,
     createdAt: Date.now(),
     durationMs,
+    lengthPx: projectileStyle.lengthPx,
+    thicknessPx: projectileStyle.thicknessPx,
+    glow: projectileStyle.glow,
   };
 
   // Spawn projectile
