@@ -11,6 +11,7 @@ import potionIMG from "@assets/images/potion.png";
 import sanctuaryPoolImg from "@assets/images/poolofpeace.png";
 import footprintsIMG from "@assets/images/footprints-blue.png";
 import aeroWreckageIMG from "@assets/images/aero-wreckage.png";
+import tesseractIMG from "@assets/images/teseract-puzzle1.png";
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
@@ -255,6 +256,27 @@ export const buildings: Record<string, GameObject> = {
     ],
     subGame: {
       subGameName: "aerowreckage-puzzle",
+      ctaLabel: "Investigate",
+      requiresPlayerOnObject: true,
+    },
+  },
+  tesseract: {
+    shortName: "tesseract",
+    category: "building",
+    name: "Tesseract",
+    description: "A mysterious geometric structure that seems to defy the laws of space itself. Its crystalline surfaces shimmer with an otherworldly light, hinting at dimensions beyond mortal comprehension.",
+    width: 4,
+    height: 4,
+    image: tesseractIMG,
+    active: true,
+    zIndex: 0,
+    effects: [
+      {
+        type: "hide",
+      },
+    ],
+    subGame: {
+      subGameName: "tesseract",
       ctaLabel: "Investigate",
       requiresPlayerOnObject: true,
     },
