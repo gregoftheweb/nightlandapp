@@ -210,6 +210,35 @@ export default function Game() {
     [settingsVisible, inventoryVisible]
   );
 
+  /**
+   * GESTURE HANDLING RULES
+   * ======================
+   * 
+   * Single Tap (onPress):
+   * - ALWAYS triggers navigation, regardless of what's tapped (empty cell, object, monster, etc.)
+   * - Exception: If a long press was just completed, the release is suppressed (via didLongPress flag)
+   * 
+   * Long Press (onLongPress):
+   * - On EMPTY SPACE: Starts continuous movement in the tapped direction
+   * - On OBJECT (monster, building, item, player, etc.): Opens InfoBox for that object
+   * - Sets didLongPress flag to prevent the subsequent onPress from triggering navigation
+   * 
+   * Long Press Suppression:
+   * - React Native Pressable fires both onLongPress and onPress events
+   * - We use a didLongPress ref flag to prevent double-firing
+   * - When long press is detected, we set didLongPress.current = true
+   * - The next onPress checks this flag and returns early if true
+   * - The flag is reset after being checked to allow future taps
+   * 
+   * Hit Testing Priority (highest to lowest):
+   * 1. Player
+   * 2. Monsters (active + combat slots)
+   * 3. Great Powers
+   * 4. Items
+   * 5. Buildings
+   * 6. Non-collision objects
+   */
+
   // Press handlers
   const handlePress = useCallback(
     (event: any) => {
