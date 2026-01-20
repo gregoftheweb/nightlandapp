@@ -59,6 +59,9 @@ export default function Game() {
 
   // Ref to access GameBoard's showInfo function
   const showInfoRef = useRef<((name: string, description: string, image?: any, ctaLabel?: string, onCtaPress?: () => void) => void) | null>(null);
+  
+  // Ref to access GameBoard's closeInfo function
+  const closeInfoRef = useRef<(() => void) | null>(null);
 
   // Refs
   const stateRef = useRef(state);
@@ -326,6 +329,10 @@ export default function Game() {
     
     if (canLaunch && launch) {
       const handleCtaPress = () => {
+        // Close InfoBox before entering sub-game
+        if (closeInfoRef.current) {
+          closeInfoRef.current();
+        }
         enterSubGame(launch.subGameName, { objectId: building.id });
       };
       
@@ -368,16 +375,31 @@ export default function Game() {
       const { pageX, pageY } = event.nativeEvent;
       if (pageY > height - UI_CONSTANTS.HUD_HEIGHT) return;
 
-      // If in ranged attack mode and player taps ground (not a monster), cancel mode
+      const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
+
+      // If in ranged attack mode, check if tapping on a monster to retarget
       if (state.rangedAttackMode) {
+        const objectAtPoint = getObjectAtPoint(tapRow, tapCol, state);
+        
+        // If tapping on a monster, retarget to it (don't clear mode, don't navigate)
+        if (objectAtPoint && objectAtPoint.type === 'monster') {
+          if (__DEV__) {
+            console.log("Retargeting to monster:", objectAtPoint.data.name, "ID:", objectAtPoint.data.id);
+          }
+          dispatch({
+            type: "SET_TARGET_MONSTER",
+            payload: { monsterId: objectAtPoint.data.id },
+          });
+          return; // Don't proceed with navigation
+        }
+        
+        // If tapping on empty space or non-monster, clear ranged mode and proceed with navigation
         dispatch({ type: "CLEAR_RANGED_MODE" });
-        // Then proceed with normal tap behavior
       }
 
       // Don't allow movement during combat
       if (state.inCombat) return;
 
-      const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
       const { row: playerRow, col: playerCol } = state.player.position;
 
       const direction = getMovementDirectionFromTap(
@@ -394,6 +416,7 @@ export default function Game() {
       state.inCombat,
       state.player.position,
       state.rangedAttackMode,
+      state,
       isOverlayVisible,
       calculateTapPosition,
       getMovementDirectionFromTap,
@@ -838,6 +861,7 @@ export default function Game() {
           onDeathInfoBoxClose={handleDeathInfoBoxClose}
           onProjectileComplete={handleProjectileComplete}
           onShowInfoRef={showInfoRef}
+          onCloseInfoRef={closeInfoRef}
         />
         <PositionDisplay position={state.player.position} level={state.level} />
         <PlayerHUD

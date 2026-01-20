@@ -50,6 +50,7 @@ interface GameBoardProps {
   onDeathInfoBoxClose?: () => void;
   onProjectileComplete?: (projectileId: string) => void;
   onShowInfoRef?: React.MutableRefObject<((name: string, description: string, image?: ImageSourcePropType, ctaLabel?: string, onCtaPress?: () => void) => void) | null>;
+  onCloseInfoRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export default function GameBoard({
@@ -64,6 +65,7 @@ export default function GameBoard({
   onDeathInfoBoxClose,
   onProjectileComplete,
   onShowInfoRef,
+  onCloseInfoRef,
 }: GameBoardProps) {
   const [infoVisible, setInfoVisible] = useState(false);
   const [infoData, setInfoData] = useState<{
@@ -272,12 +274,27 @@ export default function GameBoard({
     [infoVisible]
   );
 
+  // Memoized closeInfo to hide InfoBox
+  const closeInfo = useCallback(() => {
+    if (__DEV__) {
+      console.log("closeInfo called");
+    }
+    setInfoVisible(false);
+  }, []);
+
   // Expose showInfo to parent component via ref
   useEffect(() => {
     if (onShowInfoRef) {
       onShowInfoRef.current = showInfo;
     }
   }, [showInfo, onShowInfoRef]);
+
+  // Expose closeInfo to parent component via ref
+  useEffect(() => {
+    if (onCloseInfoRef) {
+      onCloseInfoRef.current = closeInfo;
+    }
+  }, [closeInfo, onCloseInfoRef]);
 
   // Memoized handlers (perf: stable refs for child props/optimizations)
   const handlePlayerTap = useCallback(() => {
