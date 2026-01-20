@@ -78,6 +78,9 @@ export function getObjectAtPoint(
   }
 
   // Priority 2: Monsters (both active and in combat slots)
+  // Note: We check !inCombatSlot to avoid detecting monsters that are positioned
+  // at combat UI slots rather than their world position. Monsters in attackSlots
+  // still have their world position and should be detectable there.
   const allMonsters = [
     ...(state.activeMonsters || []),
     ...(state.attackSlots || [])

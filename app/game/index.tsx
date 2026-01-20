@@ -256,7 +256,7 @@ export default function Game() {
       }\n\n Level: ${state.level.name}\n${state.level.description}\n${
         player.position.row
       }- ${player.position.col}`,
-      player.image || require("../assets/images/christos.png")
+      player.image || require("../../assets/images/christos.png")
     );
   }, [state.player, state.level]);
 
@@ -272,7 +272,7 @@ export default function Game() {
       return;
     }
 
-    const monsterImage = monster.image || require("../assets/images/abhuman.png");
+    const monsterImage = monster.image || require("../../assets/images/abhuman.png");
     showInfoRef.current(
       monster.name || monster.shortName || "Monster",
       monster.description ||
@@ -284,7 +284,7 @@ export default function Game() {
   const showGreatPowerInfo = useCallback((greatPower: GreatPower) => {
     if (!showInfoRef.current) return;
     const statusInfo = greatPower.awakened ? "AWAKENED" : "Sleeping";
-    const greatPowerImage = greatPower.image || require("../assets/images/watcherse.png");
+    const greatPowerImage = greatPower.image || require("../../assets/images/watcherse.png");
     showInfoRef.current(
       greatPower.name || greatPower.shortName || "Great Power",
       `${
@@ -298,7 +298,7 @@ export default function Game() {
 
   const showItemInfo = useCallback((item: Item) => {
     if (!showInfoRef.current) return;
-    const itemImage = item.image || require("../assets/images/potion.png");
+    const itemImage = item.image || require("../../assets/images/potion.png");
     showInfoRef.current(
       item.name || item.shortName || "Item",
       item.description || "An object of interest.",
