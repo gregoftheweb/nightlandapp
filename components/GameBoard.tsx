@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Dimensions,
   ImageSourcePropType,
-  TouchableOpacity,
 } from "react-native";
 import {
   Monster,
@@ -520,9 +519,8 @@ export default function GameBoard({
         const isTargeted = state.targetedMonsterId === monster.id;
         
         return (
-          <TouchableOpacity
+          <View
             key={`combat-monster-${monster.id}-${index}`}
-            onPress={() => handleMonsterTap(monster)}
             style={{
               position: "absolute",
               left: screenCol * CELL_SIZE,
@@ -531,7 +529,7 @@ export default function GameBoard({
               height: CELL_SIZE,
               zIndex: 4,
             }}
-            activeOpacity={0.7}
+            pointerEvents="none"
           >
             <Image
               source={getMonsterImage(monster)}
@@ -544,7 +542,7 @@ export default function GameBoard({
               ]}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+          </View>
         );
       })
       .filter((item): item is React.ReactElement => item !== null);
@@ -568,9 +566,8 @@ export default function GameBoard({
       screenCol < VIEWPORT_COLS;
     if (!inView) return null;
     return (
-      <TouchableOpacity
+      <View
         key="player"
-        onPress={handlePlayerTap}
         style={{
           position: "absolute",
           left: screenCol * CELL_SIZE,
@@ -579,14 +576,14 @@ export default function GameBoard({
           height: CELL_SIZE,
           zIndex: 5,
         }}
-        activeOpacity={0.7}
+        pointerEvents="none"
       >
         <Image
           source={require("../assets/images/christos.png")}
           style={styles.character}
           resizeMode="contain"
         />
-      </TouchableOpacity>
+      </View>
     );
   }, [
     state.player?.position,
@@ -613,9 +610,8 @@ export default function GameBoard({
         const isTargeted = state.targetedMonsterId === monster.id;
         
         return (
-          <TouchableOpacity
+          <View
             key={`monster-${monster.id}-${index}`}
-            onPress={() => handleMonsterTap(monster)}
             style={{
               position: "absolute",
               left: screenCol * CELL_SIZE,
@@ -624,7 +620,7 @@ export default function GameBoard({
               height: CELL_SIZE,
               zIndex: 3,
             }}
-            activeOpacity={0.7}
+            pointerEvents="none"
           >
             <Image
               source={getMonsterImage(monster)}
@@ -637,7 +633,7 @@ export default function GameBoard({
               ]}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+          </View>
         );
       })
       .filter((item): item is React.ReactElement => item !== null);
@@ -665,9 +661,8 @@ export default function GameBoard({
           screenCol < VIEWPORT_COLS;
         if (!inView) return null;
         return (
-          <TouchableOpacity
+          <View
             key={`greatpower-${greatPower.id}-${index}`}
-            onPress={() => handleGreatPowerTap(greatPower)}
             style={{
               position: "absolute",
               left: screenCol * CELL_SIZE,
@@ -676,7 +671,7 @@ export default function GameBoard({
               height: gpHeight * CELL_SIZE,
               zIndex: 2,
             }}
-            activeOpacity={0.7}
+            pointerEvents="none"
           >
             <Image
               source={getGreatPowerImage(greatPower)}
@@ -687,7 +682,7 @@ export default function GameBoard({
               }}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+          </View>
         );
       })
       .filter((item): item is React.ReactElement => item !== null);
@@ -712,9 +707,8 @@ export default function GameBoard({
           screenCol < VIEWPORT_COLS;
         if (!inView) return null;
         return (
-          <TouchableOpacity
+          <View
             key={`item-${item.id}-${index}`}
-            onPress={() => handleItemTap(item)}
             style={{
               position: "absolute",
               left: screenCol * CELL_SIZE,
@@ -723,7 +717,7 @@ export default function GameBoard({
               height: CELL_SIZE,
               zIndex: item.zIndex || 1,
             }}
-            activeOpacity={0.7}
+            pointerEvents="none"
           >
             <Image
               source={getItemImage(item)}
@@ -736,7 +730,7 @@ export default function GameBoard({
               }}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+          </View>
         );
       })
       .filter((item): item is React.ReactElement => item !== null);
@@ -761,10 +755,8 @@ export default function GameBoard({
         const rotation = obj.rotation ?? 0;
 
         return (
-          <TouchableOpacity
+          <View
             key={`building-${obj.id}-${index}`}
-            onPress={() => handleBuildingTap(obj)}
-            activeOpacity={0.8}
             style={{
               position: "absolute",
               left: screenCol * CELL_SIZE,
@@ -773,6 +765,7 @@ export default function GameBoard({
               height: objHeight * CELL_SIZE,
               zIndex: obj.zIndex || 0,
             }}
+            pointerEvents="none"
           >
             <Image
               source={obj.image as ImageSourcePropType}
@@ -783,7 +776,7 @@ export default function GameBoard({
               }}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+          </View>
         );
       })
       .filter((item): item is React.ReactElement => item !== null);
@@ -831,61 +824,34 @@ export default function GameBoard({
         );
       }
 
-      if (!isInteractable || hasCollisionMask) {
-        elements.push(
-          <View
-            key={`noncollision-${obj.id}-${index}`}
+      // All non-collision objects now use View instead of TouchableOpacity
+      // Interaction is handled via long-press in game/index.tsx
+      elements.push(
+        <View
+          key={`noncollision-${obj.id}-${index}`}
+          style={{
+            position: "absolute",
+            left: screenCol * CELL_SIZE,
+            top: screenRow * CELL_SIZE,
+            width: objWidth * CELL_SIZE,
+            height: objHeight * CELL_SIZE,
+            zIndex: obj.zIndex || 1,
+          }}
+          pointerEvents="none"
+        >
+          <Image
+            source={obj.image as ImageSourcePropType}
             style={{
-              position: "absolute",
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: objWidth * CELL_SIZE,
-              height: objHeight * CELL_SIZE,
-              zIndex: obj.zIndex || 1,
+              width: "100%",
+              height: "100%",
+              transform: [{ rotate: `${obj.rotation}deg` }],
             }}
-            pointerEvents="none"
-          >
-            <Image
-              source={obj.image as ImageSourcePropType}
-              style={{
-                width: "100%",
-                height: "100%",
-                transform: [{ rotate: `${obj.rotation}deg` }],
-              }}
-              resizeMode="contain"
-            />
-          </View>
-        );
-      } else {
-        // Regular interactable object without collision mask
-        elements.push(
-          <TouchableOpacity
-            key={`noncollision-${obj.id}-${index}`}
-            onPress={() => handleNonCollisionObjectTap(obj)}
-            activeOpacity={0.8}
-            style={{
-              position: "absolute",
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: objWidth * CELL_SIZE,
-              height: objHeight * CELL_SIZE,
-              zIndex: obj.zIndex || 1,
-            }}
-          >
-            <Image
-              source={obj.image as ImageSourcePropType}
-              style={{
-                width: "100%",
-                height: "100%",
-                transform: [{ rotate: `${obj.rotation}deg` }],
-              }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        );
-      }
+            resizeMode="contain"
+          />
+        </View>
+      );
 
-      // Render collision mask tiles
+      // Render collision mask tiles (also as non-interactive Views)
       if (hasCollisionMask) {
         obj.collisionMask!.forEach((mask, maskIndex) => {
           const maskScreenRow = screenRow + mask.row;
@@ -894,10 +860,8 @@ export default function GameBoard({
           const maskHeight = mask.height || 1;
 
           elements.push(
-            <TouchableOpacity
+            <View
               key={`collision-mask-${obj.id}-${maskIndex}`}
-              onPress={() => handleNonCollisionObjectTap(obj)}
-              activeOpacity={0.3}
               style={{
                 position: "absolute",
                 left: maskScreenCol * CELL_SIZE,
@@ -909,6 +873,7 @@ export default function GameBoard({
                 // borderWidth: 1,
                 // borderColor: "cyan",
               }}
+              pointerEvents="none"
             />
           );
         });

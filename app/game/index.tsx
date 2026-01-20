@@ -18,7 +18,7 @@ import GameBoard, {
 import PlayerHUD from "../../components/PlayerHUD";
 import Settings from "../../components/Settings";
 import Inventory from "../../components/Inventory";
-import { calculateCameraOffset } from "../../modules/utils";
+import { calculateCameraOffset, getObjectAtPoint } from "../../modules/utils";
 import {
   handleMovePlayer,
   handleCombatAction,
@@ -61,6 +61,7 @@ export default function Game() {
   const longPressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentDirection = useRef<Direction>(null);
   const lastZapPressTime = useRef<number>(0);
+  const didLongPress = useRef<boolean>(false);
 
   // Keep state ref in sync
   useEffect(() => {
@@ -212,6 +213,12 @@ export default function Game() {
   // Press handlers
   const handlePress = useCallback(
     (event: any) => {
+      // If long press was triggered, suppress this tap to prevent navigation
+      if (didLongPress.current) {
+        didLongPress.current = false;
+        return;
+      }
+
       if (isOverlayVisible) return;
 
       const { pageX, pageY } = event.nativeEvent;
@@ -259,25 +266,65 @@ export default function Game() {
       if (pageY > height - UI_CONSTANTS.HUD_HEIGHT) return;
 
       const { tapCol, tapRow } = calculateTapPosition(pageX, pageY);
-      const { row: playerRow, col: playerCol } = state.player.position;
 
-      const direction = getMovementDirectionFromTap(
-        tapRow,
-        tapCol,
-        playerRow,
-        playerCol,
-        UI_CONSTANTS.MIN_MOVE_DISTANCE
-      );
+      // Check if there's an object at this position
+      const objectAtPoint = getObjectAtPoint(tapRow, tapCol, state);
 
-      if (direction) startLongPressInterval(direction);
+      if (objectAtPoint) {
+        // Long press on object - set flag and trigger appropriate handler
+        didLongPress.current = true;
+
+        // Call the appropriate handler based on object type
+        switch (objectAtPoint.type) {
+          case 'player':
+            handlePlayerTap();
+            break;
+          case 'monster':
+            handleMonsterTap(objectAtPoint.data);
+            break;
+          case 'greatPower':
+            handleGreatPowerTap(objectAtPoint.data);
+            break;
+          case 'item':
+            handleItemTap(objectAtPoint.data);
+            break;
+          case 'building':
+            handleBuildingTap(objectAtPoint.data);
+            break;
+          case 'nonCollisionObject':
+            handleNonCollisionObjectTap(objectAtPoint.data);
+            break;
+        }
+      } else {
+        // Long press on empty space - start continuous movement
+        const { row: playerRow, col: playerCol } = state.player.position;
+
+        const direction = getMovementDirectionFromTap(
+          tapRow,
+          tapCol,
+          playerRow,
+          playerCol,
+          UI_CONSTANTS.MIN_MOVE_DISTANCE
+        );
+
+        if (direction) {
+          didLongPress.current = true;
+          startLongPressInterval(direction);
+        }
+      }
     },
     [
-      state.inCombat,
-      state.player.position,
+      state,
       isOverlayVisible,
       calculateTapPosition,
       getMovementDirectionFromTap,
       startLongPressInterval,
+      handlePlayerTap,
+      handleMonsterTap,
+      handleGreatPowerTap,
+      handleItemTap,
+      handleBuildingTap,
+      handleNonCollisionObjectTap,
     ]
   );
 
