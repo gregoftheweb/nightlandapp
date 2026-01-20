@@ -40,6 +40,7 @@ import {
 } from "../../constants/Game";
 import { findNearestMonster } from "../../modules/monsterUtils";
 import { executeRangedAttack, processRangedAttackImpact, checkCombatEnd } from "../../modules/combat";
+import { enterSubGame } from "../../lib/subGames";
 
 // Constants
 const { width, height } = Dimensions.get("window");
