@@ -1,6 +1,7 @@
 # Dead Dial Safe-Cracking Puzzle
 
 ## Overview
+
 The Dead Dial is a tactile safe-cracking puzzle sub-game for the aerowreckage scenario. Players explore a ruined ancient aerocraft, discovering clues in the cockpit that help them crack a safe in the rear section. The puzzle features multiple screens with exploration choices and a tactile dial-based safe-cracking mechanism.
 
 ## File Structure
@@ -38,6 +39,7 @@ app/sub-games/
 ## Screen Flow & Navigation
 
 ### Route Map
+
 - `/sub-games/aerowreckage-puzzle` → `index.tsx` (router)
   - Routes to `entry.tsx` if puzzle not completed
   - Routes to `success.tsx` if puzzle already completed
@@ -92,6 +94,7 @@ cockpit-closeup.tsx      ↓           ↓
 ### Screen Details
 
 #### Screen [1]: Main Entry (entry.tsx)
+
 - **Background**: `aerowreck-safe4.png`
 - **Description**: Ruined fuselage interior with art deco details, torn hull, wires
 - **Buttons**:
@@ -101,6 +104,7 @@ cockpit-closeup.tsx      ↓           ↓
   - Dev Reset button (dev mode only)
 
 #### Screen [2]: Cockpit Overview (cockpit.tsx)
+
 - **Background**: `aerowreck-safe5.png`
 - **Description**: Ruined cockpit with shattered glass, brass art-deco instruments
 - **Buttons**:
@@ -108,12 +112,14 @@ cockpit-closeup.tsx      ↓           ↓
   - "Return back to entrance" → Navigate back to Screen [1]
 
 #### Screen [3]: Cockpit Closeup (cockpit-closeup.tsx)
+
 - **Background**: `aerowreck-safe6.png`
 - **Description**: Shows etched combo "28-15-7" on metal panel
 - **Buttons**:
   - "Continue exploration" → Navigate back to Screen [2]
 
 #### Screen [A]: Rear Entry (rear-entry.tsx)
+
 - **Background**: `aerowreck-safe1.png`
 - **Description**: Dusty safe under wreckage
 - **Buttons**:
@@ -122,6 +128,7 @@ cockpit-closeup.tsx      ↓           ↓
   - Dev Reset button (dev mode only)
 
 #### Screen [B]: Safe Puzzle (safe.tsx)
+
 - **Background**: `aerowreck-safe2.png`
 - **Interactive**: Rotatable dial with 3-step combination (L-28, R-15, L-7)
 - **Buttons**:
@@ -130,6 +137,7 @@ cockpit-closeup.tsx      ↓           ↓
 - **Auto-navigation**: Navigates to Screen [C] on successful unlock
 
 #### Screen [C]: Success (success.tsx)
+
 - **Background**: `aerowreck-safe3.png`
 - **Description**: "Christos Succeeds!" message
 - **Buttons**:
@@ -139,36 +147,44 @@ cockpit-closeup.tsx      ↓           ↓
 ## Features
 
 ### 1. Tactile Dial UI
+
 - **Gesture Control**: Uses `PanResponder` for smooth, touch-based rotation
 - **Visual Feedback**: Rotating pointer and number display
 - **Art-Deco Styling**: Dark theme with brass/gold accents, geometric patterns
 - **Pure View-Based**: No external image assets required
 
 ### 2. Code Sequence Mechanism
+
 - **Three-Step Combination**: Left-28, Right-15, Left-7
 - **Direction Changes**: Requires alternating rotation directions (L-R-L)
 - **Tolerance System**: Must be within ±0.5 numbers of target
 
 ### 3. Dwell Time Requirement
+
 - **Lock Timer**: 400ms pause required on each target number
 - **Visual Indicator**: Center hub changes color during dwell
 - **Cancellation**: Moving away from target cancels the lock attempt
 
 ### 4. Progress Feedback
+
 - **Step Indicators**: Three circles showing locked/active/pending steps
 - **Direction Labels**: Shows required rotation direction (L/R)
 - **Completed Numbers**: Displays locked-in numbers
 - **Success Message**: "SAFE OPENED" when complete
 
 ### 5. Haptic Feedback
+
 Uses `expo-haptics` for tactile responses:
+
 - **Light Impact**: When dial crosses number boundaries (tick sound)
 - **Medium Impact**: When a step successfully locks
 - **Error Notification**: When rotating in wrong direction
 - **Success Pattern**: When safe opens
 
 ### 6. State Persistence
+
 Saves to AsyncStorage:
+
 - Current step index
 - Current dial angle and number
 - Rotation history
@@ -176,6 +192,7 @@ Saves to AsyncStorage:
 - Restores on re-entry
 
 ### 7. Validation Logic
+
 - **Direction Tracking**: Monitors clockwise (R) vs counter-clockwise (L) rotation
 - **Step Requirements**: Each step validates direction + target number + dwell time
 - **Failure Handling**: Wrong direction triggers haptic error and cancels dwell
@@ -187,15 +204,15 @@ Edit `config.ts` to customize:
 
 ```typescript
 export const PUZZLE_CONFIG: PuzzleConfig = {
-  totalNumbers: 40,           // Numbers on dial (0-39)
+  totalNumbers: 40, // Numbers on dial (0-39)
   codeSteps: [
     { direction: 'L', target: 28, dwellMs: 400 },
     { direction: 'R', target: 15, dwellMs: 400 },
     { direction: 'L', target: 7, dwellMs: 400 },
   ],
-  tolerance: 0.5,             // Allowed deviation from target
-  tickStepSize: 1,            // Haptic tick every N numbers
-};
+  tolerance: 0.5, // Allowed deviation from target
+  tickStepSize: 1, // Haptic tick every N numbers
+}
 ```
 
 ## Theme Customization
@@ -204,13 +221,13 @@ Edit `theme.ts` to adjust colors:
 
 ```typescript
 export const THEME = {
-  background: '#0a0e1a',      // Deep black-blue
-  brass: '#d4af37',           // Primary brass/gold
-  dialBackground: '#1a2332',  // Dial surface
-  numberColor: '#f0d98d',     // Number markers
-  pointerColor: '#ef4444',    // Red pointer
+  background: '#0a0e1a', // Deep black-blue
+  brass: '#d4af37', // Primary brass/gold
+  dialBackground: '#1a2332', // Dial surface
+  numberColor: '#f0d98d', // Number markers
+  pointerColor: '#ef4444', // Red pointer
   // ... more colors
-};
+}
 ```
 
 ## Integration with Main Game
@@ -228,6 +245,7 @@ The puzzle integrates with the existing sub-game framework:
 ### Playing the Puzzle
 
 **Exploration Phase:**
+
 1. Start at the main fuselage interior (Screen [1])
 2. Choose to explore the cockpit to discover the combination "28-15-7"
    - OR go directly to the rear to attempt the safe
@@ -235,6 +253,7 @@ The puzzle integrates with the existing sub-game framework:
 4. Return to entrance and explore the rear section
 
 **Safe-Cracking Phase:**
+
 1. Find the safe in the rear section (Screen [A])
 2. Attempt to open it (Screen [B])
 3. Rotate the dial to input the combination:
@@ -245,11 +264,13 @@ The puzzle integrates with the existing sub-game framework:
 5. Collect the reward when the safe opens (Screen [C])
 
 ### Resetting
+
 - Tap "Reset Puzzle" (dev mode only) to clear progress and restart
 - Reset from any screen returns to the entry screen
 - Exit and re-enter to resume from saved state
 
 ### Exiting
+
 - "Exit without exploring" from entry screen → returns to main game
 - "Leave Without Unlocking" from safe screen → returns to main game
 - "Return to Quest" from success screen → returns to main game (marks completed)
@@ -258,31 +279,35 @@ The puzzle integrates with the existing sub-game framework:
 ## Technical Details
 
 ### Angle Calculation
+
 ```typescript
 // Convert touch position to angle (radians)
-const angle = Math.atan2(dy, dx) + DIAL_ORIENTATION_OFFSET;
+const angle = Math.atan2(dy, dx) + DIAL_ORIENTATION_OFFSET
 
 // Convert angle to dial number
-const number = angleToNumber(normalizeAngle(angle));
+const number = angleToNumber(normalizeAngle(angle))
 ```
 
 ### Direction Detection
+
 ```typescript
 // Compare current angle to previous angle
-const delta = currentAngle - previousAngle;
-const direction = getRotationDirection(delta); // 'L' or 'R'
+const delta = currentAngle - previousAngle
+const direction = getRotationDirection(delta) // 'L' or 'R'
 ```
 
 ### Tolerance Check
+
 ```typescript
 // Account for wrap-around (39 -> 0)
-const diff = Math.abs(current - target);
-const wrapDiff = totalNumbers - diff;
-const shortestDiff = Math.min(diff, wrapDiff);
-return shortestDiff <= tolerance;
+const diff = Math.abs(current - target)
+const wrapDiff = totalNumbers - diff
+const shortestDiff = Math.min(diff, wrapDiff)
+return shortestDiff <= tolerance
 ```
 
 ### State Management Flow
+
 1. User drags dial → `updateAngle()` called
 2. New number calculated, haptic tick if changed
 3. Direction validated against current step requirement
@@ -301,6 +326,7 @@ return shortestDiff <= tolerance;
 ## Future Enhancements
 
 Possible improvements:
+
 - **Sound Effects**: Audible clicks, lock sounds, safe opening
 - **Difficulty Levels**: More steps, tighter tolerance, less dwell time
 - **Slip Behavior**: Dial drifts back if idle too long
@@ -327,6 +353,7 @@ Possible improvements:
 ## Art Direction
 
 **Art-Deco Dark Fantasy Aesthetic**:
+
 - Geometric patterns and symmetry
 - Brass/gold metallics on dark backgrounds
 - Deep blues and blacks

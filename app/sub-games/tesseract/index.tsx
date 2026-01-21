@@ -1,17 +1,17 @@
 // app/sub-games/tesseract/index.tsx
 // Main entry point for the tesseract sub-game - routes to main screen
-import React, { useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import React, { useEffect } from 'react'
+import { useRouter } from 'expo-router'
 
 export default function TesseractIndex() {
-  const router = useRouter();
+  const router = useRouter()
 
   useEffect(() => {
     if (__DEV__) {
-      console.log('[Tesseract] Routing to main screen');
+      console.log('[Tesseract] Routing to main screen')
     }
-    router.replace('/sub-games/tesseract/main' as any);
-  }, []);
+    router.replace('/sub-games/tesseract/main' as any)
+  }, [])
 
-  return null;
+  return null
 }

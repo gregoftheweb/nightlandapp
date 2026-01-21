@@ -7,6 +7,7 @@ This document demonstrates the improvements made to the levels configuration sys
 ## 1. Type Safety Improvements
 
 ### Before
+
 ```typescript
 // ❌ Plain string IDs - no compile-time validation
 export const levels: Record<string, Level> = {
@@ -20,6 +21,7 @@ const badLevel = levels["99"]; // undefined, no TypeScript error
 ```
 
 ### After
+
 ```typescript
 // ✅ Strict type checking with LevelId union
 export type LevelId = "1" | "2";
@@ -46,6 +48,7 @@ export function getLevel(id: LevelId): Level {
 ## 2. Reduced Duplication
 
 ### Before
+
 ```typescript
 // ❌ Spawn configurations duplicated across levels
 "1": {
@@ -66,6 +69,7 @@ export function getLevel(id: LevelId): Level {
 ```
 
 ### After
+
 ```typescript
 // ✅ Spawn tables defined once, reused across levels
 export const SPAWN_TABLES: Record<SpawnTableId, SpawnConfig[]> = {
@@ -100,7 +104,8 @@ export const LEVEL_DEFAULTS = {
 },
 ```
 
-**Impact:** 
+**Impact:**
+
 - Easier to balance encounters - change spawn table once, affects all levels
 - Changing default healing rate updates all levels
 - Less code to maintain
@@ -110,6 +115,7 @@ export const LEVEL_DEFAULTS = {
 ## 3. Semantic Types vs Magic Strings
 
 ### Before
+
 ```typescript
 // ❌ Magic numbers and strings
 "1": {
@@ -126,6 +132,7 @@ export const LEVEL_DEFAULTS = {
 ```
 
 ### After
+
 ```typescript
 // ✅ Semantic type definitions
 export type WeatherEffect = "clear" | "mist" | "ash_fall" | "blood_rain" | null;
@@ -169,6 +176,7 @@ export const BIOME_PRESETS: Record<BiomeId, BiomePreset> = {
 ```
 
 **Impact:**
+
 - IDE autocomplete helps discover available options
 - Type checking prevents typos
 - Semantic names make code self-documenting
@@ -179,44 +187,47 @@ export const BIOME_PRESETS: Record<BiomeId, BiomePreset> = {
 ## 4. Validation & Error Detection
 
 ### Before
+
 ```typescript
 // ❌ No validation - errors only appear at runtime
 export const levels: Record<string, Level> = {
-  "1": {
-    playerSpawn: { row: 500, col: 200 },  // Out of bounds!
+  '1': {
+    playerSpawn: { row: 500, col: 200 }, // Out of bounds!
     boardSize: { width: 400, height: 400 },
   },
-};
+}
 
 // Game crashes when trying to spawn player
 ```
 
 ### After
+
 ```typescript
 // ✅ Validation at module load time
 export function validateLevel(level: Level): void {
-  const { boardSize, playerSpawn, id } = level;
-  
+  const { boardSize, playerSpawn, id } = level
+
   if (playerSpawn.row < 0 || playerSpawn.row >= boardSize.height) {
     throw new Error(
       `Level ${id}: playerSpawn.row (${playerSpawn.row}) out of bounds [0, ${boardSize.height})`
-    );
+    )
   }
-  
+
   // Validate objects are within bounds
   for (const obj of level.objects) {
-    if (!obj.position) continue;
+    if (!obj.position) continue
     if (obj.position.row < 0 || obj.position.row >= boardSize.height) {
-      throw new Error(`Level ${id}: Object ${obj.id} row position out of bounds`);
+      throw new Error(`Level ${id}: Object ${obj.id} row position out of bounds`)
     }
   }
 }
 
 // ✅ Run validation at module load
-[levels["1"], levels["2"]].forEach(validateLevel);
+;[levels['1'], levels['2']].forEach(validateLevel)
 ```
 
 **Impact:**
+
 - Catches config errors immediately on app start
 - Fails fast with clear error messages
 - Prevents shipping broken level configurations
@@ -226,6 +237,7 @@ export function validateLevel(level: Level): void {
 ## 5. Code Organization
 
 ### Before
+
 ```
 config/
 ├── types.ts         # All types mixed together
@@ -238,6 +250,7 @@ config/
 ```
 
 ### After
+
 ```
 config/
 ├── types.ts              # Core game types
@@ -253,6 +266,7 @@ config/
 ```
 
 **Impact:**
+
 - Concerns are separated
 - Easier to find and modify presets
 - Helpers are testable in isolation
@@ -265,6 +279,7 @@ config/
 ### Scenario: Adjust Global Healing Rate
 
 #### Before
+
 ```typescript
 // ❌ Must update every level manually
 "1": { turnsPerHitPoint: 5 },  // Change here
@@ -275,12 +290,13 @@ config/
 ```
 
 #### After
+
 ```typescript
 // ✅ Change once in LEVEL_DEFAULTS
 export const LEVEL_DEFAULTS = {
-  turnsPerHitPoint: 10,  // Change ONLY here
+  turnsPerHitPoint: 10, // Change ONLY here
   // ...
-};
+}
 
 // All levels automatically inherit the new value
 ```
@@ -290,6 +306,7 @@ export const LEVEL_DEFAULTS = {
 ### Scenario: Add a New Spawn Variant
 
 #### Before
+
 ```typescript
 // ❌ Must copy-paste and modify for each level
 "1": {
@@ -310,15 +327,16 @@ export const LEVEL_DEFAULTS = {
 ```
 
 #### After
+
 ```typescript
 // ✅ Update the spawn table once
 export const SPAWN_TABLES = {
   wasteland_common: [
-    { monsterShortName: "abhuman", spawnRate: 0.04, maxInstances: 3 },
-    { monsterShortName: "night_hound", spawnRate: 0.02, maxInstances: 2 },
-    { monsterShortName: "shadow_beast", spawnRate: 0.01, maxInstances: 1 },  // Add once
+    { monsterShortName: 'abhuman', spawnRate: 0.04, maxInstances: 3 },
+    { monsterShortName: 'night_hound', spawnRate: 0.02, maxInstances: 2 },
+    { monsterShortName: 'shadow_beast', spawnRate: 0.01, maxInstances: 1 }, // Add once
   ],
-};
+}
 
 // All levels using "wasteland_common" get the update automatically
 ```
@@ -328,23 +346,25 @@ export const SPAWN_TABLES = {
 ## 7. Developer Experience
 
 ### Before
+
 ```typescript
 // ❌ No autocomplete, no validation
-const levelId = "3";  // Could be any string
-const level = levels[levelId];  // Might be undefined
+const levelId = '3' // Could be any string
+const level = levels[levelId] // Might be undefined
 
-level.weatherEffect = "rain";  // Is "rain" valid? Who knows!
-level.backgroundMusic = "epic_battle";  // Does this track exist?
+level.weatherEffect = 'rain' // Is "rain" valid? Who knows!
+level.backgroundMusic = 'epic_battle' // Does this track exist?
 ```
 
 ### After
+
 ```typescript
 // ✅ Full autocomplete and type checking
-const levelId: LevelId = "1";  // IDE suggests: "1" | "2"
-const level = getLevel(levelId);  // Guaranteed to exist
+const levelId: LevelId = '1' // IDE suggests: "1" | "2"
+const level = getLevel(levelId) // Guaranteed to exist
 
-level.weatherEffect = "mist";  // IDE suggests: "clear" | "mist" | "ash_fall" | "blood_rain" | null
-level.backgroundMusic = "watching_grounds";  // IDE suggests valid track IDs
+level.weatherEffect = 'mist' // IDE suggests: "clear" | "mist" | "ash_fall" | "blood_rain" | null
+level.backgroundMusic = 'watching_grounds' // IDE suggests valid track IDs
 ```
 
 ---
@@ -354,10 +374,12 @@ level.backgroundMusic = "watching_grounds";  // IDE suggests valid track IDs
 ### Statistics
 
 **Before:**
+
 - `levels.ts`: 378 lines
 - Total config complexity: Mixed inline
 
 **After:**
+
 - `levels.ts`: 410 lines (+32, but cleaner structure)
 - `levelTypes.ts`: 73 lines (NEW)
 - `levelPresets.ts`: 128 lines (NEW)
@@ -365,6 +387,7 @@ level.backgroundMusic = "watching_grounds";  // IDE suggests valid track IDs
 - **Total**: 777 lines
 
 **But consider:**
+
 - Adding 10 more levels with old approach: +1,890 lines (378 × 5)
 - Adding 10 more levels with new approach: +200 lines (just level defs, reuse presets)
 - **Savings at 12 levels**: ~1,690 lines
@@ -376,6 +399,7 @@ level.backgroundMusic = "watching_grounds";  // IDE suggests valid track IDs
 ### Adding Level 3 (Cursed Forest)
 
 #### Before
+
 ```typescript
 // ❌ Copy-paste 190 lines, change everything manually
 "3": {
@@ -396,6 +420,7 @@ level.backgroundMusic = "watching_grounds";  // IDE suggests valid track IDs
 ```
 
 #### After
+
 ```typescript
 // ✅ Just 30-50 lines with smart defaults
 "3": createLevel({
@@ -404,11 +429,11 @@ level.backgroundMusic = "watching_grounds";  // IDE suggests valid track IDs
   boardSize: { width: 500, height: 500 },
   playerSpawn: { row: 480, col: 250 },
   biome: "cursed_forest",  // Auto-sets light, weather, music
-  
+
   monsters: loadSpawnTable("wasteland_common"),  // Reuse existing
   items: [/* specific items */],
   objects: [/* specific objects */],
-  
+
   completionConditions: [/* objectives */],
 }),
 ```
@@ -419,21 +444,22 @@ level.backgroundMusic = "watching_grounds";  // IDE suggests valid track IDs
 
 ## Summary of Benefits
 
-| Aspect | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Type Safety | ❌ None | ✅ Full | Prevents typos |
-| Duplication | ❌ High | ✅ Low | DRY principle |
-| Maintainability | ❌ Hard | ✅ Easy | Central changes |
-| Documentation | ❌ Comments | ✅ Types | Self-documenting |
-| Error Detection | ❌ Runtime | ✅ Build time | Fail fast |
-| Scalability | ❌ Linear | ✅ Constant | Reuse patterns |
-| Developer UX | ❌ Manual | ✅ Autocomplete | Faster authoring |
+| Aspect          | Before      | After           | Improvement      |
+| --------------- | ----------- | --------------- | ---------------- |
+| Type Safety     | ❌ None     | ✅ Full         | Prevents typos   |
+| Duplication     | ❌ High     | ✅ Low          | DRY principle    |
+| Maintainability | ❌ Hard     | ✅ Easy         | Central changes  |
+| Documentation   | ❌ Comments | ✅ Types        | Self-documenting |
+| Error Detection | ❌ Runtime  | ✅ Build time   | Fail fast        |
+| Scalability     | ❌ Linear   | ✅ Constant     | Reuse patterns   |
+| Developer UX    | ❌ Manual   | ✅ Autocomplete | Faster authoring |
 
 ---
 
 ## Backward Compatibility
 
 ✅ **All existing code continues to work** - the refactor is additive:
+
 - `levels["1"]` still works
 - Monster instances have same structure
 - Level objects unchanged

@@ -6,11 +6,11 @@
  */
 export const subGameTheme = {
   // Primary colors
-  red: '#990000',      // Primary button fill
-  blue: '#0589fc',     // Highlight/accent color (borders, focus rings, selected indicators)
-  black: '#000000',    // Button text color
-  
+  red: '#990000', // Primary button fill
+  blue: '#0589fc', // Highlight/accent color (borders, focus rings, selected indicators)
+  black: '#000000', // Button text color
+
   // Utility colors
   white: '#ffffff',
   transparent: 'transparent',
-};
+}

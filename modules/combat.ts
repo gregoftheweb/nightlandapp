@@ -1,241 +1,220 @@
 // modules/combat.ts - Enhanced d20 combat system with all combat logic
-import { GameState, Position, Monster } from "../config/types";
-import { getTextContent, logIfDev } from "./utils";
-import { COMBAT_STRINGS } from "@/assets/copy/combat";
+import { GameState, Position, Monster } from '../config/types'
+import { getTextContent, logIfDev } from './utils'
+import { COMBAT_STRINGS } from '@/assets/copy/combat'
 
 // Roll a d20
 const rollD20 = (): number => {
-  return Math.floor(Math.random() * 20) + 1;
-};
+  return Math.floor(Math.random() * 20) + 1
+}
 
 // Roll a d6
 const rollD6 = (): number => {
-  return Math.floor(Math.random() * 6) + 1;
-};
+  return Math.floor(Math.random() * 6) + 1
+}
 
 // ==================== COMBAT UTILITIES ====================
 
 const checkCollision = (pos1: Position, pos2: Position): boolean => {
-  return pos1.row === pos2.row && pos1.col === pos2.col;
-};
+  return pos1.row === pos2.row && pos1.col === pos2.col
+}
 
 // ==================== CORE COMBAT ACTIONS ====================
 
-export const executeAttack = (
-  attacker: any,
-  defender: any,
-  dispatch: any
-): boolean => {
-  const attackRoll = rollD20();
-  const totalAttack = attackRoll + attacker.attack;
-  const hit = totalAttack >= defender.ac;
+export const executeAttack = (attacker: any, defender: any, dispatch: any): boolean => {
+  const attackRoll = rollD20()
+  const totalAttack = attackRoll + attacker.attack
+  const hit = totalAttack >= defender.ac
 
-  logIfDev(`\n🎲 ${attacker.name} attacks ${defender.name}:`);
+  logIfDev(`\n🎲 ${attacker.name} attacks ${defender.name}:`)
   logIfDev(
     `   Roll: ${attackRoll} + Attack: ${attacker.attack} = ${totalAttack} vs AC: ${defender.ac}`
-  );
+  )
 
   if (hit) {
-    const damageRoll = Math.floor(Math.random() * 6) + 1;
-    const totalDamage = damageRoll + Math.floor(attacker.attack / 2);
-    const newHp = Math.max(0, defender.hp - totalDamage);
+    const damageRoll = Math.floor(Math.random() * 6) + 1
+    const totalDamage = damageRoll + Math.floor(attacker.attack / 2)
+    const newHp = Math.max(0, defender.hp - totalDamage)
 
     logIfDev(
-      `   💥 HIT! Damage: ${damageRoll} + ${Math.floor(
-        attacker.attack / 2
-      )} = ${totalDamage}`
-    );
-    logIfDev(`   ${defender.name} HP: ${defender.hp} → ${newHp}`);
+      `   💥 HIT! Damage: ${damageRoll} + ${Math.floor(attacker.attack / 2)} = ${totalDamage}`
+    )
+    logIfDev(`   ${defender.name} HP: ${defender.hp} → ${newHp}`)
 
     // Create different messages for Christos vs monsters
-    let combatMessage = "";
-    if (attacker.id === "christos") {
+    let combatMessage = ''
+    if (attacker.id === 'christos') {
       // Christos attacking - use "the" before monster name
-      const monsterName = defender.name || defender.shortName || "enemy";
+      const monsterName = defender.name || defender.shortName || 'enemy'
       combatMessage =
-        `Christos hit the ${monsterName} for ${totalDamage}` +
-        (totalDamage >= 10 ? "!!" : "");
+        `Christos hit the ${monsterName} for ${totalDamage}` + (totalDamage >= 10 ? '!!' : '')
     } else {
       // Monster attacking - keep it simple
-      combatMessage =
-        `${attacker.name} hit for ${totalDamage}` +
-        (totalDamage >= 10 ? "!!" : "");
+      combatMessage = `${attacker.name} hit for ${totalDamage}` + (totalDamage >= 10 ? '!!' : '')
     }
 
     // Dispatch combat log message
     dispatch({
-      type: "ADD_COMBAT_LOG",
+      type: 'ADD_COMBAT_LOG',
       payload: { message: combatMessage },
-    });
+    })
 
     // Update HP
-    if (defender.id === "christos") {
+    if (defender.id === 'christos') {
       dispatch({
-        type: "UPDATE_PLAYER",
+        type: 'UPDATE_PLAYER',
         payload: { updates: { hp: newHp } },
-      });
+      })
     } else {
       dispatch({
-        type: "UPDATE_MONSTER",
+        type: 'UPDATE_MONSTER',
         payload: { id: defender.id, updates: { hp: newHp } },
-      });
+      })
     }
 
     // Check if defender is dead
     if (newHp <= 0) {
-      logIfDev(`💀 ${defender.name} is defeated!`);
+      logIfDev(`💀 ${defender.name} is defeated!`)
 
-      let deathMessage = "";
-      if (attacker.id === "christos") {
-        const monsterName = defender.name || defender.shortName || "enemy";
-        deathMessage = `Christos killed the ${monsterName}`;
+      let deathMessage = ''
+      if (attacker.id === 'christos') {
+        const monsterName = defender.name || defender.shortName || 'enemy'
+        deathMessage = `Christos killed the ${monsterName}`
       } else {
-        deathMessage = `${attacker.name} killed ${defender.name}`;
+        deathMessage = `${attacker.name} killed ${defender.name}`
       }
 
       dispatch({
-        type: "ADD_COMBAT_LOG",
+        type: 'ADD_COMBAT_LOG',
         payload: { message: deathMessage },
-      });
+      })
 
-      if (defender.id !== "christos") {
+      if (defender.id !== 'christos') {
         dispatch({
-          type: "REMOVE_MONSTER",
+          type: 'REMOVE_MONSTER',
           payload: { id: defender.id },
-        });
-        return true;
+        })
+        return true
       } else {
         // Player died - just dispatch GAME_OVER
-        const killerName =
-          attacker.name || attacker.shortName || "unknown horror";
+        const killerName = attacker.name || attacker.shortName || 'unknown horror'
 
         // Use your COMBAT_STRINGS function here
-        const deathMessage = COMBAT_STRINGS.death.player(killerName);
+        const deathMessage = COMBAT_STRINGS.death.player(killerName)
 
         dispatch({
-          type: "ADD_COMBAT_LOG",
+          type: 'ADD_COMBAT_LOG',
           payload: { message: deathMessage },
-        });
+        })
 
         // Send the message and killer name into GAME_OVER reducer
         dispatch({
-          type: "GAME_OVER",
+          type: 'GAME_OVER',
           payload: { message: deathMessage, killerName: killerName },
-        });
+        })
 
-        return true;
+        return true
       }
     }
   } else {
-    logIfDev(`   ❌ MISS!`);
+    logIfDev(`   ❌ MISS!`)
 
     // Create different miss messages for Christos vs monsters
-    let missMessage = "";
-    if (attacker.id === "christos") {
-      const monsterName = defender.name || defender.shortName || "enemy";
-      missMessage = `Christos missed the ${monsterName}`;
+    let missMessage = ''
+    if (attacker.id === 'christos') {
+      const monsterName = defender.name || defender.shortName || 'enemy'
+      missMessage = `Christos missed the ${monsterName}`
     } else {
-      missMessage = `${attacker.name} missed`;
+      missMessage = `${attacker.name} missed`
     }
 
     dispatch({
-      type: "ADD_COMBAT_LOG",
+      type: 'ADD_COMBAT_LOG',
       payload: { message: missMessage },
-    });
+    })
   }
 
-  return false;
-};
+  return false
+}
 
 // ==================== COMBAT TURN PROCESSING ====================
 
-export const processCombatTurn = (
-  state: GameState,
-  dispatch: any,
-  targetId?: string
-): void => {
+export const processCombatTurn = (state: GameState, dispatch: any, targetId?: string): void => {
   if (!state.inCombat || !state.attackSlots || state.attackSlots.length === 0) {
-    logIfDev("No combat to process");
-    return;
+    logIfDev('No combat to process')
+    return
   }
 
-  logIfDev(`\n⚔️ COMBAT ROUND STARTING (Turn ${state.moveCount + 1})`);
-  logIfDev(`   Player HP: ${state.player.hp}/${state.player.maxHP}`);
-  logIfDev(`   Monsters in combat: ${state.attackSlots.length}`);
+  logIfDev(`\n⚔️ COMBAT ROUND STARTING (Turn ${state.moveCount + 1})`)
+  logIfDev(`   Player HP: ${state.player.hp}/${state.player.maxHP}`)
+  logIfDev(`   Monsters in combat: ${state.attackSlots.length}`)
 
-  const combatOrder = [state.player, ...state.attackSlots];
+  const combatOrder = [state.player, ...state.attackSlots]
 
   for (const entity of combatOrder) {
-    if (entity.hp <= 0) continue;
+    if (entity.hp <= 0) continue
 
-    if (entity.id === "christos") {
-      logIfDev(`\n👤 ${entity.name}'s turn:`);
-      let targetMonster = null;
+    if (entity.id === 'christos') {
+      logIfDev(`\n👤 ${entity.name}'s turn:`)
+      let targetMonster = null
       if (targetId) {
-        targetMonster = state.attackSlots.find(
-          (m: any) => m.id === targetId && m.hp > 0
-        );
+        targetMonster = state.attackSlots.find((m: any) => m.id === targetId && m.hp > 0)
       }
       if (!targetMonster) {
-        targetMonster = state.attackSlots.find((m: any) => m.hp > 0);
+        targetMonster = state.attackSlots.find((m: any) => m.hp > 0)
       }
 
       if (targetMonster) {
-        const monsterDied = executeAttack(entity, targetMonster, dispatch);
+        const monsterDied = executeAttack(entity, targetMonster, dispatch)
         if (monsterDied) {
-          const updatedAttackSlots = state.attackSlots.filter(
-            (m: any) => m.id !== targetMonster.id
-          );
+          const updatedAttackSlots = state.attackSlots.filter((m: any) => m.id !== targetMonster.id)
           dispatch({
-            type: "SET_COMBAT",
+            type: 'SET_COMBAT',
             payload: {
               ...state,
               attackSlots: updatedAttackSlots,
               inCombat: updatedAttackSlots.length > 0,
             },
-          });
+          })
         }
       } else {
-        logIfDev(`   No valid target for ${entity.name}'s attack`);
+        logIfDev(`   No valid target for ${entity.name}'s attack`)
         dispatch({
-          type: "ADD_COMBAT_LOG",
+          type: 'ADD_COMBAT_LOG',
           payload: { message: `${entity.name} has no target to attack!` },
-        });
+        })
       }
     } else {
-      logIfDev(`\n👹 ${entity.name}'s turn:`);
-      const playerDied = executeAttack(entity, state.player, dispatch);
+      logIfDev(`\n👹 ${entity.name}'s turn:`)
+      const playerDied = executeAttack(entity, state.player, dispatch)
       if (playerDied) {
-        logIfDev("💀 GAME OVER - Player defeated!");
-        return;
+        logIfDev('💀 GAME OVER - Player defeated!')
+        return
       }
     }
   }
 
   // Move waiting monsters into empty attack slots
-  moveWaitingMonstersToAttackSlots(state, dispatch);
+  moveWaitingMonstersToAttackSlots(state, dispatch)
 
-  logIfDev(`\n📊 COMBAT ROUND COMPLETE`);
-  logIfDev(`   Player HP: ${state.player.hp}/${state.player.maxHP}`);
+  logIfDev(`\n📊 COMBAT ROUND COMPLETE`)
+  logIfDev(`   Player HP: ${state.player.hp}/${state.player.maxHP}`)
   state.attackSlots.forEach((monster: any) => {
     if (monster.hp > 0) {
-      logIfDev(`   ${monster.name} HP: ${monster.hp}/${monster.maxHP}`);
+      logIfDev(`   ${monster.name} HP: ${monster.hp}/${monster.maxHP}`)
     }
-  });
-};
+  })
+}
 
 // ==================== COMBAT MANAGEMENT ====================
 
-const moveWaitingMonstersToAttackSlots = (
-  state: GameState,
-  dispatch: any
-): void => {
-  const aliveMonsters = state.attackSlots.filter((m: any) => m.hp > 0);
-  const availableSlots = (state.maxAttackers || 4) - aliveMonsters.length;
+const moveWaitingMonstersToAttackSlots = (state: GameState, dispatch: any): void => {
+  const aliveMonsters = state.attackSlots.filter((m: any) => m.hp > 0)
+  const availableSlots = (state.maxAttackers || 4) - aliveMonsters.length
 
   if (availableSlots > 0 && state.waitingMonsters.length > 0) {
-    const newAttackSlots = [...aliveMonsters];
-    const newWaitingMonsters = [...state.waitingMonsters];
+    const newAttackSlots = [...aliveMonsters]
+    const newWaitingMonsters = [...state.waitingMonsters]
     const slotPositions = [
       {
         row: state.player.position.row - 1,
@@ -253,48 +232,40 @@ const moveWaitingMonstersToAttackSlots = (
         row: state.player.position.row + 1,
         col: state.player.position.col + 1,
       },
-    ];
+    ]
 
-    const usedUISlots = newAttackSlots.map((slot: any) => slot.uiSlot || 0);
-    let monstersMoved = 0;
+    const usedUISlots = newAttackSlots.map((slot: any) => slot.uiSlot || 0)
+    let monstersMoved = 0
 
-    for (
-      let i = 0;
-      i < newWaitingMonsters.length && monstersMoved < availableSlots;
-      i++
-    ) {
-      const monster = newWaitingMonsters[i];
-      const nextUISlot = [0, 1, 2, 3].find(
-        (slot) => !usedUISlots.includes(slot)
-      );
+    for (let i = 0; i < newWaitingMonsters.length && monstersMoved < availableSlots; i++) {
+      const monster = newWaitingMonsters[i]
+      const nextUISlot = [0, 1, 2, 3].find((slot) => !usedUISlots.includes(slot))
       if (nextUISlot !== undefined) {
         const combatMonster = {
           ...monster,
           position: { ...slotPositions[nextUISlot] },
           uiSlot: nextUISlot,
           inCombatSlot: true,
-        };
-        newAttackSlots.push(combatMonster);
+        }
+        newAttackSlots.push(combatMonster)
         dispatch({
-          type: "MOVE_MONSTER",
+          type: 'MOVE_MONSTER',
           payload: { id: monster.id, position: combatMonster.position },
-        });
-        console.log(
-          `✅ Monster ${monster.name} moved from waiting to attack slot ${nextUISlot}`
-        );
+        })
+        console.log(`✅ Monster ${monster.name} moved from waiting to attack slot ${nextUISlot}`)
         dispatch({
-          type: "ADD_COMBAT_LOG",
+          type: 'ADD_COMBAT_LOG',
           payload: { message: `${monster.name} joins the combat!` },
-        });
-        usedUISlots.push(nextUISlot);
-        newWaitingMonsters.splice(i, 1);
-        i--;
-        monstersMoved++;
+        })
+        usedUISlots.push(nextUISlot)
+        newWaitingMonsters.splice(i, 1)
+        i--
+        monstersMoved++
       }
     }
 
     dispatch({
-      type: "SET_COMBAT",
+      type: 'SET_COMBAT',
       payload: {
         ...state,
         attackSlots: newAttackSlots,
@@ -302,21 +273,21 @@ const moveWaitingMonstersToAttackSlots = (
         turnOrder: [state.player, ...newAttackSlots],
         combatTurn: state.player,
       },
-    });
+    })
   }
-};
+}
 
 export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
-  const aliveMonsters = state.attackSlots?.filter((m: any) => m.hp > 0) || [];
+  const aliveMonsters = state.attackSlots?.filter((m: any) => m.hp > 0) || []
 
   if (aliveMonsters.length === 0) {
-    logIfDev("🏆 Combat won - all monsters defeated!");
+    logIfDev('🏆 Combat won - all monsters defeated!')
     dispatch({
-      type: "ADD_COMBAT_LOG",
-      payload: { message: "All enemies defeated!" },
-    });
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: 'All enemies defeated!' },
+    })
     dispatch({
-      type: "SET_COMBAT",
+      type: 'SET_COMBAT',
       payload: {
         inCombat: false,
         attackSlots: [],
@@ -325,25 +296,25 @@ export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
         combatTurn: state.player,
         combatLog: [], // Clear log
       },
-    });
-    return true;
+    })
+    return true
   }
 
   if (state.player.hp <= 0) {
-    logIfDev("💀 Combat lost - player defeated!");
+    logIfDev('💀 Combat lost - player defeated!')
 
-    const killer = aliveMonsters[0]?.name || "unknown horror";
+    const killer = aliveMonsters[0]?.name || 'unknown horror'
 
     dispatch({
-      type: "ADD_COMBAT_LOG",
+      type: 'ADD_COMBAT_LOG',
       payload: { message: COMBAT_STRINGS.death.player(killer) },
-    });
+    })
 
-    return true;
+    return true
   }
 
-  return false;
-};
+  return false
+}
 
 // ==================== COMBAT SETUP AND INITIALIZATION ====================
 
@@ -353,12 +324,12 @@ export const setupCombat = (
   monster: Monster,
   playerPosOverride?: Position
 ): void => {
-  logIfDev(`\n⚔️ SETTING UP COMBAT with ${monster.name}`);
-  logIfDev(`📊 BEFORE SETUP - state.attackSlots:`, state.attackSlots);
-  logIfDev(`📊 BEFORE SETUP - state.inCombat:`, state.inCombat);
+  logIfDev(`\n⚔️ SETTING UP COMBAT with ${monster.name}`)
+  logIfDev(`📊 BEFORE SETUP - state.attackSlots:`, state.attackSlots)
+  logIfDev(`📊 BEFORE SETUP - state.inCombat:`, state.inCombat)
 
-  let newAttackSlots = [...(state.attackSlots || [])];
-  let newWaitingMonsters = [...(state.waitingMonsters || [])];
+  let newAttackSlots = [...(state.attackSlots || [])]
+  let newWaitingMonsters = [...(state.waitingMonsters || [])]
 
   // Define attack slot positions around player
   const slotPositions = [
@@ -366,18 +337,18 @@ export const setupCombat = (
     { row: state.player.position.row - 1, col: state.player.position.col + 1 }, // Slot 1
     { row: state.player.position.row + 1, col: state.player.position.col - 1 }, // Slot 2
     { row: state.player.position.row + 1, col: state.player.position.col + 1 }, // Slot 3
-  ];
+  ]
 
   // Check if monster is already in combat
   if (newAttackSlots.some((slot: any) => slot.id === monster.id)) {
-    console.warn(`Monster ${monster.name} already in attack slots`);
-    return;
+    console.warn(`Monster ${monster.name} already in attack slots`)
+    return
   }
 
   // Try to add to attack slots
   if (newAttackSlots.length < (state.maxAttackers || 4)) {
-    const usedUISlots = newAttackSlots.map((slot: any) => slot.uiSlot || 0);
-    const nextUISlot = [0, 1, 2, 3].find((slot) => !usedUISlots.includes(slot));
+    const usedUISlots = newAttackSlots.map((slot: any) => slot.uiSlot || 0)
+    const nextUISlot = [0, 1, 2, 3].find((slot) => !usedUISlots.includes(slot))
 
     if (nextUISlot !== undefined) {
       const combatMonster = {
@@ -385,47 +356,45 @@ export const setupCombat = (
         position: { ...slotPositions[nextUISlot] },
         uiSlot: nextUISlot,
         inCombatSlot: true,
-      };
+      }
 
-      newAttackSlots.push(combatMonster);
+      newAttackSlots.push(combatMonster)
 
       logIfDev(
         `✅ ADDED TO ATTACK SLOTS - Monster: ${monster.name}, ID: ${monster.id}, Slot: ${nextUISlot}`
-      );
-      logIfDev(`📊 NEW attackSlots array length:`, newAttackSlots.length);
+      )
+      logIfDev(`📊 NEW attackSlots array length:`, newAttackSlots.length)
       logIfDev(
         `📊 NEW attackSlots IDs:`,
         newAttackSlots.map((m) => m.id)
-      );
+      )
 
       dispatch({
-        type: "MOVE_MONSTER",
+        type: 'MOVE_MONSTER',
         payload: { id: monster.id, position: combatMonster.position },
-      });
+      })
 
       // Add combat log entry
       dispatch({
-        type: "ADD_COMBAT_LOG",
+        type: 'ADD_COMBAT_LOG',
         payload: { message: `${monster.name} enters combat!` },
-      });
+      })
 
-      logIfDev(
-        `✅ Monster ${monster.name} assigned to attack slot ${nextUISlot}`
-      );
+      logIfDev(`✅ Monster ${monster.name} assigned to attack slot ${nextUISlot}`)
     } else {
-      console.warn("No available UI slot for combat monster");
-      return;
+      console.warn('No available UI slot for combat monster')
+      return
     }
   } else {
     // Add to waiting monsters
     if (!newWaitingMonsters.some((m: any) => m.id === monster.id)) {
-      newWaitingMonsters.push(monster);
-      logIfDev(`Monster ${monster.name} added to waiting queue`);
+      newWaitingMonsters.push(monster)
+      logIfDev(`Monster ${monster.name} added to waiting queue`)
     }
-    return;
+    return
   }
 
-  const newTurnOrder = [state.player, ...newAttackSlots];
+  const newTurnOrder = [state.player, ...newAttackSlots]
 
   const combatPayload = {
     inCombat: true,
@@ -433,30 +402,28 @@ export const setupCombat = (
     waitingMonsters: newWaitingMonsters,
     turnOrder: newTurnOrder,
     combatTurn: newTurnOrder[0] || state.player,
-  };
+  }
 
-  logIfDev(`🎯 DISPATCHING SET_COMBAT with payload:`);
+  logIfDev(`🎯 DISPATCHING SET_COMBAT with payload:`)
 
-  dispatch({ type: "SET_COMBAT", payload: combatPayload });
+  dispatch({ type: 'SET_COMBAT', payload: combatPayload })
 
   // Add player comment at start of combat if combat just began
   if (!state.inCombat) {
     dispatch({
-      type: "ADD_COMBAT_LOG",
-      payload: { message: getTextContent("combatStartPlayerComment") },
-    });
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: getTextContent('combatStartPlayerComment') },
+    })
   }
 
   // Add monster-specific combat start message
   dispatch({
-    type: "ADD_COMBAT_LOG",
-    payload: { message: getTextContent("combatStart", [monster.name]) },
-  });
+    type: 'ADD_COMBAT_LOG',
+    payload: { message: getTextContent('combatStart', [monster.name]) },
+  })
 
-  logIfDev(
-    `⚔️ Combat initiated! ${newAttackSlots.length} monsters in attack slots`
-  );
-};
+  logIfDev(`⚔️ Combat initiated! ${newAttackSlots.length} monsters in attack slots`)
+}
 
 // ==================== COMBAT TURN HANDLER ====================
 
@@ -468,14 +435,14 @@ export const handleCombatTurn = (
   setDeathMessage?: (message: string) => void // Can remove this parameter now
 ): void => {
   if (!state.inCombat) {
-    logIfDev("handleCombatTurn called but not in combat");
-    return;
+    logIfDev('handleCombatTurn called but not in combat')
+    return
   }
 
-  logIfDev(`\n⚔️ PROCESSING COMBAT ACTION: ${action}`);
-  processCombatTurn(state, dispatch, targetId);
-  checkCombatEnd(state, dispatch);
-};
+  logIfDev(`\n⚔️ PROCESSING COMBAT ACTION: ${action}`)
+  processCombatTurn(state, dispatch, targetId)
+  checkCombatEnd(state, dispatch)
+}
 
 // ==================== MONSTER MOVEMENT AND COLLISION ====================
 
@@ -487,11 +454,11 @@ export const checkForCombatCollision = (
 ): boolean => {
   if (checkCollision(newPosition, playerPos)) {
     if (!state.player.isHidden) {
-      return true; // Combat should be initiated
+      return true // Combat should be initiated
     }
   }
-  return false;
-};
+  return false
+}
 
 // ==================== RANGED ATTACK ====================
 
@@ -502,12 +469,12 @@ export const checkForCombatCollision = (
  */
 const getEquippedRangedWeaponName = (state: GameState): string => {
   if (!state.player.equippedRangedWeaponId) {
-    return "bow"; // Default fallback
+    return 'bow' // Default fallback
   }
-  
-  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId);
-  return weapon?.name || "ranged weapon";
-};
+
+  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId)
+  return weapon?.name || 'ranged weapon'
+}
 
 /**
  * Get the projectile color for the equipped ranged weapon
@@ -516,38 +483,40 @@ const getEquippedRangedWeaponName = (state: GameState): string => {
  */
 const getEquippedRangedWeaponProjectileColor = (state: GameState): string => {
   if (!state.player.equippedRangedWeaponId) {
-    return "#FFFFFF"; // Default white
+    return '#FFFFFF' // Default white
   }
-  
-  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId);
-  return weapon?.projectileColor || "#FFFFFF";
-};
+
+  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId)
+  return weapon?.projectileColor || '#FFFFFF'
+}
 
 /**
  * Get the projectile style (dimensions, glow) for the equipped ranged weapon
  * @param state - Current game state
  * @returns Object containing projectile style properties
  */
-const getEquippedRangedWeaponProjectileStyle = (state: GameState): {
-  lengthPx?: number;
-  thicknessPx?: number;
-  glow?: boolean;
+const getEquippedRangedWeaponProjectileStyle = (
+  state: GameState
+): {
+  lengthPx?: number
+  thicknessPx?: number
+  glow?: boolean
 } => {
   if (!state.player.equippedRangedWeaponId) {
-    return {};
+    return {}
   }
-  
-  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId);
+
+  const weapon = state.weapons?.find((w) => w.id === state.player.equippedRangedWeaponId)
   if (!weapon) {
-    return {};
+    return {}
   }
-  
+
   return {
     lengthPx: weapon.projectileLengthPx,
     thicknessPx: weapon.projectileThicknessPx,
     glow: weapon.projectileGlow,
-  };
-};
+  }
+}
 
 /**
  * Execute a ranged attack from the player to a target monster
@@ -572,47 +541,47 @@ export const executeRangedAttack = (
   monsterScreenY: number
 ): string | null => {
   // Find the target monster in either activeMonsters or attackSlots
-  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0);
-  
+  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0)
+
   if (!targetMonster) {
-    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.hp > 0);
+    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.hp > 0)
   }
 
   if (!targetMonster) {
-    logIfDev("No valid target for ranged attack");
+    logIfDev('No valid target for ranged attack')
     dispatch({
-      type: "ADD_COMBAT_LOG",
-      payload: { message: "No target in range" },
-    });
-    return null;
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: 'No target in range' },
+    })
+    return null
   }
 
-  const player = state.player;
-  const weaponName = getEquippedRangedWeaponName(state);
-  const projectileColor = getEquippedRangedWeaponProjectileColor(state);
-  const projectileStyle = getEquippedRangedWeaponProjectileStyle(state);
+  const player = state.player
+  const weaponName = getEquippedRangedWeaponName(state)
+  const projectileColor = getEquippedRangedWeaponProjectileColor(state)
+  const projectileStyle = getEquippedRangedWeaponProjectileStyle(state)
 
   // Log attempt
-  const monsterName = targetMonster.name || targetMonster.shortName || "enemy";
+  const monsterName = targetMonster.name || targetMonster.shortName || 'enemy'
   dispatch({
-    type: "ADD_COMBAT_LOG",
+    type: 'ADD_COMBAT_LOG',
     payload: { message: `Christos attempts a shot with ${weaponName} at ${monsterName}.` },
-  });
+  })
 
-  logIfDev(`\n🏹 Christos ranged attack on ${monsterName}:`);
+  logIfDev(`\n🏹 Christos ranged attack on ${monsterName}:`)
 
   // Calculate projectile trajectory
-  const dx = monsterScreenX - playerScreenX;
-  const dy = monsterScreenY - playerScreenY;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const dx = monsterScreenX - playerScreenX
+  const dy = monsterScreenY - playerScreenY
+  const distance = Math.sqrt(dx * dx + dy * dy)
+  const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI
 
   // Calculate duration based on distance (faster for short distances, slower for long)
-  const pixelsPerMs = 0.5; // Speed of projectile
-  const durationMs = Math.max(120, Math.min(450, distance / pixelsPerMs));
+  const pixelsPerMs = 0.5 // Speed of projectile
+  const durationMs = Math.max(120, Math.min(450, distance / pixelsPerMs))
 
   // Create projectile
-  const projectileId = `projectile-${Date.now()}-${Math.random()}`;
+  const projectileId = `projectile-${Date.now()}-${Math.random()}`
   const projectile = {
     id: projectileId,
     startX: playerScreenX,
@@ -626,18 +595,20 @@ export const executeRangedAttack = (
     lengthPx: projectileStyle.lengthPx,
     thicknessPx: projectileStyle.thicknessPx,
     glow: projectileStyle.glow,
-  };
+  }
 
   // Spawn projectile
   dispatch({
-    type: "ADD_PROJECTILE",
+    type: 'ADD_PROJECTILE',
     payload: projectile,
-  });
+  })
 
-  logIfDev(`🎯 Projectile spawned: id=${projectileId}, duration=${durationMs}ms, angle=${angleDeg}°`);
+  logIfDev(
+    `🎯 Projectile spawned: id=${projectileId}, duration=${durationMs}ms, angle=${angleDeg}°`
+  )
 
-  return projectileId;
-};
+  return projectileId
+}
 
 /**
  * Process the hit/miss/damage for a ranged attack after projectile impact
@@ -653,79 +624,75 @@ export const processRangedAttackImpact = (
   targetMonsterId: string
 ): boolean => {
   // Find the target monster in either activeMonsters or attackSlots
-  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0);
-  
+  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0)
+
   if (!targetMonster) {
-    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.hp > 0);
+    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.hp > 0)
   }
 
   if (!targetMonster) {
-    logIfDev("Target no longer exists for ranged attack impact");
-    return false;
+    logIfDev('Target no longer exists for ranged attack impact')
+    return false
   }
 
-  const player = state.player;
-  const monsterName = targetMonster.name || targetMonster.shortName || "enemy";
+  const player = state.player
+  const monsterName = targetMonster.name || targetMonster.shortName || 'enemy'
 
   // Perform hit/miss roll using d20 system
-  const attackRoll = rollD20();
-  const totalAttack = attackRoll + player.attack;
-  const hit = totalAttack >= targetMonster.ac;
+  const attackRoll = rollD20()
+  const totalAttack = attackRoll + player.attack
+  const hit = totalAttack >= targetMonster.ac
 
   logIfDev(
     `   Roll: ${attackRoll} + Attack: ${player.attack} = ${totalAttack} vs AC: ${targetMonster.ac}`
-  );
+  )
 
   if (hit) {
     // Calculate damage using d6 dice roll
-    const damageRoll = rollD6();
-    const totalDamage = damageRoll + Math.floor(player.attack / 2);
-    const newHp = Math.max(0, targetMonster.hp - totalDamage);
+    const damageRoll = rollD6()
+    const totalDamage = damageRoll + Math.floor(player.attack / 2)
+    const newHp = Math.max(0, targetMonster.hp - totalDamage)
 
-    logIfDev(
-      `   💥 HIT! Damage: ${damageRoll} + ${Math.floor(
-        player.attack / 2
-      )} = ${totalDamage}`
-    );
-    logIfDev(`   ${monsterName} HP: ${targetMonster.hp} → ${newHp}`);
+    logIfDev(`   💥 HIT! Damage: ${damageRoll} + ${Math.floor(player.attack / 2)} = ${totalDamage}`)
+    logIfDev(`   ${monsterName} HP: ${targetMonster.hp} → ${newHp}`)
 
     // Log hit and damage
     dispatch({
-      type: "ADD_COMBAT_LOG",
-      payload: { message: "Hit!" },
-    });
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: 'Hit!' },
+    })
     dispatch({
-      type: "ADD_COMBAT_LOG",
+      type: 'ADD_COMBAT_LOG',
       payload: { message: `${monsterName} takes ${totalDamage} damage.` },
-    });
+    })
 
     // Update monster HP
     dispatch({
-      type: "UPDATE_MONSTER",
+      type: 'UPDATE_MONSTER',
       payload: { id: targetMonster.id, updates: { hp: newHp } },
-    });
+    })
 
     // Check if monster dies
     if (newHp <= 0) {
-      logIfDev(`💀 ${monsterName} is defeated!`);
+      logIfDev(`💀 ${monsterName} is defeated!`)
       dispatch({
-        type: "ADD_COMBAT_LOG",
+        type: 'ADD_COMBAT_LOG',
         payload: { message: `${monsterName} dies.` },
-      });
+      })
       dispatch({
-        type: "REMOVE_MONSTER",
+        type: 'REMOVE_MONSTER',
         payload: { id: targetMonster.id },
-      });
-      
-      return true; // Target died
+      })
+
+      return true // Target died
     }
   } else {
-    logIfDev(`   ❌ MISS!`);
+    logIfDev(`   ❌ MISS!`)
     dispatch({
-      type: "ADD_COMBAT_LOG",
-      payload: { message: "Miss!" },
-    });
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: 'Miss!' },
+    })
   }
-  
-  return false; // Target survived
-};
+
+  return false // Target survived
+}

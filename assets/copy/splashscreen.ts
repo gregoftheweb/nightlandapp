@@ -1,6 +1,6 @@
 export const SPLASH_STRINGS = {
   splashScreen: {
-    buttonText: "Enter the Night Land at Your Peril",
+    buttonText: 'Enter the Night Land at Your Peril',
   },
 
   princessScreen: {
@@ -12,14 +12,14 @@ and my love will become sorrow...
 She turns from you and quietly sobs.
 
 You say nothing and depart. For even though hopeless, you must try.`,
-    buttonText: "Leave your love and depart into the Nightland and your doom...",
+    buttonText: 'Leave your love and depart into the Nightland and your doom...',
   },
 
   deathScreen: {
-    title: "Christos is dead.",
-    buttonText: "Venture yet again out into the Night Land to face the horrors of the dark.....",
+    title: 'Christos is dead.',
+    buttonText: 'Venture yet again out into the Night Land to face the horrors of the dark.....',
     slainByText: (killerName: string) => `\nSlain by the ${killerName}.\n\n`,
     monstersKilledText: (count: number) => `Monsters killed: ${count}\n`,
     distanceTraveledText: (distance: number) => `Distance traveled: ${distance} steps`,
   },
-} as const;
+} as const

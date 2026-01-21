@@ -1,12 +1,12 @@
 // app/sub-games/aerowreckage-puzzle/components/InstructionOverlay.tsx
 // Flavor text and instructions
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { THEME } from '../theme';
+import React from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import { THEME } from '../theme'
 
 interface InstructionOverlayProps {
-  isOpened: boolean;
+  isOpened: boolean
 }
 
 export function InstructionOverlay({ isOpened }: InstructionOverlayProps) {
@@ -24,7 +24,7 @@ export function InstructionOverlay({ isOpened }: InstructionOverlayProps) {
         </Text>
       )}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -59,4 +59,4 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 18,
   },
-});
+})

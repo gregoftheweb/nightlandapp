@@ -11,18 +11,21 @@ This guide documents the architectural patterns for the Night Land game and prov
 ### 1. Separation of Concerns
 
 **Config Layer** (`config/*`)
+
 - Static game data (weapon stats, monster stats, level definitions)
 - Tuning values (spawn rates, damage multipliers, heal rates)
 - Templates (building types, item types, etc.)
 - **NEVER** contains runtime state
 
 **Runtime Layer** (`modules/*`)
+
 - Game state initialization
 - State mutations via reducers
 - Game systems (combat, movement, turns, effects)
 - References config data but doesn't duplicate it
 
 **Constants Layer** (`constants/*`)
+
 - UI constants (HUD height, timing values)
 - Magic numbers extracted for clarity
 - Values that truly never change
@@ -33,23 +36,24 @@ Each piece of data should have **one authoritative source**:
 
 ```typescript
 // ✅ GOOD: Reference config
-import { gameConfig } from "../config/gameConfig";
+import { gameConfig } from '../config/gameConfig'
 
 const state = {
-  gridWidth: gameConfig.grid.width,  // References config
+  gridWidth: gameConfig.grid.width, // References config
   gridHeight: gameConfig.grid.height,
-};
+}
 
 // ❌ BAD: Duplicate data
 const state = {
-  gridWidth: 400,  // Hardcoded duplicate!
+  gridWidth: 400, // Hardcoded duplicate!
   gridHeight: 400,
-};
+}
 ```
 
 ### 3. No Circular Dependencies
 
 **Import Hierarchy:**
+
 ```
 modules/* → config/* → config/types.ts
     ↓           ↓
@@ -92,13 +96,13 @@ constants/*  (can't import modules)
 
 ### Adding New Config Data
 
-| Type of Data | Where It Goes | Example |
-|--------------|---------------|---------|
-| Weapon stats | `config/weapons.ts` | damage, hitBonus, projectileColor |
-| Monster stats | `config/monsters.ts` | hp, attack, ac, moveRate |
-| Level data | `config/levels.ts` | monsters, items, objects, spawn zones |
-| Game tuning | `config/gameConfig.ts` | maxAttackers, gridSize, healRate |
-| UI constants | `constants/Game.ts` | HUD_HEIGHT, MOVEMENT_INTERVAL |
+| Type of Data  | Where It Goes          | Example                                   |
+| ------------- | ---------------------- | ----------------------------------------- |
+| Weapon stats  | `config/weapons.ts`    | damage, hitBonus, projectileColor         |
+| Monster stats | `config/monsters.ts`   | hp, attack, ac, moveRate                  |
+| Level data    | `config/levels.ts`     | monsters, items, objects, spawn zones     |
+| Game tuning   | `config/gameConfig.ts` | maxAttackers, gridSize, healRate          |
+| UI constants  | `constants/Game.ts`    | HUD_HEIGHT, MOVEMENT_INTERVAL             |
 | Runtime state | `modules/gameState.ts` | player position, combat status, inventory |
 
 ### Decision Tree
@@ -123,21 +127,21 @@ Is this data that changes during gameplay?
 // config/monsters.ts - TEMPLATE
 export const monsters: Monster[] = [
   {
-    shortName: "abhuman",
+    shortName: 'abhuman',
     hp: 12,
     maxHP: 12,
     attack: 5,
     // ... static template data
   },
-];
+]
 
 // modules/gameState.ts - RUNTIME INSTANCE
-import { levels } from "../config/levels";
+import { levels } from '../config/levels'
 
 const state = {
-  monsters: levelConfig.monsters || [],  // Runtime instances
+  monsters: levelConfig.monsters || [], // Runtime instances
   // These will have positions, current HP, etc.
-};
+}
 ```
 
 ### Pattern 2: Centralized Tuning
@@ -152,15 +156,15 @@ export const gameConfig = {
     width: 400,
     height: 400,
   },
-};
+}
 
 // modules/gameState.ts - REFERENCE
-import { gameConfig } from "../config/gameConfig";
+import { gameConfig } from '../config/gameConfig'
 
 const state = {
-  maxAttackers: gameConfig.combat.maxAttackers,  // ✅
-  gridWidth: gameConfig.grid.width,              // ✅
-};
+  maxAttackers: gameConfig.combat.maxAttackers, // ✅
+  gridWidth: gameConfig.grid.width, // ✅
+}
 ```
 
 ### Pattern 3: Factory Functions
@@ -172,14 +176,14 @@ export const createItemInstance = (
   position: Position,
   overrides: Partial<Item> = {}
 ): Item => {
-  const template = getWeaponTemplate(templateShortName);
+  const template = getWeaponTemplate(templateShortName)
   return {
     ...template,
     position,
     id: `${template.shortName}_${position.row}_${position.col}`,
     ...overrides,
-  };
-};
+  }
+}
 ```
 
 ---
@@ -213,13 +217,13 @@ export const createItemInstance = (
 
 ```typescript
 // Import and reference config
-import { weaponsCatalog } from "../config/weapons";
-import { gameConfig } from "../config/gameConfig";
+import { weaponsCatalog } from '../config/weapons'
+import { gameConfig } from '../config/gameConfig'
 
 const state = {
   weapons: weaponsCatalog,
   maxAttackers: gameConfig.combat.maxAttackers,
-};
+}
 ```
 
 ### DON'T ❌
@@ -239,19 +243,19 @@ const state = {
 export const weaponsCatalog: Item[] = [
   // ... existing weapons
   {
-    id: "weapon-flamethrower-003",
-    category: "weapon",
-    shortName: "flamethrower",
-    name: "Flamethrower",
-    description: "A weapon that spews fire.",
+    id: 'weapon-flamethrower-003',
+    category: 'weapon',
+    shortName: 'flamethrower',
+    name: 'Flamethrower',
+    description: 'A weapon that spews fire.',
     damage: 15,
     hitBonus: 1,
-    type: "weapon",
-    weaponType: "ranged",
+    type: 'weapon',
+    weaponType: 'ranged',
     collectible: true,
-    projectileColor: "#FF4500",
+    projectileColor: '#FF4500',
   },
-];
+]
 
 // 2. That's it! The weapon is now available throughout the game
 ```
@@ -266,15 +270,16 @@ export const gameConfig = {
     baseXP: 100,
     multiplierPerLevel: 1.5,
   },
-};
+}
 
 // 2. Reference in gameState or systems
-import { gameConfig } from "../config/gameConfig";
+import { gameConfig } from '../config/gameConfig'
 
 const calculateXPNeeded = (level: number) => {
-  return gameConfig.experience.baseXP * 
-         Math.pow(gameConfig.experience.multiplierPerLevel, level - 1);
-};
+  return (
+    gameConfig.experience.baseXP * Math.pow(gameConfig.experience.multiplierPerLevel, level - 1)
+  )
+}
 ```
 
 ---
@@ -287,13 +292,10 @@ Test runtime logic separately from config:
 
 ```typescript
 // modules/__tests__/selfHealing.test.ts
-const createMockGameState = (
-  playerHP: number,
-  turnsPerHitPoint: number = 5
-): GameState => {
+const createMockGameState = (playerHP: number, turnsPerHitPoint: number = 5): GameState => {
   // Mock state with config values as parameters
   // This allows testing different config scenarios
-};
+}
 ```
 
 ### Integration Tests
@@ -302,10 +304,10 @@ Test that config values flow correctly:
 
 ```typescript
 test('should use weapons from weaponsCatalog', () => {
-  const state = createInitialGameState();
-  expect(state.weapons).toBe(weaponsCatalog);
-  expect(state.weapons.length).toBeGreaterThan(0);
-});
+  const state = createInitialGameState()
+  expect(state.weapons).toBe(weaponsCatalog)
+  expect(state.weapons.length).toBeGreaterThan(0)
+})
 ```
 
 ---
@@ -346,7 +348,7 @@ export const progressionConfig = {
     hpPerLevel: 10,
     attackPerLevel: 1,
   },
-};
+}
 ```
 
 ---
@@ -356,17 +358,19 @@ export const progressionConfig = {
 ### "Cannot find module" Errors
 
 Make sure imports use correct relative paths:
+
 ```typescript
 // From modules/* to config/*
-import { weaponsCatalog } from "../config/weapons";
+import { weaponsCatalog } from '../config/weapons'
 
 // From config/* to config/*
-import { Item } from "./types";
+import { Item } from './types'
 ```
 
 ### Circular Dependencies
 
 If you get circular import errors:
+
 1. Check the import hierarchy (modules → config → types)
 2. Extract shared types to `config/types.ts`
 3. Never import from `modules/*` in `config/*`
@@ -374,12 +378,13 @@ If you get circular import errors:
 ### State Not Updating
 
 Make sure you're mutating state via reducers:
+
 ```typescript
 // ✅ GOOD
-dispatch({ type: 'UPDATE_PLAYER', payload: { hp: newHP } });
+dispatch({ type: 'UPDATE_PLAYER', payload: { hp: newHP } })
 
 // ❌ BAD
-state.player.hp = newHP;  // Direct mutation!
+state.player.hp = newHP // Direct mutation!
 ```
 
 ---
@@ -388,14 +393,14 @@ state.player.hp = newHP;  // Direct mutation!
 
 ### Key Files
 
-| File | Purpose | What to Add |
-|------|---------|-------------|
-| `config/weapons.ts` | Weapon catalog | New weapons |
-| `config/monsters.ts` | Monster templates | New monsters |
-| `config/gameConfig.ts` | Tuning values | Balance changes |
-| `config/levels.ts` | Level definitions | New levels |
-| `modules/gameState.ts` | State init | Runtime state shape |
-| `modules/reducers.ts` | State mutations | New actions |
+| File                   | Purpose           | What to Add         |
+| ---------------------- | ----------------- | ------------------- |
+| `config/weapons.ts`    | Weapon catalog    | New weapons         |
+| `config/monsters.ts`   | Monster templates | New monsters        |
+| `config/gameConfig.ts` | Tuning values     | Balance changes     |
+| `config/levels.ts`     | Level definitions | New levels          |
+| `modules/gameState.ts` | State init        | Runtime state shape |
+| `modules/reducers.ts`  | State mutations   | New actions         |
 
 ### Helper Functions
 
@@ -421,6 +426,7 @@ getConsumableTemplate(shortName: string): GameObject | undefined
 ## Summary
 
 This architecture provides:
+
 - ✅ Clear separation between config and runtime state
 - ✅ Single source of truth for all data
 - ✅ Easy to modify game balance

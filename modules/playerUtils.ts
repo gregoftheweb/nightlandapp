@@ -1,5 +1,5 @@
 // modules/playerUtils.ts - Interaction utilities
-import { GameState, Position } from '../config/types';
+import { GameState, Position } from '../config/types'
 
 // ==================== ITEM INTERACTION ====================
 
@@ -9,17 +9,17 @@ export const checkItemInteractions = (
   showDialog: (message: string, duration?: number) => void,
   setOverlay: (overlay: any) => void
 ) => {
-  const playerPos = state.player.position;
+  const playerPos = state.player.position
 
   const collectibleAtPosition = state.items?.find((item: any) => {
-    if (!item || !item.active || !item.collectible || !item.position) return false;
+    if (!item || !item.active || !item.collectible || !item.position) return false
 
-    const itemRowStart = item.position.row;
-    const itemColStart = item.position.col;
-    const itemWidth = item.size?.width || 1;
-    const itemHeight = item.size?.height || 1;
-    const itemRowEnd = itemRowStart + itemHeight - 1;
-    const itemColEnd = itemColStart + itemWidth - 1;
+    const itemRowStart = item.position.row
+    const itemColStart = item.position.col
+    const itemWidth = item.size?.width || 1
+    const itemHeight = item.size?.height || 1
+    const itemRowEnd = itemRowStart + itemHeight - 1
+    const itemColEnd = itemColStart + itemWidth - 1
 
     return (
       item.active &&
@@ -28,41 +28,39 @@ export const checkItemInteractions = (
       playerPos.row <= itemRowEnd &&
       playerPos.col >= itemColStart &&
       playerPos.col <= itemColEnd
-    );
-  });
+    )
+  })
 
-  if (!collectibleAtPosition) return;
+  if (!collectibleAtPosition) return
 
   // Handle splash screen
   if (collectibleAtPosition.splash) {
     setOverlay({
       image: collectibleAtPosition.splash.image,
       text: collectibleAtPosition.splash.text,
-    });
+    })
   }
 
   // Handle item collection
   if (collectibleAtPosition.type === 'weapon') {
-    const weapon = state.weapons?.find(
-      (w: any) => w.id === collectibleAtPosition.weaponId
-    );
+    const weapon = state.weapons?.find((w: any) => w.id === collectibleAtPosition.weaponId)
     if (!weapon) {
-      console.warn('Weapon not found:', collectibleAtPosition.weaponId);
-      return;
+      console.warn('Weapon not found:', collectibleAtPosition.weaponId)
+      return
     }
     const weaponEntry = {
       id: weapon.id,
       equipped: false,
-    };
-    dispatch({ type: 'ADD_TO_WEAPONS', payload: { weapon: weaponEntry } });
-    showDialog(`Picked up ${weapon.name}!`, 3000);
+    }
+    dispatch({ type: 'ADD_TO_WEAPONS', payload: { weapon: weaponEntry } })
+    showDialog(`Picked up ${weapon.name}!`, 3000)
   } else {
     const item = {
       id: `${collectibleAtPosition.shortName}-${Date.now()}`,
       ...collectibleAtPosition,
-    };
-    dispatch({ type: 'ADD_TO_INVENTORY', payload: { item } });
-    showDialog(`Picked up ${item.name}!`, 3000);
+    }
+    dispatch({ type: 'ADD_TO_INVENTORY', payload: { item } })
+    showDialog(`Picked up ${item.name}!`, 3000)
   }
 
   // Deactivate the collected item
@@ -72,8 +70,8 @@ export const checkItemInteractions = (
       shortName: collectibleAtPosition.shortName,
       updates: { active: false },
     },
-  });
-};
+  })
+}
 
 // ==================== OBJECT INTERACTION ====================
 export const checkObjectInteractions = (
@@ -82,28 +80,27 @@ export const checkObjectInteractions = (
   showDialog: (message: string, duration?: number) => void,
   playerPos: Position
 ) => {
-  console.log('Checking object interactions at playerPos:', playerPos);
-  console.log('Available objects:', state.objects);
+  console.log('Checking object interactions at playerPos:', playerPos)
+  console.log('Available objects:', state.objects)
 
   const objectAtPosition = state.objects?.find((obj: any) => {
     if (!obj.active) {
-      console.log(`Object ${obj.name} is inactive, skipping`);
-      return false;
+      console.log(`Object ${obj.name} is inactive, skipping`)
+      return false
     }
 
     if (obj.collisionMask) {
       return obj.collisionMask.some((mask: any) => {
-        const objRowStart = obj.position.row + mask.row;
-        const objColStart = obj.position.col + mask.col;
-        const objRowEnd = objRowStart + (mask.height || 1) - 1;
-        const objColEnd = objColStart + (mask.width || 1) - 1;
+        const objRowStart = obj.position.row + mask.row
+        const objColStart = obj.position.col + mask.col
+        const objRowEnd = objRowStart + (mask.height || 1) - 1
+        const objColEnd = objColStart + (mask.width || 1) - 1
 
-        const isCollision = (
+        const isCollision =
           playerPos.row >= objRowStart &&
           playerPos.row <= objRowEnd &&
           playerPos.col >= objColStart &&
           playerPos.col <= objColEnd
-        );
         console.log(`Checking collision for ${obj.name}:`, {
           objRowStart,
           objRowEnd,
@@ -111,23 +108,22 @@ export const checkObjectInteractions = (
           objColEnd,
           playerPos,
           isCollision,
-        });
-        return isCollision;
-      });
+        })
+        return isCollision
+      })
     } else {
-      const objRowStart = obj.position.row;
-      const objColStart = obj.position.col;
-      const objWidth = obj.size?.width || 1;
-      const objHeight = obj.size?.height || 1;
-      const objRowEnd = objRowStart + objHeight - 1;
-      const objColEnd = objColStart + objWidth - 1;
+      const objRowStart = obj.position.row
+      const objColStart = obj.position.col
+      const objWidth = obj.size?.width || 1
+      const objHeight = obj.size?.height || 1
+      const objRowEnd = objRowStart + objHeight - 1
+      const objColEnd = objColStart + objWidth - 1
 
-      const isCollision = (
+      const isCollision =
         playerPos.row >= objRowStart &&
         playerPos.row <= objRowEnd &&
         playerPos.col >= objColStart &&
         playerPos.col <= objColEnd
-      );
       console.log(`Checking collision for ${obj.name} (no mask):`, {
         objRowStart,
         objRowEnd,
@@ -135,57 +131,57 @@ export const checkObjectInteractions = (
         objColEnd,
         playerPos,
         isCollision,
-      });
-      return isCollision;
+      })
+      return isCollision
     }
-  });
+  })
 
   if (!objectAtPosition) {
-    console.log('No object found at player position');
-    return;
+    console.log('No object found at player position')
+    return
   }
   if (!objectAtPosition.effects) {
-    console.log(`Object ${objectAtPosition.name} has no effects`);
-    return;
+    console.log(`Object ${objectAtPosition.name} has no effects`)
+    return
   }
 
-  const now = Date.now();
-  const lastTrigger = objectAtPosition.lastTrigger || 0;
+  const now = Date.now()
+  const lastTrigger = objectAtPosition.lastTrigger || 0
   console.log(`Cooldown check for ${objectAtPosition.name}:`, {
     now,
     lastTrigger,
     timeSinceLast: now - lastTrigger,
-  });
+  })
 
   // Cooldown check (50 seconds)
   if (now - lastTrigger <= 50000) {
-    console.log(`Cooldown active for ${objectAtPosition.name}, exiting`);
-    return;
+    console.log(`Cooldown active for ${objectAtPosition.name}, exiting`)
+    return
   }
 
   objectAtPosition.effects.forEach((effect: any) => {
-    console.log('Triggering effect:', effect);
+    console.log('Triggering effect:', effect)
 
     dispatch({
       type: 'TRIGGER_EFFECT',
       payload: { effect, position: playerPos },
-    });
+    })
 
     switch (effect.type) {
       case 'swarm':
-        console.log(`A swarm of ${effect.monsterType}s emerges from the ${objectAtPosition.name}!`);
-        break;
+        console.log(`A swarm of ${effect.monsterType}s emerges from the ${objectAtPosition.name}!`)
+        break
       case 'hide':
-        console.log(`The ${objectAtPosition.name} cloaks you in silence.`);
-        break;
+        console.log(`The ${objectAtPosition.name} cloaks you in silence.`)
+        break
       case 'heal':
-        console.log(`The ${objectAtPosition.name} restores your strength!`);
-        break;
+        console.log(`The ${objectAtPosition.name} restores your strength!`)
+        break
       default:
-        console.log(`Unhandled effect type: ${effect.type}`);
-        break;
+        console.log(`Unhandled effect type: ${effect.type}`)
+        break
     }
-  });
+  })
 
   dispatch({
     type: 'UPDATE_OBJECT',
@@ -193,5 +189,5 @@ export const checkObjectInteractions = (
       shortName: objectAtPosition.shortName,
       updates: { lastTrigger: now },
     },
-  });
-};
+  })
+}

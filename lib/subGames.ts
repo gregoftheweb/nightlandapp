@@ -1,8 +1,8 @@
 // lib/subGames.ts
 // Sub-game navigation and coordination helper
 
-import { router } from 'expo-router';
-import { SubGameResult } from '@/config/types';
+import { router } from 'expo-router'
+import { SubGameResult } from '@/config/types'
 
 /**
  * Enter a sub-game by navigating to its route
@@ -11,11 +11,11 @@ import { SubGameResult } from '@/config/types';
  */
 export function enterSubGame(subGameName: string, context?: { objectId?: string }) {
   if (__DEV__) {
-    console.log(`[SubGames] Entering sub-game: ${subGameName}`, context);
+    console.log(`[SubGames] Entering sub-game: ${subGameName}`, context)
   }
-  
+
   // Navigate to the sub-game route
-  router.push(`/sub-games/${subGameName}` as any);
+  router.push(`/sub-games/${subGameName}` as any)
 }
 
 /**
@@ -24,11 +24,11 @@ export function enterSubGame(subGameName: string, context?: { objectId?: string 
  */
 export function exitSubGame(result?: SubGameResult) {
   if (__DEV__) {
-    console.log('[SubGames] Exiting sub-game', result);
+    console.log('[SubGames] Exiting sub-game', result)
   }
-  
+
   // Navigate back to the game
-  router.back();
+  router.back()
 }
 
 /**
@@ -37,7 +37,7 @@ export function exitSubGame(result?: SubGameResult) {
  */
 export function signalRpgResume() {
   if (__DEV__) {
-    console.log('[SubGames] Signaling RPG resume');
+    console.log('[SubGames] Signaling RPG resume')
   }
   // The resume signal is managed by incrementing resumeNonce in GameContext
   // This will be triggered by the sub-game when it exits

@@ -1,24 +1,24 @@
 // components/Projectile.tsx
-import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Animated } from "react-native";
+import React, { useEffect, useRef } from 'react'
+import { View, StyleSheet, Animated } from 'react-native'
 
 interface ProjectileProps {
-  id: string;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  angleDeg: number;
-  color: string;
-  durationMs: number;
-  onComplete: (id: string) => void;
-  lengthPx?: number; // Optional length for laser bolts
-  thicknessPx?: number; // Optional thickness
-  glow?: boolean; // Optional glow effect
+  id: string
+  startX: number
+  startY: number
+  endX: number
+  endY: number
+  angleDeg: number
+  color: string
+  durationMs: number
+  onComplete: (id: string) => void
+  lengthPx?: number // Optional length for laser bolts
+  thicknessPx?: number // Optional thickness
+  glow?: boolean // Optional glow effect
 }
 
-const PROJECTILE_LENGTH = 12; // pixels
-const PROJECTILE_WIDTH = 3; // pixels
+const PROJECTILE_LENGTH = 12 // pixels
+const PROJECTILE_WIDTH = 3 // pixels
 
 export default function Projectile({
   id,
@@ -34,8 +34,8 @@ export default function Projectile({
   thicknessPx,
   glow,
 }: ProjectileProps) {
-  const translateX = useRef(new Animated.Value(startX)).current;
-  const translateY = useRef(new Animated.Value(startY)).current;
+  const translateX = useRef(new Animated.Value(startX)).current
+  const translateY = useRef(new Animated.Value(startY)).current
 
   useEffect(() => {
     // Animate the projectile from start to end
@@ -52,14 +52,14 @@ export default function Projectile({
       }),
     ]).start(() => {
       // Call onComplete when animation finishes
-      onComplete(id);
-    });
-  }, [id, startX, startY, endX, endY, durationMs, onComplete, translateX, translateY]);
+      onComplete(id)
+    })
+  }, [id, startX, startY, endX, endY, durationMs, onComplete, translateX, translateY])
 
   // Use provided dimensions or defaults
-  const projectileLength = lengthPx ?? PROJECTILE_LENGTH;
-  const projectileWidth = thicknessPx ?? PROJECTILE_WIDTH;
-  const borderRadius = projectileWidth / 2;
+  const projectileLength = lengthPx ?? PROJECTILE_LENGTH
+  const projectileWidth = thicknessPx ?? PROJECTILE_WIDTH
+  const borderRadius = projectileWidth / 2
 
   // Calculate glow effect styles
   const glowStyles = glow
@@ -70,7 +70,7 @@ export default function Projectile({
         shadowRadius: 4,
         elevation: 5, // For Android
       }
-    : {};
+    : {}
 
   return (
     <Animated.View
@@ -96,12 +96,12 @@ export default function Projectile({
         },
       ]}
     />
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   projectile: {
-    position: "absolute",
+    position: 'absolute',
     borderRadius: 1.5,
   },
-});
+})

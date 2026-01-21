@@ -1,42 +1,36 @@
 // app/sub-games/aerowreckage-puzzle/components/FeedbackModal.tsx
 // Modal dialog for showing attempt feedback
 
-import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
-import { THEME } from '../theme';
-import { subGameTheme } from '../../_shared/subGameTheme';
+import React from 'react'
+import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native'
+import { THEME } from '../theme'
+import { subGameTheme } from '../../_shared/subGameTheme'
 
 interface FeedbackModalProps {
-  visible: boolean;
-  type: 'step_locked' | 'safe_opened' | 'wrong_direction' | 'wrong_number' | 'insufficient_dwell' | 'already_opened' | 'error';
-  message: string;
-  hint?: string;
-  onDismiss: () => void;
+  visible: boolean
+  type:
+    | 'step_locked'
+    | 'safe_opened'
+    | 'wrong_direction'
+    | 'wrong_number'
+    | 'insufficient_dwell'
+    | 'already_opened'
+    | 'error'
+  message: string
+  hint?: string
+  onDismiss: () => void
 }
 
 export function FeedbackModal({ visible, type, message, hint, onDismiss }: FeedbackModalProps) {
-  const isSuccess = type === 'step_locked' || type === 'safe_opened';
-  
+  const isSuccess = type === 'step_locked' || type === 'safe_opened'
+
   return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="fade"
-      onRequestClose={onDismiss}
-    >
-      <TouchableOpacity 
-        style={styles.overlay} 
-        activeOpacity={1}
-        onPress={onDismiss}
-      >
+    <Modal transparent visible={visible} animationType="fade" onRequestClose={onDismiss}>
+      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onDismiss}>
         <View style={styles.modalContainer}>
           <View style={[styles.modal, isSuccess && styles.modalSuccess]}>
-            <Text style={[styles.message, isSuccess && styles.messageSuccess]}>
-              {message}
-            </Text>
-            {hint && (
-              <Text style={styles.hint}>{hint}</Text>
-            )}
+            <Text style={[styles.message, isSuccess && styles.messageSuccess]}>{message}</Text>
+            {hint && <Text style={styles.hint}>{hint}</Text>}
             <TouchableOpacity
               style={[styles.button, isSuccess && styles.buttonSuccess]}
               onPress={onDismiss}
@@ -48,7 +42,7 @@ export function FeedbackModal({ visible, type, message, hint, onDismiss }: Feedb
         </View>
       </TouchableOpacity>
     </Modal>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -117,4 +111,4 @@ const styles = StyleSheet.create({
     color: THEME.background,
     textAlign: 'center',
   },
-});
+})

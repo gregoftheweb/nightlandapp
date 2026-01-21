@@ -1,16 +1,16 @@
 // app/sub-games/aerowreckage-puzzle/components/StepIndicator.tsx
 // Progress indicator showing locked steps
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { PUZZLE_CONFIG } from '../config';
-import { THEME } from '../theme';
-import { subGameTheme } from '../../_shared/subGameTheme';
+import React from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import { PUZZLE_CONFIG } from '../config'
+import { THEME } from '../theme'
+import { subGameTheme } from '../../_shared/subGameTheme'
 
 interface StepIndicatorProps {
-  currentStepIndex: number;
-  stepHistory: number[];
-  isOpened: boolean;
+  currentStepIndex: number
+  stepHistory: number[]
+  isOpened: boolean
 }
 
 export function StepIndicator({ currentStepIndex, stepHistory, isOpened }: StepIndicatorProps) {
@@ -19,10 +19,10 @@ export function StepIndicator({ currentStepIndex, stepHistory, isOpened }: StepI
       <Text style={styles.title}>Code Sequence</Text>
       <View style={styles.stepsContainer}>
         {PUZZLE_CONFIG.codeSteps.map((step, index) => {
-          const isCompleted = index < currentStepIndex;
-          const isActive = index === currentStepIndex && !isOpened;
-          const lockedNumber = stepHistory[index];
-          
+          const isCompleted = index < currentStepIndex
+          const isActive = index === currentStepIndex && !isOpened
+          const lockedNumber = stepHistory[index]
+
           return (
             <View key={index} style={styles.stepWrapper}>
               <View
@@ -35,28 +35,19 @@ export function StepIndicator({ currentStepIndex, stepHistory, isOpened }: StepI
                 {isCompleted ? (
                   <Text style={styles.stepNumberCompleted}>{lockedNumber}</Text>
                 ) : (
-                  <Text
-                    style={[
-                      styles.stepNumber,
-                      isActive && styles.stepNumberActive,
-                    ]}
-                  >
-                    ?
-                  </Text>
+                  <Text style={[styles.stepNumber, isActive && styles.stepNumberActive]}>?</Text>
                 )}
               </View>
               <Text style={styles.stepDirection}>
                 {step.direction === 'CW' ? 'Clockwise' : 'Counter-Clockwise'}
               </Text>
             </View>
-          );
+          )
         })}
       </View>
-      {isOpened && (
-        <Text style={styles.openedText}>✓ SAFE OPENED</Text>
-      )}
+      {isOpened && <Text style={styles.openedText}>✓ SAFE OPENED</Text>}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -128,4 +119,4 @@ const styles = StyleSheet.create({
     color: subGameTheme.red,
     letterSpacing: 2,
   },
-});
+})

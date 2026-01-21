@@ -16,52 +16,59 @@
 // - If image is taller than screen: vertically centered, overflow parts are clipped
 //   (center portion visible)
 
-import React from 'react';
-import { View, Image, ImageBackground, StyleSheet, ImageSourcePropType, useWindowDimensions } from 'react-native';
+import React from 'react'
+import {
+  View,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  ImageSourcePropType,
+  useWindowDimensions,
+} from 'react-native'
 
-const puzzleBackground = require('@/assets/images/sub-game-background.png');
+const puzzleBackground = require('@/assets/images/sub-game-background.png')
 
 interface BackgroundImageProps {
-  source?: ImageSourcePropType;
-  children: React.ReactNode;
-  overlayOpacity?: number;
-  contentContainerStyle?: object;
-  foregroundFit?: 'screenWidthCenter' | 'cover' | 'contain';
+  source?: ImageSourcePropType
+  children: React.ReactNode
+  overlayOpacity?: number
+  contentContainerStyle?: object
+  foregroundFit?: 'screenWidthCenter' | 'cover' | 'contain'
 }
 
 /**
  * BackgroundImage component wraps content with dual-layer backgrounds:
  * 1. Base texture (puzzle-background.png) - always visible
  * 2. Optional foreground image - sized to screen width, preserving aspect ratio
- * 
+ *
  * @param source - Optional foreground image source (use require() for static assets)
  * @param children - Content to render above the backgrounds
  * @param overlayOpacity - Opacity of the dark overlay (default: 0.45)
  * @param contentContainerStyle - Optional additional styles for content container
  * @param foregroundFit - How to fit foreground image (default: 'screenWidthCenter')
  */
-export function BackgroundImage({ 
-  source, 
-  children, 
+export function BackgroundImage({
+  source,
+  children,
   overlayOpacity = 0.45,
   contentContainerStyle,
   foregroundFit = 'screenWidthCenter',
 }: BackgroundImageProps) {
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions()
 
   // Calculate foreground image dimensions
-  let foregroundStyle = {};
+  let foregroundStyle = {}
   if (source && foregroundFit === 'screenWidthCenter') {
     try {
       // Get intrinsic dimensions of the foreground image
-      const resolved = Image.resolveAssetSource(source);
+      const resolved = Image.resolveAssetSource(source)
       if (resolved && resolved.width && resolved.height) {
-        const aspectRatio = resolved.width / resolved.height;
-        
+        const aspectRatio = resolved.width / resolved.height
+
         // Always size to screen width, compute height from aspect ratio
-        const displayedWidth = screenWidth;
-        const displayedHeight = displayedWidth / aspectRatio;
-        
+        const displayedWidth = screenWidth
+        const displayedHeight = displayedWidth / aspectRatio
+
         // Always center vertically
         // If taller than screen, parts will be cut off (overflow hidden by container)
         // If shorter than screen, letterbox areas show puzzle background
@@ -71,26 +78,22 @@ export function BackgroundImage({
           position: 'absolute' as const,
           left: 0,
           top: (screenHeight - displayedHeight) / 2,
-        };
+        }
       }
     } catch (error) {
       // If we can't resolve dimensions, fall back to cover mode
-      console.warn('[BackgroundImage] Could not resolve image dimensions, using cover mode', error);
+      console.warn('[BackgroundImage] Could not resolve image dimensions, using cover mode', error)
     }
   }
 
   return (
     <View style={styles.container}>
       {/* Base layer: puzzle background texture - always visible, covers full screen */}
-      <ImageBackground
-        source={puzzleBackground}
-        style={styles.baseBackground}
-        resizeMode="cover"
-      />
+      <ImageBackground source={puzzleBackground} style={styles.baseBackground} resizeMode="cover" />
 
       {/* Foreground layer: screen-specific image (optional) */}
-      {source && (
-        foregroundFit === 'screenWidthCenter' && Object.keys(foregroundStyle).length > 0 ? (
+      {source &&
+        (foregroundFit === 'screenWidthCenter' && Object.keys(foregroundStyle).length > 0 ? (
           <Image
             source={source}
             style={[styles.foregroundImage, foregroundStyle]}
@@ -102,18 +105,15 @@ export function BackgroundImage({
             style={styles.baseBackground}
             resizeMode={foregroundFit === 'cover' ? 'cover' : 'contain'}
           />
-        )
-      )}
+        ))}
 
       {/* Dark overlay for better text contrast - above both backgrounds */}
       <View style={[styles.overlay, { backgroundColor: `rgba(0,0,0,${overlayOpacity})` }]} />
-      
+
       {/* Content container - above everything */}
-      <View style={[styles.contentContainer, contentContainerStyle]}>
-        {children}
-      </View>
+      <View style={[styles.contentContainer, contentContainerStyle]}>{children}</View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -140,4 +140,4 @@ const styles = StyleSheet.create({
     flex: 1,
     zIndex: 20,
   },
-});
+})

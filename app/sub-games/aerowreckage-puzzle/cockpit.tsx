@@ -1,31 +1,31 @@
 // app/sub-games/aerowreckage-puzzle/cockpit.tsx
 // Screen [2]: Cockpit overview screen
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
-import { BackgroundImage } from "../_shared/BackgroundImage";
-import { BottomActionBar } from "../_shared/BottomActionBar";
-import { subGameTheme } from "../_shared/subGameTheme";
-import { THEME } from "./theme";
+import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { useRouter } from 'expo-router'
+import { BackgroundImage } from '../_shared/BackgroundImage'
+import { BottomActionBar } from '../_shared/BottomActionBar'
+import { subGameTheme } from '../_shared/subGameTheme'
+import { THEME } from './theme'
 
-const bgCockpit = require("@/assets/images/aerowreck-safe5.png");
+const bgCockpit = require('@/assets/images/aerowreck-safe5.png')
 
 export default function AeroWreckageCockpit() {
-  const router = useRouter();
+  const router = useRouter()
 
   const handleLookCloser = () => {
     if (__DEV__) {
-      console.log("[AeroWreckageCockpit] Looking more closely");
+      console.log('[AeroWreckageCockpit] Looking more closely')
     }
-    router.push("/sub-games/aerowreckage-puzzle/cockpit-closeup" as any);
-  };
+    router.push('/sub-games/aerowreckage-puzzle/cockpit-closeup' as any)
+  }
 
   const handleReturnToEntrance = () => {
     if (__DEV__) {
-      console.log("[AeroWreckageCockpit] Returning to entrance");
+      console.log('[AeroWreckageCockpit] Returning to entrance')
     }
-    router.back();
-  };
+    router.back()
+  }
 
   return (
     <BackgroundImage source={bgCockpit}>
@@ -34,16 +34,15 @@ export default function AeroWreckageCockpit() {
           <View
             style={{
               flex: 1,
-              alignSelf: "stretch",
-              justifyContent: "flex-start",
-              alignItems: "flex-start",
-              paddingTop: "10%",
+              alignSelf: 'stretch',
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start',
+              paddingTop: '10%',
             }}
           >
             <Text style={styles.flavorText}>
-              The ruined cockpit stretches before Christos. Shattered glass
-              crunches under his feet, but the workmanship speaks of a lost age
-              of wonders.
+              The ruined cockpit stretches before Christos. Shattered glass crunches under his feet,
+              but the workmanship speaks of a lost age of wonders.
             </Text>
           </View>
         </View>
@@ -63,45 +62,43 @@ export default function AeroWreckageCockpit() {
               onPress={handleReturnToEntrance}
               activeOpacity={0.7}
             >
-              <Text style={styles.primaryButtonText}>
-                Return back to entrance
-              </Text>
+              <Text style={styles.primaryButtonText}>Return back to entrance</Text>
             </TouchableOpacity>
           </View>
         </BottomActionBar>
       </View>
     </BackgroundImage>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
   contentArea: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 30,
     gap: 20,
   },
   flavorText: {
     fontSize: 18,
     color: THEME.textPrimary,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 28,
     marginBottom: 10,
   },
   flavorTextSecondary: {
     fontSize: 16,
     color: THEME.textSecondary,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 24,
-    fontStyle: "italic",
+    fontStyle: 'italic',
   },
   buttonRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 14,
   },
   primaryButton: {
@@ -120,8 +117,8 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     color: subGameTheme.black,
-    textAlign: "center",
+    textAlign: 'center',
   },
-});
+})

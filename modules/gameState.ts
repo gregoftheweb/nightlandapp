@@ -1,14 +1,14 @@
 // modules/gameState.ts
-import { levels } from "../config/levels";
-import { GameState, Level } from "../config/types";
-import { playerConfig } from "../config/player";
-import { weaponsCatalog } from "../config/weapons";
-import { gameConfig } from "../config/gameConfig";
-import { reducer } from "./reducers";
-import { initializeStartingMonsters } from "./turnManager";
+import { levels } from '../config/levels'
+import { GameState, Level } from '../config/types'
+import { playerConfig } from '../config/player'
+import { weaponsCatalog } from '../config/weapons'
+import { gameConfig } from '../config/gameConfig'
+import { reducer } from './reducers'
+import { initializeStartingMonsters } from './turnManager'
 
-export const getInitialState = (levelId: string = "1"): GameState => {
-  const levelConfig = levels[levelId] as Level;
+export const getInitialState = (levelId: string = '1'): GameState => {
+  const levelConfig = levels[levelId] as Level
   return {
     level: levelConfig,
     currentLevelId: levelId,
@@ -27,7 +27,7 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     items: levelConfig.items || [],
     objects: levelConfig.objects || [],
     greatPowers: levelConfig.greatPowers || [],
-    nonCollisionObjects: levelConfig.nonCollisionObjects || [], 
+    nonCollisionObjects: levelConfig.nonCollisionObjects || [],
     levels: { [levelId]: levelConfig },
     weapons: weaponsCatalog, // Import from centralized config
     monsters: levelConfig.monsters || [],
@@ -37,29 +37,29 @@ export const getInitialState = (levelId: string = "1"): GameState => {
     saveVersion: gameConfig.save.version,
     lastSaved: new Date(),
     playTime: 0,
-    lastAction: "",
+    lastAction: '',
     monstersKilled: 0,
     distanceTraveled: 0,
     rangedAttackMode: false,
     targetedMonsterId: null,
     activeProjectiles: [],
     subGamesCompleted: {},
-  };
-};
+  }
+}
 
-export const initialState = getInitialState("1");
+export const initialState = getInitialState('1')
 
-export const createInitialGameState = (levelId: string = "1"): GameState => {
-  return getInitialState(levelId);
-};
+export const createInitialGameState = (levelId: string = '1'): GameState => {
+  return getInitialState(levelId)
+}
 
 export const serializeGameState = (state: GameState): string => {
-  return JSON.stringify(state);
-};
+  return JSON.stringify(state)
+}
 
 export const deserializeGameState = (serializedState: string): GameState => {
   try {
-    const parsedState = JSON.parse(serializedState);
+    const parsedState = JSON.parse(serializedState)
     return {
       ...initialState,
       ...parsedState,
@@ -73,13 +73,13 @@ export const deserializeGameState = (serializedState: string): GameState => {
         ...parsedState.levels,
       },
       combatLog: parsedState.combatLog || [],
-      nonCollisionObjects: parsedState.nonCollisionObjects || [], 
+      nonCollisionObjects: parsedState.nonCollisionObjects || [],
       activeProjectiles: parsedState.activeProjectiles || [],
-    };
+    }
   } catch (e) {
-    console.error("Failed to deserialize game state:", e);
-    return initialState;
+    console.error('Failed to deserialize game state:', e)
+    return initialState
   }
-};
+}
 
-export { reducer };
+export { reducer }

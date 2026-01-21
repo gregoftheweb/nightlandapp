@@ -1,13 +1,13 @@
 // modules/audioManager.ts
-import { Audio } from 'expo-av';
-import { gameConfig } from '../config/gameConfig';
+import { Audio } from 'expo-av'
+import { gameConfig } from '../config/gameConfig'
 
 class AudioManager {
-  private backgroundSound: Audio.Sound | null = null;
-  private isBackgroundPlaying = false;
-  private isEnabled = gameConfig.audio.backgroundMusicEnabled;
-  private isLoading = false;
-  private shouldAutoPlay = false; // Flag to auto-play when loading completes
+  private backgroundSound: Audio.Sound | null = null
+  private isBackgroundPlaying = false
+  private isEnabled = gameConfig.audio.backgroundMusicEnabled
+  private isLoading = false
+  private shouldAutoPlay = false // Flag to auto-play when loading completes
 
   async initializeAudio() {
     try {
@@ -18,28 +18,28 @@ class AudioManager {
         playsInSilentModeIOS: true,
         shouldDuckAndroid: false,
         playThroughEarpieceAndroid: false,
-      });
-      
+      })
+
       if (__DEV__) {
-        console.log('Audio mode set successfully');
+        console.log('Audio mode set successfully')
       }
     } catch (error) {
-      console.error('Failed to initialize audio:', error);
+      console.error('Failed to initialize audio:', error)
     }
   }
 
   async loadBackgroundMusic() {
-    if (this.isLoading) return; // Prevent multiple loading attempts
-    
+    if (this.isLoading) return // Prevent multiple loading attempts
+
     try {
-      this.isLoading = true;
-      
+      this.isLoading = true
+
       if (this.backgroundSound) {
-        await this.backgroundSound.unloadAsync();
+        await this.backgroundSound.unloadAsync()
       }
 
       if (__DEV__) {
-        console.log('Loading background music...');
+        console.log('Loading background music...')
       }
       const { sound } = await Audio.Sound.createAsync(
         require('../assets/sounds/ambient-background.wav'),
@@ -48,147 +48,157 @@ class AudioManager {
           volume: gameConfig.audio.backgroundVolume * gameConfig.audio.masterVolume,
           shouldPlay: false,
         }
-      );
+      )
 
-      this.backgroundSound = sound;
-      this.isLoading = false;
+      this.backgroundSound = sound
+      this.isLoading = false
       if (__DEV__) {
-        console.log('Background music loaded successfully');
+        console.log('Background music loaded successfully')
       }
-      
+
       // If we were requested to play before loading completed, play now
       if (this.shouldAutoPlay && this.isEnabled) {
-        this.shouldAutoPlay = false;
-        await this.playBackgroundMusic();
+        this.shouldAutoPlay = false
+        await this.playBackgroundMusic()
       }
-      
     } catch (error) {
-      console.error('Failed to load background music:', error);
-      this.isLoading = false;
+      console.error('Failed to load background music:', error)
+      this.isLoading = false
     }
   }
 
   async playBackgroundMusic() {
     if (__DEV__) {
-      console.log('playBackgroundMusic called, enabled:', this.isEnabled, 'hasSound:', !!this.backgroundSound, 'isPlaying:', this.isBackgroundPlaying, 'isLoading:', this.isLoading);
+      console.log(
+        'playBackgroundMusic called, enabled:',
+        this.isEnabled,
+        'hasSound:',
+        !!this.backgroundSound,
+        'isPlaying:',
+        this.isBackgroundPlaying,
+        'isLoading:',
+        this.isLoading
+      )
     }
-    
+
     if (!this.isEnabled) {
       if (__DEV__) {
-        console.log('Skipping playback - audio disabled');
+        console.log('Skipping playback - audio disabled')
       }
-      return;
+      return
     }
 
     // If still loading, set flag to auto-play when ready
     if (this.isLoading || !this.backgroundSound) {
       if (__DEV__) {
-        console.log('Audio still loading, will auto-play when ready');
+        console.log('Audio still loading, will auto-play when ready')
       }
-      this.shouldAutoPlay = true;
-      return;
+      this.shouldAutoPlay = true
+      return
     }
 
     if (this.isBackgroundPlaying) {
       if (__DEV__) {
-        console.log('Already playing');
+        console.log('Already playing')
       }
-      return;
+      return
     }
 
     try {
       if (__DEV__) {
-        console.log('Attempting to play background music...');
+        console.log('Attempting to play background music...')
       }
       // Double-check sound object still exists after async operations
       // (prevents race condition if unloadAsync was called during the checks above)
       if (!this.backgroundSound) {
         if (__DEV__) {
-          console.warn('Background sound became null before playback - possible race condition with cleanup/unload. Skipping playback.');
+          console.warn(
+            'Background sound became null before playback - possible race condition with cleanup/unload. Skipping playback.'
+          )
         }
-        return;
+        return
       }
-      await this.backgroundSound.playAsync();
-      this.isBackgroundPlaying = true;
+      await this.backgroundSound.playAsync()
+      this.isBackgroundPlaying = true
       if (__DEV__) {
-        console.log('Background music started successfully');
+        console.log('Background music started successfully')
       }
     } catch (error) {
-      console.error('Failed to play background music:', error);
+      console.error('Failed to play background music:', error)
     }
   }
 
   async pauseBackgroundMusic() {
     if (!this.backgroundSound || !this.isBackgroundPlaying) {
-      return;
+      return
     }
 
     try {
-      await this.backgroundSound.pauseAsync();
-      this.isBackgroundPlaying = false;
+      await this.backgroundSound.pauseAsync()
+      this.isBackgroundPlaying = false
       if (__DEV__) {
-        console.log('Background music paused');
+        console.log('Background music paused')
       }
     } catch (error) {
-      console.error('Failed to pause background music:', error);
+      console.error('Failed to pause background music:', error)
     }
   }
 
   async stopBackgroundMusic() {
     if (!this.backgroundSound) {
-      return;
+      return
     }
 
     try {
-      await this.backgroundSound.stopAsync();
-      this.isBackgroundPlaying = false;
+      await this.backgroundSound.stopAsync()
+      this.isBackgroundPlaying = false
       if (__DEV__) {
-        console.log('Background music stopped');
+        console.log('Background music stopped')
       }
     } catch (error) {
-      console.error('Failed to stop background music:', error);
+      console.error('Failed to stop background music:', error)
     }
   }
 
   async setBackgroundMusicVolume(volume: number) {
     if (!this.backgroundSound) {
-      return;
+      return
     }
 
     try {
-      const adjustedVolume = volume * gameConfig.audio.masterVolume;
-      await this.backgroundSound.setVolumeAsync(adjustedVolume);
+      const adjustedVolume = volume * gameConfig.audio.masterVolume
+      await this.backgroundSound.setVolumeAsync(adjustedVolume)
     } catch (error) {
-      console.error('Failed to set background music volume:', error);
+      console.error('Failed to set background music volume:', error)
     }
   }
 
   setEnabled(enabled: boolean) {
-    this.isEnabled = enabled;
-    
+    this.isEnabled = enabled
+
     if (!enabled && this.isBackgroundPlaying) {
-      this.pauseBackgroundMusic();
+      this.pauseBackgroundMusic()
     } else if (enabled && !this.isBackgroundPlaying) {
-      this.playBackgroundMusic();
+      this.playBackgroundMusic()
     }
   }
 
   getIsEnabled(): boolean {
-    return this.isEnabled;
+    return this.isEnabled
   }
 
   getIsPlaying(): boolean {
-    return this.isBackgroundPlaying;
+    return this.isBackgroundPlaying
   }
 
   async cleanup() {
     if (this.backgroundSound) {
-      await this.backgroundSound.unloadAsync();
-      this.backgroundSound = null;
-      this.isBackgroundPlaying = false;
+      await this.backgroundSound.unloadAsync()
+      this.backgroundSound = null
+      this.isBackgroundPlaying = false
     }
   }
 }
 
 // Export a singleton instance
-export const audioManager = new AudioManager();
+export const audioManager = new AudioManager()

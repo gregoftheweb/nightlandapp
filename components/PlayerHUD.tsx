@@ -1,5 +1,5 @@
 // components/playerHUD.tsx
-import React from "react";
+import React from 'react'
 import {
   View,
   Text,
@@ -9,24 +9,24 @@ import {
   Image,
   NativeSyntheticEvent,
   NativeTouchEvent,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import turnButtonIMG from "@assets/images/buttonTurn.png";
-import attackButtonIMG from "@assets/images/buttonAttack.png";
-import inventoryButtonIMG from "@assets/images/buttonInventory.png";
-import zapButtonIMG from "@assets/images/buttonZap.png";
+} from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import turnButtonIMG from '@assets/images/buttonTurn.png'
+import attackButtonIMG from '@assets/images/buttonAttack.png'
+import inventoryButtonIMG from '@assets/images/buttonInventory.png'
+import zapButtonIMG from '@assets/images/buttonZap.png'
 
-const { width } = Dimensions.get("window");
+const { width } = Dimensions.get('window')
 
 interface PlayerHUDProps {
-  hp: number;
-  maxHP: number;
-  inCombat: boolean;
-  onGearPress?: () => void;
-  onTurnPress?: () => void;
-  onAttackPress?: () => void;
-  onInventoryPress?: () => void; // New prop for inventory
-  onZapPress?: () => void; // New prop for zap button
+  hp: number
+  maxHP: number
+  inCombat: boolean
+  onGearPress?: () => void
+  onTurnPress?: () => void
+  onAttackPress?: () => void
+  onInventoryPress?: () => void // New prop for inventory
+  onZapPress?: () => void // New prop for zap button
 }
 
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
@@ -39,34 +39,32 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onInventoryPress, // New prop
   onZapPress, // New prop
 }) => {
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets()
 
   const handleGearPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
-    event.stopPropagation();
-    onGearPress?.();
-  };
+    event.stopPropagation()
+    onGearPress?.()
+  }
 
   const handleActionPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
-    event.stopPropagation();
+    event.stopPropagation()
     if (inCombat) {
-      onAttackPress?.();
+      onAttackPress?.()
     } else {
-      onTurnPress?.();
+      onTurnPress?.()
     }
-  };
+  }
 
-  const handleInventoryPress = (
-    event: NativeSyntheticEvent<NativeTouchEvent>
-  ) => {
-    event.stopPropagation();
-    onInventoryPress?.();
-  };
+  const handleInventoryPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    event.stopPropagation()
+    onInventoryPress?.()
+  }
 
   const handleZapPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
-    event.stopPropagation();
+    event.stopPropagation()
     // TODO: Implement special ability/power attack functionality
-    onZapPress?.();
-  };
+    onZapPress?.()
+  }
 
   return (
     <View
@@ -75,40 +73,19 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
     >
       <View style={styles.statusBar} pointerEvents="box-none">
         <Text style={styles.hpText}>HP: {hp}</Text>
-        <TouchableOpacity
-          style={styles.gearButton}
-          onPress={handleGearPress}
-          activeOpacity={0.7}
-        >
-          <Image
-            source={require("@assets/images/gear.png")}
-            style={styles.gearIcon}
-          />
+        <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
+          <Image source={require('@assets/images/gear.png')} style={styles.gearIcon} />
         </TouchableOpacity>
       </View>
 
       {/* Zap Button - Left of center */}
-      <TouchableOpacity
-        style={styles.zapButton}
-        onPress={handleZapPress}
-        activeOpacity={0.7}
-      >
-        <Image
-          source={zapButtonIMG}
-          style={styles.zapButtonImage}
-        />
+      <TouchableOpacity style={styles.zapButton} onPress={handleZapPress} activeOpacity={0.7}>
+        <Image source={zapButtonIMG} style={styles.zapButtonImage} />
       </TouchableOpacity>
 
       {/* Dynamic Turn/Attack Button - Always centered */}
-      <TouchableOpacity
-        style={styles.turnButton}
-        onPress={handleActionPress}
-        activeOpacity={0.7}
-      >
-        <Image
-          source={inCombat ? attackButtonIMG : turnButtonIMG}
-          style={styles.turnButtonImage}
-        />
+      <TouchableOpacity style={styles.turnButton} onPress={handleActionPress} activeOpacity={0.7}>
+        <Image source={inCombat ? attackButtonIMG : turnButtonIMG} style={styles.turnButtonImage} />
       </TouchableOpacity>
 
       {/* Inventory Button - Right side */}
@@ -117,43 +94,40 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         onPress={handleInventoryPress}
         activeOpacity={0.7}
       >
-        <Image
-          source={inventoryButtonIMG}
-          style={styles.inventoryButtonImage}
-        />
+        <Image source={inventoryButtonIMG} style={styles.inventoryButtonImage} />
       </TouchableOpacity>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    alignItems: "center",
+    alignItems: 'center',
     zIndex: 1000,
-    pointerEvents: "box-none",
+    pointerEvents: 'box-none',
   },
   statusBar: {
     width: width * 0.7, // Widened from 0.55 to 0.75
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: "#990000",
+    borderColor: '#990000',
     marginBottom: 10,
   },
   hpText: {
-    color: "#990000",
+    color: '#990000',
     fontSize: 14,
-    fontWeight: "bold",
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
@@ -164,39 +138,39 @@ const styles = StyleSheet.create({
   gearIcon: {
     width: 20,
     height: 20,
-    tintColor: "#990000",
+    tintColor: '#990000',
   },
   turnButton: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 14,
-    left: "50%",
-    marginLeft: -30, 
+    left: '50%',
+    marginLeft: -30,
   },
   turnButtonImage: {
     width: 65,
     height: 65,
-    resizeMode: "contain",
+    resizeMode: 'contain',
   },
   zapButton: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 24,
     left: width * 0.28,
   },
   zapButtonImage: {
     width: 40,
     height: 40,
-    resizeMode: "contain",
+    resizeMode: 'contain',
   },
   inventoryButton: {
-    position: "absolute",
-    bottom: 24, 
-    right: width * 0.28, 
+    position: 'absolute',
+    bottom: 24,
+    right: width * 0.28,
   },
   inventoryButtonImage: {
-    width: 40, 
+    width: 40,
     height: 40,
-    resizeMode: "contain",
+    resizeMode: 'contain',
   },
-});
+})
 
-export default PlayerHUD;
+export default PlayerHUD

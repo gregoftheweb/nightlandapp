@@ -11,6 +11,7 @@
 ### 1.1 Shape & Readability Issues
 
 #### ✅ Strengths
+
 - Clear helper functions (`createObjectInstance`, `createItemInstance`, `createMonsterInstance`, etc.)
 - Template-based approach separates concerns between templates (in `objects.ts`, `monsters.ts`) and instances
 - Position-based unique IDs prevent collisions
@@ -19,33 +20,38 @@
 #### ❌ Issues Found
 
 **Issue 1: Magic String IDs**
+
 - **Location:** Line 184: `export const levels: Record<string, Level>`
 - **Problem:** Level IDs are plain strings (`"1"`, `"2"`), not typed/validated
 - **Impact:** Typos like `levels["3"]` won't be caught at compile time
 - **Example:**
   ```typescript
   // Current - no type safety
-  const level = levels["typo"];  // undefined at runtime
+  const level = levels['typo'] // undefined at runtime
   ```
 
 **Issue 2: Duplicated Configuration Patterns**
+
 - **Location:** Lines 196, 351 - `turnsPerHitPoint: 5` repeated in both levels
 - **Location:** Lines 206-208, 357-359 - Monster spawn patterns are inline and duplicated
 - **Problem:** Common values (ambient light defaults, healing rates, spawn rate patterns) are not extracted
 - **Impact:** Changing global defaults requires editing multiple levels
 
 **Issue 3: Inline Complex Objects**
+
 - **Location:** Lines 278-307 - Large river collision mask defined inline
 - **Problem:** Complex collision masks and effect arrays buried in level config
 - **Impact:** Hard to reuse, test, or validate collision patterns
 
 **Issue 4: Inconsistent Field Presence**
+
 - **Location:** Level "1" has `requiredLevel`, `recommendedLevel`, `experienceReward` missing
 - **Location:** Level "2" has these fields present
 - **Problem:** Optional fields not clearly documented as optional vs required
 - **Impact:** Unclear which fields are needed for level progression
 
 **Issue 5: Non-Collision Objects Array Size**
+
 - **Location:** Lines 218-274 - 57 footstep objects with repetitive patterns
 - **Problem:** Large array of similar objects creates noise
 - **Impact:** Hard to visualize the path, difficult to edit
@@ -78,10 +84,11 @@
 **Missing Type Safety:**
 
 1. **No LevelId Type**
+
    ```typescript
    // Current
    export const levels: Record<string, Level> = { "1": {...} };
-   
+
    // Should be
    export type LevelId = "1" | "2" | "3";
    export const levels: Record<LevelId, LevelConfig> = { "1": {...} };
@@ -99,11 +106,13 @@
 **Safety Concerns:**
 
 1. **Template Lookup Failures**
+
    ```typescript
    // Line 26-29: throws at runtime
-   const template = getBuildingTemplate(templateShortName);
-   if (!template) throw new Error(`Building template ${templateShortName} not found`);
+   const template = getBuildingTemplate(templateShortName)
+   if (!template) throw new Error(`Building template ${templateShortName} not found`)
    ```
+
    - Good: Fails fast
    - Bad: Happens at initialization, could fail on production load
 
@@ -114,44 +123,51 @@
 ### 1.4 Determinism & Progression Issues
 
 **RNG & Spawning:**
+
 - **Good:** Spawn rates are explicit decimals (`0.04`, `0.02`)
 - **Missing:** No seed configuration for deterministic runs
 - **Missing:** No difficulty curve documentation
 
 **Progression:**
+
 - Level "2" has `requiredLevel: 2`, `recommendedLevel: 3`
 - Level "1" doesn't have these - unclear if intentional
 - No documentation of intended progression path
 
 **Tuning:**
+
 - Spawn rates are scattered - hard to balance
 - No central tuning file for encounter difficulty
 
 ### 1.5 Performance & Load Strategy
 
 **Current State:**
+
 - All levels loaded at module import time
 - Both levels are small (~380 LOC total)
 - All templates fetched eagerly
 
 **Performance Analysis:**
+
 - ✅ **OK for now:** 2 levels is trivial
 - ⚠️ **Future concern:** If expanding to 50+ levels, need lazy loading
 - ✅ **Good:** Template separation already enables code splitting
 
 **Recommendations:**
+
 1. Keep current approach until 10+ levels
 2. When scaling, use dynamic imports:
    ```typescript
    const loadLevel = async (id: LevelId) => {
-     const module = await import(`./levels/${id}.ts`);
-     return module.level;
-   };
+     const module = await import(`./levels/${id}.ts`)
+     return module.level
+   }
    ```
 
 ### 1.6 Import Analysis
 
 **Dependencies:**
+
 ```typescript
 import { ... } from "./types";      // ✅ Config types - good
 import { ... } from "./objects";    // ✅ Templates - good
@@ -159,6 +175,7 @@ import { ... } from "./monsters";   // ✅ Templates - good
 ```
 
 **No runtime imports - EXCELLENT ✅**
+
 - No circular dependencies detected
 - Config depends on types, not runtime state
 - Clean separation maintained
@@ -193,56 +210,45 @@ config/
 ### 2.2 Key Type Definitions
 
 **levelTypes.ts:**
+
 ```typescript
 // Strict level identifiers
-export type LevelId = "1" | "2";
+export type LevelId = '1' | '2'
 
 // Biome/theme presets
-export type BiomeId = 
-  | "dark_wastes"
-  | "watching_grounds" 
-  | "cursed_forest"
-  | "ancient_ruins";
+export type BiomeId = 'dark_wastes' | 'watching_grounds' | 'cursed_forest' | 'ancient_ruins'
 
 // Weather effects enum
-export type WeatherEffect = 
-  | "clear"
-  | "mist" 
-  | "ash_fall"
-  | "blood_rain"
-  | null;
+export type WeatherEffect = 'clear' | 'mist' | 'ash_fall' | 'blood_rain' | null
 
 // Lighting presets
-export type LightingPreset = "pitch_black" | "very_dim" | "dim" | "moderate" | "bright";
+export type LightingPreset = 'pitch_black' | 'very_dim' | 'dim' | 'moderate' | 'bright'
 
 // Music track IDs
-export type MusicTrackId =
-  | "nightland_ambient"
-  | "watching_grounds"
-  | "combat_theme"
-  | "boss_theme";
+export type MusicTrackId = 'nightland_ambient' | 'watching_grounds' | 'combat_theme' | 'boss_theme'
 
 // Spawn table IDs for reusable encounter groups
 export type SpawnTableId =
-  | "wasteland_common"
-  | "wasteland_rare"
-  | "wasteland_boss"
-  | "grounds_common"
-  | "grounds_rare";
+  | 'wasteland_common'
+  | 'wasteland_rare'
+  | 'wasteland_boss'
+  | 'grounds_common'
+  | 'grounds_rare'
 
 // Level configuration with stronger types
 export interface LevelConfig extends Omit<Level, 'id'> {
-  id: LevelId;
-  biome?: BiomeId;
-  weatherEffect: WeatherEffect;
-  backgroundMusic: MusicTrackId;
-  lighting?: LightingPreset;
+  id: LevelId
+  biome?: BiomeId
+  weatherEffect: WeatherEffect
+  backgroundMusic: MusicTrackId
+  lighting?: LightingPreset
 }
 ```
 
 **levelPresets.ts:**
+
 ```typescript
-import { LightingPreset, BiomeId, SpawnTableId, LevelMonsterInstance } from "./levelTypes";
+import { LightingPreset, BiomeId, SpawnTableId, LevelMonsterInstance } from './levelTypes'
 
 // Lighting value mappings
 export const LIGHTING_VALUES: Record<LightingPreset, number> = {
@@ -251,65 +257,65 @@ export const LIGHTING_VALUES: Record<LightingPreset, number> = {
   dim: 0.15,
   moderate: 0.2,
   bright: 0.3,
-};
+}
 
 // Biome presets bundle common settings
 export interface BiomePreset {
-  ambientLight: number;
-  weatherEffect: WeatherEffect;
-  defaultMusic: MusicTrackId;
+  ambientLight: number
+  weatherEffect: WeatherEffect
+  defaultMusic: MusicTrackId
   palette?: {
-    fog?: string;
-    tint?: string;
-  };
+    fog?: string
+    tint?: string
+  }
 }
 
 export const BIOME_PRESETS: Record<BiomeId, BiomePreset> = {
   dark_wastes: {
     ambientLight: 0.2,
     weatherEffect: null,
-    defaultMusic: "nightland_ambient",
+    defaultMusic: 'nightland_ambient',
   },
   watching_grounds: {
     ambientLight: 0.15,
-    weatherEffect: "mist",
-    defaultMusic: "watching_grounds",
+    weatherEffect: 'mist',
+    defaultMusic: 'watching_grounds',
   },
   cursed_forest: {
     ambientLight: 0.1,
-    weatherEffect: "ash_fall",
-    defaultMusic: "nightland_ambient",
+    weatherEffect: 'ash_fall',
+    defaultMusic: 'nightland_ambient',
   },
   ancient_ruins: {
     ambientLight: 0.25,
     weatherEffect: null,
-    defaultMusic: "nightland_ambient",
+    defaultMusic: 'nightland_ambient',
   },
-};
+}
 
 // Reusable spawn configurations
 export type SpawnConfig = {
-  monsterShortName: string;
-  spawnRate: number;
-  maxInstances: number;
-};
+  monsterShortName: string
+  spawnRate: number
+  maxInstances: number
+}
 
 export const SPAWN_TABLES: Record<SpawnTableId, SpawnConfig[]> = {
   wasteland_common: [
-    { monsterShortName: "abhuman", spawnRate: 0.04, maxInstances: 3 },
-    { monsterShortName: "night_hound", spawnRate: 0.02, maxInstances: 2 },
+    { monsterShortName: 'abhuman', spawnRate: 0.04, maxInstances: 3 },
+    { monsterShortName: 'night_hound', spawnRate: 0.02, maxInstances: 2 },
   ],
   wasteland_rare: [
-    { monsterShortName: "abhuman", spawnRate: 0.015, maxInstances: 1 },
-    { monsterShortName: "night_hound", spawnRate: 0.1, maxInstances: 6 },
+    { monsterShortName: 'abhuman', spawnRate: 0.015, maxInstances: 1 },
+    { monsterShortName: 'night_hound', spawnRate: 0.1, maxInstances: 6 },
   ],
   wasteland_boss: [],
   grounds_common: [
-    { monsterShortName: "night_hound", spawnRate: 0.1, maxInstances: 6 },
-    { monsterShortName: "abhuman", spawnRate: 0.015, maxInstances: 1 },
+    { monsterShortName: 'night_hound', spawnRate: 0.1, maxInstances: 6 },
+    { monsterShortName: 'abhuman', spawnRate: 0.015, maxInstances: 1 },
   ],
   grounds_rare: [],
-};
+}
 
 // Common level defaults
 export const LEVEL_DEFAULTS = {
@@ -319,26 +325,29 @@ export const LEVEL_DEFAULTS = {
   experienceReward: 100,
   ambientLight: 0.2,
   weatherEffect: null as WeatherEffect,
-  backgroundMusic: "nightland_ambient" as MusicTrackId,
-};
+  backgroundMusic: 'nightland_ambient' as MusicTrackId,
+}
 ```
 
 **levelHelpers.ts:**
+
 ```typescript
-import { Level, LevelMonsterInstance } from "./types";
-import { LevelConfig, SpawnTableId, BiomeId } from "./levelTypes";
-import { BIOME_PRESETS, SPAWN_TABLES, LEVEL_DEFAULTS } from "./levelPresets";
-import { createMonsterInstance } from "./levels"; // Import existing helper
+import { Level, LevelMonsterInstance } from './types'
+import { LevelConfig, SpawnTableId, BiomeId } from './levelTypes'
+import { BIOME_PRESETS, SPAWN_TABLES, LEVEL_DEFAULTS } from './levelPresets'
+import { createMonsterInstance } from './levels' // Import existing helper
 
 // Create level with defaults and biome presets
-export function createLevel(config: Partial<LevelConfig> & {
-  id: string;
-  name: string;
-  boardSize: { width: number; height: number };
-  playerSpawn: Position;
-}): LevelConfig {
-  const biome = config.biome ? BIOME_PRESETS[config.biome] : undefined;
-  
+export function createLevel(
+  config: Partial<LevelConfig> & {
+    id: string
+    name: string
+    boardSize: { width: number; height: number }
+    playerSpawn: Position
+  }
+): LevelConfig {
+  const biome = config.biome ? BIOME_PRESETS[config.biome] : undefined
+
   return {
     ...LEVEL_DEFAULTS,
     ...config,
@@ -352,35 +361,35 @@ export function createLevel(config: Partial<LevelConfig> & {
     monsters: config.monsters || [],
     objects: config.objects || [],
     greatPowers: config.greatPowers || [],
-  } as LevelConfig;
+  } as LevelConfig
 }
 
 // Load monsters from spawn table
 export function loadSpawnTable(tableId: SpawnTableId): LevelMonsterInstance[] {
-  const configs = SPAWN_TABLES[tableId];
-  return configs.map(cfg =>
+  const configs = SPAWN_TABLES[tableId]
+  return configs.map((cfg) =>
     createMonsterInstance(cfg.monsterShortName, cfg.spawnRate, cfg.maxInstances)
-  );
+  )
 }
 
 // Validate level config at module load time
 export function validateLevel(level: LevelConfig): void {
-  const { boardSize, playerSpawn } = level;
-  
+  const { boardSize, playerSpawn } = level
+
   if (playerSpawn.row < 0 || playerSpawn.row >= boardSize.height) {
-    throw new Error(`Level ${level.id}: playerSpawn.row out of bounds`);
+    throw new Error(`Level ${level.id}: playerSpawn.row out of bounds`)
   }
   if (playerSpawn.col < 0 || playerSpawn.col >= boardSize.width) {
-    throw new Error(`Level ${level.id}: playerSpawn.col out of bounds`);
+    throw new Error(`Level ${level.id}: playerSpawn.col out of bounds`)
   }
-  
+
   // Validate objects are within bounds
   for (const obj of level.objects) {
     if (obj.position.row < 0 || obj.position.row >= boardSize.height) {
-      throw new Error(`Level ${level.id}: Object ${obj.id} out of bounds`);
+      throw new Error(`Level ${level.id}: Object ${obj.id} out of bounds`)
     }
   }
-  
+
   // Could add more validations:
   // - Check for position overlaps
   // - Validate template IDs exist
@@ -391,102 +400,112 @@ export function validateLevel(level: LevelConfig): void {
 ### 2.3 Example Refactored Level
 
 **levels.ts (improved):**
+
 ```typescript
-import { createLevel, loadSpawnTable, validateLevel } from "./levelHelpers";
-import { LevelId, LevelConfig } from "./levelTypes";
-import { createObjectInstance, createItemInstance, createGreatPowerForLevel, createNonCollisionObject } from "./levels"; // existing helpers
+import { createLevel, loadSpawnTable, validateLevel } from './levelHelpers'
+import { LevelId, LevelConfig } from './levelTypes'
+import {
+  createObjectInstance,
+  createItemInstance,
+  createGreatPowerForLevel,
+  createNonCollisionObject,
+} from './levels' // existing helpers
 
 export const levels: Record<LevelId, LevelConfig> = {
-  "1": createLevel({
-    id: "1",
-    name: "The Dark Outer Wastes",
-    description: "The only lands known by the Monstruwacans...",
+  '1': createLevel({
+    id: '1',
+    name: 'The Dark Outer Wastes',
+    description: 'The only lands known by the Monstruwacans...',
     boardSize: { width: 400, height: 400 },
     playerSpawn: { row: 395, col: 200 },
-    biome: "dark_wastes", // Auto-sets ambientLight, weather, music
-    
+    biome: 'dark_wastes', // Auto-sets ambientLight, weather, music
+
     items: [
-      createItemInstance("healthPotion", { row: 395, col: 195 }),
-      createItemInstance("ironSword", { row: 380, col: 200 }),
-      createItemInstance("maguffinRock", { row: 390, col: 210 }),
+      createItemInstance('healthPotion', { row: 395, col: 195 }),
+      createItemInstance('ironSword', { row: 380, col: 200 }),
+      createItemInstance('maguffinRock', { row: 390, col: 210 }),
     ],
-    
+
     // Use spawn table instead of inline config
-    monsters: loadSpawnTable("wasteland_common"),
-    
+    monsters: loadSpawnTable('wasteland_common'),
+
     objects: [
-      createObjectInstance("redoubt", { row: 390, col: 198 }),
-      createObjectInstance("healingPool", { row: 375, col: 20 }),
-      createObjectInstance("poisonPool", { row: 250, col: 250 }),
-      createObjectInstance("cursedTotem", { row: 385, col: 220 }),
-      createObjectInstance("aeroWreckage", { row: 340, col: 298 }),
+      createObjectInstance('redoubt', { row: 390, col: 198 }),
+      createObjectInstance('healingPool', { row: 375, col: 20 }),
+      createObjectInstance('poisonPool', { row: 250, col: 250 }),
+      createObjectInstance('cursedTotem', { row: 385, col: 220 }),
+      createObjectInstance('aeroWreckage', { row: 340, col: 298 }),
     ],
-    
+
     // Keep existing nonCollisionObjects as-is for now
     // (Could extract path generation later)
     nonCollisionObjects: [
       // ... footsteps array ...
     ],
-    
+
     greatPowers: [
-      createGreatPowerForLevel("watcher_se", { row: 380, col: 180 }, {
-        hp: 1000,
-        maxHP: 1000,
-        attack: 50,
-        ac: 25,
-      }),
+      createGreatPowerForLevel(
+        'watcher_se',
+        { row: 380, col: 180 },
+        {
+          hp: 1000,
+          maxHP: 1000,
+          attack: 50,
+          ac: 25,
+        }
+      ),
     ],
-    
+
     completionConditions: [
       {
-        type: "reach_position",
+        type: 'reach_position',
         position: { row: 10, col: 200 },
-        description: "Reach the northern border",
+        description: 'Reach the northern border',
       },
       {
-        type: "collect_item",
-        itemId: "ironSword",
-        description: "Find the iron sword",
+        type: 'collect_item',
+        itemId: 'ironSword',
+        description: 'Find the iron sword',
       },
     ],
   }),
-  
-  "2": createLevel({
-    id: "2",
-    name: "The Watching Grounds",
-    description: "Venture deeper into the Nightland...",
+
+  '2': createLevel({
+    id: '2',
+    name: 'The Watching Grounds',
+    description: 'Venture deeper into the Nightland...',
     boardSize: { width: 600, height: 500 },
     playerSpawn: { row: 590, col: 50 },
     requiredLevel: 2,
     recommendedLevel: 3,
     experienceReward: 250,
-    biome: "watching_grounds", // Auto-sets ambientLight, weather, music
-    
+    biome: 'watching_grounds', // Auto-sets ambientLight, weather, music
+
     items: [],
-    monsters: loadSpawnTable("grounds_common"),
-    objects: [createObjectInstance("poisonPool", { row: 150, col: 150 })],
+    monsters: loadSpawnTable('grounds_common'),
+    objects: [createObjectInstance('poisonPool', { row: 150, col: 150 })],
     greatPowers: [],
-    
+
     completionConditions: [
       {
-        type: "defeat_all_monsters",
-        description: "Defeat all monsters in the area",
+        type: 'defeat_all_monsters',
+        description: 'Defeat all monsters in the area',
       },
       {
-        type: "reach_position",
+        type: 'reach_position',
         position: { row: 50, col: 550 },
-        description: "Reach the eastern exit",
+        description: 'Reach the eastern exit',
       },
     ],
   }),
-};
+}
 
 // Validate all levels at module load
-Object.values(levels).forEach(validateLevel);
+Object.values(levels).forEach(validateLevel)
 
 // Type-safe level lookup
 export function getLevel(id: LevelId): LevelConfig {
-  return levels[id];
+  return levels[id]
 }
 ```
 
@@ -495,49 +514,59 @@ export function getLevel(id: LevelId): LevelConfig {
 ## 3. REFACTOR PLAN (Incremental Steps)
 
 ### Phase 1: Add Type Safety (Non-Breaking)
+
 **Goal:** Strengthen types without changing runtime behavior
 
 **Step 1.1:** Create `levelTypes.ts`
+
 - Add `LevelId`, `BiomeId`, `WeatherEffect`, `MusicTrackId` types
 - Export from config/types.ts for backwards compatibility
 - **Risk:** None - purely additive
 - **Validation:** `tsc --noEmit`
 
 **Step 1.2:** Update `levels.ts` export signature
+
 ```typescript
 // Change
 export const levels: Record<string, Level> = { ... };
 // To
 export const levels: Record<LevelId, Level> = { ... };
 ```
+
 - **Risk:** Low - consumers already use correct IDs
 - **Validation:** Compile check
 
 **Step 1.3:** Add type-safe getLevel helper
+
 ```typescript
 export function getLevel(id: LevelId): Level {
-  return levels[id];
+  return levels[id]
 }
 ```
+
 - **Risk:** None - optional helper
 - **Validation:** Unit test
 
 ### Phase 2: Extract Common Patterns (Minimal Changes)
+
 **Goal:** Reduce duplication while keeping existing structure
 
 **Step 2.1:** Create `levelPresets.ts`
+
 - Extract `LIGHTING_VALUES`, `LEVEL_DEFAULTS`
 - Add `BIOME_PRESETS` (optional usage)
 - **Risk:** None - not used yet
 - **Validation:** Import check
 
 **Step 2.2:** Create `SPAWN_TABLES` in `levelPresets.ts`
+
 - Extract spawn configs from levels "1" and "2"
 - Keep inline configs for now (comment with `// TODO: use SPAWN_TABLES.wasteland_common`)
 - **Risk:** None - parallel implementation
 - **Validation:** Compare outputs
 
 **Step 2.3:** Replace inline spawn configs with table lookups
+
 ```typescript
 // Before
 monsters: [
@@ -548,34 +577,42 @@ monsters: [
 // After
 monsters: loadSpawnTable("wasteland_common"),
 ```
+
 - **Risk:** Low - equivalent output
 - **Validation:** Compare serialized monsters before/after
 
 ### Phase 3: Add Helper Factory (Optional)
+
 **Goal:** Simplify level creation with smart defaults
 
 **Step 3.1:** Create `levelHelpers.ts` with `createLevel()`
+
 - Implement factory with defaults and biome support
 - **Risk:** None - optional usage
 - **Validation:** Unit test helper
 
 **Step 3.2:** Optionally refactor levels to use `createLevel()`
+
 - Wrap existing level configs
 - **Risk:** Low - wrapper pattern
 - **Validation:** Deep equality check on output
 
 ### Phase 4: Add Validation (Safety)
+
 **Goal:** Catch config errors at build time
 
 **Step 4.1:** Add `validateLevel()` helper
+
 - Check bounds, overlaps, references
 - **Risk:** None - opt-in validation
 - **Validation:** Unit tests with invalid configs
 
 **Step 4.2:** Call validation at module load
+
 ```typescript
-Object.values(levels).forEach(validateLevel);
+Object.values(levels).forEach(validateLevel)
 ```
+
 - **Risk:** Medium - could break if existing levels have issues
 - **Mitigation:** Fix any issues found
 - **Validation:** Module import succeeds
@@ -601,17 +638,20 @@ Below is the minimal, focused implementation of Phase 1 improvements:
 ## 5. SUMMARY & RECOMMENDATIONS
 
 ### Immediate Actions (Do Now)
+
 1. ✅ **Add strong typing** - `LevelId`, biome/weather enums
 2. ✅ **Extract spawn tables** - Normalize monster configs
 3. ✅ **Add LEVEL_DEFAULTS** - Stop duplicating `turnsPerHitPoint`
 4. ✅ **Create type-safe getLevel()** - Prevent typos
 
 ### Near-Term (Next Sprint)
+
 5. **Add biome presets** - Bundle related settings
 6. **Add validation** - Catch config errors early
 7. **Create createLevel() helper** - Simplify level authoring
 
 ### Future Considerations (When Scaling)
+
 8. **Split into per-level files** - When 10+ levels
 9. **Add difficulty curves** - Document intended progression
 10. **Path generator** - Replace manual footstep arrays
@@ -619,6 +659,7 @@ Below is the minimal, focused implementation of Phase 1 improvements:
 12. **Lazy loading** - Dynamic imports for 50+ levels
 
 ### Do NOT Do
+
 - ❌ Don't add behavior/game logic to config files
 - ❌ Don't create circular dependencies with runtime modules
 - ❌ Don't over-engineer before adding more levels
@@ -629,6 +670,7 @@ Below is the minimal, focused implementation of Phase 1 improvements:
 ## 6. NEXT STEPS
 
 **Recommended Implementation Order:**
+
 1. Create `levelTypes.ts` (5 min)
 2. Create `levelPresets.ts` with spawn tables (10 min)
 3. Update `levels.ts` to use types and spawn tables (15 min)
@@ -638,6 +680,7 @@ Below is the minimal, focused implementation of Phase 1 improvements:
 **Total estimated time:** 45 minutes for Phase 1-2
 
 **Success Criteria:**
+
 - ✅ TypeScript compilation passes
 - ✅ No runtime errors on level load
 - ✅ Game initializes and plays normally

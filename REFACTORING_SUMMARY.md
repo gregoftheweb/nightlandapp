@@ -10,6 +10,7 @@
 ### 1. Comprehensive Architecture Audit ✅
 
 Created **ARCHITECTURE_REVIEW.md** (279 lines) documenting:
+
 - Complete audit of gameState.ts identifying config vs runtime data
 - Classification of each data type (Config, Runtime, Derived, Utilities)
 - Recommended target architecture with folder structure
@@ -19,6 +20,7 @@ Created **ARCHITECTURE_REVIEW.md** (279 lines) documenting:
 ### 2. Weapons Config Extraction ✅
 
 **Created:** `config/weapons.ts` (116 lines)
+
 - Extracted all 4 hardcoded weapons from gameState.ts
 - Created centralized `weaponsCatalog` as single source of truth
 - Added helper functions:
@@ -29,6 +31,7 @@ Created **ARCHITECTURE_REVIEW.md** (279 lines) documenting:
   - `getAllWeaponIds()`
 
 **Before (gameState.ts lines 30-85):**
+
 ```typescript
 weapons: [
   {
@@ -46,6 +49,7 @@ weapons: [
 ```
 
 **After (gameState.ts line 32):**
+
 ```typescript
 weapons: weaponsCatalog, // Import from centralized config
 ```
@@ -54,16 +58,17 @@ weapons: weaponsCatalog, // Import from centralized config
 
 **Updated gameState.ts** to reference centralized config:
 
-| Value | Before | After |
-|-------|--------|-------|
-| Grid Width | `gridWidth: 400` | `gridWidth: gameConfig.grid.width` |
-| Grid Height | `gridHeight: 400` | `gridHeight: gameConfig.grid.height` |
-| Max Attackers | `maxAttackers: 4` | `maxAttackers: gameConfig.combat.maxAttackers` |
-| Save Version | `saveVersion: "1.0"` | `saveVersion: gameConfig.save.version` |
+| Value         | Before               | After                                          |
+| ------------- | -------------------- | ---------------------------------------------- |
+| Grid Width    | `gridWidth: 400`     | `gridWidth: gameConfig.grid.width`             |
+| Grid Height   | `gridHeight: 400`    | `gridHeight: gameConfig.grid.height`           |
+| Max Attackers | `maxAttackers: 4`    | `maxAttackers: gameConfig.combat.maxAttackers` |
+| Save Version  | `saveVersion: "1.0"` | `saveVersion: gameConfig.save.version`         |
 
 ### 4. Developer Documentation ✅
 
 Created **DEVELOPER_GUIDE.md** (430 lines) with:
+
 - Architecture principles and patterns
 - What goes where (decision tree)
 - Common patterns with code examples
@@ -77,11 +82,11 @@ Created **DEVELOPER_GUIDE.md** (430 lines) with:
 
 ### Lines of Code
 
-| File | Before | After | Change |
-|------|--------|-------|--------|
-| `modules/gameState.ts` | 137 | 83 | **-54 lines** ✅ |
-| `config/weapons.ts` | 0 | 116 | **+116 lines** (new) |
-| Total Documentation | 0 | 709 | **+709 lines** (new) |
+| File                   | Before | After | Change               |
+| ---------------------- | ------ | ----- | -------------------- |
+| `modules/gameState.ts` | 137    | 83    | **-54 lines** ✅     |
+| `config/weapons.ts`    | 0      | 116   | **+116 lines** (new) |
+| Total Documentation    | 0      | 709   | **+709 lines** (new) |
 
 ### Benefits
 
@@ -263,16 +268,17 @@ These are suggestions for further improvements, not required:
 
 ### Architecture Quality
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Config in gameState | ❌ Yes (weapons, grid, combat, version) | ✅ No (all in config/*) |
-| Single source of truth | ❌ Duplicated | ✅ Centralized |
-| Documentation | ❌ None | ✅ Comprehensive |
-| Maintainability | ⚠️ Medium | ✅ High |
+| Metric                 | Before                                  | After                    |
+| ---------------------- | --------------------------------------- | ------------------------ |
+| Config in gameState    | ❌ Yes (weapons, grid, combat, version) | ✅ No (all in config/\*) |
+| Single source of truth | ❌ Duplicated                           | ✅ Centralized           |
+| Documentation          | ❌ None                                 | ✅ Comprehensive         |
+| Maintainability        | ⚠️ Medium                               | ✅ High                  |
 
 ### Recommendations Implemented
 
 From the problem statement:
+
 - ✅ Audit findings with specific file/line references
 - ✅ Proposed target architecture with folder structure
 - ✅ Concrete refactor plan (step-by-step)

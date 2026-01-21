@@ -1,41 +1,41 @@
 // app/sub-games/aerowreckage-puzzle/rear-entry.tsx
 // Screen [A]: Rear section entry - safe discovery screen
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { BackgroundImage } from '../_shared/BackgroundImage';
-import { BottomActionBar } from '../_shared/BottomActionBar';
-import { subGameTheme } from '../_shared/subGameTheme';
-import { usePuzzleState } from './hooks/usePuzzleState';
-import { THEME } from './theme';
+import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { useRouter } from 'expo-router'
+import { BackgroundImage } from '../_shared/BackgroundImage'
+import { BottomActionBar } from '../_shared/BottomActionBar'
+import { subGameTheme } from '../_shared/subGameTheme'
+import { usePuzzleState } from './hooks/usePuzzleState'
+import { THEME } from './theme'
 
-const bgIntro = require('@/assets/images/aerowreck-safe1.png');
+const bgIntro = require('@/assets/images/aerowreck-safe1.png')
 
 export default function AeroWreckageRearEntry() {
-  const router = useRouter();
-  const { resetPuzzle } = usePuzzleState();
+  const router = useRouter()
+  const { resetPuzzle } = usePuzzleState()
 
   const handleAttemptOpen = () => {
     if (__DEV__) {
-      console.log('[AeroWreckageRearEntry] Attempting to open safe');
+      console.log('[AeroWreckageRearEntry] Attempting to open safe')
     }
-    router.push('/sub-games/aerowreckage-puzzle/safe' as any);
-  };
+    router.push('/sub-games/aerowreckage-puzzle/safe' as any)
+  }
 
   const handleLeaveTreasure = () => {
     if (__DEV__) {
-      console.log('[AeroWreckageRearEntry] Leaving treasure untouched, returning to entry');
+      console.log('[AeroWreckageRearEntry] Leaving treasure untouched, returning to entry')
     }
-    router.back();
-  };
+    router.back()
+  }
 
   const handleResetPuzzle = async () => {
     if (__DEV__) {
-      console.log('[AeroWreckageRearEntry] Resetting puzzle for testing');
+      console.log('[AeroWreckageRearEntry] Resetting puzzle for testing')
     }
-    await resetPuzzle();
-    router.replace('/sub-games/aerowreckage-puzzle/entry' as any);
-  };
+    await resetPuzzle()
+    router.replace('/sub-games/aerowreckage-puzzle/entry' as any)
+  }
 
   return (
     <BackgroundImage source={bgIntro}>
@@ -44,9 +44,7 @@ export default function AeroWreckageRearEntry() {
           <Text style={styles.flavorText}>
             Christos finds a dust covered safe under some strewn wreckage of the ancient craft.
           </Text>
-          <Text style={styles.flavorTextSecondary}>
-            Christos ponders the treasure within?
-          </Text>
+          <Text style={styles.flavorTextSecondary}>Christos ponders the treasure within?</Text>
         </View>
 
         <BottomActionBar>
@@ -59,7 +57,7 @@ export default function AeroWreckageRearEntry() {
               <Text style={styles.resetButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
             </TouchableOpacity>
           )}
-          
+
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={styles.primaryButton}
@@ -80,7 +78,7 @@ export default function AeroWreckageRearEntry() {
         </BottomActionBar>
       </View>
     </BackgroundImage>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -149,4 +147,4 @@ const styles = StyleSheet.create({
     color: subGameTheme.blue,
     textAlign: 'center',
   },
-});
+})
