@@ -74,12 +74,13 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
     displayAngleAnimated.setValue(targetAngle);
   }, [currentNumber, displayAngleAnimated]);
   
-  // Rotate clockwise by one step (increment number by 1)
+  // Rotate clockwise by one step (decrement number by 1)
+  // When dial rotates CW, the indicated number under the top pointer decreases
   const rotateClockwiseOneStep = () => {
-    let newNumber = currentNumber + 1;
-    // Wrap around if exceeding max
-    if (newNumber >= PUZZLE_CONFIG.totalNumbers) {
-      newNumber = 0;
+    let newNumber = currentNumber - 1;
+    // Wrap around if going below 0
+    if (newNumber < 0) {
+      newNumber = PUZZLE_CONFIG.totalNumbers - 1;
     }
     
     // Convert number to angle
@@ -95,12 +96,13 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
     }).start();
   };
   
-  // Rotate counter-clockwise by one step (decrement number by 1)
+  // Rotate counter-clockwise by one step (increment number by 1)
+  // When dial rotates CCW, the indicated number under the top pointer increases
   const rotateCounterClockwiseOneStep = () => {
-    let newNumber = currentNumber - 1;
-    // Wrap around if going below 0
-    if (newNumber < 0) {
-      newNumber = PUZZLE_CONFIG.totalNumbers - 1;
+    let newNumber = currentNumber + 1;
+    // Wrap around if exceeding max
+    if (newNumber >= PUZZLE_CONFIG.totalNumbers) {
+      newNumber = 0;
     }
     
     // Convert number to angle
@@ -176,7 +178,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
           pressed && styles.controlButtonPressed,
         ]}
         accessibilityLabel="Rotate dial clockwise"
-        accessibilityHint="Increments the dial number by 1"
+        accessibilityHint="Decrements the dial number by 1"
       >
         <Image source={clockwiseButtonImage} style={styles.controlButtonImage} />
       </Pressable>
@@ -247,7 +249,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
           pressed && styles.controlButtonPressed,
         ]}
         accessibilityLabel="Rotate dial counter-clockwise"
-        accessibilityHint="Decrements the dial number by 1"
+        accessibilityHint="Increments the dial number by 1"
       >
         <Image source={counterClockwiseButtonImage} style={styles.controlButtonImage} />
       </Pressable>
