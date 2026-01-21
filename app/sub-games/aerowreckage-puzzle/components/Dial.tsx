@@ -1,24 +1,26 @@
 // app/sub-games/aerowreckage-puzzle/components/Dial.tsx
-// Rotatable dial with gesture handling - Discrete tick model with smooth animation
+// Safe dial with button-based rotation - One tap = one number step
+// NEW INTERACTION MODEL:
+// - Left button (Clockwise) increments dial number by +1
+// - Right button (Counter-Clockwise) decrements dial number by -1
+// - Tapping center number attempts to lock that number in the combination
+// - No drag/swipe gestures on the dial face
 
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, PanResponder, Animated, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity, Pressable, Image } from 'react-native';
 import { PUZZLE_CONFIG } from '../config';
 import { THEME } from '../theme';
-import { normalizeAngle, formatDialNumber } from '../utils';
+import { formatDialNumber } from '../utils';
 
 const CENTER_SIZE = 60;
 const NUMBER_MARKERS = 12; // Major number markers around the dial
 const TICK_MARKS = 8; // Decorative tick marks on rotating dial
 const DIAL_ORIENTATION_OFFSET = -Math.PI / 2; // -90 degrees to align number 0 at 12 o'clock (top)
-const ROTATION_SENSITIVITY = 0.4; // Slow down input for heavier feel (0.4 = 40% of finger movement)
-const MAX_STEP_JUMP = 1; // Maximum number of steps dial can move in one update (only 1 for smooth click-by-click)
-const TICK_ANIMATION_DURATION = 150; // ms - duration for dial to animate to next tick position (increased for slower, more deliberate feel)
+const TICK_ANIMATION_DURATION = 150; // ms - duration for dial to animate to next tick position
 
-// Detent/sticky dial parameters for realistic safe feel
-const COMMIT_THRESHOLD = 0.18; // Radians of deliberate movement required to commit to next tick (increased from 0.12 to slow down clicks)
-const DIRECTION_CONFIDENCE_DECAY = 0.85; // How quickly direction scores decay (0.85 = 15% decay per move)
-const DIRECTION_DOMINANCE_MARGIN = 0.03; // Minimum score difference to establish dominant direction
+// Button images
+const clockwiseButtonImage = require('@/assets/images/safe-dial-Clockwise.png');
+const counterClockwiseButtonImage = require('@/assets/images/safe-dial-CC.png');
 
 // Calculate responsive dial size based on screen dimensions
 const getDialSize = (width: number, height: number) => {
@@ -42,11 +44,9 @@ interface DialProps {
   currentNumber: number;
   onAngleChange: (angle: number) => void;
   onCenterTap: () => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
 }
 
-export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, onDragStart, onDragEnd }: DialProps) {
+export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }: DialProps) {
   const [dimensions, setDimensions] = useState(() => {
     const window = Dimensions.get('window');
     return { width: window.width, height: window.height };
@@ -62,18 +62,6 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
     return () => subscription?.remove();
   }, []);
   
-  // Discrete tick dial model - Index is the single source of truth for the number
-  const currentIndexRef = useRef(currentNumber);
-  const tickAccumulatorRef = useRef(0); // Fractional angle between ticks
-  const lastThetaRef = useRef<number | null>(null); // Last raw atan2 angle for unwrapping
-  const grabOffsetRef = useRef<number>(0); // Offset to handle grab at arbitrary position
-  
-  // Detent/sticky behavior - Direction tracking for deliberate movement
-  const directionScoreCW = useRef(0); // Confidence score for clockwise movement
-  const directionScoreCCW = useRef(0); // Confidence score for counter-clockwise movement
-  const lastCommittedDir = useRef<'CW' | 'CCW' | null>(null); // Last committed direction
-  const commitAccumulator = useRef(0); // Accumulated movement toward commit threshold
-  
   // Animated display angle for smooth tick transitions
   const displayAngleAnimated = useRef(new Animated.Value(
     (currentNumber / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI + DIAL_ORIENTATION_OFFSET
@@ -81,162 +69,56 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
   
   // Sync with parent's currentNumber when it changes externally (e.g., on load)
   useEffect(() => {
-    currentIndexRef.current = currentNumber;
     // Immediately update display angle when externally changed (e.g., on load)
     const targetAngle = (currentNumber / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI + DIAL_ORIENTATION_OFFSET;
     displayAngleAnimated.setValue(targetAngle);
   }, [currentNumber, displayAngleAnimated]);
   
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => {
-        // Notify parent we're dragging
-        onDragStart();
-        
-        // Calculate touch angle
-        const { locationX, locationY } = evt.nativeEvent;
-        const centerX = dialSize / 2;
-        const centerY = dialSize / 2;
-        
-        const dx = locationX - centerX;
-        const dy = locationY - centerY;
-        const touchAngle = Math.atan2(dy, dx);
-        
-        // Initialize tracking - "grab" at current dial position
-        // Calculate current visual angle from index
-        const currentVisualAngle = (currentIndexRef.current / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
-        
-        // Calculate grab offset to maintain current dial position
-        // This offset ensures that when the user touches the dial at any position,
-        // the dial continues from its current number without jumping.
-        // Formula: offset = currentAngle - touchAngle
-        // When applied in future moves, touchAngle + offset = currentAngle (maintained)
-        grabOffsetRef.current = currentVisualAngle - touchAngle;
-        
-        lastThetaRef.current = touchAngle;
-        tickAccumulatorRef.current = 0; // Reset accumulator on new grab
-        
-        // Reset detent/sticky state on new grab
-        directionScoreCW.current = 0;
-        directionScoreCCW.current = 0;
-        commitAccumulator.current = 0;
-        // Keep lastCommittedDir to maintain directional consistency across re-grabs
-      },
-      onPanResponderMove: (evt) => {
-        const { locationX, locationY } = evt.nativeEvent;
-        const centerX = dialSize / 2;
-        const centerY = dialSize / 2;
-        
-        const dx = locationX - centerX;
-        const dy = locationY - centerY;
-        const theta = Math.atan2(dy, dx);
-        
-        if (lastThetaRef.current !== null) {
-          // Calculate delta with unwrapping to handle 2π discontinuity
-          let deltaTheta = theta - lastThetaRef.current;
-          
-          // Unwrap: if we crossed the boundary, adjust
-          if (deltaTheta > Math.PI) {
-            deltaTheta -= 2 * Math.PI;
-          } else if (deltaTheta < -Math.PI) {
-            deltaTheta += 2 * Math.PI;
-          }
-          
-          // Apply sensitivity to slow down rotation
-          deltaTheta *= ROTATION_SENSITIVITY;
-          
-          // Update direction confidence scores
-          // Decay existing scores slightly to favor recent movement
-          directionScoreCW.current *= DIRECTION_CONFIDENCE_DECAY;
-          directionScoreCCW.current *= DIRECTION_CONFIDENCE_DECAY;
-          
-          // Add to the score based on this move's direction
-          // In our coordinate system: positive deltaTheta = CW, negative = CCW
-          const absDelta = Math.abs(deltaTheta);
-          if (deltaTheta > 0) {
-            directionScoreCW.current += absDelta;
-          } else if (deltaTheta < 0) {
-            directionScoreCCW.current += absDelta;
-          }
-          
-          // Determine dominant direction (if clear)
-          let dominantDir: 'CW' | 'CCW' | null = null;
-          if (directionScoreCW.current > directionScoreCCW.current + DIRECTION_DOMINANCE_MARGIN) {
-            dominantDir = 'CW';
-          } else if (directionScoreCCW.current > directionScoreCW.current + DIRECTION_DOMINANCE_MARGIN) {
-            dominantDir = 'CCW';
-          }
-          
-          // Accumulate movement toward commit threshold
-          // Only accumulate in the dominant direction
-          if (dominantDir === 'CW' && deltaTheta > 0) {
-            commitAccumulator.current += absDelta;
-          } else if (dominantDir === 'CCW' && deltaTheta < 0) {
-            commitAccumulator.current += absDelta;
-          } else {
-            // Movement in non-dominant direction: slightly reduce accumulator (jiggle/reversal)
-            commitAccumulator.current = Math.max(0, commitAccumulator.current - absDelta * 0.5);
-          }
-          
-          // Check if we should commit to advancing a tick
-          // Rules for committing:
-          // 1. Must have accumulated enough deliberate movement (COMMIT_THRESHOLD)
-          // 2. Must have a clear dominant direction
-          // 3. Dominant direction must match lastCommittedDir OR lastCommittedDir is null
-          //    OR we have enough confidence to reverse direction (both scores reset means clear reversal)
-          
-          const canCommit = commitAccumulator.current >= COMMIT_THRESHOLD && dominantDir !== null;
-          const directionMatches = lastCommittedDir.current === null || 
-                                   lastCommittedDir.current === dominantDir ||
-                                   (directionScoreCW.current < 0.05 && directionScoreCCW.current < 0.05); // Both low = clear reversal
-          
-          if (canCommit && directionMatches) {
-            // Commit to advancing one tick in the dominant direction
-            const stepDirection = dominantDir === 'CW' ? 1 : -1;
-            
-            // Update index with wrap-around
-            let newIndex = currentIndexRef.current + stepDirection;
-            newIndex = ((newIndex % PUZZLE_CONFIG.totalNumbers) + PUZZLE_CONFIG.totalNumbers) % PUZZLE_CONFIG.totalNumbers;
-            
-            currentIndexRef.current = newIndex;
-            
-            // Update last committed direction
-            lastCommittedDir.current = dominantDir;
-            
-            // Reset commit accumulator after successful commit
-            commitAccumulator.current = 0;
-            
-            // Convert index to angle and notify parent
-            const newAngle = (newIndex / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
-            onAngleChange(newAngle);
-            
-            // Animate display angle to new target for smooth click-by-click feel
-            const targetAngle = newAngle + DIAL_ORIENTATION_OFFSET;
-            Animated.timing(displayAngleAnimated, {
-              toValue: targetAngle,
-              duration: TICK_ANIMATION_DURATION,
-              useNativeDriver: true,
-            }).start();
-          }
-        }
-        
-        lastThetaRef.current = theta;
-      },
-      onPanResponderRelease: () => {
-        // Notify parent we stopped dragging
-        onDragEnd();
-        lastThetaRef.current = null;
-        // Reset detent state on release
-        tickAccumulatorRef.current = 0;
-        directionScoreCW.current = 0;
-        directionScoreCCW.current = 0;
-        commitAccumulator.current = 0;
-        // Keep lastCommittedDir to maintain directional consistency if user re-grabs quickly
-      },
-    })
-  ).current;
+  // Rotate clockwise by one step (increment number by 1)
+  const rotateClockwiseOneStep = () => {
+    let newNumber = currentNumber + 1;
+    // Wrap around if exceeding max
+    if (newNumber >= PUZZLE_CONFIG.totalNumbers) {
+      newNumber = 0;
+    }
+    
+    // Convert number to angle
+    const newAngle = (newNumber / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
+    onAngleChange(newAngle);
+    
+    // Animate display angle to new target
+    const targetAngle = newAngle + DIAL_ORIENTATION_OFFSET;
+    Animated.timing(displayAngleAnimated, {
+      toValue: targetAngle,
+      duration: TICK_ANIMATION_DURATION,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  // Rotate counter-clockwise by one step (decrement number by 1)
+  const rotateCounterClockwiseOneStep = () => {
+    let newNumber = currentNumber - 1;
+    // Wrap around if going below 0
+    if (newNumber < 0) {
+      newNumber = PUZZLE_CONFIG.totalNumbers - 1;
+    }
+    
+    // Convert number to angle
+    const newAngle = (newNumber / PUZZLE_CONFIG.totalNumbers) * 2 * Math.PI;
+    onAngleChange(newAngle);
+    
+    // Animate display angle to new target
+    const targetAngle = newAngle + DIAL_ORIENTATION_OFFSET;
+    Animated.timing(displayAngleAnimated, {
+      toValue: targetAngle,
+      duration: TICK_ANIMATION_DURATION,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  const tryCurrentNumber = () => {
+    onCenterTap();
+  };
   
   // Rotation for display - use animated value for smooth transitions
   const rotationInterpolated = displayAngleAnimated.interpolate({
@@ -284,71 +166,127 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap, 
   }
   
   return (
-    <View style={styles.container}>
-      {/* Fixed indicator at 12 o'clock (top center) - OUTSIDE dial */}
-      <View style={styles.fixedIndicator} pointerEvents="none">
-        <View style={styles.indicatorTriangle} />
-      </View>
-      
-      <View
-        style={[styles.dial, { width: dialSize, height: dialSize }]}
-        {...panResponder.panHandlers}
+    <View style={styles.outerContainer}>
+      {/* Left Button - Clockwise */}
+      <Pressable
+        onPress={rotateClockwiseOneStep}
+        style={({ pressed }) => [
+          styles.controlButton,
+          styles.leftButton,
+          pressed && styles.controlButtonPressed,
+        ]}
+        accessibilityLabel="Rotate dial clockwise"
+        accessibilityHint="Increments the dial number by 1"
       >
-        {/* Dial background with geometric pattern */}
-        <View style={styles.dialBackground}>
-          {/* Outer ring */}
-          <View style={styles.outerRing} />
-          
-          {/* Rotating inner dial with numbers and tick marks */}
-          <Animated.View
-            style={[
-              styles.innerDial,
-              {
-                transform: [{ rotate: rotationInterpolated }],
-              },
-            ]}
-          >
-            {/* Number markers - INSIDE rotating dial */}
-            <View style={styles.markersContainer}>
-              {markers}
-            </View>
+        <Image source={clockwiseButtonImage} style={styles.controlButtonImage} />
+      </Pressable>
+
+      <View style={styles.container}>
+        {/* Fixed indicator at 12 o'clock (top center) - OUTSIDE dial */}
+        <View style={styles.fixedIndicator} pointerEvents="none">
+          <View style={styles.indicatorTriangle} />
+        </View>
+        
+        <View style={[styles.dial, { width: dialSize, height: dialSize }]}>
+          {/* Dial background with geometric pattern */}
+          <View style={styles.dialBackground}>
+            {/* Outer ring */}
+            <View style={styles.outerRing} />
             
-            {/* Tick marks */}
-            {Array.from({ length: TICK_MARKS }).map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.tickMark,
-                  {
-                    transform: [
-                      { rotate: `${i * (360 / TICK_MARKS)}deg` },
-                      { translateY: -(dialSize / 2 - 40) },
-                    ],
-                  },
-                ]}
-              />
-            ))}
-          </Animated.View>
-          
-          {/* Center hub - TAPPABLE */}
-          <TouchableOpacity
-            style={styles.center}
-            onPress={onCenterTap}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.currentNumber}>{formatDialNumber(currentNumber)}</Text>
-          </TouchableOpacity>
+            {/* Rotating inner dial with numbers and tick marks */}
+            <Animated.View
+              style={[
+                styles.innerDial,
+                {
+                  transform: [{ rotate: rotationInterpolated }],
+                },
+              ]}
+            >
+              {/* Number markers - INSIDE rotating dial */}
+              <View style={styles.markersContainer}>
+                {markers}
+              </View>
+              
+              {/* Tick marks */}
+              {Array.from({ length: TICK_MARKS }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.tickMark,
+                    {
+                      transform: [
+                        { rotate: `${i * (360 / TICK_MARKS)}deg` },
+                        { translateY: -(dialSize / 2 - 40) },
+                      ],
+                    },
+                  ]}
+                />
+              ))}
+            </Animated.View>
+            
+            {/* Center hub - TAPPABLE */}
+            <TouchableOpacity
+              style={styles.center}
+              onPress={tryCurrentNumber}
+              activeOpacity={0.7}
+              accessibilityLabel="Try current number"
+              accessibilityHint="Attempts to lock this number in the combination"
+            >
+              <Text style={styles.currentNumber}>{formatDialNumber(currentNumber)}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
+
+      {/* Right Button - Counter-Clockwise */}
+      <Pressable
+        onPress={rotateCounterClockwiseOneStep}
+        style={({ pressed }) => [
+          styles.controlButton,
+          styles.rightButton,
+          pressed && styles.controlButtonPressed,
+        ]}
+        accessibilityLabel="Rotate dial counter-clockwise"
+        accessibilityHint="Decrements the dial number by 1"
+      >
+        <Image source={counterClockwiseButtonImage} style={styles.controlButtonImage} />
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 30,
+  },
+  controlButton: {
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
+  controlButtonPressed: {
+    opacity: 0.6,
+  },
+  controlButtonImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  leftButton: {
+    // Positioned on the left
+  },
+  rightButton: {
+    // Positioned on the right
+  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 30,
     position: 'relative',
   },
   fixedIndicator: {

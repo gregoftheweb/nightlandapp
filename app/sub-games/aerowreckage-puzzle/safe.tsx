@@ -17,7 +17,7 @@ const bgPuzzle = require('@/assets/images/aerowreck-safe2.png');
 
 export default function AeroWreckageSafe() {
   const router = useRouter();
-  const { state, updateAngle, attemptLock, setDragging } = usePuzzleState();
+  const { state, updateAngle, attemptLock } = usePuzzleState();
   const [modalVisible, setModalVisible] = useState(false);
   const [attemptResult, setAttemptResult] = useState<AttemptResult | null>(null);
 
@@ -53,14 +53,6 @@ export default function AeroWreckageSafe() {
     handleTryCombination();
   };
 
-  const handleDragStart = () => {
-    setDragging(true);
-  };
-
-  const handleDragEnd = () => {
-    setDragging(false);
-  };
-
   const handleModalDismiss = () => {
     setModalVisible(false);
   };
@@ -85,8 +77,6 @@ export default function AeroWreckageSafe() {
               currentNumber={state.currentNumber}
               onAngleChange={updateAngle}
               onCenterTap={handleCenterTap}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
             />
           </View>
 

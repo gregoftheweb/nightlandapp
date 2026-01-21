@@ -8,19 +8,14 @@ import { PUZZLE_CONFIG, SAVE_KEY, INITIAL_STATE } from '../config';
 import { getSubGameSave, setSubGameSave, clearSubGameSave } from '../../_shared';
 import { angleToNumber, getRotationDirection, isWithinTolerance } from '../utils';
 
-const HAPTIC_TICK_MIN_INTERVAL_MS = 50; // Minimum 50ms between ticks for crisp feel
-
 export function usePuzzleState() {
   const [state, setState] = useState<PuzzleState>(INITIAL_STATE);
   const [isLoading, setIsLoading] = useState(true);
   
   // Refs for tracking
   const lastNumberRef = useRef<number>(0);
-  const lastTickNumberRef = useRef<number>(0);
-  const lastTickTimeRef = useRef<number>(0);
   const saveThrottleRef = useRef<NodeJS.Timeout | null>(null);
   const lastAngleRef = useRef<number>(0);
-  const isDraggingRef = useRef<boolean>(false);
   
   // Load saved state on mount
   useEffect(() => {
@@ -66,13 +61,7 @@ export function usePuzzleState() {
     setState(INITIAL_STATE);
     lastNumberRef.current = 0;
     lastAngleRef.current = 0;
-    lastTickNumberRef.current = 0;
-    lastTickTimeRef.current = 0;
   };
-  
-  const setDragging = useCallback((dragging: boolean) => {
-    isDraggingRef.current = dragging;
-  }, []);
   
   const updateAngle = useCallback((newAngle: number) => {
     const newNumber = angleToNumber(newAngle);
@@ -81,18 +70,6 @@ export function usePuzzleState() {
     
     // Update last angle
     lastAngleRef.current = newAngle;
-    
-    // Trigger haptic tick if crossing into a new number (only while dragging)
-    if (isDraggingRef.current && newNumber !== lastTickNumberRef.current) {
-      const now = Date.now();
-      const timeSinceLastTick = now - lastTickTimeRef.current;
-      
-      if (timeSinceLastTick >= HAPTIC_TICK_MIN_INTERVAL_MS) {
-        Haptics.selectionAsync(); // Light tick sound
-        lastTickNumberRef.current = newNumber;
-        lastTickTimeRef.current = now;
-      }
-    }
     
     lastNumberRef.current = newNumber;
     
@@ -209,6 +186,5 @@ export function usePuzzleState() {
     updateAngle,
     resetPuzzle,
     attemptLock,
-    setDragging,
   };
 }
