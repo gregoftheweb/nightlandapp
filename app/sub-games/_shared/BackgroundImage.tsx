@@ -19,7 +19,7 @@
 import React from 'react';
 import { View, Image, ImageBackground, StyleSheet, ImageSourcePropType, useWindowDimensions } from 'react-native';
 
-const puzzleBackground = require('@/assets/images/puzzle-background.png');
+const puzzleBackground = require('@/assets/images/sub-game-background.png');
 
 interface BackgroundImageProps {
   source?: ImageSourcePropType;
