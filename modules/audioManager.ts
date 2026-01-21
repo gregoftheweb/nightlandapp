@@ -1,5 +1,6 @@
 // modules/audioManager.ts
-import { Audio } from 'expo-av'
+import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av'
+
 import { gameConfig } from '../config/gameConfig'
 
 class AudioManager {
@@ -16,7 +17,12 @@ class AudioManager {
         allowsRecordingIOS: false,
         staysActiveInBackground: false,
         playsInSilentModeIOS: true,
-        shouldDuckAndroid: false,
+
+        shouldDuckAndroid: true,
+
+        interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+        interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+
         playThroughEarpieceAndroid: false,
       })
 
