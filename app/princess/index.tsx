@@ -1,30 +1,23 @@
 // app/princess/index.tsx
-import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ImageBackground,
-  TouchableOpacity,
-  Dimensions,
-} from "react-native";
-import { useRouter } from "expo-router";
-import { SPLASH_STRINGS } from "@/assets/copy/splashscreen";
+import React from 'react'
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native'
+import { useRouter } from 'expo-router'
+import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function PrincessScreen() {
-  const router = useRouter();
+  const router = useRouter()
 
   const handlePress = () => {
-    console.log("Navigating to gameplay");
-    router.push("/game"); // Updated to match route
-  };
+    console.log('Navigating to gameplay')
+    router.push('/game') // Updated to match route
+  }
 
-  console.log("Rendering PrincessScreen component");
+  console.log('Rendering PrincessScreen component')
   return (
     <ImageBackground
-      source={require("../../assets/images/sadprincess.png")}
+      source={require('../../assets/images/sadprincess.png')}
       resizeMode="cover"
       style={styles.backgroundImage}
     >
@@ -35,54 +28,52 @@ export default function PrincessScreen() {
 
         <View style={styles.overlay}>
           <TouchableOpacity style={styles.button} onPress={handlePress}>
-            <Text style={styles.buttonText}>
-              {SPLASH_STRINGS.princessScreen.buttonText}
-            </Text>
+            <Text style={styles.buttonText}>{SPLASH_STRINGS.princessScreen.buttonText}</Text>
           </TouchableOpacity>
         </View>
       </View>
     </ImageBackground>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
     width: SCREEN_WIDTH,
-    height: "100%",
+    height: '100%',
   },
   container: {
     flex: 1,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
     padding: 20,
   },
   textContainer: {
     borderWidth: 2,
-    borderColor: "red",
+    borderColor: 'red',
     borderRadius: 8,
     padding: 16,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   text: {
-    color: "red",
+    color: 'red',
     fontSize: 22,
-    fontFamily: "Gabrielle",
+    fontFamily: 'Gabrielle',
   },
   overlay: {
-    alignItems: "center",
+    alignItems: 'center',
     paddingBottom: 60,
   },
   button: {
-    backgroundColor: "transparent",
-    borderColor: "red",
+    backgroundColor: 'transparent',
+    borderColor: 'red',
     borderWidth: 2,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
   buttonText: {
-    color: "red",
+    color: 'red',
     fontSize: 26,
-    fontFamily: "Gabrielle",
+    fontFamily: 'Gabrielle',
   },
-});
+})

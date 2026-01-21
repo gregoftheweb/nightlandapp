@@ -5,15 +5,15 @@
  * Generic sub-game save data structure
  */
 export interface SubGameSaveData<T = any> {
-  version: number;
-  timestamp: number;
-  data: T;
+  version: number
+  timestamp: number
+  data: T
 }
 
 /**
  * Result returned when a sub-game is exited
  */
 export interface SubGameExitResult {
-  completed: boolean;
-  data?: any;
+  completed: boolean
+  data?: any
 }

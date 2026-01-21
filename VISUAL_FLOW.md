@@ -3,6 +3,7 @@
 ## User Journey
 
 ### Scenario A: Player NOT on aeroWreckage
+
 ```
 ┌─────────────────────────────────────────┐
 │  [Game Board]                           │
@@ -32,6 +33,7 @@
 ```
 
 ### Scenario B: Player ON aeroWreckage
+
 ```
 ┌─────────────────────────────────────────┐
 │  [Game Board]                           │
@@ -127,32 +129,34 @@
 ## Code Flow
 
 ### 1. Player Taps Building
+
 ```typescript
 // GameBoard.tsx - handleBuildingTap()
-const launch = building.subGame;  // from config
+const launch = building.subGame // from config
 const playerOnObject = isPlayerOnObject(
   state.player.position,
   building.position,
   building.width,
   building.height
-);
-const canLaunch = launch && playerOnObject;
+)
+const canLaunch = launch && playerOnObject
 
 if (canLaunch) {
   showInfo(
     building.name,
     building.description,
     building.image,
-    launch.ctaLabel,      // "Investigate"
+    launch.ctaLabel, // "Investigate"
     () => {
-      setInfoVisible(false);
-      enterSubGame(launch.subGameName);  // "aerowreckage-puzzle"
+      setInfoVisible(false)
+      enterSubGame(launch.subGameName) // "aerowreckage-puzzle"
     }
-  );
+  )
 }
 ```
 
 ### 2. InfoBox Renders
+
 ```typescript
 // InfoBox.tsx
 <Text style={styles.description}>{description}</Text>
@@ -165,32 +169,35 @@ if (canLaunch) {
 ```
 
 ### 3. Navigation to Sub-Game
+
 ```typescript
 // lib/subGames.ts
 export function enterSubGame(subGameName: string) {
-  router.push(`/sub-games/${subGameName}`);
+  router.push(`/sub-games/${subGameName}`)
   // Routes to: app/sub-games/aerowreckage-puzzle/index.tsx
 }
 ```
 
 ### 4. Sub-Game Completion
+
 ```typescript
 // app/sub-games/aerowreckage-puzzle/index.tsx
 const handleWin = () => {
   dispatch({
     type: 'SET_SUB_GAME_COMPLETED',
-    payload: { subGameName: 'aerowreckagePuzzle', completed: true }
-  });
-  signalRpgResume();  // Increment nonce
-  exitSubGame({ completed: true });
-};
+    payload: { subGameName: 'aerowreckagePuzzle', completed: true },
+  })
+  signalRpgResume() // Increment nonce
+  exitSubGame({ completed: true })
+}
 ```
 
 ### 5. Return to RPG
+
 ```typescript
 // lib/subGames.ts
 export function exitSubGame(result?: SubGameResult) {
-  router.back();  // Return to previous screen (RPG)
+  router.back() // Return to previous screen (RPG)
 }
 
 // GameContext maintains state across navigation
@@ -215,4 +222,4 @@ export function exitSubGame(result?: SubGameResult) {
 ✅ **Presentational UI**: InfoBox has no business logic  
 ✅ **Position-Based**: Player must be at object to interact  
 ✅ **State Preservation**: Navigation doesn't reset game state  
-✅ **Scalable**: Adding new sub-games requires minimal code  
+✅ **Scalable**: Adding new sub-games requires minimal code

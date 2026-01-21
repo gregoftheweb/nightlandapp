@@ -1,6 +1,6 @@
 /**
  * Unit tests for the self-healing mechanic.
- * 
+ *
  * Tests verify that:
  * - Players heal 1 HP after the configured number of turns (turnsPerHitPoint)
  * - Healing only occurs when below max HP
@@ -8,11 +8,11 @@
  * - Turn counter resets after healing
  * - No healing occurs when turnsPerHitPoint is 0 or undefined
  */
-import { GameState, Level, Player } from '../../config/types';
+import { GameState, Level, Player } from '../../config/types'
 
 describe('Self-Healing Mechanic', () => {
   // Mock dispatch function
-  const mockDispatch = jest.fn();
+  const mockDispatch = jest.fn()
 
   // Helper to create a mock game state
   const createMockGameState = (
@@ -31,7 +31,7 @@ describe('Self-Healing Mechanic', () => {
       monsters: [],
       objects: [],
       greatPowers: [],
-    };
+    }
 
     const mockPlayer: Player = {
       name: 'Christos',
@@ -54,7 +54,7 @@ describe('Self-Healing Mechanic', () => {
       maxWeaponsSize: 4,
       soulKey: '000000',
       moveSpeed: 1,
-    };
+    }
 
     return {
       level: mockLevel,
@@ -82,127 +82,127 @@ describe('Self-Healing Mechanic', () => {
       playTime: 0,
       lastAction: '',
       selfHealTurnCounter,
-    } as GameState;
-  };
+    } as GameState
+  }
 
   // Helper to simulate self-healing logic (matches turnManager.ts implementation)
   const simulateSelfHealing = (state: GameState, dispatch: jest.Mock) => {
-    const turnsPerHitPoint = state.level.turnsPerHitPoint;
+    const turnsPerHitPoint = state.level.turnsPerHitPoint
     if (turnsPerHitPoint && turnsPerHitPoint > 0) {
-      const currentHP = state.player.hp;
-      const maxHP = state.player.maxHP;
+      const currentHP = state.player.hp
+      const maxHP = state.player.maxHP
 
       if (currentHP < maxHP) {
-        const currentCounter = state.selfHealTurnCounter || 0;
-        const newCounter = currentCounter + 1;
+        const currentCounter = state.selfHealTurnCounter || 0
+        const newCounter = currentCounter + 1
 
         if (newCounter >= turnsPerHitPoint) {
-          const newHP = Math.min(currentHP + 1, maxHP);
+          const newHP = Math.min(currentHP + 1, maxHP)
 
           dispatch({
             type: 'UPDATE_PLAYER',
             payload: {
-              updates: { hp: newHP }
-            }
-          });
+              updates: { hp: newHP },
+            },
+          })
 
           dispatch({
             type: 'UPDATE_SELF_HEAL_COUNTER',
-            payload: { counter: 0 }
-          });
+            payload: { counter: 0 },
+          })
         } else {
           dispatch({
             type: 'UPDATE_SELF_HEAL_COUNTER',
-            payload: { counter: newCounter }
-          });
+            payload: { counter: newCounter },
+          })
         }
       }
     }
-  };
+  }
 
   beforeEach(() => {
-    mockDispatch.mockClear();
-  });
+    mockDispatch.mockClear()
+  })
 
   test('should increment counter but not heal before reaching turnsPerHitPoint', () => {
-    const state = createMockGameState(50, 100, 5, 0);
-    simulateSelfHealing(state, mockDispatch);
+    const state = createMockGameState(50, 100, 5, 0)
+    simulateSelfHealing(state, mockDispatch)
 
     // Should only update counter, not heal
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_SELF_HEAL_COUNTER',
-      payload: { counter: 1 }
-    });
+      payload: { counter: 1 },
+    })
     expect(mockDispatch).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: 'UPDATE_PLAYER' })
-    );
-  });
+    )
+  })
 
   test('should heal 1 HP after reaching turnsPerHitPoint', () => {
-    const state = createMockGameState(50, 100, 5, 4); // Counter at 4, next turn should heal
-    simulateSelfHealing(state, mockDispatch);
+    const state = createMockGameState(50, 100, 5, 4) // Counter at 4, next turn should heal
+    simulateSelfHealing(state, mockDispatch)
 
     // Should heal and reset counter
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
       payload: {
-        updates: { hp: 51 }
-      }
-    });
+        updates: { hp: 51 },
+      },
+    })
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_SELF_HEAL_COUNTER',
-      payload: { counter: 0 }
-    });
-  });
+      payload: { counter: 0 },
+    })
+  })
 
   test('should not heal when player is at max HP', () => {
-    const state = createMockGameState(100, 100, 5, 4);
-    simulateSelfHealing(state, mockDispatch);
+    const state = createMockGameState(100, 100, 5, 4)
+    simulateSelfHealing(state, mockDispatch)
 
     // Should not dispatch anything when at max HP
-    expect(mockDispatch).not.toHaveBeenCalled();
-  });
+    expect(mockDispatch).not.toHaveBeenCalled()
+  })
 
   test('should not exceed max HP when healing', () => {
-    const state = createMockGameState(99, 100, 5, 4); // At 99/100, heal should cap at 100
-    simulateSelfHealing(state, mockDispatch);
+    const state = createMockGameState(99, 100, 5, 4) // At 99/100, heal should cap at 100
+    simulateSelfHealing(state, mockDispatch)
 
     // Should heal to exactly max HP, not beyond
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
       payload: {
-        updates: { hp: 100 }
-      }
-    });
-  });
+        updates: { hp: 100 },
+      },
+    })
+  })
 
   test('should not heal when turnsPerHitPoint is 0', () => {
-    const state = createMockGameState(50, 100, 0, 0);
-    simulateSelfHealing(state, mockDispatch);
+    const state = createMockGameState(50, 100, 0, 0)
+    simulateSelfHealing(state, mockDispatch)
 
     // Should not dispatch when turnsPerHitPoint is 0
-    expect(mockDispatch).not.toHaveBeenCalled();
-  });
+    expect(mockDispatch).not.toHaveBeenCalled()
+  })
 
   test('should not heal when turnsPerHitPoint is undefined', () => {
-    const state = createMockGameState(50, 100, 0, 0);
-    state.level.turnsPerHitPoint = undefined;
-    simulateSelfHealing(state, mockDispatch);
+    const state = createMockGameState(50, 100, 0, 0)
+    state.level.turnsPerHitPoint = undefined
+    simulateSelfHealing(state, mockDispatch)
 
     // Should not dispatch when turnsPerHitPoint is undefined
-    expect(mockDispatch).not.toHaveBeenCalled();
-  });
+    expect(mockDispatch).not.toHaveBeenCalled()
+  })
 
   test('should work with turnsPerHitPoint of 1 (heal every turn)', () => {
-    const state = createMockGameState(50, 100, 1, 0);
-    simulateSelfHealing(state, mockDispatch);
+    const state = createMockGameState(50, 100, 1, 0)
+    simulateSelfHealing(state, mockDispatch)
 
     // Should heal immediately when turnsPerHitPoint is 1
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
       payload: {
-        updates: { hp: 51 }
-      }
-    });
-  });
-});
+        updates: { hp: 51 },
+      },
+    })
+  })
+})

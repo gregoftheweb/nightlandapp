@@ -1,19 +1,19 @@
 // app/sub-games/tesseract/main.tsx
 // Main screen for the tesseract sub-game - placeholder implementation
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { exitSubGame } from "@/lib/subGames";
-import { BackgroundImage } from "../_shared/BackgroundImage";
-import { BottomActionBar } from "../_shared/BottomActionBar";
-import { subGameTheme } from "../_shared/subGameTheme";
+import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { exitSubGame } from '@/lib/subGames'
+import { BackgroundImage } from '../_shared/BackgroundImage'
+import { BottomActionBar } from '../_shared/BottomActionBar'
+import { subGameTheme } from '../_shared/subGameTheme'
 
 export default function TesseractMain() {
   const handleReturn = () => {
     if (__DEV__) {
-      console.log("[Tesseract] Returning to RPG");
+      console.log('[Tesseract] Returning to RPG')
     }
-    exitSubGame({ completed: false });
-  };
+    exitSubGame({ completed: false })
+  }
 
   return (
     <BackgroundImage>
@@ -23,62 +23,56 @@ export default function TesseractMain() {
           <View style={styles.placeholderBox}>
             <Text style={styles.placeholderText}>TESSERACT PUZZLE</Text>
             <Text style={styles.subtitleText}>Placeholder Screen</Text>
-            <Text style={styles.instructionText}>
-              Puzzle artwork and gameplay coming soon
-            </Text>
+            <Text style={styles.instructionText}>Puzzle artwork and gameplay coming soon</Text>
           </View>
         </View>
 
         <BottomActionBar>
-          <TouchableOpacity
-            style={styles.returnButton}
-            onPress={handleReturn}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.returnButton} onPress={handleReturn} activeOpacity={0.7}>
             <Text style={styles.returnButtonText}>Return</Text>
           </TouchableOpacity>
         </BottomActionBar>
       </View>
     </BackgroundImage>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
   contentArea: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 30,
   },
   placeholderBox: {
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     borderWidth: 2,
     borderColor: subGameTheme.blue,
     borderRadius: 16,
     padding: 40,
-    alignItems: "center",
+    alignItems: 'center',
     gap: 16,
   },
   placeholderText: {
     fontSize: 32,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     color: subGameTheme.blue,
-    textAlign: "center",
+    textAlign: 'center',
   },
   subtitleText: {
     fontSize: 20,
-    color: "#ffffff",
-    textAlign: "center",
+    color: '#ffffff',
+    textAlign: 'center',
   },
   instructionText: {
     fontSize: 16,
-    color: "#aaaaaa",
-    textAlign: "center",
-    fontStyle: "italic",
+    color: '#aaaaaa',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   returnButton: {
     paddingVertical: 16,
@@ -95,8 +89,8 @@ const styles = StyleSheet.create({
   },
   returnButtonText: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     color: subGameTheme.black,
-    textAlign: "center",
+    textAlign: 'center',
   },
-});
+})

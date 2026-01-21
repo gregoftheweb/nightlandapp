@@ -11,16 +11,18 @@
 ### A. Config/Static Data (SHOULD BE IN CONFIG MODULES)
 
 #### 1. **Weapons Array** (gameState.ts, lines 30-85)
+
 - **Location:** `modules/gameState.ts:30-85`
 - **Classification:** Config/static data (B)
 - **Issue:** Hardcoded array of 4 weapon definitions with stats (damage, hitBonus, descriptions, effects)
-- **Current Problem:** 
+- **Current Problem:**
   - Weapon data is duplicated - similar weapons exist in `config/objects.ts` as templates
   - Makes it hard to maintain weapon stats in one place
   - Violates single source of truth principle
 - **Recommendation:** Move to `config/weapons.ts` as authoritative weapon catalog
 
 #### 2. **Grid Dimensions** (gameState.ts, lines 87-88)
+
 - **Location:** `modules/gameState.ts:87-88`
 - **Values:** `gridWidth: 400, gridHeight: 400`
 - **Classification:** Config/static data (B)
@@ -29,6 +31,7 @@
 - **Recommendation:** Reference `gameConfig.grid.width/height` instead of hardcoding
 
 #### 3. **Max Attackers** (gameState.ts, line 89)
+
 - **Location:** `modules/gameState.ts:89`
 - **Value:** `maxAttackers: 4`
 - **Classification:** Config/static data (B)
@@ -37,11 +40,12 @@
 - **Recommendation:** Reference `gameConfig.combat.maxAttackers`
 
 #### 4. **Save Version** (gameState.ts, line 90)
+
 - **Location:** `modules/gameState.ts:90`
 - **Value:** `saveVersion: "1.0"`
 - **Classification:** Config/static data (B)
 - **Issue:** Version string should be centralized
-- **Current Problem:** 
+- **Current Problem:**
   - Inconsistent with `config/gameConfig.ts` which has `save.version: "1.0.0"`
   - Version management should be in one place
 - **Recommendation:** Use `gameConfig.save.version`
@@ -73,6 +77,7 @@ These values are properly in gameState as they represent runtime state:
 ### C. Derived State (SHOULD BE COMPUTED VIA FACTORIES)
 
 #### 1. **Level State Initialization** (lines 11-29)
+
 - **Location:** `modules/gameState.ts:11-29`
 - **Classification:** Derived state (C)
 - **Current Implementation:** Directly spreads level config properties
@@ -127,28 +132,31 @@ src/
 
 ### Module Boundaries
 
-#### Config Layer (config/*)
+#### Config Layer (config/\*)
+
 - **Responsibility:** Static data, templates, tuning values
 - **Rules:**
   - No runtime state
   - No side effects
   - Pure data exports
   - Can import types from config/types.ts
-  - CANNOT import from modules/*
+  - CANNOT import from modules/\*
 
-#### Constants Layer (constants/*)
+#### Constants Layer (constants/\*)
+
 - **Responsibility:** Unchanging values, magic numbers
 - **Rules:**
   - Primitive values or simple objects with `as const`
   - No logic, pure data
   - Can be referenced anywhere
 
-#### Modules Layer (modules/*)
+#### Modules Layer (modules/\*)
+
 - **Responsibility:** Runtime systems, state management, game logic
 - **Rules:**
-  - Can import from config/*
-  - Can import from constants/*
-  - Can import other modules/* (avoid circular deps)
+  - Can import from config/\*
+  - Can import from constants/\*
+  - Can import other modules/\* (avoid circular deps)
   - Contains state initialization and mutation logic
 
 ---
@@ -158,26 +166,31 @@ src/
 ### Phase 1: Extract Weapons Config (HIGH PRIORITY)
 
 **Step 1.1:** Create `config/weapons.ts`
+
 - Create new file with weapon catalog
 - Include all 4 weapons from gameState.ts
 - Use consistent structure with existing templates in objects.ts
 - Add helper functions for weapon lookups
 
 **Step 1.2:** Update `config/objects.ts`
+
 - Remove weapon definitions (they'll be in weapons.ts)
 - Keep only non-weapon objects (buildings, consumables, collectibles)
 - Update imports if needed
 
 **Step 1.3:** Update `modules/gameState.ts`
+
 - Import weapon definitions from new config/weapons.ts
 - Replace hardcoded array with imported data
 - Verify structure matches existing Item type
 
 **Step 1.4:** Update `config/player.ts`
+
 - Ensure player weapon references point to config/weapons.ts
 - No hardcoded weapon data in player config
 
 **Step 1.5:** Validate
+
 - Run tests: `npm test`
 - Check for circular dependencies
 - Verify no duplicate weapon definitions
@@ -185,10 +198,12 @@ src/
 ### Phase 2: Consolidate Grid & Combat Config (MEDIUM PRIORITY)
 
 **Step 2.1:** Update `config/gameConfig.ts`
+
 - Ensure grid.width, grid.height, combat.maxAttackers are defined
 - Add any missing default values
 
 **Step 2.2:** Update `modules/gameState.ts`
+
 - Import gameConfig
 - Replace `gridWidth: 400` with `gameConfig.grid.width`
 - Replace `gridHeight: 400` with `gameConfig.grid.height`
@@ -196,17 +211,20 @@ src/
 - Replace `saveVersion: "1.0"` with `gameConfig.save.version`
 
 **Step 2.3:** Validate
+
 - Run tests
 - Verify config values propagate correctly
 
 ### Phase 3: Documentation & Guidelines (LOW PRIORITY)
 
 **Step 3.1:** Create ARCHITECTURE.md
+
 - Document config vs runtime separation
 - Provide examples of where to put new data
 - Explain module boundaries
 
 **Step 3.2:** Add inline comments
+
 - Mark config imports clearly in gameState.ts
 - Add JSDoc to factory functions
 
@@ -223,6 +241,7 @@ This refactor extracts the hardcoded weapons array from gameState.ts into a prop
 **Purpose:** Centralized weapon catalog with all weapon definitions
 
 **Benefits:**
+
 - Single source of truth for weapon stats
 - Easier to balance and modify weapons
 - Consistent with other config files (monsters.ts, objects.ts)
@@ -231,6 +250,7 @@ This refactor extracts the hardcoded weapons array from gameState.ts into a prop
 #### File 2: Update `modules/gameState.ts`
 
 **Changes:**
+
 - Remove hardcoded weapons array (lines 30-85)
 - Import weapons from config/weapons.ts
 - Use imported data in initial state
@@ -240,6 +260,7 @@ This refactor extracts the hardcoded weapons array from gameState.ts into a prop
 #### File 3: Update `config/objects.ts` (if needed)
 
 **Changes:**
+
 - Remove redundant weapon definitions
 - Keep only building/consumable/collectible templates
 
@@ -256,7 +277,7 @@ This refactor extracts the hardcoded weapons array from gameState.ts into a prop
 
 ### Best Practices Going Forward
 
-1. **New Config Data:** Always add to config/* files first
+1. **New Config Data:** Always add to config/\* files first
 2. **Runtime State:** Only in modules/gameState.ts or reducers
 3. **Derived Values:** Compute in factory functions, don't hardcode
 4. **Avoid Duplication:** One authoritative source per data type
@@ -267,6 +288,7 @@ This refactor extracts the hardcoded weapons array from gameState.ts into a prop
 ## Summary
 
 **Main Issues Found:**
+
 1. Weapons array hardcoded in gameState.ts (should be config)
 2. Grid dimensions duplicated (should reference gameConfig)
 3. Combat settings duplicated (should reference gameConfig)

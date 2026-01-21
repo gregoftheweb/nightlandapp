@@ -102,7 +102,7 @@ myNewObject: {
   name: "My Object Name",
   description: "This object does something cool...",
   // ... other properties (width, height, image, etc.)
-  
+
   // Add sub-game config:
   subGame: {
     subGameName: "my-new-puzzle",      // Route name
@@ -151,9 +151,9 @@ export default function MyNewPuzzle() {
     <View style={styles.container}>
       <Text style={styles.title}>My Puzzle Title</Text>
       <Text style={styles.description}>Puzzle description...</Text>
-      
+
       {/* Your puzzle UI here */}
-      
+
       <TouchableOpacity onPress={handleComplete}>
         <Text>Complete</Text>
       </TouchableOpacity>
@@ -174,7 +174,7 @@ Edit `config/levels.ts`:
 
 ```typescript
 objects: [
-  createObjectInstance("myNewObject", { row: 100, col: 200 }),
+  createObjectInstance('myNewObject', { row: 100, col: 200 }),
   // ... other objects
 ]
 ```
@@ -189,9 +189,9 @@ objects: [
 
 ```typescript
 interface SubGameLaunch {
-  subGameName: string;           // Maps to /sub-games/<subGameName>
-  ctaLabel: string;              // Button text in InfoBox
-  requiresPlayerOnObject?: boolean;  // Default: true
+  subGameName: string // Maps to /sub-games/<subGameName>
+  ctaLabel: string // Button text in InfoBox
+  requiresPlayerOnObject?: boolean // Default: true
 }
 ```
 
@@ -207,6 +207,7 @@ isPlayerOnObject(
 ```
 
 Checks if player position falls within object bounds:
+
 - `playerPos.row >= objectPos.row`
 - `playerPos.row < objectPos.row + objectHeight`
 - `playerPos.col >= objectPos.col`
@@ -267,11 +268,12 @@ interface SubGameResult {
 ### Debugging
 
 Enable dev logs:
+
 ```typescript
 if (__DEV__) {
-  console.log('[SubGame] Current state:', state);
-  console.log('[SubGame] Player position:', state.player.position);
-  console.log('[SubGame] Completed flags:', state.subGamesCompleted);
+  console.log('[SubGame] Current state:', state)
+  console.log('[SubGame] Player position:', state.player.position)
+  console.log('[SubGame] Completed flags:', state.subGamesCompleted)
 }
 ```
 
@@ -293,7 +295,7 @@ if (__DEV__) {
 - **Color**: Red (`#ff0000`) matching game theme
 - **Position**: Below description, above close button
 - **Style**: Rounded corners, border, bold text
-- **Behavior**: 
+- **Behavior**:
   - Only visible when `ctaLabel` and `onCtaPress` props provided
   - Closes InfoBox on press
   - Triggers navigation to sub-game
@@ -303,7 +305,7 @@ if (__DEV__) {
 - **Background**: Black (`#000`)
 - **Text**: Red (`#ff0000`)
 - **Layout**: Centered content
-- **Navigation**: 
+- **Navigation**:
   - "I Win" button (or custom completion button)
   - Back button also works (handled by Expo Router)
 
@@ -354,7 +356,7 @@ subGame: {
 
 ```typescript
 // Pass context when entering
-enterSubGame("puzzle", { objectId: "chest-123", difficulty: "hard" });
+enterSubGame('puzzle', { objectId: 'chest-123', difficulty: 'hard' })
 
 // Access in sub-game (if needed)
 // Note: Current implementation doesn't pass context to screen
@@ -365,10 +367,10 @@ enterSubGame("puzzle", { objectId: "chest-123", difficulty: "hard" });
 
 ```typescript
 // In sub-game or RPG screen
-const isCompleted = state.subGamesCompleted?.["aerowreckage-puzzle"];
+const isCompleted = state.subGamesCompleted?.['aerowreckage-puzzle']
 
 if (isCompleted) {
-  console.log("Player already completed this puzzle");
+  console.log('Player already completed this puzzle')
 }
 ```
 
@@ -378,13 +380,13 @@ if (isCompleted) {
 // Track different completion states
 dispatch({
   type: 'SET_SUB_GAME_COMPLETED',
-  payload: { subGameName: 'puzzle-1-easy', completed: true }
-});
+  payload: { subGameName: 'puzzle-1-easy', completed: true },
+})
 
 dispatch({
   type: 'SET_SUB_GAME_COMPLETED',
-  payload: { subGameName: 'puzzle-1-hard', completed: true }
-});
+  payload: { subGameName: 'puzzle-1-hard', completed: true },
+})
 ```
 
 ---
@@ -427,6 +429,7 @@ When adding a new sub-game:
 ## 📞 Support
 
 For questions or issues:
+
 - Check SUBGAME_DESIGN.md for architecture details
 - Review VISUAL_FLOW.md for data flow diagrams
 - See TEST_PLAN.md for testing guidance

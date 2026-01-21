@@ -29,6 +29,6 @@ export const gameConfig = {
 
   // Save metadata
   save: {
-    version: "1.0.0", // version number pulled into config
+    version: '1.0.0', // version number pulled into config
   },
-};
+}

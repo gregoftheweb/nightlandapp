@@ -1,39 +1,37 @@
 // app/sub-games/_shared/persistence.ts
 // Shared persistence layer for sub-games using AsyncStorage
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SubGameSaveData } from './types';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { SubGameSaveData } from './types'
 
-const SUB_GAME_STORAGE_PREFIX = '@nightland:subgame:';
+const SUB_GAME_STORAGE_PREFIX = '@nightland:subgame:'
 
 /**
  * Get saved data for a sub-game
  * @param key - Unique key for the sub-game (e.g., 'aerowreckage-puzzle')
  * @returns Saved data or null if not found
  */
-export async function getSubGameSave<T = any>(
-  key: string
-): Promise<SubGameSaveData<T> | null> {
+export async function getSubGameSave<T = any>(key: string): Promise<SubGameSaveData<T> | null> {
   try {
-    const storageKey = `${SUB_GAME_STORAGE_PREFIX}${key}`;
-    const jsonValue = await AsyncStorage.getItem(storageKey);
-    
+    const storageKey = `${SUB_GAME_STORAGE_PREFIX}${key}`
+    const jsonValue = await AsyncStorage.getItem(storageKey)
+
     if (jsonValue === null) {
-      return null;
+      return null
     }
-    
-    const parsed = JSON.parse(jsonValue) as SubGameSaveData<T>;
-    
+
+    const parsed = JSON.parse(jsonValue) as SubGameSaveData<T>
+
     if (__DEV__) {
-      console.log(`[SubGamePersistence] Loaded save for ${key}:`, parsed);
+      console.log(`[SubGamePersistence] Loaded save for ${key}:`, parsed)
     }
-    
-    return parsed;
+
+    return parsed
   } catch (error) {
     if (__DEV__) {
-      console.error(`[SubGamePersistence] Error loading save for ${key}:`, error);
+      console.error(`[SubGamePersistence] Error loading save for ${key}:`, error)
     }
-    return null;
+    return null
   }
 }
 
@@ -49,22 +47,22 @@ export async function setSubGameSave<T = any>(
   version: number = 1
 ): Promise<void> {
   try {
-    const storageKey = `${SUB_GAME_STORAGE_PREFIX}${key}`;
+    const storageKey = `${SUB_GAME_STORAGE_PREFIX}${key}`
     const saveData: SubGameSaveData<T> = {
       version,
       timestamp: Date.now(),
       data,
-    };
-    
-    const jsonValue = JSON.stringify(saveData);
-    await AsyncStorage.setItem(storageKey, jsonValue);
-    
+    }
+
+    const jsonValue = JSON.stringify(saveData)
+    await AsyncStorage.setItem(storageKey, jsonValue)
+
     if (__DEV__) {
-      console.log(`[SubGamePersistence] Saved data for ${key}:`, saveData);
+      console.log(`[SubGamePersistence] Saved data for ${key}:`, saveData)
     }
   } catch (error) {
     if (__DEV__) {
-      console.error(`[SubGamePersistence] Error saving data for ${key}:`, error);
+      console.error(`[SubGamePersistence] Error saving data for ${key}:`, error)
     }
   }
 }
@@ -75,15 +73,15 @@ export async function setSubGameSave<T = any>(
  */
 export async function clearSubGameSave(key: string): Promise<void> {
   try {
-    const storageKey = `${SUB_GAME_STORAGE_PREFIX}${key}`;
-    await AsyncStorage.removeItem(storageKey);
-    
+    const storageKey = `${SUB_GAME_STORAGE_PREFIX}${key}`
+    await AsyncStorage.removeItem(storageKey)
+
     if (__DEV__) {
-      console.log(`[SubGamePersistence] Cleared save for ${key}`);
+      console.log(`[SubGamePersistence] Cleared save for ${key}`)
     }
   } catch (error) {
     if (__DEV__) {
-      console.error(`[SubGamePersistence] Error clearing save for ${key}:`, error);
+      console.error(`[SubGamePersistence] Error clearing save for ${key}:`, error)
     }
   }
 }
@@ -94,6 +92,6 @@ export async function clearSubGameSave(key: string): Promise<void> {
  * @returns True if save exists, false otherwise
  */
 export async function hasSubGameSave(key: string): Promise<boolean> {
-  const save = await getSubGameSave(key);
-  return save !== null;
+  const save = await getSubGameSave(key)
+  return save !== null
 }

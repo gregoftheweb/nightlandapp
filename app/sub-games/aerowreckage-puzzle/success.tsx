@@ -1,39 +1,39 @@
 // app/sub-games/aerowreckage-puzzle/success.tsx
 // Screen [C]: Success screen after opening the safe
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import { useGameContext } from '@/context/GameContext';
-import { exitSubGame } from '@/lib/subGames';
-import { BackgroundImage } from '../_shared/BackgroundImage';
-import { BottomActionBar } from '../_shared/BottomActionBar';
-import { subGameTheme } from '../_shared/subGameTheme';
-import { usePuzzleState } from './hooks/usePuzzleState';
+import React, { useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
+import { useRouter } from 'expo-router'
+import * as Haptics from 'expo-haptics'
+import { useGameContext } from '@/context/GameContext'
+import { exitSubGame } from '@/lib/subGames'
+import { BackgroundImage } from '../_shared/BackgroundImage'
+import { BottomActionBar } from '../_shared/BottomActionBar'
+import { subGameTheme } from '../_shared/subGameTheme'
+import { usePuzzleState } from './hooks/usePuzzleState'
 
-const bgSuccess = require('@/assets/images/aerowreck-safe3.png');
+const bgSuccess = require('@/assets/images/aerowreck-safe3.png')
 
-const LAZER_PISTOL_WEAPON_ID = 'weapon-lazer-pistol-001';
+const LAZER_PISTOL_WEAPON_ID = 'weapon-lazer-pistol-001'
 
 export default function AeroWreckageSuccess() {
-  const router = useRouter();
-  const { state, dispatch, signalRpgResume } = useGameContext();
-  const { resetPuzzle } = usePuzzleState();
-  const [showAcquiredModal, setShowAcquiredModal] = useState(false);
+  const router = useRouter()
+  const { state, dispatch, signalRpgResume } = useGameContext()
+  const { resetPuzzle } = usePuzzleState()
+  const [showAcquiredModal, setShowAcquiredModal] = useState(false)
 
   // Check if Lazer Pistol is already in inventory
-  const hasLazerPistol = state.player.rangedWeaponInventoryIds.includes(LAZER_PISTOL_WEAPON_ID);
+  const hasLazerPistol = state.player.rangedWeaponInventoryIds.includes(LAZER_PISTOL_WEAPON_ID)
 
   const handlePickUpLazerPistol = () => {
     if (hasLazerPistol) {
       if (__DEV__) {
-        console.log('[AeroWreckageSuccess] Lazer Pistol already acquired');
+        console.log('[AeroWreckageSuccess] Lazer Pistol already acquired')
       }
-      return;
+      return
     }
 
     if (__DEV__) {
-      console.log('[AeroWreckageSuccess] Picking up Lazer Pistol');
+      console.log('[AeroWreckageSuccess] Picking up Lazer Pistol')
     }
 
     // Add weapon to inventory
@@ -42,18 +42,18 @@ export default function AeroWreckageSuccess() {
       payload: {
         id: LAZER_PISTOL_WEAPON_ID,
       },
-    });
+    })
 
     // Haptic feedback
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 
     // Show acquisition modal
-    setShowAcquiredModal(true);
-  };
+    setShowAcquiredModal(true)
+  }
 
   const handleReturnToQuest = () => {
     if (__DEV__) {
-      console.log('[AeroWreckageSuccess] Player returning to quest after success');
+      console.log('[AeroWreckageSuccess] Player returning to quest after success')
     }
 
     // Update gamestate: mark aerowreckage puzzle as completed
@@ -63,22 +63,22 @@ export default function AeroWreckageSuccess() {
         subGameName: 'aerowreckage-puzzle',
         completed: true,
       },
-    });
+    })
 
     // Signal RPG to refresh
-    signalRpgResume();
+    signalRpgResume()
 
     // Exit sub-game and return to RPG
-    exitSubGame({ completed: true });
-  };
+    exitSubGame({ completed: true })
+  }
 
   const handleResetPuzzle = async () => {
     if (__DEV__) {
-      console.log('[AeroWreckageSuccess] Resetting puzzle for testing');
+      console.log('[AeroWreckageSuccess] Resetting puzzle for testing')
     }
-    await resetPuzzle();
-    router.replace('/sub-games/aerowreckage-puzzle/entry' as any);
-  };
+    await resetPuzzle()
+    router.replace('/sub-games/aerowreckage-puzzle/entry' as any)
+  }
 
   return (
     <BackgroundImage source={bgSuccess}>
@@ -97,7 +97,7 @@ export default function AeroWreckageSuccess() {
               <Text style={styles.resetButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
             </TouchableOpacity>
           )}
-          
+
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={[
@@ -109,10 +109,7 @@ export default function AeroWreckageSuccess() {
               activeOpacity={hasLazerPistol ? 1 : 0.7}
               disabled={hasLazerPistol}
             >
-              <Text style={[
-                styles.primaryButtonText,
-                hasLazerPistol && styles.disabledButtonText,
-              ]}>
+              <Text style={[styles.primaryButtonText, hasLazerPistol && styles.disabledButtonText]}>
                 {hasLazerPistol ? 'Acquired' : 'Pick up Lazer Pistol'}
               </Text>
             </TouchableOpacity>
@@ -152,7 +149,7 @@ export default function AeroWreckageSuccess() {
         </Modal>
       </View>
     </BackgroundImage>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -272,4 +269,4 @@ const styles = StyleSheet.create({
     color: subGameTheme.black,
     textAlign: 'center',
   },
-});
+})

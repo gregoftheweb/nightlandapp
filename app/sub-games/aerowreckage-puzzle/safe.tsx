@@ -1,69 +1,61 @@
 // app/sub-games/aerowreckage-puzzle/safe.tsx
 // Screen [B]: Safe cracking puzzle screen
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import { useRouter } from 'expo-router';
-import { exitSubGame } from '@/lib/subGames';
-import { usePuzzleState } from './hooks/usePuzzleState';
-import { Dial } from './components/Dial';
-import { StepIndicator } from './components/StepIndicator';
-import { FeedbackModal } from './components/FeedbackModal';
-import { BackgroundImage } from '../_shared/BackgroundImage';
-import { BottomActionBar } from '../_shared/BottomActionBar';
-import { subGameTheme } from '../_shared/subGameTheme';
-import { AttemptResult } from './types';
+import React, { useEffect, useState } from 'react'
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native'
+import { useRouter } from 'expo-router'
+import { exitSubGame } from '@/lib/subGames'
+import { usePuzzleState } from './hooks/usePuzzleState'
+import { Dial } from './components/Dial'
+import { StepIndicator } from './components/StepIndicator'
+import { FeedbackModal } from './components/FeedbackModal'
+import { BackgroundImage } from '../_shared/BackgroundImage'
+import { BottomActionBar } from '../_shared/BottomActionBar'
+import { subGameTheme } from '../_shared/subGameTheme'
+import { AttemptResult } from './types'
 
-const bgPuzzle = require('@/assets/images/aerowreck-safe2.png');
+const bgPuzzle = require('@/assets/images/aerowreck-safe2.png')
 
 export default function AeroWreckageSafe() {
-  const router = useRouter();
-  const { state, updateAngle, attemptLock, setDragging } = usePuzzleState();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [attemptResult, setAttemptResult] = useState<AttemptResult | null>(null);
+  const router = useRouter()
+  const { state, updateAngle, attemptLock } = usePuzzleState()
+  const [modalVisible, setModalVisible] = useState(false)
+  const [attemptResult, setAttemptResult] = useState<AttemptResult | null>(null)
 
   // When puzzle opens, transition to success page
   useEffect(() => {
     if (state.isOpened) {
-      router.replace('/sub-games/aerowreckage-puzzle/success' as any);
+      router.replace('/sub-games/aerowreckage-puzzle/success' as any)
     }
-  }, [state.isOpened]);
+  }, [state.isOpened])
 
   const handleLeaveWithoutUnlocking = () => {
     if (__DEV__) {
-      console.log('[AeroWreckageSafe] Player leaving without unlocking');
+      console.log('[AeroWreckageSafe] Player leaving without unlocking')
     }
-    exitSubGame({ completed: false });
-  };
+    exitSubGame({ completed: false })
+  }
 
   const handleTryCombination = () => {
-    const result = attemptLock();
-    setAttemptResult(result);
-    setModalVisible(true);
-    
+    const result = attemptLock()
+    setAttemptResult(result)
+    setModalVisible(true)
+
     // If safe opened, navigate to success page after a delay
     if (result.type === 'safe_opened') {
       setTimeout(() => {
-        setModalVisible(false);
-        router.replace('/sub-games/aerowreckage-puzzle/success' as any);
-      }, 2000);
+        setModalVisible(false)
+        router.replace('/sub-games/aerowreckage-puzzle/success' as any)
+      }, 2000)
     }
-  };
+  }
 
   const handleCenterTap = () => {
-    handleTryCombination();
-  };
-
-  const handleDragStart = () => {
-    setDragging(true);
-  };
-
-  const handleDragEnd = () => {
-    setDragging(false);
-  };
+    handleTryCombination()
+  }
 
   const handleModalDismiss = () => {
-    setModalVisible(false);
-  };
+    setModalVisible(false)
+  }
 
   return (
     <BackgroundImage source={bgPuzzle}>
@@ -85,8 +77,6 @@ export default function AeroWreckageSafe() {
               currentNumber={state.currentNumber}
               onAngleChange={updateAngle}
               onCenterTap={handleCenterTap}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
             />
           </View>
 
@@ -100,7 +90,7 @@ export default function AeroWreckageSafe() {
               >
                 <Text style={styles.primaryButtonText}>Try Combination</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={handleLeaveWithoutUnlocking}
@@ -111,7 +101,7 @@ export default function AeroWreckageSafe() {
             </View>
           </BottomActionBar>
         </View>
-        
+
         {/* Feedback Modal */}
         {attemptResult && (
           <FeedbackModal
@@ -124,7 +114,7 @@ export default function AeroWreckageSafe() {
         )}
       </View>
     </BackgroundImage>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -171,4 +161,4 @@ const styles = StyleSheet.create({
     color: subGameTheme.black,
     textAlign: 'center',
   },
-});
+})

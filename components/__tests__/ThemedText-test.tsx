@@ -1,10 +1,10 @@
-import * as React from 'react';
-import renderer from 'react-test-renderer';
+import * as React from 'react'
+import renderer from 'react-test-renderer'
 
-import { ThemedText } from '../ThemedText.tsx';
+import { ThemedText } from '../ThemedText.tsx'
 
 it(`renders correctly`, () => {
-  const tree = renderer.create(<ThemedText>Snapshot test!</ThemedText>).toJSON();
+  const tree = renderer.create(<ThemedText>Snapshot test!</ThemedText>).toJSON()
 
-  expect(tree).toMatchSnapshot();
-});
+  expect(tree).toMatchSnapshot()
+})

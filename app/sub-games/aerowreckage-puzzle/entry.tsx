@@ -1,49 +1,49 @@
 // app/sub-games/aerowreckage-puzzle/entry.tsx
 // Screen [1]: New main entry screen - fuselage interior with 3-way choice
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
-import { exitSubGame } from "@/lib/subGames";
-import { BackgroundImage } from "../_shared/BackgroundImage";
-import { BottomActionBar } from "../_shared/BottomActionBar";
-import { subGameTheme } from "../_shared/subGameTheme";
-import { usePuzzleState } from "./hooks/usePuzzleState";
-import { THEME } from "./theme";
+import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { useRouter } from 'expo-router'
+import { exitSubGame } from '@/lib/subGames'
+import { BackgroundImage } from '../_shared/BackgroundImage'
+import { BottomActionBar } from '../_shared/BottomActionBar'
+import { subGameTheme } from '../_shared/subGameTheme'
+import { usePuzzleState } from './hooks/usePuzzleState'
+import { THEME } from './theme'
 
-const bgFuselage = require("@/assets/images/aerowreck-safe4.png");
+const bgFuselage = require('@/assets/images/aerowreck-safe4.png')
 
 export default function AeroWreckageEntry() {
-  const router = useRouter();
-  const { resetPuzzle } = usePuzzleState();
+  const router = useRouter()
+  const { resetPuzzle } = usePuzzleState()
 
   const handleExploreCockpit = () => {
     if (__DEV__) {
-      console.log("[AeroWreckageEntry] Exploring cockpit");
+      console.log('[AeroWreckageEntry] Exploring cockpit')
     }
-    router.push("/sub-games/aerowreckage-puzzle/cockpit" as any);
-  };
+    router.push('/sub-games/aerowreckage-puzzle/cockpit' as any)
+  }
 
   const handleExitWithoutExploring = () => {
     if (__DEV__) {
-      console.log("[AeroWreckageEntry] Exiting without exploring");
+      console.log('[AeroWreckageEntry] Exiting without exploring')
     }
-    exitSubGame({ completed: false });
-  };
+    exitSubGame({ completed: false })
+  }
 
   const handleExploreRear = () => {
     if (__DEV__) {
-      console.log("[AeroWreckageEntry] Exploring rear section");
+      console.log('[AeroWreckageEntry] Exploring rear section')
     }
-    router.push("/sub-games/aerowreckage-puzzle/rear-entry" as any);
-  };
+    router.push('/sub-games/aerowreckage-puzzle/rear-entry' as any)
+  }
 
   const handleResetPuzzle = async () => {
     if (__DEV__) {
-      console.log("[AeroWreckageEntry] Resetting puzzle for testing");
+      console.log('[AeroWreckageEntry] Resetting puzzle for testing')
     }
-    await resetPuzzle();
+    await resetPuzzle()
     // Stay on entry screen after reset
-  };
+  }
 
   return (
     <BackgroundImage source={bgFuselage}>
@@ -52,19 +52,17 @@ export default function AeroWreckageEntry() {
           <View
             style={{
               flex: 1,
-              alignSelf: "stretch",
-              justifyContent: "flex-start",
-              alignItems: "flex-start",
-              paddingTop: "10%",
+              alignSelf: 'stretch',
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start',
+              paddingTop: '10%',
             }}
           >
             <Text style={styles.flavorText}>
-              Christos stands in the ruined interior of an ancient aerocraft.
-              The hull is torn open in places, revealing glimpses of the
-              desolate wasteland beyond. Ancient panels hang askew, brass
-              fittings dulled by ages of dust. Wires dangle from broken
-              fixtures, and holes in the fuselage let in an eerie silence broken
-              only by distant winds.
+              Christos stands in the ruined interior of an ancient aerocraft. The hull is torn open
+              in places, revealing glimpses of the desolate wasteland beyond. Ancient panels hang
+              askew, brass fittings dulled by ages of dust. Wires dangle from broken fixtures, and
+              holes in the fuselage let in an eerie silence broken only by distant winds.
             </Text>
           </View>
         </View>
@@ -76,9 +74,7 @@ export default function AeroWreckageEntry() {
               onPress={handleResetPuzzle}
               activeOpacity={0.7}
             >
-              <Text style={styles.resetButtonText}>
-                🔄 Reset Puzzle (Dev Only)
-              </Text>
+              <Text style={styles.resetButtonText}>🔄 Reset Puzzle (Dev Only)</Text>
             </TouchableOpacity>
           )}
 
@@ -96,9 +92,7 @@ export default function AeroWreckageEntry() {
               onPress={handleExitWithoutExploring}
               activeOpacity={0.7}
             >
-              <Text style={styles.primaryButtonText}>
-                Exit without exploring
-              </Text>
+              <Text style={styles.primaryButtonText}>Exit without exploring</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -112,37 +106,37 @@ export default function AeroWreckageEntry() {
         </BottomActionBar>
       </View>
     </BackgroundImage>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
   contentArea: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 30,
     gap: 20,
   },
   flavorText: {
     fontSize: 18,
     color: THEME.textPrimary,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 28,
     marginBottom: 10,
   },
   flavorTextSecondary: {
     fontSize: 16,
     color: THEME.textSecondary,
-    textAlign: "center",
+    textAlign: 'center',
     lineHeight: 24,
-    fontStyle: "italic",
+    fontStyle: 'italic',
   },
   buttonRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 14,
   },
   primaryButton: {
@@ -161,15 +155,15 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     color: subGameTheme.black,
-    textAlign: "center",
+    textAlign: 'center',
   },
   resetButton: {
-    alignSelf: "center",
+    alignSelf: 'center',
     paddingVertical: 10,
     paddingHorizontal: 24,
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
     borderRadius: 10,
     borderWidth: 2,
     borderColor: subGameTheme.blue,
@@ -177,8 +171,8 @@ const styles = StyleSheet.create({
   },
   resetButtonText: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: '600',
     color: subGameTheme.blue,
-    textAlign: "center",
+    textAlign: 'center',
   },
-});
+})

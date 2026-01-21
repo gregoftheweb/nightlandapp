@@ -1,17 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
-import { STRINGS } from '../assets/copy/strings';
-import { SPLASH_STRINGS } from "@/assets/copy/splashscreen";
+import React from 'react'
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native'
+import { useRouter } from 'expo-router'
+import { STRINGS } from '../assets/copy/strings'
+import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function SplashScreen() {
-  const router = useRouter();
+  const router = useRouter()
 
   const handlePress = () => {
-    router.replace('/princess');
-  };
+    router.replace('/princess')
+  }
 
   return (
     <ImageBackground
@@ -25,31 +25,31 @@ export default function SplashScreen() {
         </TouchableOpacity>
       </View>
     </ImageBackground>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
     width: SCREEN_WIDTH,
-    height: "100%",
+    height: '100%',
   },
   overlay: {
     flex: 1,
-    justifyContent: "center", // center vertically
-    alignItems: "center",     // center horizontally
+    justifyContent: 'center', // center vertically
+    alignItems: 'center', // center horizontally
   },
   button: {
-    backgroundColor: "transparent",
-    borderColor: "red",
+    backgroundColor: 'transparent',
+    borderColor: 'red',
     borderWidth: 2,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
   buttonText: {
-    color: "red",
+    color: 'red',
     fontSize: 26,
     fontFamily: 'Gabrielle',
   },
-});
+})

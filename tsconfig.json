@@ -9,12 +9,19 @@
       "@assets/*": ["assets/*"],
       "@modules/*": ["modules/*"],
       "@components/*": ["components/*"],
-      "@config/*": ["config/*"],
+      "@config/*": ["config/*"]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts", "components/HapticTab.blech", "components/ThemedText.tsx", "components/ParallaxScrollView.blech", "components/HelloWave.blech", "components/Collapsible.blech", "components/ThemedView.blech", ]
+    "expo-env.d.ts",
+    "components/HapticTab.blech",
+    "components/ThemedText.tsx",
+    "components/ParallaxScrollView.blech",
+    "components/HelloWave.blech",
+    "components/Collapsible.blech",
+    "components/ThemedView.blech"
+  ]
 }

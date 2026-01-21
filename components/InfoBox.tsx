@@ -1,14 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Modal, Animated, TouchableOpacity, NativeSyntheticEvent, NativeTouchEvent, Image, ImageSourcePropType } from 'react-native';
+import React, { useEffect, useState } from 'react'
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  Animated,
+  TouchableOpacity,
+  NativeSyntheticEvent,
+  NativeTouchEvent,
+  Image,
+  ImageSourcePropType,
+} from 'react-native'
 
 interface InfoBoxProps {
-  visible: boolean;
-  name: string;
-  description: string;
-  image?: ImageSourcePropType;
-  onClose: () => void;
-  ctaLabel?: string;
-  onCtaPress?: () => void;
+  visible: boolean
+  name: string
+  description: string
+  image?: ImageSourcePropType
+  onClose: () => void
+  ctaLabel?: string
+  onCtaPress?: () => void
 }
 
 export const InfoBox: React.FC<InfoBoxProps> = ({
@@ -18,20 +29,20 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
   image,
   onClose,
   ctaLabel,
-  onCtaPress
+  onCtaPress,
 }) => {
-  const [opacity] = useState(new Animated.Value(0));
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [opacity] = useState(new Animated.Value(0))
+  const [isModalVisible, setIsModalVisible] = useState(false)
 
   useEffect(() => {
     if (visible) {
-      setIsModalVisible(true);
+      setIsModalVisible(true)
       // Fade in
       Animated.timing(opacity, {
         toValue: 1,
         duration: 200,
         useNativeDriver: true,
-      }).start();
+      }).start()
     } else {
       // Fade out
       Animated.timing(opacity, {
@@ -39,18 +50,18 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
         duration: 200,
         useNativeDriver: true,
       }).start(() => {
-        setIsModalVisible(false);
-      });
+        setIsModalVisible(false)
+      })
     }
-  }, [visible, opacity]);
+  }, [visible, opacity])
 
   const handleClosePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
-    event.stopPropagation();
-    onClose();
-  };
+    event.stopPropagation()
+    onClose()
+  }
 
   if (!isModalVisible) {
-    return null;
+    return null
   }
 
   return (
@@ -67,33 +78,25 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
               <Text style={styles.closeText}>×</Text>
             </TouchableOpacity>
           </View>
-          
+
           {image && (
             <View style={styles.imageContainer}>
-              <Image 
-                source={image} 
-                style={styles.image}
-                resizeMode="contain"
-              />
+              <Image source={image} style={styles.image} resizeMode="contain" />
             </View>
           )}
-          
+
           <Text style={styles.description}>{description}</Text>
-          
+
           {ctaLabel && onCtaPress && (
-            <TouchableOpacity
-              style={styles.ctaButton}
-              onPress={onCtaPress}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.ctaButton} onPress={onCtaPress} activeOpacity={0.7}>
               <Text style={styles.ctaButtonText}>{ctaLabel}</Text>
             </TouchableOpacity>
           )}
         </Animated.View>
       </View>
     </Modal>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   overlay: {
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
   },
   image: {
     maxWidth: 150,
-    maxHeight:150,
+    maxHeight: 150,
     aspectRatio: 1,
   },
   description: {
@@ -178,4 +181,4 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
   },
-});
+})
