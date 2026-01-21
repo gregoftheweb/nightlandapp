@@ -19,7 +19,10 @@
 import React from 'react';
 import { View, Image, ImageBackground, StyleSheet, ImageSourcePropType, useWindowDimensions } from 'react-native';
 
-const puzzleBackground = require('@/assets/images/puzzle-background.png');
+// React Native requires static require() calls for local assets, not string paths.
+// Metro bundler doesn't support TypeScript path aliases (@/) without explicit configuration,
+// so we use a relative path from this file to the asset.
+const puzzleBackground = require('../../../assets/images/puzzle-background.png');
 
 interface BackgroundImageProps {
   source?: ImageSourcePropType;
