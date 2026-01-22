@@ -23,6 +23,11 @@ const puzzleBoard = require('@/assets/images/teseract-puzzle-board.png')
 // TODO: Set DEBUG = false once grid alignment is verified
 const DEBUG = true
 
+// CODE VERSION MARKER - If you see this log, the latest code is running
+if (__DEV__) {
+  console.log('[Tesseract] *** CODE VERSION: 8706ec9+ with enhanced logging ***')
+}
+
 export default function TesseractScreen2() {
   const router = useRouter()
   const { width: screenWidth } = useWindowDimensions()
