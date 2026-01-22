@@ -56,13 +56,8 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
       return
     }
 
-    // Use the item through the effects system
-    const result = useItem(item, {
-      state,
-      dispatch,
-      showDialog,
-      item,
-    })
+    // Use the item through the unified effects system
+    const result = useItem(item, state, dispatch, showDialog)
 
     // Handle the result
     if (result.success) {
