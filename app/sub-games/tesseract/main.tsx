@@ -1,36 +1,57 @@
 // app/sub-games/tesseract/main.tsx
-// Main screen for the tesseract sub-game - placeholder implementation
+// Screen 1: Intro screen for the tesseract sub-game
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { useRouter } from 'expo-router'
 import { exitSubGame } from '@/lib/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 
+const bgScreen1 = require('@/assets/images/teseract-screen1.png')
+
 export default function TesseractMain() {
-  const handleReturn = () => {
+  const router = useRouter()
+
+  const handleLeaveWithoutExploring = () => {
     if (__DEV__) {
-      console.log('[Tesseract] Returning to RPG')
+      console.log('[Tesseract] Leaving without exploring')
     }
     exitSubGame({ completed: false })
   }
 
+  const handleExploreRuins = () => {
+    if (__DEV__) {
+      console.log('[Tesseract] Exploring the stone ruins')
+    }
+    router.push('/sub-games/tesseract/screen2' as any)
+  }
+
   return (
-    <BackgroundImage>
-      {/* TODO: Replace placeholder background with tesseract puzzle artwork when available */}
+    <BackgroundImage source={bgScreen1}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          <View style={styles.placeholderBox}>
-            <Text style={styles.placeholderText}>TESSERACT PUZZLE</Text>
-            <Text style={styles.subtitleText}>Placeholder Screen</Text>
-            <Text style={styles.instructionText}>Puzzle artwork and gameplay coming soon</Text>
-          </View>
+          {/* Content area for potential flavor text or UI elements */}
         </View>
 
         <BottomActionBar>
-          <TouchableOpacity style={styles.returnButton} onPress={handleReturn} activeOpacity={0.7}>
-            <Text style={styles.returnButtonText}>Return</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleLeaveWithoutExploring}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.buttonText}>leave without exploring</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleExploreRuins}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.buttonText}>explore the stone ruins</Text>
+            </TouchableOpacity>
+          </View>
         </BottomActionBar>
       </View>
     </BackgroundImage>
@@ -48,35 +69,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 30,
   },
-  placeholderBox: {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderWidth: 2,
-    borderColor: subGameTheme.blue,
-    borderRadius: 16,
-    padding: 40,
-    alignItems: 'center',
-    gap: 16,
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 14,
   },
-  placeholderText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: subGameTheme.blue,
-    textAlign: 'center',
-  },
-  subtitleText: {
-    fontSize: 20,
-    color: '#ffffff',
-    textAlign: 'center',
-  },
-  instructionText: {
-    fontSize: 16,
-    color: '#aaaaaa',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  returnButton: {
+  button: {
+    flex: 1,
     paddingVertical: 16,
-    paddingHorizontal: 40,
+    paddingHorizontal: 20,
     backgroundColor: subGameTheme.red,
     borderRadius: 14,
     borderWidth: 2,
@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  returnButtonText: {
-    fontSize: 18,
+  buttonText: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: subGameTheme.black,
     textAlign: 'center',
