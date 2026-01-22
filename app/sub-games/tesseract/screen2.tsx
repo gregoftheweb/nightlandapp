@@ -48,6 +48,10 @@ export default function TesseractScreen2() {
     const imageAspectRatio = 1024 / 972
     const containerAspectRatio = width / height
     
+    if (__DEV__) {
+      console.log(`[Tesseract] Image aspect ratio: ${imageAspectRatio.toFixed(3)}, Container aspect ratio: ${containerAspectRatio.toFixed(3)}`)
+    }
+    
     let actualWidth: number
     let actualHeight: number
     let offsetX: number
@@ -59,12 +63,18 @@ export default function TesseractScreen2() {
       actualWidth = height * imageAspectRatio
       offsetX = (width - actualWidth) / 2
       offsetY = 0
+      if (__DEV__) {
+        console.log(`[Tesseract] Layout: Container wider, image constrained by height`)
+      }
     } else {
       // Container is taller - image will be constrained by width
       actualWidth = width
       actualHeight = width / imageAspectRatio
       offsetX = 0
       offsetY = (height - actualHeight) / 2
+      if (__DEV__) {
+        console.log(`[Tesseract] Layout: Container taller, image constrained by width`)
+      }
     }
     
     if (__DEV__) {
@@ -77,20 +87,43 @@ export default function TesseractScreen2() {
     // Using a small gap (0.005 = 0.5%) to avoid overlapping the grout lines between tiles
     const normalizedTiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0.005)
     
+    if (__DEV__) {
+      console.log(`[Tesseract] GRID_RECT: left=${GRID_RECT.left}, top=${GRID_RECT.top}, right=${GRID_RECT.right}, bottom=${GRID_RECT.bottom}`)
+    }
+    
     // Convert to pixel coordinates using ACTUAL image dimensions
     const pixelTiles = tilesToPixelCoords(normalizedTiles, actualWidth, actualHeight)
     setTiles(pixelTiles)
     
     if (__DEV__) {
       console.log(`[Tesseract] Generated ${pixelTiles.length} tiles`)
+      if (pixelTiles.length > 0) {
+        const firstTile = pixelTiles[0]
+        const lastTile = pixelTiles[pixelTiles.length - 1]
+        console.log(`[Tesseract] First tile (0,0): left=${firstTile.leftPx?.toFixed(1)}, top=${firstTile.topPx?.toFixed(1)}, right=${firstTile.rightPx?.toFixed(1)}, bottom=${firstTile.bottomPx?.toFixed(1)}`)
+        console.log(`[Tesseract] Last tile (4,4): left=${lastTile.leftPx?.toFixed(1)}, top=${lastTile.topPx?.toFixed(1)}, right=${lastTile.rightPx?.toFixed(1)}, bottom=${lastTile.bottomPx?.toFixed(1)}`)
+      }
     }
   }, [])
 
   // Handle tap on the puzzle board
   const handlePress = useCallback((event: any) => {
-    if (!imageLayout || !actualImageSize || tiles.length === 0) return
+    if (__DEV__) {
+      console.log(`[Tesseract] handlePress called - imageLayout: ${!!imageLayout}, actualImageSize: ${!!actualImageSize}, tiles: ${tiles.length}`)
+    }
+    
+    if (!imageLayout || !actualImageSize || tiles.length === 0) {
+      if (__DEV__) {
+        console.log(`[Tesseract] Early return - missing data`)
+      }
+      return
+    }
 
     const { locationX, locationY } = event.nativeEvent
+    
+    if (__DEV__) {
+      console.log(`[Tesseract] actualImageSize: width=${actualImageSize.width.toFixed(1)}, height=${actualImageSize.height.toFixed(1)}, offsetX=${actualImageSize.offsetX.toFixed(1)}, offsetY=${actualImageSize.offsetY.toFixed(1)}`)
+    }
     
     // Adjust coordinates for image offset within container
     const adjustedX = locationX - actualImageSize.offsetX
@@ -98,16 +131,21 @@ export default function TesseractScreen2() {
     
     if (__DEV__) {
       console.log(`[Tesseract] Tap at: ${locationX.toFixed(1)}, ${locationY.toFixed(1)} -> adjusted: ${adjustedX.toFixed(1)}, ${adjustedY.toFixed(1)}`)
+      console.log(`[Tesseract] Image bounds check: X in [0, ${actualImageSize.width.toFixed(1)}], Y in [0, ${actualImageSize.height.toFixed(1)}]`)
     }
 
     // Check if tap is within actual image bounds
     if (adjustedX < 0 || adjustedX > actualImageSize.width || 
         adjustedY < 0 || adjustedY > actualImageSize.height) {
       if (__DEV__) {
-        console.log('[Tesseract] Tap outside image bounds')
+        console.log(`[Tesseract] Tap outside image bounds: adjustedX=${adjustedX.toFixed(1)}, adjustedY=${adjustedY.toFixed(1)}`)
       }
       setSelectedTile(null)
       return
+    }
+
+    if (__DEV__) {
+      console.log(`[Tesseract] Tap within image bounds, checking tiles...`)
     }
 
     const tappedTile = getTileAtPoint(tiles, adjustedX, adjustedY)
@@ -120,7 +158,7 @@ export default function TesseractScreen2() {
       setLastTappedTile(tappedTile)
     } else {
       if (__DEV__) {
-        console.log('[Tesseract] Tap outside tile grid')
+        console.log('[Tesseract] Tap outside tile grid (within image but not on any tile)')
       }
       setSelectedTile(null)
     }
