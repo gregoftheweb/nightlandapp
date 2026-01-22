@@ -40,7 +40,8 @@ export default function TesseractScreen2() {
     setImageLayout({ width, height })
     
     // Generate tiles with normalized coordinates
-    const normalizedTiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0.01) // 1% gap
+    // Using a small gap (0.005 = 0.5%) to avoid overlapping the grout lines between tiles
+    const normalizedTiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0.005)
     
     // Convert to pixel coordinates
     const pixelTiles = tilesToPixelCoords(normalizedTiles, width, height)

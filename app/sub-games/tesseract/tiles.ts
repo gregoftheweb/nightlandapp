@@ -46,17 +46,20 @@ export interface GridRect {
  * These values define where the letter tile field sits within the puzzle board image.
  * Tuned to match the visual layout of teseract-puzzle-board.png
  * 
- * Initial estimate (will be refined visually):
- * - left: 0.10 (10% from left edge)
- * - top: 0.10 (10% from top edge)
- * - right: 0.90 (10% from right edge)
- * - bottom: 0.88 (12% from bottom edge, accounting for slightly larger bottom border)
+ * The puzzle board has a stone/brick border around a 5x5 grid of letter tiles.
+ * These normalized coordinates (0..1) define the bounds of the inner tile field:
+ * - left: 0.075 (~7.5% from left edge to start of first tile column)
+ * - top: 0.065 (~6.5% from top edge to start of first tile row)
+ * - right: 0.925 (~7.5% from right edge to end of last tile column)
+ * - bottom: 0.89 (~11% from bottom edge to end of last tile row, slightly larger border)
+ * 
+ * Note: Use DEBUG mode in screen2.tsx to visually verify alignment and fine-tune if needed.
  */
 export const GRID_RECT: GridRect = {
-  left: 0.10,
-  top: 0.10,
-  right: 0.90,
-  bottom: 0.88,
+  left: 0.075,
+  top: 0.065,
+  right: 0.925,
+  bottom: 0.89,
 }
 
 /**
