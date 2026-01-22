@@ -18,6 +18,9 @@ import {
 const puzzleBoard = require('@/assets/images/teseract-puzzle-board.png')
 
 // Debug mode: Set to true to see grid overlay (dev only)
+// When enabled, shows yellow grid rect outline and magenta tile outlines with row,col labels
+// IMPORTANT: Set to false before production deployment to hide debug visualizations
+// TODO: Set DEBUG = false once grid alignment is verified
 const DEBUG = true
 
 export default function TesseractScreen2() {
