@@ -225,25 +225,23 @@ const handleObjectEffects = (
     }
   }
 
+  // Apply each effect through unified effects system
+  const { applyEffect } = require('./effects')
+  
   obj.effects.forEach((effect: any) => {
-    dispatch({
-      type: 'TRIGGER_EFFECT',
-      payload: { effect, position: playerPos },
-    })
-
-    switch (effect.type) {
-      case 'swarm':
-        console.log(`A swarm of ${effect.monsterType}s emerges!`)
-        break
-      case 'hide':
-        console.log(`The ${obj.name} cloaks you in silence.`)
-        break
-      case 'heal':
-        console.log(`The ${obj.name} restores your strength!`)
-        break
-      case 'recuperate':
-        console.log(`The ${obj.name} restores ${effect.amount || 5} HP!`)
-        break
+    const context = {
+      state,
+      dispatch,
+      sourceType: 'object' as const,
+      sourceId: obj.shortName,
+      trigger: 'onEnterTile' as const,
+      position: playerPos,
+    }
+    
+    const result = applyEffect(effect, context)
+    
+    if (result.success) {
+      console.log(`✅ Object effect applied: ${result.message}`)
     }
   })
 
@@ -281,16 +279,25 @@ const handleGreatPowerEffects = (
       payload: { message: deathMessage },
     })
 
+    // Apply effects through unified effects system
+    const { applyEffect } = require('./effects')
+    
     greatPower.effects.forEach((effect: any) => {
-      dispatch({
-        type: 'TRIGGER_EFFECT',
-        payload: {
-          effect,
-          position: playerPos,
-          source: 'greatPower',
-          message: deathMessage,
-        },
-      })
+      const context = {
+        state,
+        dispatch,
+        sourceType: 'object' as const,
+        sourceId: greatPower.id,
+        trigger: 'onGreatPowerCollision' as const,
+        position: playerPos,
+      }
+      
+      // Add death message to effect description if soulsuck
+      if (effect.type === 'soulsuck' && !effect.description) {
+        effect.description = deathMessage
+      }
+      
+      applyEffect(effect, context)
     })
   }
 }
@@ -303,20 +310,23 @@ const handleNonCollisionObjectEffects = (
 ) => {
   if (!obj.collisionEffects) return
 
+  // Apply effects through unified effects system
+  const { applyEffect } = require('./effects')
+  
   obj.collisionEffects.forEach((effect) => {
-    dispatch({
-      type: 'TRIGGER_EFFECT',
-      payload: { effect, position: playerPos },
-    })
-
-    switch (effect.type) {
-      case 'heal':
-        console.log(`The ${obj.name} heals you for ${effect.value} HP!`)
-        break
-      case 'poison':
-        console.log(`The ${obj.name} poisons you!`)
-        break
-      // ... other effect types
+    const context = {
+      state,
+      dispatch,
+      sourceType: 'object' as const,
+      sourceId: obj.shortName,
+      trigger: 'onEnterTile' as const,
+      position: playerPos,
+    }
+    
+    const result = applyEffect(effect, context)
+    
+    if (result.success) {
+      console.log(`✅ Non-collision object effect applied: ${result.message}`)
     }
   })
 }

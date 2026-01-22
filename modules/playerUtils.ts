@@ -74,6 +74,10 @@ export const checkItemInteractions = (
 }
 
 // ==================== OBJECT INTERACTION ====================
+/**
+ * Check for object interactions and apply effects through unified effects system.
+ * This function detects collision with objects and triggers their effects.
+ */
 export const checkObjectInteractions = (
   state: GameState,
   dispatch: (action: any) => void,
@@ -159,27 +163,27 @@ export const checkObjectInteractions = (
     return
   }
 
+  // Apply each effect through the unified effects system
   objectAtPosition.effects.forEach((effect: any) => {
-    console.log('Triggering effect:', effect)
+    console.log('Triggering effect through unified system:', effect)
 
-    dispatch({
-      type: 'TRIGGER_EFFECT',
-      payload: { effect, position: playerPos },
-    })
+    // Import and use the unified applyEffect function
+    const { applyEffect } = require('./effects')
+    
+    const context = {
+      state,
+      dispatch,
+      showDialog,
+      sourceType: 'object' as const,
+      sourceId: objectAtPosition.shortName,
+      trigger: 'onEnterTile' as const,
+      position: playerPos,
+    }
 
-    switch (effect.type) {
-      case 'swarm':
-        console.log(`A swarm of ${effect.monsterType}s emerges from the ${objectAtPosition.name}!`)
-        break
-      case 'hide':
-        console.log(`The ${objectAtPosition.name} cloaks you in silence.`)
-        break
-      case 'heal':
-        console.log(`The ${objectAtPosition.name} restores your strength!`)
-        break
-      default:
-        console.log(`Unhandled effect type: ${effect.type}`)
-        break
+    const result = applyEffect(effect, context)
+    
+    if (result.success && result.message) {
+      console.log(`Effect applied: ${result.message}`)
     }
   })
 
