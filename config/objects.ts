@@ -1,7 +1,7 @@
 // config/objects.ts
 import { GameObject, NonCollisionObject } from './types'
 
-import redoubtImg from '@assets/images/redoubt.png'
+import redoubtImg from '@assets/images/redoubt2.png'
 import riverIMG from '@assets/images/river1.png'
 import cursedTotemIMG from '@assets/images/cursedtotem.png'
 import petrifiedWillowIMG from '@assets/images/petrifiedWillow.png'
@@ -267,7 +267,7 @@ export const buildings: Record<string, GameObject> = {
     category: 'building',
     name: 'Tesseract',
     description:
-      'A mysterious geometric structure that seems to defy the laws of space itself. Its crystalline surfaces shimmer with an otherworldly light, hinting at dimensions beyond mortal comprehension.',
+      'An ancient circle of black stone, steeped in a will that is not its own. Those who seek to command its power gain forbidden knowledge… or vanish without even the mercy of death.',
     width: 6,
     height: 6,
     image: tesseractIMG,
