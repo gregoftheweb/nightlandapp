@@ -30,6 +30,7 @@ export default function TesseractScreen2() {
 
   // Image and tile state
   const [imageLayout, setImageLayout] = useState<{ width: number; height: number } | null>(null)
+  const [actualImageSize, setActualImageSize] = useState<{ width: number; height: number; offsetX: number; offsetY: number } | null>(null)
   const [tiles, setTiles] = useState<Tile[]>([])
   const [selectedTile, setSelectedTile] = useState<Tile | null>(null)
   const [lastTappedTile, setLastTappedTile] = useState<Tile | null>(null)
@@ -42,12 +43,42 @@ export default function TesseractScreen2() {
     }
     setImageLayout({ width, height })
     
+    // Calculate actual rendered image size and position within container
+    // The actual puzzle board image is 1024x972 pixels
+    const imageAspectRatio = 1024 / 972
+    const containerAspectRatio = width / height
+    
+    let actualWidth: number
+    let actualHeight: number
+    let offsetX: number
+    let offsetY: number
+    
+    if (containerAspectRatio > imageAspectRatio) {
+      // Container is wider - image will be constrained by height
+      actualHeight = height
+      actualWidth = height * imageAspectRatio
+      offsetX = (width - actualWidth) / 2
+      offsetY = 0
+    } else {
+      // Container is taller - image will be constrained by width
+      actualWidth = width
+      actualHeight = width / imageAspectRatio
+      offsetX = 0
+      offsetY = (height - actualHeight) / 2
+    }
+    
+    if (__DEV__) {
+      console.log(`[Tesseract] Actual image size: ${actualWidth.toFixed(1)}x${actualHeight.toFixed(1)}, offset: (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`)
+    }
+    
+    setActualImageSize({ width: actualWidth, height: actualHeight, offsetX, offsetY })
+    
     // Generate tiles with normalized coordinates
     // Using a small gap (0.005 = 0.5%) to avoid overlapping the grout lines between tiles
     const normalizedTiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0.005)
     
-    // Convert to pixel coordinates
-    const pixelTiles = tilesToPixelCoords(normalizedTiles, width, height)
+    // Convert to pixel coordinates using ACTUAL image dimensions
+    const pixelTiles = tilesToPixelCoords(normalizedTiles, actualWidth, actualHeight)
     setTiles(pixelTiles)
     
     if (__DEV__) {
@@ -57,15 +88,29 @@ export default function TesseractScreen2() {
 
   // Handle tap on the puzzle board
   const handlePress = useCallback((event: any) => {
-    if (!imageLayout || tiles.length === 0) return
+    if (!imageLayout || !actualImageSize || tiles.length === 0) return
 
     const { locationX, locationY } = event.nativeEvent
     
+    // Adjust coordinates for image offset within container
+    const adjustedX = locationX - actualImageSize.offsetX
+    const adjustedY = locationY - actualImageSize.offsetY
+    
     if (__DEV__) {
-      console.log(`[Tesseract] Tap at: ${locationX.toFixed(1)}, ${locationY.toFixed(1)}`)
+      console.log(`[Tesseract] Tap at: ${locationX.toFixed(1)}, ${locationY.toFixed(1)} -> adjusted: ${adjustedX.toFixed(1)}, ${adjustedY.toFixed(1)}`)
     }
 
-    const tappedTile = getTileAtPoint(tiles, locationX, locationY)
+    // Check if tap is within actual image bounds
+    if (adjustedX < 0 || adjustedX > actualImageSize.width || 
+        adjustedY < 0 || adjustedY > actualImageSize.height) {
+      if (__DEV__) {
+        console.log('[Tesseract] Tap outside image bounds')
+      }
+      setSelectedTile(null)
+      return
+    }
+
+    const tappedTile = getTileAtPoint(tiles, adjustedX, adjustedY)
     
     if (tappedTile) {
       if (__DEV__) {
@@ -79,7 +124,7 @@ export default function TesseractScreen2() {
       }
       setSelectedTile(null)
     }
-  }, [imageLayout, tiles])
+  }, [imageLayout, actualImageSize, tiles])
 
   const handleLeaveCourtyard = () => {
     if (__DEV__) {
@@ -101,7 +146,7 @@ export default function TesseractScreen2() {
             />
             
             {/* Interactive overlay for tap handling */}
-            {imageLayout && (
+            {imageLayout && actualImageSize && (
               <Pressable
                 style={[
                   styles.pressableOverlay,
@@ -116,8 +161,8 @@ export default function TesseractScreen2() {
                     style={[
                       styles.tileBorder,
                       {
-                        left: selectedTile.leftPx,
-                        top: selectedTile.topPx,
+                        left: (selectedTile.leftPx || 0) + actualImageSize.offsetX,
+                        top: (selectedTile.topPx || 0) + actualImageSize.offsetY,
                         width: selectedTile.widthPx,
                         height: selectedTile.heightPx,
                       }
@@ -132,8 +177,8 @@ export default function TesseractScreen2() {
                     style={[
                       styles.tileCircle,
                       {
-                        left: (lastTappedTile.leftPx || 0) + (lastTappedTile.widthPx || 0) / 2 - 15,
-                        top: (lastTappedTile.topPx || 0) + (lastTappedTile.heightPx || 0) / 2 - 15,
+                        left: (lastTappedTile.leftPx || 0) + (lastTappedTile.widthPx || 0) / 2 - 15 + actualImageSize.offsetX,
+                        top: (lastTappedTile.topPx || 0) + (lastTappedTile.heightPx || 0) / 2 - 15 + actualImageSize.offsetY,
                       }
                     ]}
                   />
@@ -148,10 +193,10 @@ export default function TesseractScreen2() {
                       style={[
                         styles.debugGridRect,
                         {
-                          left: GRID_RECT.left * imageLayout.width,
-                          top: GRID_RECT.top * imageLayout.height,
-                          width: (GRID_RECT.right - GRID_RECT.left) * imageLayout.width,
-                          height: (GRID_RECT.bottom - GRID_RECT.top) * imageLayout.height,
+                          left: GRID_RECT.left * actualImageSize.width + actualImageSize.offsetX,
+                          top: GRID_RECT.top * actualImageSize.height + actualImageSize.offsetY,
+                          width: (GRID_RECT.right - GRID_RECT.left) * actualImageSize.width,
+                          height: (GRID_RECT.bottom - GRID_RECT.top) * actualImageSize.height,
                         }
                       ]}
                     />
@@ -164,8 +209,8 @@ export default function TesseractScreen2() {
                         style={[
                           styles.debugTileOutline,
                           {
-                            left: tile.leftPx,
-                            top: tile.topPx,
+                            left: (tile.leftPx || 0) + actualImageSize.offsetX,
+                            top: (tile.topPx || 0) + actualImageSize.offsetY,
                             width: tile.widthPx,
                             height: tile.heightPx,
                           }
