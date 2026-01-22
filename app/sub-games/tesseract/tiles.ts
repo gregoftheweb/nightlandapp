@@ -57,9 +57,9 @@ export interface GridRect {
  */
 export const GRID_RECT: GridRect = {
   left: 0.095,
-  top: 0.29,
+  top: 0.11,
   right: 0.90,
-  bottom: 0.70,
+  bottom: 0.87,
 }
 
 /**
