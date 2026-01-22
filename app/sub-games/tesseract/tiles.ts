@@ -48,18 +48,18 @@ export interface GridRect {
  * 
  * The puzzle board has a stone/brick border around a 5x5 grid of letter tiles.
  * These normalized coordinates (0..1) define the bounds of the inner tile field:
- * - left: 0.075 (~7.5% from left edge to start of first tile column)
- * - top: 0.065 (~6.5% from top edge to start of first tile row)
- * - right: 0.925 (~7.5% from right edge to end of last tile column)
- * - bottom: 0.89 (~11% from bottom edge to end of last tile row, slightly larger border)
+ * - left: 0.095 (~9.5% from left edge to start of first tile column)
+ * - top: 0.29 (~29% from top edge to start of first tile row)
+ * - right: 0.90 (~10% from right edge to end of last tile column)
+ * - bottom: 0.70 (~30% from bottom edge to end of last tile row)
  * 
- * Note: Use DEBUG mode in screen2.tsx to visually verify alignment and fine-tune if needed.
+ * Note: These values were visually calibrated using DEBUG mode in screen2.tsx.
  */
 export const GRID_RECT: GridRect = {
-  left: 0.075,
-  top: 0.065,
-  right: 0.925,
-  bottom: 0.89,
+  left: 0.095,
+  top: 0.29,
+  right: 0.90,
+  bottom: 0.70,
 }
 
 /**

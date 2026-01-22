@@ -112,6 +112,7 @@ export default function TesseractScreen2() {
                 {/* Green border on selected tile */}
                 {selectedTile && selectedTile.leftPx !== undefined && (
                   <View
+                    pointerEvents="none"
                     style={[
                       styles.tileBorder,
                       {
@@ -127,6 +128,7 @@ export default function TesseractScreen2() {
                 {/* Green circle on last tapped tile */}
                 {lastTappedTile && lastTappedTile.leftPx !== undefined && (
                   <View
+                    pointerEvents="none"
                     style={[
                       styles.tileCircle,
                       {
@@ -142,6 +144,7 @@ export default function TesseractScreen2() {
                   <>
                     {/* Grid rect outline */}
                     <View
+                      pointerEvents="none"
                       style={[
                         styles.debugGridRect,
                         {
@@ -157,6 +160,7 @@ export default function TesseractScreen2() {
                     {tiles.map((tile) => (
                       <View
                         key={tile.id}
+                        pointerEvents="none"
                         style={[
                           styles.debugTileOutline,
                           {
