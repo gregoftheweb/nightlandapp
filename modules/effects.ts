@@ -98,6 +98,9 @@ export interface EffectResult {
  * HEAL EFFECT
  * Restores HP to the player, capped at maxHP.
  * Used by: health potions, healing pools, recuperation zones
+ * 
+ * Note: Supports both 'value' and 'amount' fields for backward compatibility
+ * with different config sources (objects.ts uses 'value', some items may use 'amount')
  */
 const executeHealEffect = (effect: Effect, context: EffectContext): EffectResult => {
   const { state, dispatch, showDialog } = context
@@ -166,6 +169,8 @@ const executeHealEffect = (effect: Effect, context: EffectContext): EffectResult
  * RECUPERATE EFFECT
  * Similar to heal, but only heals if player is below max HP.
  * Used by: safe zones, rest areas like The Last Redoubt
+ * 
+ * Note: Supports both 'value' and 'amount' fields for backward compatibility
  */
 const executeRecuperateEffect = (effect: Effect, context: EffectContext): EffectResult => {
   const { state, dispatch, showDialog } = context
@@ -436,6 +441,8 @@ const executeSoulsuckEffect = (effect: Effect, context: EffectContext): EffectRe
  * - Can be extended to apply DOT (damage over time) status
  * 
  * Used by: poison pools, toxic enemies, cursed items
+ * 
+ * Note: Supports both 'value' and 'amount' fields for backward compatibility
  */
 const executePoisonEffect = (effect: Effect, context: EffectContext): EffectResult => {
   const { state, dispatch, showDialog } = context

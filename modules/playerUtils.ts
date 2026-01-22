@@ -1,5 +1,6 @@
 // modules/playerUtils.ts - Interaction utilities
 import { GameState, Position } from '../config/types'
+import { applyEffect } from './effects'
 
 // ==================== ITEM INTERACTION ====================
 
@@ -166,9 +167,6 @@ export const checkObjectInteractions = (
   // Apply each effect through the unified effects system
   objectAtPosition.effects.forEach((effect: any) => {
     console.log('Triggering effect through unified system:', effect)
-
-    // Import and use the unified applyEffect function
-    const { applyEffect } = require('./effects')
     
     const context = {
       state,

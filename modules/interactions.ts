@@ -3,6 +3,7 @@ import { GameState, Position, Item, NonCollisionObject } from '../config/types'
 import { createItemInstance } from '../config/levels'
 import { COMBAT_STRINGS } from '@assets/copy/combat'
 import { buildSpatialGrid, checkOverlap } from './spacialGrid'
+import { applyEffect } from './effects'
 
 // ==================== ITEM INTERACTIONS ====================
 
@@ -226,8 +227,6 @@ const handleObjectEffects = (
   }
 
   // Apply each effect through unified effects system
-  const { applyEffect } = require('./effects')
-  
   obj.effects.forEach((effect: any) => {
     const context = {
       state,
@@ -280,8 +279,6 @@ const handleGreatPowerEffects = (
     })
 
     // Apply effects through unified effects system
-    const { applyEffect } = require('./effects')
-    
     greatPower.effects.forEach((effect: any) => {
       const context = {
         state,
@@ -311,8 +308,6 @@ const handleNonCollisionObjectEffects = (
   if (!obj.collisionEffects) return
 
   // Apply effects through unified effects system
-  const { applyEffect } = require('./effects')
-  
   obj.collisionEffects.forEach((effect) => {
     const context = {
       state,
