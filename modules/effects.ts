@@ -104,7 +104,7 @@ export interface EffectResult {
  */
 const executeHealEffect = (effect: Effect, context: EffectContext): EffectResult => {
   const { state, dispatch, showDialog } = context
-  const healAmount = (effect.value || effect.amount || 0)
+  const healAmount = effect.value || effect.amount || 0
 
   logIfDev('🩹 Executing heal effect:', { healAmount, currentHP: state.player.hp, maxHP: state.player.maxHP })
 
@@ -174,7 +174,7 @@ const executeHealEffect = (effect: Effect, context: EffectContext): EffectResult
  */
 const executeRecuperateEffect = (effect: Effect, context: EffectContext): EffectResult => {
   const { state, dispatch, showDialog } = context
-  const healAmount = (effect.value || effect.amount || 5)
+  const healAmount = effect.value || effect.amount || 5
 
   logIfDev('💤 Executing recuperate effect:', { healAmount, currentHP: state.player.hp, maxHP: state.player.maxHP })
 

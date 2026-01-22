@@ -280,6 +280,7 @@ const handleGreatPowerEffects = (
 
     // Apply effects through unified effects system
     greatPower.effects.forEach((effect: any) => {
+      // Create effect context with death message for soulsuck effects
       const context = {
         state,
         dispatch,
@@ -289,12 +290,13 @@ const handleGreatPowerEffects = (
         position: playerPos,
       }
       
-      // Add death message to effect description if soulsuck
-      if (effect.type === 'soulsuck' && !effect.description) {
-        effect.description = deathMessage
-      }
+      // For soulsuck effects, pass death message through modified effect object
+      // (create new object to avoid mutating config)
+      const effectToApply = effect.type === 'soulsuck' && !effect.description
+        ? { ...effect, description: deathMessage }
+        : effect
       
-      applyEffect(effect, context)
+      applyEffect(effectToApply, context)
     })
   }
 }
