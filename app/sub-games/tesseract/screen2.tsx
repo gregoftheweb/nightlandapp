@@ -1,7 +1,7 @@
 // app/sub-games/tesseract/screen2.tsx
 // Screen 2: Puzzle board screen for the tesseract sub-game
-import React, { useState, useCallback } from 'react'
-import { View, Image, StyleSheet, TouchableOpacity, Text, useWindowDimensions, Pressable } from 'react-native'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
+import { View, Image, StyleSheet, TouchableOpacity, Text, useWindowDimensions, Pressable, Animated } from 'react-native'
 import { useRouter } from 'expo-router'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
@@ -39,6 +39,22 @@ export default function TesseractScreen2() {
   const [tiles, setTiles] = useState<Tile[]>([])
   const [selectedTile, setSelectedTile] = useState<Tile | null>(null)
   const [lastTappedTile, setLastTappedTile] = useState<Tile | null>(null)
+  
+  // Animation for the green circle fade-out
+  const circleOpacity = useRef(new Animated.Value(0)).current
+  
+  // Trigger fade-out animation when a tile is tapped
+  useEffect(() => {
+    if (lastTappedTile) {
+      // Reset and start fade-out animation
+      circleOpacity.setValue(1)
+      Animated.timing(circleOpacity, {
+        toValue: 0,
+        duration: 2000, // 2 seconds
+        useNativeDriver: true,
+      }).start()
+    }
+  }, [lastTappedTile, circleOpacity])
 
   // Handle image layout to get actual rendered dimensions
   const handleImageLayout = useCallback((event: any) => {
@@ -215,13 +231,14 @@ export default function TesseractScreen2() {
                 
                 {/* Green circle on last tapped tile */}
                 {lastTappedTile && lastTappedTile.leftPx !== undefined && (
-                  <View
+                  <Animated.View
                     pointerEvents="none"
                     style={[
                       styles.tileCircle,
                       {
-                        left: (lastTappedTile.leftPx || 0) + (lastTappedTile.widthPx || 0) / 2 - 15 + actualImageSize.offsetX,
-                        top: (lastTappedTile.topPx || 0) + (lastTappedTile.heightPx || 0) / 2 - 15 + actualImageSize.offsetY,
+                        left: (lastTappedTile.leftPx || 0) + (lastTappedTile.widthPx || 0) / 2 - 18 + actualImageSize.offsetX,
+                        top: (lastTappedTile.topPx || 0) + (lastTappedTile.heightPx || 0) / 2 - 18 + actualImageSize.offsetY,
+                        opacity: circleOpacity,
                       }
                     ]}
                   />
@@ -317,9 +334,9 @@ const styles = StyleSheet.create({
   },
   tileCircle: {
     position: 'absolute',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 36, // 20% bigger than original 30px
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(0, 255, 0, 0.5)',
   },
   // Debug styles (dev only)
