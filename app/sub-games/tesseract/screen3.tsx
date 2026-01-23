@@ -3,6 +3,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
@@ -11,14 +12,24 @@ const bgScreen3 = require('@/assets/images/teseract-screen3.png')
 
 export default function TesseractScreen3() {
   const router = useRouter()
+  const { dispatch } = useGameContext()
 
-  const handleResetPuzzle = () => {
+  const handleAcceptDoom = () => {
     if (__DEV__) {
-      console.log('[Tesseract] Resetting puzzle from failure screen')
+      console.log('[Tesseract] Player accepts doom - triggering death')
     }
-    // Reset will be handled by navigating back to screen1
-    // which will clear state when navigating to screen2 again
-    router.replace('/sub-games/tesseract/main' as any)
+    
+    // Dispatch GAME_OVER action to set death state
+    dispatch({
+      type: 'GAME_OVER',
+      payload: {
+        message: 'Christos failed to guess the right word. An ancient evil rose from the earth and devoured his soul.',
+        killerName: 'Ancient Evil',
+      },
+    })
+    
+    // Navigate to death screen
+    router.push('/death' as any)
   }
 
   return (
@@ -34,10 +45,10 @@ export default function TesseractScreen3() {
         <BottomActionBar>
           <TouchableOpacity
             style={styles.button}
-            onPress={handleResetPuzzle}
+            onPress={handleAcceptDoom}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>reset the puzzle</Text>
+            <Text style={styles.buttonText}>accept your doom</Text>
           </TouchableOpacity>
         </BottomActionBar>
       </View>

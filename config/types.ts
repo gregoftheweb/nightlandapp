@@ -184,6 +184,7 @@ export interface Effect {
     | 'hide'
     | 'recuperate'
     | 'soulsuck'
+    | 'showMessage'
 
   description?: string
 
@@ -235,6 +236,7 @@ export interface Effect {
   // Success/failure messaging
   successMessage?: string
   failureMessage?: string
+  message?: string // For showMessage effect
 
   // Cooldown and usage limits
   cooldown?: number

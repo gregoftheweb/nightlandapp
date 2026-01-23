@@ -1,6 +1,6 @@
 // app/sub-games/tesseract/screen4.tsx
 // Screen 4: Success screen for the tesseract sub-game
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import { useRouter } from 'expo-router'
 import { exitSubGame } from '@/lib/subGames'
@@ -8,13 +8,52 @@ import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
+import { consumables } from '@/config/objects'
 
 const bgScreen4 = require('@/assets/images/teseract-screen4.png')
 
+const PERSIUS_SCROLL_TEXT = `Christos,
+
+Return to the Redoubt.
+
+Your quest may yet save mankind, but you must risk no other souls in its pursuit.
+
+I go now in search of the Tesseract.
+
+— Persius`
+
 export default function TesseractScreen4() {
   const router = useRouter()
-  const { dispatch, signalRpgResume } = useGameContext()
+  const { state, dispatch, signalRpgResume } = useGameContext()
   const [showScrollModal, setShowScrollModal] = useState(false)
+
+  // Add Persius Scroll to inventory on mount (only once)
+  useEffect(() => {
+    const persiusScrollId = 'persius-scroll'
+    const alreadyHasScroll = state.player.inventory.some(item => item.id === persiusScrollId)
+    
+    if (!alreadyHasScroll) {
+      if (__DEV__) {
+        console.log('[Tesseract] Adding Persius Scroll to inventory')
+      }
+      
+      // Create the scroll item from the template
+      const scrollItem = {
+        ...consumables.persiusScroll,
+        id: persiusScrollId,
+        collectible: true,
+      }
+      
+      dispatch({
+        type: 'ADD_TO_INVENTORY',
+        payload: { item: scrollItem },
+      })
+    } else {
+      if (__DEV__) {
+        console.log('[Tesseract] Persius Scroll already in inventory')
+      }
+    }
+  }, [dispatch, state.player.inventory])
 
   const handleReadScroll = () => {
     if (__DEV__) {
@@ -85,11 +124,7 @@ export default function TesseractScreen4() {
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>Message from Persius</Text>
               <Text style={styles.modalText}>
-                Christos,{'\n\n'}
-                Return to the Redoubt.{'\n\n'}
-                Your quest may yet save mankind, but you must risk no other souls in its pursuit.{'\n\n'}
-                I go now in search of the Tesseract.{'\n\n'}
-                — Persius
+                {PERSIUS_SCROLL_TEXT}
               </Text>
               <TouchableOpacity
                 style={styles.modalButton}

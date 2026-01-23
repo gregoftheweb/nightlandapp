@@ -88,6 +88,39 @@ export const consumables: Record<string, GameObject> = {
       },
     ],
   },
+  persiusScroll: {
+    shortName: 'persiusScroll',
+    category: 'collectible',
+    name: 'Persius Scroll',
+    description: `Christos,
+
+Return to the Redoubt.
+
+Your quest may yet save mankind, but you must risk no other souls in its pursuit.
+
+I go now in search of the Tesseract.
+
+— Persius`,
+    type: 'collectible',
+    collectible: true,
+    active: true,
+    usable: true,
+    consumeOnUse: false,
+    effects: [
+      {
+        type: 'showMessage',
+        message: `Christos,
+
+Return to the Redoubt.
+
+Your quest may yet save mankind, but you must risk no other souls in its pursuit.
+
+I go now in search of the Tesseract.
+
+— Persius`,
+      },
+    ],
+  },
 }
 
 export const collectible: Record<string, GameObject> = {

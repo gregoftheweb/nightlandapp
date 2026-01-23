@@ -484,6 +484,26 @@ const executePoisonEffect = (effect: Effect, context: EffectContext): EffectResu
   }
 }
 
+/**
+ * SHOW MESSAGE EFFECT
+ * Displays a message to the player without consuming the item.
+ * Used for: readable items like scrolls, notes, and letters.
+ */
+const executeShowMessageEffect = (effect: Effect, context: EffectContext): EffectResult => {
+  const { showDialog } = context
+  const message = effect.message || effect.description || 'A message appears.'
+
+  logIfDev('📜 Executing showMessage effect')
+  
+  showDialog?.(message, 5000)
+
+  return {
+    success: true,
+    message: 'You read the scroll.',
+    consumeItem: false,
+  }
+}
+
 // ==================== EFFECT HANDLER REGISTRY ====================
 
 /**
@@ -500,6 +520,7 @@ const EFFECT_HANDLERS: Record<string, EffectHandler> = {
   swarm: executeSwarmEffect,
   soulsuck: executeSoulsuckEffect,
   poison: executePoisonEffect,
+  showMessage: executeShowMessageEffect,
   // Add new effect handlers here as they are implemented
 }
 
