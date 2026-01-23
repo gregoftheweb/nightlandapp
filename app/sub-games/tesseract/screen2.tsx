@@ -37,11 +37,30 @@ export default function TesseractScreen2() {
   const [imageLayout, setImageLayout] = useState<{ width: number; height: number } | null>(null)
   const [actualImageSize, setActualImageSize] = useState<{ width: number; height: number; offsetX: number; offsetY: number } | null>(null)
   const [tiles, setTiles] = useState<Tile[]>([])
-  const [selectedTile, setSelectedTile] = useState<Tile | null>(null)
+  const [selectedTiles, setSelectedTiles] = useState<Tile[]>([]) // Array to track all tapped tiles
   const [lastTappedTile, setLastTappedTile] = useState<Tile | null>(null)
   
   // Animation for the green circle fade-out
   const circleOpacity = useRef(new Animated.Value(0)).current
+  
+  // Expose reset function globally for dev button on screen 1
+  useEffect(() => {
+    if (__DEV__) {
+      // @ts-ignore - global for dev only
+      global.resetTesseractTiles = () => {
+        setSelectedTiles([])
+        if (__DEV__) {
+          console.log('[Tesseract] Reset all selected tiles')
+        }
+      }
+    }
+    return () => {
+      if (__DEV__) {
+        // @ts-ignore
+        delete global.resetTesseractTiles
+      }
+    }
+  }, [])
   
   // Trigger fade-out animation when a tile is tapped
   useEffect(() => {
@@ -175,13 +194,19 @@ export default function TesseractScreen2() {
       if (__DEV__) {
         console.log(`[Tesseract] Tapped tile: row=${tappedTile.row}, col=${tappedTile.col}`)
       }
-      setSelectedTile(tappedTile)
+      // Add tile to selected tiles if not already selected
+      setSelectedTiles(prev => {
+        const isAlreadySelected = prev.some(t => t.id === tappedTile.id)
+        if (isAlreadySelected) {
+          return prev // Don't add duplicates
+        }
+        return [...prev, tappedTile]
+      })
       setLastTappedTile(tappedTile)
     } else {
       if (__DEV__) {
         console.log('[Tesseract] Tap outside tile grid (within image but not on any tile)')
       }
-      setSelectedTile(null)
     }
   }, [imageLayout, actualImageSize, tiles])
 
@@ -213,21 +238,22 @@ export default function TesseractScreen2() {
                 ]}
                 onPress={handlePress}
               >
-                {/* Green border on selected tile */}
-                {selectedTile && selectedTile.leftPx !== undefined && (
+                {/* Green borders on all selected tiles */}
+                {selectedTiles.map((tile) => tile.leftPx !== undefined && (
                   <View
+                    key={tile.id}
                     pointerEvents="none"
                     style={[
                       styles.tileBorder,
                       {
-                        left: (selectedTile.leftPx || 0) + actualImageSize.offsetX,
-                        top: (selectedTile.topPx || 0) + actualImageSize.offsetY,
-                        width: selectedTile.widthPx,
-                        height: selectedTile.heightPx,
+                        left: (tile.leftPx || 0) + actualImageSize.offsetX,
+                        top: (tile.topPx || 0) + actualImageSize.offsetY,
+                        width: tile.widthPx,
+                        height: tile.heightPx,
                       }
                     ]}
                   />
-                )}
+                ))}
                 
                 {/* Green circle on last tapped tile */}
                 {lastTappedTile && lastTappedTile.leftPx !== undefined && (
