@@ -17,6 +17,9 @@ import {
 
 const puzzleBoard = require('@/assets/images/teseract-puzzle-board.png')
 
+// Target word to spell
+const TARGET = ['T', 'E', 'S', 'E', 'R', 'A', 'C', 'T']
+
 // Debug mode: Set to true to see grid overlay (dev only)
 // When enabled, shows yellow grid rect outline and magenta tile outlines with row,col labels
 // IMPORTANT: Set to false before production deployment to hide debug visualizations
@@ -40,19 +43,29 @@ export default function TesseractScreen2() {
   const [selectedTiles, setSelectedTiles] = useState<Tile[]>([]) // Array to track all tapped tiles
   const [lastTappedTile, setLastTappedTile] = useState<Tile | null>(null)
   
+  // Spelling logic state
+  const [currentSequence, setCurrentSequence] = useState<string[]>([])
+  const [inactiveTiles, setInactiveTiles] = useState<Set<string>>(new Set())
+  
   // Animation for the green circle fade-out
   const circleOpacity = useRef(new Animated.Value(0)).current
+  
+  // Reset function to clear puzzle state
+  const resetPuzzle = useCallback(() => {
+    setSelectedTiles([])
+    setLastTappedTile(null)
+    setCurrentSequence([])
+    setInactiveTiles(new Set())
+    if (__DEV__) {
+      console.log('[Tesseract] Puzzle state reset')
+    }
+  }, [])
   
   // Expose reset function globally for dev button on screen 1
   useEffect(() => {
     if (__DEV__) {
       // @ts-ignore - global for dev only
-      global.resetTesseractTiles = () => {
-        setSelectedTiles([])
-        if (__DEV__) {
-          console.log('[Tesseract] Reset all selected tiles')
-        }
-      }
+      global.resetTesseractTiles = resetPuzzle
     }
     return () => {
       if (__DEV__) {
@@ -60,7 +73,7 @@ export default function TesseractScreen2() {
         delete global.resetTesseractTiles
       }
     }
-  }, [])
+  }, [resetPuzzle])
   
   // Trigger fade-out animation when a tile is tapped
   useEffect(() => {
@@ -180,7 +193,6 @@ export default function TesseractScreen2() {
       if (__DEV__) {
         console.log(`[Tesseract] Tap outside image bounds: adjustedX=${adjustedX.toFixed(1)}, adjustedY=${adjustedY.toFixed(1)}`)
       }
-      setSelectedTile(null)
       return
     }
 
@@ -191,24 +203,69 @@ export default function TesseractScreen2() {
     const tappedTile = getTileAtPoint(tiles, adjustedX, adjustedY)
     
     if (tappedTile) {
-      if (__DEV__) {
-        console.log(`[Tesseract] Tapped tile: row=${tappedTile.row}, col=${tappedTile.col}`)
-      }
-      // Add tile to selected tiles if not already selected
-      setSelectedTiles(prev => {
-        const isAlreadySelected = prev.some(t => t.id === tappedTile.id)
-        if (isAlreadySelected) {
-          return prev // Don't add duplicates
+      // Check if tile is already inactive
+      if (inactiveTiles.has(tappedTile.id)) {
+        if (__DEV__) {
+          console.log(`[Tesseract] Tile already tapped: row=${tappedTile.row}, col=${tappedTile.col}, letter=${tappedTile.letter}`)
         }
-        return [...prev, tappedTile]
-      })
+        return
+      }
+      
+      if (__DEV__) {
+        console.log(`[Tesseract] Tapped tile: row=${tappedTile.row}, col=${tappedTile.col}, letter=${tappedTile.letter}`)
+      }
+      
+      // Add tile to selected tiles
+      setSelectedTiles(prev => [...prev, tappedTile])
       setLastTappedTile(tappedTile)
+      
+      // Mark tile as inactive
+      setInactiveTiles(prev => new Set(prev).add(tappedTile.id))
+      
+      // Update sequence and validate
+      const newSequence = [...currentSequence, tappedTile.letter]
+      setCurrentSequence(newSequence)
+      
+      // Validation logic
+      const index = newSequence.length - 1
+      
+      if (__DEV__) {
+        console.log(`[Tesseract] Sequence: ${newSequence.join('')}, expected: ${TARGET.slice(0, index + 1).join('')}`)
+      }
+      
+      // Check if this letter is wrong
+      if (newSequence[index] !== TARGET[index]) {
+        if (__DEV__) {
+          console.log(`[Tesseract] FAILURE - Wrong letter at position ${index}: got '${newSequence[index]}', expected '${TARGET[index]}'`)
+        }
+        // Navigate to failure screen after a short delay
+        setTimeout(() => {
+          router.push('/sub-games/tesseract/screen3' as any)
+        }, 500)
+        return
+      }
+      
+      // Check if word is complete
+      if (newSequence.length === TARGET.length) {
+        if (__DEV__) {
+          console.log(`[Tesseract] SUCCESS - Word completed correctly: ${newSequence.join('')}`)
+        }
+        // Navigate to success screen after a short delay
+        setTimeout(() => {
+          router.push('/sub-games/tesseract/screen4' as any)
+        }, 500)
+        return
+      }
+      
+      if (__DEV__) {
+        console.log(`[Tesseract] Correct so far - continue...`)
+      }
     } else {
       if (__DEV__) {
         console.log('[Tesseract] Tap outside tile grid (within image but not on any tile)')
       }
     }
-  }, [imageLayout, actualImageSize, tiles])
+  }, [imageLayout, actualImageSize, tiles, inactiveTiles, currentSequence, router])
 
   const handleLeaveCourtyard = () => {
     if (__DEV__) {
@@ -245,6 +302,23 @@ export default function TesseractScreen2() {
                     pointerEvents="none"
                     style={[
                       styles.tileBorder,
+                      {
+                        left: (tile.leftPx || 0) + actualImageSize.offsetX,
+                        top: (tile.topPx || 0) + actualImageSize.offsetY,
+                        width: tile.widthPx,
+                        height: tile.heightPx,
+                      }
+                    ]}
+                  />
+                ))}
+                
+                {/* Muted overlay on inactive tiles */}
+                {tiles.map((tile) => tile.leftPx !== undefined && inactiveTiles.has(tile.id) && (
+                  <View
+                    key={`inactive-${tile.id}`}
+                    pointerEvents="none"
+                    style={[
+                      styles.inactiveTileOverlay,
                       {
                         left: (tile.leftPx || 0) + actualImageSize.offsetX,
                         top: (tile.topPx || 0) + actualImageSize.offsetY,
@@ -357,6 +431,11 @@ const styles = StyleSheet.create({
     borderColor: '#00ff00',
     borderRadius: 4,
     backgroundColor: 'transparent',
+  },
+  inactiveTileOverlay: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 4,
   },
   tileCircle: {
     position: 'absolute',

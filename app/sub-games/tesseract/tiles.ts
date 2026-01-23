@@ -8,6 +8,7 @@ export interface Tile {
   id: string
   row: number
   col: number
+  letter: string // The letter displayed on this tile
   // Normalized coordinates (0..1) relative to the full image
   left: number
   top: number
@@ -63,6 +64,35 @@ export const GRID_RECT: GridRect = {
 }
 
 /**
+ * Letter mapping for the 5x5 grid
+ * Based on the visual layout of teseract-puzzle-board.png
+ * 
+ * Grid layout (row, col):
+ * Row 0: Z T V A N
+ * Row 1: L G R E Y
+ * Row 2: W P S T H
+ * Row 3: D < T O M
+ * Row 4: E C H R Z
+ */
+const LETTER_GRID: string[][] = [
+  ['Z', 'T', 'V', 'A', 'N'],
+  ['L', 'G', 'R', 'E', 'Y'],
+  ['W', 'P', 'S', 'T', 'H'],
+  ['D', '<', 'T', 'O', 'M'],
+  ['E', 'C', 'H', 'R', 'Z'],
+]
+
+/**
+ * Get the letter for a given tile position
+ */
+export function getLetterForTile(row: number, col: number): string {
+  if (row < 0 || row >= 5 || col < 0 || col >= 5) {
+    return ''
+  }
+  return LETTER_GRID[row][col]
+}
+
+/**
  * Generate the 25 tiles by subdividing the gridRect into a rows x cols grid
  * 
  * @param gridRect - The normalized inner grid bounds
@@ -102,6 +132,7 @@ export function generateTilesFromGridRect(
         id: `tile-${row}-${col}`,
         row,
         col,
+        letter: getLetterForTile(row, col),
         left,
         top,
         right,

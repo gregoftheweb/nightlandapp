@@ -1,0 +1,86 @@
+// app/sub-games/tesseract/screen3.tsx
+// Screen 3: Failure screen for the tesseract sub-game
+import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { useRouter } from 'expo-router'
+import { BackgroundImage } from '../_shared/BackgroundImage'
+import { BottomActionBar } from '../_shared/BottomActionBar'
+import { subGameTheme } from '../_shared/subGameTheme'
+
+const bgScreen3 = require('@/assets/images/teseract-screen3.png')
+
+export default function TesseractScreen3() {
+  const router = useRouter()
+
+  const handleResetPuzzle = () => {
+    if (__DEV__) {
+      console.log('[Tesseract] Resetting puzzle from failure screen')
+    }
+    // Reset will be handled by navigating back to screen1
+    // which will clear state when navigating to screen2 again
+    router.replace('/sub-games/tesseract/main' as any)
+  }
+
+  return (
+    <BackgroundImage source={bgScreen3}>
+      <View style={styles.container}>
+        <View style={styles.contentArea}>
+          <Text style={styles.descriptionText}>
+            Christos fails to guess the right word.{'\n\n'}
+            An ancient evil rises from the earth and devours his soul.
+          </Text>
+        </View>
+
+        <BottomActionBar>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleResetPuzzle}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>reset the puzzle</Text>
+          </TouchableOpacity>
+        </BottomActionBar>
+      </View>
+    </BackgroundImage>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  contentArea: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  descriptionText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: subGameTheme.red,
+    textAlign: 'center',
+    lineHeight: 26,
+  },
+  button: {
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    backgroundColor: subGameTheme.red,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: subGameTheme.blue,
+    shadowColor: subGameTheme.red,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+    alignSelf: 'stretch',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: subGameTheme.black,
+    textAlign: 'center',
+  },
+})
