@@ -156,7 +156,6 @@ All requirements from the problem statement have been implemented:
 
 ## Notes
 
-- The asset files use "teseract" spelling (single 's'), which differs from the correct English spelling "tesseract"
+- The asset files now use "tesseract" spelling (correct spelling with double 's')
 - The folder is named "tesseract" (correct spelling)
-- Comments reference the asset file name spelling to maintain consistency
-- This is a cosmetic issue and doesn't affect functionality
+- Comments reference the asset file names consistently

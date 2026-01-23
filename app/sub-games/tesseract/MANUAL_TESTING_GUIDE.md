@@ -1,8 +1,8 @@
-# Manual Testing Guide for TESERACT Puzzle
+# Manual Testing Guide for TESSERACT Puzzle
 
 ## Overview
 
-This guide helps you test the complete TESERACT puzzle flow from start to finish.
+This guide helps you test the complete TESSERACT puzzle flow from start to finish.
 
 ## Setup
 
@@ -11,22 +11,23 @@ This guide helps you test the complete TESERACT puzzle flow from start to finish
    npm start
    ```
 2. Launch on iOS simulator (`i`) or Android emulator (`a`)
-3. Navigate to the TESERACT sub-game from the main game
+3. Navigate to the TESSERACT sub-game from the main game
 
 ## Test Scenarios
 
 ### Scenario 1: Successful Completion
 
-**Objective**: Complete the puzzle by spelling TESERACT correctly
+**Objective**: Complete the puzzle by spelling TESSERACT correctly
 
 **Steps**:
 
-1. Navigate to TESERACT intro screen (Screen 1)
+1. Navigate to TESSERACT intro screen (Screen 1)
 2. Tap "explore the stone ruins" → goes to Screen 2 (puzzle board)
-3. Tap tiles in this exact order to spell T-E-S-E-R-A-C-T:
+3. Tap tiles in this exact order to spell T-E-S-S-E-R-A-C-T:
    - Tap T at position (0,1) - top row, second column
    - Tap E at position (1,3) - second row, fourth column
    - Tap S at position (2,2) - middle row, middle column
+   - Tap S at position (4,4) - bottom row, fifth column
    - Tap E at position (4,0) - bottom row, first column
    - Tap R at position (1,2) - second row, third column
    - Tap A at position (0,3) - top row, fourth column
@@ -43,7 +44,7 @@ This guide helps you test the complete TESERACT puzzle flow from start to finish
 - After final T, console shows: "SUCCESS - Word completed correctly"
 - After 500ms delay, navigates to Screen 4 (success screen)
 - Success screen shows:
-  - Background image (teseract-screen4.png)
+  - Background image (tesseract-screen4.png)
   - Success message about Christos
   - Two buttons: "read the scroll" and "return to the Night Land"
 - Tapping "read the scroll" opens modal with Persius's message
@@ -56,7 +57,7 @@ This guide helps you test the complete TESERACT puzzle flow from start to finish
 
 **Steps**:
 
-1. Navigate to TESERACT intro screen
+1. Navigate to TESSERACT intro screen
 2. Tap "explore the stone ruins"
 3. Tap T at (0,1) - correct first letter
 4. Tap any wrong letter (e.g., Z at (0,0))
@@ -68,7 +69,7 @@ This guide helps you test the complete TESERACT puzzle flow from start to finish
 - Console shows: "FAILURE - Wrong letter at position 1: got 'Z', expected 'E'"
 - After 500ms delay, navigates to Screen 3 (failure screen)
 - Failure screen shows:
-  - Background image (teseract-screen3.png)
+  - Background image (tesseract-screen3.png)
   - Failure message about ancient evil
   - "reset the puzzle" button
 - Tapping reset button returns to Screen 1 (intro)
@@ -150,7 +151,7 @@ Row 0: Z  T  V  A  N
 Row 1: L  G  R  E  Y
 Row 2: W  P  S  T  H
 Row 3: D  <  T  O  M
-Row 4: E  C  H  R  Z
+Row 4: E  C  H  R  S
 ```
 
 Positions are (row, col) where both are 0-indexed.
@@ -159,7 +160,7 @@ Positions are (row, col) where both are 0-indexed.
 
 Solution 1 (tested):
 
-- T(0,1) → E(1,3) → S(2,2) → E(4,0) → R(1,2) → A(0,3) → C(4,1) → T(2,3)
+- T(0,1) → E(1,3) → S(2,2) → S(4,4) → E(4,0) → R(1,2) → A(0,3) → C(4,1) → T(2,3)
 
 Alternative solutions exist using different R and T tiles.
 
@@ -184,7 +185,7 @@ When testing, monitor the console for these key messages:
 **Success**:
 
 ```
-[Tesseract] SUCCESS - Word completed correctly: TESERACT
+[Tesseract] SUCCESS - Word completed correctly: TESSERACT
 ```
 
 **Duplicate tap**:

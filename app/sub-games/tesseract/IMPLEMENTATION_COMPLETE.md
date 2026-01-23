@@ -1,4 +1,4 @@
-# TESERACT Puzzle Implementation - Summary
+# TESSERACT Puzzle Implementation - Summary
 
 ## Status: ✅ COMPLETE
 
@@ -12,7 +12,7 @@ All requirements from the problem statement have been successfully implemented.
 
 **Features**:
 
-- Target word validation: `T-E-S-E-R-A-C-T`
+- Target word validation: `T-E-S-S-E-R-A-C-T`
 - Immediate validation after each tile tap
 - Tapped tiles become inactive (cannot be re-tapped)
 - Visual feedback:
@@ -40,7 +40,7 @@ Add letter to sequence
 Does letter match TARGET[index]?
   ↓ No → Navigate to Screen 3 (failure)
   ↓ Yes
-Is sequence complete (8 letters)?
+Is sequence complete (9 letters)?
   ↓ Yes → Navigate to Screen 4 (success)
   ↓ No
 Continue playing
@@ -52,7 +52,7 @@ Continue playing
 
 **UI Elements**:
 
-- Background: `teseract-screen3.png`
+- Background: `tesseract-screen3.png`
 - Description text:
 
   ```
@@ -71,7 +71,7 @@ Continue playing
 
 **UI Elements**:
 
-- Background: `teseract-screen4.png`
+- Background: `tesseract-screen4.png`
 - Description text:
 
   ```
@@ -115,7 +115,7 @@ Continue playing
   Row 1: L  G  R  E  Y
   Row 2: W  P  S  T  H
   Row 3: D  <  T  O  M
-  Row 4: E  C  H  R  Z
+  Row 4: E  C  H  R  S
   ```
 - Added `getLetterForTile(row, col)` helper function
 - Updated `generateTilesFromGridRect()` to assign letters
@@ -148,7 +148,7 @@ Continue playing
 ### Code Review
 
 - ✅ 0 critical issues
-- 📝 Note: "TESERACT" spelling is intentional (matches asset names)
+- 📝 Note: "TESSERACT" spelling has been corrected (double S)
 
 ### Security Scan
 
@@ -166,9 +166,9 @@ Continue playing
 
 ### Happy Path (Success)
 
-1. Player navigates to TESERACT intro (Screen 1)
+1. Player navigates to TESSERACT intro (Screen 1)
 2. Taps "explore the stone ruins" → Screen 2
-3. Taps tiles in correct sequence: T-E-S-E-R-A-C-T
+3. Taps tiles in correct sequence: T-E-S-S-E-R-A-C-T
 4. Each correct tap:
    - Shows green visual feedback
    - Marks tile inactive
@@ -202,7 +202,8 @@ Letter | Position (row,col) | Tile Letter
 T      | (0,1)             | T
 E      | (1,3)             | E
 S      | (2,2)             | S
-E      | (4,0)             | E ← Second E (different tile)
+S      | (4,4)             | S ← Second S (different tile)
+E      | (4,0)             | E
 R      | (1,2)             | R
 A      | (0,3)             | A
 C      | (4,1)             | C

@@ -16,7 +16,7 @@ The Tesseract puzzle is a 5x5 letter tile puzzle where players can interact with
 
 ### Grid Bounds Configuration
 
-The puzzle board image (`teseract-puzzle-board.png`) contains a 5x5 grid of letter tiles surrounded by a stone border. The tiles don't extend to the image edges.
+The puzzle board image (`tesseract-puzzle-board.png`) contains a 5x5 grid of letter tiles surrounded by a stone border. The tiles don't extend to the image edges.
 
 **GRID_RECT** defines the inner bounds of the tile field using normalized coordinates (0..1):
 
