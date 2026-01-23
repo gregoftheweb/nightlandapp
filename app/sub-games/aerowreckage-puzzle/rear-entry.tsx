@@ -59,13 +59,7 @@ export default function AeroWreckageRearEntry() {
           )}
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleAttemptOpen}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.primaryButtonText}>Attempt to Open It</Text>
-            </TouchableOpacity>
+          
 
             <TouchableOpacity
               style={styles.primaryButton}
@@ -73,6 +67,14 @@ export default function AeroWreckageRearEntry() {
               activeOpacity={0.7}
             >
               <Text style={styles.primaryButtonText}>Leave It Untouched</Text>
+            </TouchableOpacity>
+
+              <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleAttemptOpen}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.primaryButtonText}>Attempt to Open It</Text>
             </TouchableOpacity>
           </View>
         </BottomActionBar>

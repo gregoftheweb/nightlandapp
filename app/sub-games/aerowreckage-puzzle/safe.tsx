@@ -58,7 +58,7 @@ export default function AeroWreckageSafe() {
 
   const handleLeaveWithoutUnlocking = () => {
     if (__DEV__) console.log('[AeroWreckageSafe] Player leaving without unlocking')
-    exitSubGame({ completed: false })
+     router.back()
   }
 
   const handleTryCombination = () => {
@@ -114,13 +114,6 @@ export default function AeroWreckageSafe() {
           {/* Buttons at Bottom */}
           <BottomActionBar>
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={handleTryCombination}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.primaryButtonText}>Try Combination</Text>
-              </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.primaryButton}
@@ -129,6 +122,7 @@ export default function AeroWreckageSafe() {
               >
                 <Text style={styles.primaryButtonText}>Leave Without Unlocking</Text>
               </TouchableOpacity>
+
             </View>
           </BottomActionBar>
         </View>

@@ -148,18 +148,18 @@ export default function GameBoard({
 
   // Handle combat start and log updates (dev logs wrapped)
   useEffect(() => {
-    if (__DEV__) {
-      console.log(
-        '🎯 Combat effect running - inCombat:',
-        state.inCombat,
-        'combatLog.length:',
-        state.combatLog.length,
-        'previousCombatLogLength:',
-        previousCombatLogLength,
-        'rangedAttackMode:',
-        state.rangedAttackMode
-      )
-    }
+    // if (__DEV__) {
+    //   console.log(
+    //     '🎯 Combat effect running - inCombat:',
+    //     state.inCombat,
+    //     'combatLog.length:',
+    //     state.combatLog.length,
+    //     'previousCombatLogLength:',
+    //     previousCombatLogLength,
+    //     'rangedAttackMode:',
+    //     state.rangedAttackMode
+    //   )
+    // }
 
     // PRIORITY 1: Check if we just entered ranged attack mode (MUST be first to show dialog immediately)
     if (state.rangedAttackMode && !previousRangedMode && state.combatLog.length > 0) {
@@ -360,9 +360,7 @@ export default function GameBoard({
   )
 
   const handleCombatDialogClose = useCallback(() => {
-    if (__DEV__) {
-      console.log('CombatDialog onClose called')
-    }
+   
     setCombatInfoVisible(false)
   }, [])
 
@@ -833,14 +831,14 @@ export default function GameBoard({
       // Render the main image (non-interactable if it has collision mask)
       const hasCollisionMask = obj.collisionMask && obj.collisionMask.length > 0
 
-      if (hasCollisionMask) {
-        console.log(
-          'Rendering collision mask for:',
-          obj.name,
-          'mask tiles:',
-          obj.collisionMask?.length
-        )
-      }
+      // if (hasCollisionMask) {
+      //   console.log(
+      //     'Rendering collision mask for:',
+      //     obj.name,
+      //     'mask tiles:',
+      //     obj.collisionMask?.length
+      //   )
+      // }
 
       // All non-collision objects now use View instead of TouchableOpacity
       // Interaction is handled via long-press in game/index.tsx
