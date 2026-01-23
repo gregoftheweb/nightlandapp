@@ -1,21 +1,33 @@
 // app/sub-games/tesseract/screen2.tsx
 // Screen 2: Puzzle board screen for the tesseract sub-game
 import React, { useState, useCallback, useEffect, useRef } from 'react'
-import { View, Image, StyleSheet, TouchableOpacity, Text, useWindowDimensions, Pressable, Animated } from 'react-native'
+import {
+  View,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  useWindowDimensions,
+  Pressable,
+  Animated,
+} from 'react-native'
 import { useRouter } from 'expo-router'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { 
-  GRID_RECT, 
-  generateTilesFromGridRect, 
-  tilesToPixelCoords, 
+import {
+  GRID_RECT,
+  generateTilesFromGridRect,
+  tilesToPixelCoords,
   getTileAtPoint,
-  type Tile 
+  type Tile,
 } from './tiles'
 
 const puzzleBoard = require('@/assets/images/teseract-puzzle-board.png')
+
+// Target word to spell
+const TARGET = ['T', 'E', 'S', 'E', 'R', 'A', 'C', 'T']
 
 // Debug mode: Set to true to see grid overlay (dev only)
 // When enabled, shows yellow grid rect outline and magenta tile outlines with row,col labels
@@ -35,24 +47,39 @@ export default function TesseractScreen2() {
 
   // Image and tile state
   const [imageLayout, setImageLayout] = useState<{ width: number; height: number } | null>(null)
-  const [actualImageSize, setActualImageSize] = useState<{ width: number; height: number; offsetX: number; offsetY: number } | null>(null)
+  const [actualImageSize, setActualImageSize] = useState<{
+    width: number
+    height: number
+    offsetX: number
+    offsetY: number
+  } | null>(null)
   const [tiles, setTiles] = useState<Tile[]>([])
   const [selectedTiles, setSelectedTiles] = useState<Tile[]>([]) // Array to track all tapped tiles
   const [lastTappedTile, setLastTappedTile] = useState<Tile | null>(null)
-  
+
+  // Spelling logic state
+  const [currentSequence, setCurrentSequence] = useState<string[]>([])
+  const [inactiveTiles, setInactiveTiles] = useState<Set<string>>(new Set())
+
   // Animation for the green circle fade-out
   const circleOpacity = useRef(new Animated.Value(0)).current
-  
+
+  // Reset function to clear puzzle state
+  const resetPuzzle = useCallback(() => {
+    setSelectedTiles([])
+    setLastTappedTile(null)
+    setCurrentSequence([])
+    setInactiveTiles(new Set())
+    if (__DEV__) {
+      console.log('[Tesseract] Puzzle state reset')
+    }
+  }, [])
+
   // Expose reset function globally for dev button on screen 1
   useEffect(() => {
     if (__DEV__) {
       // @ts-ignore - global for dev only
-      global.resetTesseractTiles = () => {
-        setSelectedTiles([])
-        if (__DEV__) {
-          console.log('[Tesseract] Reset all selected tiles')
-        }
-      }
+      global.resetTesseractTiles = resetPuzzle
     }
     return () => {
       if (__DEV__) {
@@ -60,8 +87,8 @@ export default function TesseractScreen2() {
         delete global.resetTesseractTiles
       }
     }
-  }, [])
-  
+  }, [resetPuzzle])
+
   // Trigger fade-out animation when a tile is tapped
   useEffect(() => {
     if (lastTappedTile) {
@@ -82,21 +109,23 @@ export default function TesseractScreen2() {
       console.log(`[Tesseract] Image layout: ${width}x${height}`)
     }
     setImageLayout({ width, height })
-    
+
     // Calculate actual rendered image size and position within container
     // The actual puzzle board image is 1024x972 pixels
     const imageAspectRatio = 1024 / 972
     const containerAspectRatio = width / height
-    
+
     if (__DEV__) {
-      console.log(`[Tesseract] Image aspect ratio: ${imageAspectRatio.toFixed(3)}, Container aspect ratio: ${containerAspectRatio.toFixed(3)}`)
+      console.log(
+        `[Tesseract] Image aspect ratio: ${imageAspectRatio.toFixed(3)}, Container aspect ratio: ${containerAspectRatio.toFixed(3)}`
+      )
     }
-    
+
     let actualWidth: number
     let actualHeight: number
     let offsetX: number
     let offsetY: number
-    
+
     if (containerAspectRatio > imageAspectRatio) {
       // Container is wider - image will be constrained by height
       actualHeight = height
@@ -116,99 +145,176 @@ export default function TesseractScreen2() {
         console.log(`[Tesseract] Layout: Container taller, image constrained by width`)
       }
     }
-    
+
     if (__DEV__) {
-      console.log(`[Tesseract] Actual image size: ${actualWidth.toFixed(1)}x${actualHeight.toFixed(1)}, offset: (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`)
+      console.log(
+        `[Tesseract] Actual image size: ${actualWidth.toFixed(1)}x${actualHeight.toFixed(1)}, offset: (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`
+      )
     }
-    
+
     setActualImageSize({ width: actualWidth, height: actualHeight, offsetX, offsetY })
-    
+
     // Generate tiles with normalized coordinates
     // Using a small gap (0.005 = 0.5%) to avoid overlapping the grout lines between tiles
     const normalizedTiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0.005)
-    
+
     if (__DEV__) {
-      console.log(`[Tesseract] GRID_RECT: left=${GRID_RECT.left}, top=${GRID_RECT.top}, right=${GRID_RECT.right}, bottom=${GRID_RECT.bottom}`)
+      console.log(
+        `[Tesseract] GRID_RECT: left=${GRID_RECT.left}, top=${GRID_RECT.top}, right=${GRID_RECT.right}, bottom=${GRID_RECT.bottom}`
+      )
     }
-    
+
     // Convert to pixel coordinates using ACTUAL image dimensions
     const pixelTiles = tilesToPixelCoords(normalizedTiles, actualWidth, actualHeight)
     setTiles(pixelTiles)
-    
+
     if (__DEV__) {
       console.log(`[Tesseract] Generated ${pixelTiles.length} tiles`)
       if (pixelTiles.length > 0) {
         const firstTile = pixelTiles[0]
         const lastTile = pixelTiles[pixelTiles.length - 1]
-        console.log(`[Tesseract] First tile (0,0): left=${firstTile.leftPx?.toFixed(1)}, top=${firstTile.topPx?.toFixed(1)}, right=${firstTile.rightPx?.toFixed(1)}, bottom=${firstTile.bottomPx?.toFixed(1)}`)
-        console.log(`[Tesseract] Last tile (4,4): left=${lastTile.leftPx?.toFixed(1)}, top=${lastTile.topPx?.toFixed(1)}, right=${lastTile.rightPx?.toFixed(1)}, bottom=${lastTile.bottomPx?.toFixed(1)}`)
+        console.log(
+          `[Tesseract] First tile (0,0): left=${firstTile.leftPx?.toFixed(1)}, top=${firstTile.topPx?.toFixed(1)}, right=${firstTile.rightPx?.toFixed(1)}, bottom=${firstTile.bottomPx?.toFixed(1)}`
+        )
+        console.log(
+          `[Tesseract] Last tile (4,4): left=${lastTile.leftPx?.toFixed(1)}, top=${lastTile.topPx?.toFixed(1)}, right=${lastTile.rightPx?.toFixed(1)}, bottom=${lastTile.bottomPx?.toFixed(1)}`
+        )
       }
     }
   }, [])
 
   // Handle tap on the puzzle board
-  const handlePress = useCallback((event: any) => {
-    if (__DEV__) {
-      console.log(`[Tesseract] handlePress called - imageLayout: ${!!imageLayout}, actualImageSize: ${!!actualImageSize}, tiles: ${tiles.length}`)
-    }
-    
-    if (!imageLayout || !actualImageSize || tiles.length === 0) {
+  const handlePress = useCallback(
+    (event: any) => {
       if (__DEV__) {
-        console.log(`[Tesseract] Early return - missing data`)
+        console.log(
+          `[Tesseract] handlePress called - imageLayout: ${!!imageLayout}, actualImageSize: ${!!actualImageSize}, tiles: ${tiles.length}`
+        )
       }
-      return
-    }
 
-    const { locationX, locationY } = event.nativeEvent
-    
-    if (__DEV__) {
-      console.log(`[Tesseract] actualImageSize: width=${actualImageSize.width.toFixed(1)}, height=${actualImageSize.height.toFixed(1)}, offsetX=${actualImageSize.offsetX.toFixed(1)}, offsetY=${actualImageSize.offsetY.toFixed(1)}`)
-    }
-    
-    // Adjust coordinates for image offset within container
-    const adjustedX = locationX - actualImageSize.offsetX
-    const adjustedY = locationY - actualImageSize.offsetY
-    
-    if (__DEV__) {
-      console.log(`[Tesseract] Tap at: ${locationX.toFixed(1)}, ${locationY.toFixed(1)} -> adjusted: ${adjustedX.toFixed(1)}, ${adjustedY.toFixed(1)}`)
-      console.log(`[Tesseract] Image bounds check: X in [0, ${actualImageSize.width.toFixed(1)}], Y in [0, ${actualImageSize.height.toFixed(1)}]`)
-    }
-
-    // Check if tap is within actual image bounds
-    if (adjustedX < 0 || adjustedX > actualImageSize.width || 
-        adjustedY < 0 || adjustedY > actualImageSize.height) {
-      if (__DEV__) {
-        console.log(`[Tesseract] Tap outside image bounds: adjustedX=${adjustedX.toFixed(1)}, adjustedY=${adjustedY.toFixed(1)}`)
-      }
-      setSelectedTile(null)
-      return
-    }
-
-    if (__DEV__) {
-      console.log(`[Tesseract] Tap within image bounds, checking tiles...`)
-    }
-
-    const tappedTile = getTileAtPoint(tiles, adjustedX, adjustedY)
-    
-    if (tappedTile) {
-      if (__DEV__) {
-        console.log(`[Tesseract] Tapped tile: row=${tappedTile.row}, col=${tappedTile.col}`)
-      }
-      // Add tile to selected tiles if not already selected
-      setSelectedTiles(prev => {
-        const isAlreadySelected = prev.some(t => t.id === tappedTile.id)
-        if (isAlreadySelected) {
-          return prev // Don't add duplicates
+      if (!imageLayout || !actualImageSize || tiles.length === 0) {
+        if (__DEV__) {
+          console.log(`[Tesseract] Early return - missing data`)
         }
-        return [...prev, tappedTile]
-      })
-      setLastTappedTile(tappedTile)
-    } else {
-      if (__DEV__) {
-        console.log('[Tesseract] Tap outside tile grid (within image but not on any tile)')
+        return
       }
-    }
-  }, [imageLayout, actualImageSize, tiles])
+
+      const { locationX, locationY } = event.nativeEvent
+
+      if (__DEV__) {
+        console.log(
+          `[Tesseract] actualImageSize: width=${actualImageSize.width.toFixed(1)}, height=${actualImageSize.height.toFixed(1)}, offsetX=${actualImageSize.offsetX.toFixed(1)}, offsetY=${actualImageSize.offsetY.toFixed(1)}`
+        )
+      }
+
+      // Adjust coordinates for image offset within container
+      const adjustedX = locationX - actualImageSize.offsetX
+      const adjustedY = locationY - actualImageSize.offsetY
+
+      if (__DEV__) {
+        console.log(
+          `[Tesseract] Tap at: ${locationX.toFixed(1)}, ${locationY.toFixed(1)} -> adjusted: ${adjustedX.toFixed(1)}, ${adjustedY.toFixed(1)}`
+        )
+        console.log(
+          `[Tesseract] Image bounds check: X in [0, ${actualImageSize.width.toFixed(1)}], Y in [0, ${actualImageSize.height.toFixed(1)}]`
+        )
+      }
+
+      // Check if tap is within actual image bounds
+      if (
+        adjustedX < 0 ||
+        adjustedX > actualImageSize.width ||
+        adjustedY < 0 ||
+        adjustedY > actualImageSize.height
+      ) {
+        if (__DEV__) {
+          console.log(
+            `[Tesseract] Tap outside image bounds: adjustedX=${adjustedX.toFixed(1)}, adjustedY=${adjustedY.toFixed(1)}`
+          )
+        }
+        return
+      }
+
+      if (__DEV__) {
+        console.log(`[Tesseract] Tap within image bounds, checking tiles...`)
+      }
+
+      const tappedTile = getTileAtPoint(tiles, adjustedX, adjustedY)
+
+      if (tappedTile) {
+        // Check if tile is already inactive
+        if (inactiveTiles.has(tappedTile.id)) {
+          if (__DEV__) {
+            console.log(
+              `[Tesseract] Tile already tapped: row=${tappedTile.row}, col=${tappedTile.col}, letter=${tappedTile.letter}`
+            )
+          }
+          return
+        }
+
+        if (__DEV__) {
+          console.log(
+            `[Tesseract] Tapped tile: row=${tappedTile.row}, col=${tappedTile.col}, letter=${tappedTile.letter}`
+          )
+        }
+
+        // Add tile to selected tiles
+        setSelectedTiles((prev) => [...prev, tappedTile])
+        setLastTappedTile(tappedTile)
+
+        // Mark tile as inactive
+        setInactiveTiles((prev) => new Set(prev).add(tappedTile.id))
+
+        // Update sequence and validate
+        const newSequence = [...currentSequence, tappedTile.letter]
+        setCurrentSequence(newSequence)
+
+        // Validation logic
+        const index = newSequence.length - 1
+
+        if (__DEV__) {
+          console.log(
+            `[Tesseract] Sequence: ${newSequence.join('')}, expected: ${TARGET.slice(0, index + 1).join('')}`
+          )
+        }
+
+        // Check if this letter is wrong
+        if (newSequence[index] !== TARGET[index]) {
+          if (__DEV__) {
+            console.log(
+              `[Tesseract] FAILURE - Wrong letter at position ${index}: got '${newSequence[index]}', expected '${TARGET[index]}'`
+            )
+          }
+          // Navigate to failure screen after a short delay
+          setTimeout(() => {
+            router.push('/sub-games/tesseract/screen3' as any)
+          }, 500)
+          return
+        }
+
+        // Check if word is complete
+        if (newSequence.length === TARGET.length) {
+          if (__DEV__) {
+            console.log(`[Tesseract] SUCCESS - Word completed correctly: ${newSequence.join('')}`)
+          }
+          // Navigate to success screen after a short delay
+          setTimeout(() => {
+            router.push('/sub-games/tesseract/screen4' as any)
+          }, 500)
+          return
+        }
+
+        if (__DEV__) {
+          console.log(`[Tesseract] Correct so far - continue...`)
+        }
+      } else {
+        if (__DEV__) {
+          console.log('[Tesseract] Tap outside tile grid (within image but not on any tile)')
+        }
+      }
+    },
+    [imageLayout, actualImageSize, tiles, inactiveTiles, currentSequence, router]
+  )
 
   const handleLeaveCourtyard = () => {
     if (__DEV__) {
@@ -228,33 +334,57 @@ export default function TesseractScreen2() {
               resizeMode="contain"
               onLayout={handleImageLayout}
             />
-            
+
             {/* Interactive overlay for tap handling */}
             {imageLayout && actualImageSize && (
               <Pressable
                 style={[
                   styles.pressableOverlay,
-                  { width: imageLayout.width, height: imageLayout.height }
+                  { width: imageLayout.width, height: imageLayout.height },
                 ]}
                 onPress={handlePress}
               >
                 {/* Green borders on all selected tiles */}
-                {selectedTiles.map((tile) => tile.leftPx !== undefined && (
-                  <View
-                    key={tile.id}
-                    pointerEvents="none"
-                    style={[
-                      styles.tileBorder,
-                      {
-                        left: (tile.leftPx || 0) + actualImageSize.offsetX,
-                        top: (tile.topPx || 0) + actualImageSize.offsetY,
-                        width: tile.widthPx,
-                        height: tile.heightPx,
-                      }
-                    ]}
-                  />
-                ))}
-                
+                {selectedTiles.map(
+                  (tile) =>
+                    tile.leftPx !== undefined && (
+                      <View
+                        key={tile.id}
+                        pointerEvents="none"
+                        style={[
+                          styles.tileBorder,
+                          {
+                            left: (tile.leftPx || 0) + actualImageSize.offsetX,
+                            top: (tile.topPx || 0) + actualImageSize.offsetY,
+                            width: tile.widthPx,
+                            height: tile.heightPx,
+                          },
+                        ]}
+                      />
+                    )
+                )}
+
+                {/* Muted overlay on inactive tiles */}
+                {tiles.map(
+                  (tile) =>
+                    tile.leftPx !== undefined &&
+                    inactiveTiles.has(tile.id) && (
+                      <View
+                        key={`inactive-${tile.id}`}
+                        pointerEvents="none"
+                        style={[
+                          styles.inactiveTileOverlay,
+                          {
+                            left: (tile.leftPx || 0) + actualImageSize.offsetX,
+                            top: (tile.topPx || 0) + actualImageSize.offsetY,
+                            width: tile.widthPx,
+                            height: tile.heightPx,
+                          },
+                        ]}
+                      />
+                    )
+                )}
+
                 {/* Green circle on last tapped tile */}
                 {lastTappedTile && lastTappedTile.leftPx !== undefined && (
                   <Animated.View
@@ -262,14 +392,22 @@ export default function TesseractScreen2() {
                     style={[
                       styles.tileCircle,
                       {
-                        left: (lastTappedTile.leftPx || 0) + (lastTappedTile.widthPx || 0) / 2 - 18 + actualImageSize.offsetX,
-                        top: (lastTappedTile.topPx || 0) + (lastTappedTile.heightPx || 0) / 2 - 18 + actualImageSize.offsetY,
+                        left:
+                          (lastTappedTile.leftPx || 0) +
+                          (lastTappedTile.widthPx || 0) / 2 -
+                          18 +
+                          actualImageSize.offsetX,
+                        top:
+                          (lastTappedTile.topPx || 0) +
+                          (lastTappedTile.heightPx || 0) / 2 -
+                          18 +
+                          actualImageSize.offsetY,
                         opacity: circleOpacity,
-                      }
+                      },
                     ]}
                   />
                 )}
-                
+
                 {/* Debug overlay: Grid visualization (dev only) */}
                 {__DEV__ && DEBUG && (
                   <>
@@ -283,10 +421,10 @@ export default function TesseractScreen2() {
                           top: GRID_RECT.top * actualImageSize.height + actualImageSize.offsetY,
                           width: (GRID_RECT.right - GRID_RECT.left) * actualImageSize.width,
                           height: (GRID_RECT.bottom - GRID_RECT.top) * actualImageSize.height,
-                        }
+                        },
                       ]}
                     />
-                    
+
                     {/* Individual tile outlines */}
                     {tiles.map((tile) => (
                       <View
@@ -299,7 +437,7 @@ export default function TesseractScreen2() {
                             top: (tile.topPx || 0) + actualImageSize.offsetY,
                             width: tile.widthPx,
                             height: tile.heightPx,
-                          }
+                          },
                         ]}
                       >
                         <Text style={styles.debugTileText}>
@@ -357,6 +495,11 @@ const styles = StyleSheet.create({
     borderColor: '#00ff00',
     borderRadius: 4,
     backgroundColor: 'transparent',
+  },
+  inactiveTileOverlay: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 4,
   },
   tileCircle: {
     position: 'absolute',

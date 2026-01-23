@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { View, Image, StyleSheet, Dimensions, ImageSourcePropType } from 'react-native'
 import {
   Monster,
@@ -17,7 +17,7 @@ import { getTextContent, isPlayerOnObject } from '../modules/utils'
 import { getItemTemplate } from '@/config/objects'
 import deadChristosIMG from '@assets/images/deadChristos.png'
 import Projectile from './Projectile'
-import { enterSubGame } from '@/lib/subGames'
+import { enterSubGame } from '@/modules/subGames'
 
 const { width, height } = Dimensions.get('window')
 
@@ -237,23 +237,37 @@ export default function GameBoard({
     }
   }, [state.inCombat, state.attackSlots, state.combatLog, state.rangedAttackMode, previousInCombat])
 
-  // Game over effect (dev logs wrapped; no auto-close comment since updated InfoBox)
+  // Game over effect - only show dialog on transition and respect suppressDeathDialog
+  // Use a ref to track previous gameOver state to prevent stacking dialogs
+  const previousGameOver = useRef(false)
 
   useEffect(() => {
-    if (state.gameOver) {
-      const deathMessage =
-        state.gameOverMessage || 'Your journey ends here. The darkness claims another soul...'
-      if (__DEV__) {
-        console.log('DEATH DETECTED - Showing InfoBox:', deathMessage)
+    // Only trigger on alive->dead transition (edge trigger, not level trigger)
+    // This prevents dialog stacking on repeated deaths
+    if (state.gameOver && !previousGameOver.current) {
+      // Check if death dialog should be suppressed (e.g., for puzzle deaths)
+      if (!state.suppressDeathDialog) {
+        const deathMessage =
+          state.gameOverMessage || 'Your journey ends here. The darkness claims another soul...'
+        if (__DEV__) {
+          console.log('DEATH DETECTED - Showing InfoBox (alive->dead transition):', deathMessage)
+        }
+        setInfoData({
+          name: 'DEATH',
+          description: deathMessage,
+          image: deadChristosIMG,
+        })
+        setInfoVisible(true)
+      } else {
+        if (__DEV__) {
+          console.log('DEATH DETECTED - Dialog suppressed (suppressDeathDialog=true)')
+        }
       }
-      setInfoData({
-        name: 'DEATH',
-        description: deathMessage,
-        image: deadChristosIMG,
-      })
-      setInfoVisible(true)
     }
-  }, [state.gameOver, state.gameOverMessage])
+
+    // Update previous state for next render
+    previousGameOver.current = state.gameOver || false
+  }, [state.gameOver, state.gameOverMessage, state.suppressDeathDialog])
 
   if (!state.level || !state.level.objects) {
     if (__DEV__) {

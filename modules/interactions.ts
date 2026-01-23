@@ -236,9 +236,9 @@ const handleObjectEffects = (
       trigger: 'onEnterTile' as const,
       position: playerPos,
     }
-    
+
     const result = applyEffect(effect, context)
-    
+
     if (result.success) {
       console.log(`✅ Object effect applied: ${result.message}`)
     }
@@ -289,13 +289,14 @@ const handleGreatPowerEffects = (
         trigger: 'onGreatPowerCollision' as const,
         position: playerPos,
       }
-      
+
       // For soulsuck effects, pass death message through modified effect object
       // (create new object to avoid mutating config)
-      const effectToApply = effect.type === 'soulsuck' && !effect.description
-        ? { ...effect, description: deathMessage }
-        : effect
-      
+      const effectToApply =
+        effect.type === 'soulsuck' && !effect.description
+          ? { ...effect, description: deathMessage }
+          : effect
+
       applyEffect(effectToApply, context)
     })
   }
@@ -319,9 +320,9 @@ const handleNonCollisionObjectEffects = (
       trigger: 'onEnterTile' as const,
       position: playerPos,
     }
-    
+
     const result = applyEffect(effect, context)
-    
+
     if (result.success) {
       console.log(`✅ Non-collision object effect applied: ${result.message}`)
     }

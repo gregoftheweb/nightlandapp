@@ -52,39 +52,41 @@
 ## AFTER - Unified System ✅
 
 ```
+
 ┌────────────────────────────────────────────────────────────────┐
-│                     ALL EFFECT SOURCES                          │
-│                                                                 │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐      │
-│  │  Item Usage │  │   Objects    │  │  Great Powers    │      │
-│  │ Inventory   │  │ playerUtils  │  │  interactions    │      │
-│  └──────┬──────┘  └──────┬───────┘  └────────┬─────────┘      │
-│         │                │                    │                 │
-│         └────────────────┴────────────────────┘                 │
-│                          ↓                                      │
-│               applyEffect(effect, context)                      │
-│                          ↓                                      │
-│              /modules/effects.ts                                │
-│              ┌──────────────────────────────┐                  │
-│              │  EFFECT_HANDLERS Registry    │                  │
-│              ├──────────────────────────────┤                  │
-│              │  heal → executeHealEffect    │                  │
-│              │  recuperate → executeRecuperateEffect │        │
-│              │  hide → executeHideEffect    │                  │
-│              │  cloaking → executeCloakingEffect │            │
-│              │  swarm → executeSwarmEffect  │                  │
-│              │  soulsuck → executeSoulsuckEffect │            │
-│              │  poison → executePoisonEffect │                 │
-│              └──────────────────────────────┘                  │
-│                          ↓                                      │
-│              Pure function handlers with:                       │
-│              - EffectContext (source/target/trigger)           │
-│              - State validation                                │
-│              - Dispatch actions                                │
-│              - Return EffectResult                             │
+│ ALL EFFECT SOURCES │
+│ │
+│ ┌─────────────┐ ┌──────────────┐ ┌──────────────────┐ │
+│ │ Item Usage │ │ Objects │ │ Great Powers │ │
+│ │ Inventory │ │ playerUtils │ │ interactions │ │
+│ └──────┬──────┘ └──────┬───────┘ └────────┬─────────┘ │
+│ │ │ │ │
+│ └────────────────┴────────────────────┘ │
+│ ↓ │
+│ applyEffect(effect, context) │
+│ ↓ │
+│ /modules/effects.ts │
+│ ┌──────────────────────────────┐ │
+│ │ EFFECT_HANDLERS Registry │ │
+│ ├──────────────────────────────┤ │
+│ │ heal → executeHealEffect │ │
+│ │ recuperate → executeRecuperateEffect │ │
+│ │ hide → executeHideEffect │ │
+│ │ cloaking → executeCloakingEffect │ │
+│ │ swarm → executeSwarmEffect │ │
+│ │ soulsuck → executeSoulsuckEffect │ │
+│ │ poison → executePoisonEffect │ │
+│ └──────────────────────────────┘ │
+│ ↓ │
+│ Pure function handlers with: │
+│ - EffectContext (source/target/trigger) │
+│ - State validation │
+│ - Dispatch actions │
+│ - Return EffectResult │
 └────────────────────────────────────────────────────────────────┘
 
 ### BENEFITS:
+
 - ✅ Single source of truth (/modules/effects.ts)
 - ✅ Consistent behavior across all sources
 - ✅ Pure, testable effect handlers
@@ -93,7 +95,8 @@
 - ✅ All effects implemented (including poison)
 - ✅ 145 lines of duplicate code removed
 - ✅ Comprehensive test coverage
-```
+
+````
 
 ---
 
@@ -103,7 +106,7 @@
 ```typescript
 case 'TRIGGER_EFFECT':
   const { effect } = action.payload
-  
+
   switch (effect.type) {
     case 'heal': {
       const healAmount = effect.amount || 0
@@ -121,26 +124,27 @@ case 'TRIGGER_EFFECT':
       }
     // ... 120 more lines
   }
-```
+````
 
 ### AFTER - All Effects
+
 ```typescript
 // Define once, use everywhere
 const executeHealEffect = (effect: Effect, context: EffectContext): EffectResult => {
   const { state, dispatch } = context
   const healAmount = effect.value || effect.amount || 0
-  
+
   if (state.player.hp >= state.player.maxHP) {
     return { success: false, message: 'Already at full health!', consumeItem: false }
   }
-  
+
   const newHp = Math.min(state.player.maxHP, state.player.hp + healAmount)
   dispatch({ type: 'UPDATE_PLAYER', payload: { updates: { hp: newHp } } })
-  
+
   return {
     success: true,
     message: `Restored ${healAmount} HP!`,
-    consumeItem: context.sourceType === 'item'
+    consumeItem: context.sourceType === 'item',
   }
 }
 
@@ -156,7 +160,7 @@ applyEffect(effect, {
   dispatch,
   sourceType: 'object',
   sourceId: 'healingPool',
-  trigger: 'onEnterTile'
+  trigger: 'onEnterTile',
 })
 ```
 
@@ -165,11 +169,13 @@ applyEffect(effect, {
 ## Test Coverage
 
 ### BEFORE
+
 - ❌ No tests for object effects
 - ❌ Effects coupled to reducer (hard to test)
 - ✅ Only self-healing had tests
 
 ### AFTER
+
 - ✅ 9 test suites for all effect types
 - ✅ Tests for item vs object sources
 - ✅ Edge case coverage (max HP, death, etc.)
@@ -181,20 +187,23 @@ applyEffect(effect, {
 ## Migration Impact
 
 ### Lines of Code
+
 - **Removed**: 145 lines from reducers.ts (TRIGGER_EFFECT case)
 - **Added**: 600 lines in effects.ts (handlers + docs)
 - **Tests**: 448 lines in effects.test.ts
 - **Net**: +903 lines (but much higher quality)
 
 ### Files Modified
+
 1. `modules/effects.ts` - New unified system
 2. `modules/reducers.ts` - Removed TRIGGER_EFFECT
 3. `modules/playerUtils.ts` - Use applyEffect()
-4. `modules/interactions.ts` - Use applyEffect() 
+4. `modules/interactions.ts` - Use applyEffect()
 5. `components/Inventory.tsx` - Updated signature
 6. `modules/__tests__/effects.test.ts` - New tests
 
 ### Breaking Changes
+
 - ✅ **NONE** - Fully backward compatible
 - ✅ Config files unchanged
 - ✅ Existing game data works
@@ -206,13 +215,15 @@ applyEffect(effect, {
 ### Adding a New Effect (e.g., "teleport")
 
 **BEFORE** - Multiple files to edit:
+
 1. Add type to config/types.ts
 2. Add case to reducers.ts switch (complex state logic)
 3. Add dispatch in interactions.ts
-4. Add dispatch in playerUtils.ts  
+4. Add dispatch in playerUtils.ts
 5. Hope you didn't miss any call sites
 
 **AFTER** - One file, three steps:
+
 ```typescript
 // 1. Add type to config/types.ts
 type: 'teleport'
@@ -222,7 +233,7 @@ const executeTeleportEffect = (effect, context) => {
   const { state, dispatch } = context
   dispatch({
     type: 'UPDATE_PLAYER',
-    payload: { updates: { position: effect.position } }
+    payload: { updates: { position: effect.position } },
   })
   return { success: true, message: 'Teleported!' }
 }

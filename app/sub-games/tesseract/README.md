@@ -1,11 +1,13 @@
 # Tesseract Puzzle Sub-Game
 
 ## Overview
+
 The Tesseract puzzle is a 5x5 letter tile puzzle where players can interact with individual letter tiles on a stone puzzle board.
 
 ## Implementation Details
 
 ### Files
+
 - `index.tsx` - Entry point that routes to main screen
 - `main.tsx` - Screen 1: Introduction with option to explore the ruins
 - `screen2.tsx` - Screen 2: Interactive puzzle board
@@ -17,8 +19,9 @@ The Tesseract puzzle is a 5x5 letter tile puzzle where players can interact with
 The puzzle board image (`teseract-puzzle-board.png`) contains a 5x5 grid of letter tiles surrounded by a stone border. The tiles don't extend to the image edges.
 
 **GRID_RECT** defines the inner bounds of the tile field using normalized coordinates (0..1):
+
 - `left: 0.075` - 7.5% from left edge
-- `top: 0.065` - 6.5% from top edge  
+- `top: 0.065` - 6.5% from top edge
 - `right: 0.925` - 7.5% from right edge
 - `bottom: 0.89` - 11% from bottom edge (bottom border is slightly larger)
 
@@ -29,11 +32,13 @@ These values were calibrated by analyzing the actual puzzle board image and can 
 To visually verify and calibrate the grid alignment:
 
 1. In `screen2.tsx`, ensure `DEBUG` constant is set to `true` (line 21):
+
    ```typescript
    const DEBUG = true
    ```
 
 2. Run the app on a device or simulator:
+
    ```bash
    npm start
    # Then press 'i' for iOS or 'a' for Android
@@ -79,11 +84,13 @@ Adjust this value if needed to better avoid or include the grout lines in the hi
 ### Testing
 
 Run the tile utility tests:
+
 ```bash
 npm test -- app/sub-games/tesseract/__tests__/tiles.test.ts
 ```
 
 All 12 tests should pass, covering:
+
 - GRID_RECT validation
 - Tile generation
 - Pixel coordinate conversion
@@ -100,6 +107,7 @@ Before deploying to production:
 ## Future Enhancements
 
 Potential additions:
+
 - Puzzle solution logic
 - Animation effects when selecting tiles
 - Sound effects for tile interactions

@@ -100,7 +100,7 @@ describe('Unified Effects System', () => {
         type: 'heal',
         value: 25,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -128,7 +128,7 @@ describe('Unified Effects System', () => {
         type: 'heal',
         value: 25,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -156,7 +156,7 @@ describe('Unified Effects System', () => {
         type: 'heal',
         value: 25,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -181,7 +181,7 @@ describe('Unified Effects System', () => {
         type: 'heal',
         value: 25,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -206,7 +206,7 @@ describe('Unified Effects System', () => {
         type: 'recuperate',
         value: 10,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -233,7 +233,7 @@ describe('Unified Effects System', () => {
         type: 'recuperate',
         value: 10,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -256,7 +256,7 @@ describe('Unified Effects System', () => {
       const hideEffect: Effect = {
         type: 'hide',
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -280,11 +280,11 @@ describe('Unified Effects System', () => {
     test('should succeed when already hidden (refresh)', () => {
       const state = createMockGameState()
       state.player.isHidden = true
-      
+
       const hideEffect: Effect = {
         type: 'hide',
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -307,7 +307,7 @@ describe('Unified Effects System', () => {
         type: 'cloaking',
         duration: 5,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -323,7 +323,7 @@ describe('Unified Effects System', () => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'UPDATE_PLAYER',
         payload: {
-          updates: { 
+          updates: {
             isHidden: true,
             hideTurns: 5,
           },
@@ -337,7 +337,7 @@ describe('Unified Effects System', () => {
         type: 'cloaking',
         // no duration specified
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -351,7 +351,7 @@ describe('Unified Effects System', () => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'UPDATE_PLAYER',
         payload: {
-          updates: { 
+          updates: {
             isHidden: true,
             hideTurns: 5, // default duration
           },
@@ -369,7 +369,7 @@ describe('Unified Effects System', () => {
         type: 'poison',
         value: 10,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -396,7 +396,7 @@ describe('Unified Effects System', () => {
         type: 'poison',
         value: 10,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,
@@ -430,7 +430,7 @@ describe('Unified Effects System', () => {
       const unknownEffect: Effect = {
         type: 'unknownEffect' as any,
       }
-      
+
       const context: EffectContext = {
         state,
         dispatch: mockDispatch,

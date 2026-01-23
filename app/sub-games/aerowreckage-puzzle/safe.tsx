@@ -1,9 +1,9 @@
 // app/sub-games/aerowreckage-puzzle/safe.tsx
 // Screen [B]: Safe cracking puzzle screen
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native'
 import { useRouter } from 'expo-router'
-import { exitSubGame } from '@/lib/subGames'
+import { exitSubGame } from '@/modules/subGames'
 import { usePuzzleState } from './hooks/usePuzzleState'
 import { Dial } from './components/Dial'
 import { StepIndicator } from './components/StepIndicator'
@@ -18,20 +18,46 @@ const bgPuzzle = require('@/assets/images/aerowreck-safe2.png')
 export default function AeroWreckageSafe() {
   const router = useRouter()
   const { state, updateAngle, attemptLock } = usePuzzleState()
+
   const [modalVisible, setModalVisible] = useState(false)
   const [attemptResult, setAttemptResult] = useState<AttemptResult | null>(null)
 
-  // When puzzle opens, transition to success page
+  // ✅ Prevent double navigation + cancel delayed timers on unmount
+  const didNavigateRef = useRef(false)
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const goToSuccessOnce = () => {
+    if (didNavigateRef.current) return
+    didNavigateRef.current = true
+
+    if (__DEV__) console.log('[AeroWreckageSafe] Navigating to success (once)')
+    router.replace('/sub-games/aerowreckage-puzzle/success' as any)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current)
+        successTimerRef.current = null
+        if (__DEV__) console.log('[AeroWreckageSafe] Cleared pending success timer on unmount')
+      }
+    }
+  }, [])
+
+  // When puzzle opens, transition to success page (but only once)
   useEffect(() => {
     if (state.isOpened) {
-      router.replace('/sub-games/aerowreckage-puzzle/success' as any)
+      // If we scheduled a delayed nav, cancel it and just go now
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current)
+        successTimerRef.current = null
+      }
+      goToSuccessOnce()
     }
   }, [state.isOpened])
 
   const handleLeaveWithoutUnlocking = () => {
-    if (__DEV__) {
-      console.log('[AeroWreckageSafe] Player leaving without unlocking')
-    }
+    if (__DEV__) console.log('[AeroWreckageSafe] Player leaving without unlocking')
     exitSubGame({ completed: false })
   }
 
@@ -40,11 +66,16 @@ export default function AeroWreckageSafe() {
     setAttemptResult(result)
     setModalVisible(true)
 
-    // If safe opened, navigate to success page after a delay
+    // If safe opened, close modal after delay, but DO NOT navigate here.
+    // The state.isOpened effect will do navigation once and will cancel this timer if needed.
     if (result.type === 'safe_opened') {
-      setTimeout(() => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+
+      successTimerRef.current = setTimeout(() => {
+        successTimerRef.current = null
         setModalVisible(false)
-        router.replace('/sub-games/aerowreckage-puzzle/success' as any)
+        if (__DEV__) console.log('[AeroWreckageSafe] Closing modal after safe_opened delay')
+        // ✅ no router.replace here
       }, 2000)
     }
   }

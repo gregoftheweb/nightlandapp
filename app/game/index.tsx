@@ -24,7 +24,7 @@ import {
   processRangedAttackImpact,
   checkCombatEnd,
 } from '../../modules/combat'
-import { enterSubGame } from '../../lib/subGames'
+import { enterSubGame } from '../../modules/subGames'
 
 // Constants
 const { width, height } = Dimensions.get('window')
@@ -846,6 +846,17 @@ export default function Game() {
     router.push('/death')
   }, [router])
 
+  // Create showDialog wrapper for inventory items
+  const showDialog = useCallback((message: string, duration?: number) => {
+    if (showInfoRef.current) {
+      // Use showInfo to display the message
+      showInfoRef.current('Message', message)
+    } else {
+      // Fallback: just log if showInfo not available
+      console.log('[showDialog]', message)
+    }
+  }, [])
+
   return (
     <Pressable
       style={styles.container}
@@ -884,6 +895,7 @@ export default function Game() {
           visible={inventoryVisible}
           onClose={handleCloseInventory}
           inventory={state.player.inventory}
+          showDialog={showDialog}
         />
       </View>
     </Pressable>

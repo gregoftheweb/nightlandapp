@@ -2,20 +2,20 @@
  * ============================================================================
  * UNIFIED EFFECTS SYSTEM
  * ============================================================================
- * 
+ *
  * This module is the SINGLE source of truth for all effect execution in the game.
  * ALL effects (from items, objects, abilities, spells, etc.) MUST flow through
  * the applyEffect() function defined here.
- * 
+ *
  * ## Architecture
- * 
+ *
  * Effects are defined in config files:
  * - `/config/objects.ts` - Object/building effects (heal, hide, swarm, etc.)
  * - `/config/levels.ts` - Ability/spell effects
  * - Item templates - Consumable item effects
- * 
+ *
  * ## Effect Triggers
- * 
+ *
  * Effects can be triggered by various game events:
  * - `onUseItem` - Player uses a consumable item from inventory
  * - `onEnterTile` - Player steps onto a tile with an object that has effects
@@ -24,28 +24,28 @@
  * - `onTurnEnd` - End of player's turn (passive effects, ticking)
  * - `onCombatHit` - Effect triggers on successful attack
  * - `onGreatPowerCollision` - Player collides with a Great Power
- * 
+ *
  * ## Duration & Expiration
- * 
+ *
  * - Effects with `duration` property create timed status effects
  * - Duration is tracked in turns and decremented via DECREMENT_CLOAKING_TURNS action
  * - When duration reaches 0, effect automatically expires
  * - Some effects are instant (heal, damage) with no duration
- * 
+ *
  * ## Stacking Rules
- * 
+ *
  * - Most effects refresh duration when reapplied (hide, cloaking)
  * - Healing effects stack (multiple heals add up)
  * - Spawn effects always execute (multiple swarms create more monsters)
- * 
+ *
  * ## Adding a New Effect
- * 
+ *
  * 1. Add effect type to Effect interface in `/config/types.ts`
  * 2. Define effect in appropriate config file (objects.ts, levels.ts, etc.)
  * 3. Implement effect handler function here (executeXxxEffect)
  * 4. Register handler in EFFECT_HANDLERS registry
  * 5. Add test cases to `/modules/__tests__/effects.test.ts`
- * 
+ *
  * ============================================================================
  */
 
@@ -63,21 +63,28 @@ export interface EffectContext {
   state: GameState
   dispatch: (action: any) => void
   showDialog?: (message: string, duration?: number) => void
-  
+
   // Source information
   sourceType: 'player' | 'monster' | 'object' | 'item' | 'system'
   sourceId?: string // ID of the source entity (objectId, monsterId, itemId)
-  
+
   // Target information
   targetType?: 'player' | 'monster' | 'tile' | 'none'
   targetId?: string // ID of the target entity if applicable
-  
+
   // Trigger context
-  trigger: 'onUseItem' | 'onEnterTile' | 'onInteract' | 'onTurnStart' | 'onTurnEnd' | 'onCombatHit' | 'onGreatPowerCollision'
-  
+  trigger:
+    | 'onUseItem'
+    | 'onEnterTile'
+    | 'onInteract'
+    | 'onTurnStart'
+    | 'onTurnEnd'
+    | 'onCombatHit'
+    | 'onGreatPowerCollision'
+
   // Location context
   position?: Position // Position where effect is triggered
-  
+
   // Legacy compatibility
   item?: Item // The item being used (if applicable)
 }
@@ -98,7 +105,7 @@ export interface EffectResult {
  * HEAL EFFECT
  * Restores HP to the player, capped at maxHP.
  * Used by: health potions, healing pools, recuperation zones
- * 
+ *
  * Note: Supports both 'value' and 'amount' fields for backward compatibility
  * with different config sources (objects.ts uses 'value', some items may use 'amount')
  */
@@ -106,7 +113,11 @@ const executeHealEffect = (effect: Effect, context: EffectContext): EffectResult
   const { state, dispatch, showDialog } = context
   const healAmount = effect.value || effect.amount || 0
 
-  logIfDev('🩹 Executing heal effect:', { healAmount, currentHP: state.player.hp, maxHP: state.player.maxHP })
+  logIfDev('🩹 Executing heal effect:', {
+    healAmount,
+    currentHP: state.player.hp,
+    maxHP: state.player.maxHP,
+  })
 
   // Check if player needs healing
   if (state.player.hp >= state.player.maxHP) {
@@ -169,14 +180,18 @@ const executeHealEffect = (effect: Effect, context: EffectContext): EffectResult
  * RECUPERATE EFFECT
  * Similar to heal, but only heals if player is below max HP.
  * Used by: safe zones, rest areas like The Last Redoubt
- * 
+ *
  * Note: Supports both 'value' and 'amount' fields for backward compatibility
  */
 const executeRecuperateEffect = (effect: Effect, context: EffectContext): EffectResult => {
   const { state, dispatch, showDialog } = context
   const healAmount = effect.value || effect.amount || 5
 
-  logIfDev('💤 Executing recuperate effect:', { healAmount, currentHP: state.player.hp, maxHP: state.player.maxHP })
+  logIfDev('💤 Executing recuperate effect:', {
+    healAmount,
+    currentHP: state.player.hp,
+    maxHP: state.player.maxHP,
+  })
 
   // Only heal if player is below max HP
   if (state.player.hp >= state.player.maxHP) {
@@ -216,13 +231,13 @@ const executeRecuperateEffect = (effect: Effect, context: EffectContext): Effect
 /**
  * HIDE EFFECT
  * Sets player invisibility flag, making them hidden from enemies.
- * 
+ *
  * Intended Behavior (inferred from usage):
  * - Sets `isHidden: true` on player state
  * - Prevents monsters from detecting/targeting player
  * - Infinite duration unless explicitly cleared or player attacks
  * - Used by: safe zones (redoubt, healing pools, wreckage sites)
- * 
+ *
  * Note: For timed invisibility, use 'cloaking' effect instead
  */
 const executeHideEffect = (effect: Effect, context: EffectContext): EffectResult => {
@@ -263,7 +278,7 @@ const executeHideEffect = (effect: Effect, context: EffectContext): EffectResult
 /**
  * CLOAKING EFFECT
  * Timed invisibility effect with turn-based duration.
- * 
+ *
  * Intended Behavior:
  * - Sets `isHidden: true` on player state
  * - Sets `hideTurns` to specified duration
@@ -281,7 +296,7 @@ const executeCloakingEffect = (effect: Effect, context: EffectContext): EffectRe
   dispatch({
     type: 'UPDATE_PLAYER',
     payload: {
-      updates: { 
+      updates: {
         isHidden: true,
         hideTurns: duration,
       },
@@ -303,13 +318,13 @@ const executeCloakingEffect = (effect: Effect, context: EffectContext): EffectRe
 /**
  * SWARM EFFECT
  * Spawns multiple monsters in a circular pattern around a position.
- * 
+ *
  * Behavior:
  * - Spawns `count` monsters of type `monsterType`
  * - Monsters spawn within `range` tiles of trigger position
  * - Random variance of ±5 tiles applied to each spawn
  * - Monsters are added to activeMonsters array
- * 
+ *
  * Used by: cursed totems, monster nests, dark rituals
  */
 const executeSwarmEffect = (effect: Effect, context: EffectContext): EffectResult => {
@@ -376,7 +391,7 @@ const executeSwarmEffect = (effect: Effect, context: EffectContext): EffectResul
   })
 
   const message = `A swarm of ${effect.monsterType}s emerges!`
-  
+
   logIfDev(`✅ Spawned ${newMonsters.length} ${effect.monsterType}s`)
 
   return {
@@ -390,13 +405,13 @@ const executeSwarmEffect = (effect: Effect, context: EffectContext): EffectResul
 /**
  * SOULSUCK EFFECT
  * Instant death effect used by Great Powers.
- * 
+ *
  * Behavior:
  * - Sets player HP to 0
  * - Triggers game over state
  * - Displays custom death message
  * - Ends any active combat
- * 
+ *
  * Used by: Great Powers (Watchers, House of Silence, etc.)
  */
 const executeSoulsuckEffect = (effect: Effect, context: EffectContext): EffectResult => {
@@ -435,13 +450,13 @@ const executeSoulsuckEffect = (effect: Effect, context: EffectContext): EffectRe
 /**
  * POISON EFFECT
  * Deals damage over time to the player.
- * 
+ *
  * Behavior:
  * - Applies immediate poison damage
  * - Can be extended to apply DOT (damage over time) status
- * 
+ *
  * Used by: poison pools, toxic enemies, cursed items
- * 
+ *
  * Note: Supports both 'value' and 'amount' fields for backward compatibility
  */
 const executePoisonEffect = (effect: Effect, context: EffectContext): EffectResult => {
@@ -484,6 +499,27 @@ const executePoisonEffect = (effect: Effect, context: EffectContext): EffectResu
   }
 }
 
+/**
+ * SHOW MESSAGE EFFECT
+ * Displays a message to the player without consuming the item.
+ * Used for: readable items like scrolls, notes, and letters.
+ */
+const executeShowMessageEffect = (effect: Effect, context: EffectContext): EffectResult => {
+  const { showDialog, item } = context
+  const message = effect.message || effect.description || 'A message appears.'
+
+  logIfDev('📜 Executing showMessage effect')
+
+  showDialog?.(message, 5000)
+
+  const itemName = item?.name || 'item'
+  return {
+    success: true,
+    message: `You read the ${itemName}.`,
+    consumeItem: false,
+  }
+}
+
 // ==================== EFFECT HANDLER REGISTRY ====================
 
 /**
@@ -500,6 +536,7 @@ const EFFECT_HANDLERS: Record<string, EffectHandler> = {
   swarm: executeSwarmEffect,
   soulsuck: executeSoulsuckEffect,
   poison: executePoisonEffect,
+  showMessage: executeShowMessageEffect,
   // Add new effect handlers here as they are implemented
 }
 
@@ -507,10 +544,10 @@ const EFFECT_HANDLERS: Record<string, EffectHandler> = {
 
 /**
  * UNIFIED EFFECT APPLICATION
- * 
+ *
  * This is the SINGLE entry point for ALL effect execution in the game.
  * All code paths (items, objects, abilities, etc.) MUST call this function.
- * 
+ *
  * @param effect - The effect definition from config
  * @param context - Full context including source, target, trigger, and game state
  * @returns EffectResult with success status and message
@@ -524,7 +561,7 @@ export const applyEffect = (effect: Effect, context: EffectContext): EffectResul
 
   // Get handler for this effect type
   const handler = EFFECT_HANDLERS[effect.type]
-  
+
   if (!handler) {
     console.warn(`❌ Unknown effect type: ${effect.type}`)
     return {
@@ -536,23 +573,25 @@ export const applyEffect = (effect: Effect, context: EffectContext): EffectResul
 
   // Execute the effect handler
   const result = handler(effect, context)
-  
-  logIfDev(`${result.success ? '✅' : '❌'} Effect ${effect.type} ${result.success ? 'succeeded' : 'failed'}: ${result.message}`)
-  
+
+  logIfDev(
+    `${result.success ? '✅' : '❌'} Effect ${effect.type} ${result.success ? 'succeeded' : 'failed'}: ${result.message}`
+  )
+
   return result
 }
 
 /**
  * LEGACY COMPATIBILITY WRAPPER
- * 
+ *
  * Maintains compatibility with existing item usage code.
  * Converts old EffectExecutionContext to new EffectContext.
- * 
+ *
  * @deprecated Use applyEffect() directly with full EffectContext
  */
 export const executeEffect = (effect: Effect, context: any): EffectResult => {
   console.warn('⚠️ executeEffect is deprecated, use applyEffect() instead')
-  
+
   // Convert legacy context to new context
   const newContext: EffectContext = {
     state: context.state,
@@ -563,7 +602,7 @@ export const executeEffect = (effect: Effect, context: any): EffectResult => {
     sourceId: context.item?.id,
     trigger: 'onUseItem',
   }
-  
+
   return applyEffect(effect, newContext)
 }
 
@@ -573,7 +612,12 @@ export const executeEffect = (effect: Effect, context: any): EffectResult => {
  * Handle item usage from inventory.
  * Executes all effects on the item and determines if item should be consumed.
  */
-export const useItem = (item: Item, state: GameState, dispatch: (action: any) => void, showDialog?: (message: string, duration?: number) => void): EffectResult => {
+export const useItem = (
+  item: Item,
+  state: GameState,
+  dispatch: (action: any) => void,
+  showDialog?: (message: string, duration?: number) => void
+): EffectResult => {
   logIfDev(`📦 Using item: ${item.name}`)
 
   // Check if item has effects
@@ -600,7 +644,7 @@ export const useItem = (item: Item, state: GameState, dispatch: (action: any) =>
       trigger: 'onUseItem',
       item,
     }
-    
+
     const result = applyEffect(effect, context)
 
     if (result.success) {
