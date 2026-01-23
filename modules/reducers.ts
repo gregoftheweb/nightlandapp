@@ -285,6 +285,7 @@ export const reducer = (state: GameState = initialState, action: any): GameState
         gameOver: true,
         gameOverMessage: action.payload?.message || 'You have been defeated.',
         killerName: action.payload?.killerName || 'unknown horror',
+        suppressDeathDialog: action.payload?.suppressDeathDialog || false,
         inCombat: false,
         attackSlots: [],
         waitingMonsters: [],

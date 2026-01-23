@@ -411,6 +411,7 @@ export interface GameState {
   monstersKilled?: number
   distanceTraveled?: number
   killerName?: string
+  suppressDeathDialog?: boolean // Suppress death dialog for specific death sources (e.g., puzzle deaths)
   selfHealTurnCounter?: number // Tracks turns for self-healing mechanic
   rangedAttackMode?: boolean // True when player is in ranged attack targeting mode
   targetedMonsterId?: string | null // ID of the currently targeted monster for ranged attack

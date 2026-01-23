@@ -57,8 +57,9 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: 'space-between',
     padding: 20,
+    paddingTop: 40, // Fixed top padding to prevent layout shift
+    paddingBottom: 80, // Fixed bottom padding for button area
   },
   textContainer: {
     borderWidth: 2,
@@ -66,6 +67,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    marginBottom: 20,
   },
   title: {
     color: 'red',
@@ -79,8 +81,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Gabrielle',
   },
   overlay: {
+    position: 'absolute',
+    bottom: 80,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    paddingBottom: 60,
   },
   button: {
     backgroundColor: 'transparent',

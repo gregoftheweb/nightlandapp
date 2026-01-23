@@ -16,15 +16,17 @@ export default function TesseractScreen3() {
 
   const handleAcceptDoom = () => {
     if (__DEV__) {
-      console.log('[Tesseract] Player accepts doom - triggering death')
+      console.log('[Tesseract] Player accepts doom - triggering death with suppressDeathDialog')
     }
     
     // Dispatch GAME_OVER action to set death state
+    // suppressDeathDialog prevents the death InfoBox from appearing
     dispatch({
       type: 'GAME_OVER',
       payload: {
         message: 'Christos failed to guess the right word. An ancient evil rose from the earth and devoured his soul.',
         killerName: 'Ancient Evil',
+        suppressDeathDialog: true, // Suppress the death dialog for puzzle death
       },
     })
     
