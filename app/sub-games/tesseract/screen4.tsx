@@ -8,7 +8,7 @@ import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
-import { consumables } from '@/config/objects'
+import { consumables, collectible } from '@/config/objects'
 
 const bgScreen4 = require('@/assets/images/teseract-screen4.png')
 
@@ -37,9 +37,9 @@ export default function TesseractScreen4() {
         console.log('[Tesseract] Adding Persius Scroll to inventory')
       }
       
-      // Create the scroll item from the template
+      // Create the scroll item from the collectible template
       const scrollItem = {
-        ...consumables.persiusScroll,
+        ...collectible.persiusScroll,
         id: persiusScrollId,
         collectible: true,
       }

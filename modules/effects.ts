@@ -490,16 +490,17 @@ const executePoisonEffect = (effect: Effect, context: EffectContext): EffectResu
  * Used for: readable items like scrolls, notes, and letters.
  */
 const executeShowMessageEffect = (effect: Effect, context: EffectContext): EffectResult => {
-  const { showDialog } = context
+  const { showDialog, item } = context
   const message = effect.message || effect.description || 'A message appears.'
 
   logIfDev('📜 Executing showMessage effect')
   
   showDialog?.(message, 5000)
 
+  const itemName = item?.name || 'item'
   return {
     success: true,
-    message: 'You read the scroll.',
+    message: `You read the ${itemName}.`,
     consumeItem: false,
   }
 }
