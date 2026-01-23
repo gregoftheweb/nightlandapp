@@ -17,7 +17,7 @@ import { getTextContent, isPlayerOnObject } from '../modules/utils'
 import { getItemTemplate } from '@/config/objects'
 import deadChristosIMG from '@assets/images/deadChristos.png'
 import Projectile from './Projectile'
-import { enterSubGame } from '@/lib/subGames'
+import { enterSubGame } from '@/modules/subGames'
 
 const { width, height } = Dimensions.get('window')
 
@@ -240,7 +240,7 @@ export default function GameBoard({
   // Game over effect - only show dialog on transition and respect suppressDeathDialog
   // Use a ref to track previous gameOver state to prevent stacking dialogs
   const previousGameOver = useRef(false)
-  
+
   useEffect(() => {
     // Only trigger on alive->dead transition (edge trigger, not level trigger)
     // This prevents dialog stacking on repeated deaths
@@ -264,7 +264,7 @@ export default function GameBoard({
         }
       }
     }
-    
+
     // Update previous state for next render
     previousGameOver.current = state.gameOver || false
   }, [state.gameOver, state.gameOverMessage, state.suppressDeathDialog])

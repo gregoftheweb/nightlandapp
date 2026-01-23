@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import { useRouter } from 'expo-router'
-import { exitSubGame } from '@/lib/subGames'
+import { exitSubGame } from '@/modules/subGames'
 import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
@@ -31,14 +31,14 @@ export default function TesseractScreen4() {
   // Add Persius Scroll to inventory on mount (only once)
   useEffect(() => {
     const persiusScrollId = 'persius-scroll'
-    const alreadyHasScroll = state.player.inventory.some(item => item.id === persiusScrollId)
-    
+    const alreadyHasScroll = state.player.inventory.some((item) => item.id === persiusScrollId)
+
     if (!alreadyHasScroll) {
       if (__DEV__) {
         console.log('[Tesseract] Adding Persius Scroll to inventory')
         console.log('[Tesseract] persiusScroll template:', collectible.persiusScroll)
       }
-      
+
       // Create the scroll item from the collectible template
       // Cast to Item type to ensure all properties are preserved
       const scrollItem: Item = {
@@ -47,12 +47,12 @@ export default function TesseractScreen4() {
         type: 'collectible',
         collectible: true,
       } as Item
-      
+
       if (__DEV__) {
         console.log('[Tesseract] Created scroll item:', scrollItem)
         console.log('[Tesseract] Scroll item effects:', scrollItem.effects)
       }
-      
+
       dispatch({
         type: 'ADD_TO_INVENTORY',
         payload: { item: scrollItem },
@@ -97,8 +97,8 @@ export default function TesseractScreen4() {
       <View style={styles.container}>
         <View style={styles.contentArea}>
           <Text style={styles.descriptionText}>
-            Christos successfully spelled TESSERACT.{'\n\n'}
-            A scroll appears at his feet. It is a message from Persius.
+            Christos successfully spelled TESSERACT.{'\n\n'}A scroll appears at his feet. It is a
+            message from Persius.
           </Text>
         </View>
 
@@ -132,9 +132,7 @@ export default function TesseractScreen4() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>Message from Persius</Text>
-              <Text style={styles.modalText}>
-                {PERSIUS_SCROLL_TEXT}
-              </Text>
+              <Text style={styles.modalText}>{PERSIUS_SCROLL_TEXT}</Text>
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => setShowScrollModal(false)}

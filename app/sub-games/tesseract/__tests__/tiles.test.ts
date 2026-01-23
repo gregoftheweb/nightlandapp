@@ -34,27 +34,27 @@ describe('Tesseract Tiles', () => {
 
     it('should generate tiles with correct row and column indices', () => {
       const tiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
-      
+
       // Check first tile (0,0)
       expect(tiles[0].row).toBe(0)
       expect(tiles[0].col).toBe(0)
       expect(tiles[0].id).toBe('tile-0-0')
-      
+
       // Check last tile (4,4)
       expect(tiles[24].row).toBe(4)
       expect(tiles[24].col).toBe(4)
       expect(tiles[24].id).toBe('tile-4-4')
-      
+
       // Check middle tile (2,2)
-      const middleTile = tiles.find(t => t.row === 2 && t.col === 2)
+      const middleTile = tiles.find((t) => t.row === 2 && t.col === 2)
       expect(middleTile).toBeDefined()
       expect(middleTile?.id).toBe('tile-2-2')
     })
 
     it('should generate tiles within the grid rect bounds', () => {
       const tiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
-      
-      tiles.forEach(tile => {
+
+      tiles.forEach((tile) => {
         expect(tile.left).toBeGreaterThanOrEqual(GRID_RECT.left)
         expect(tile.right).toBeLessThanOrEqual(GRID_RECT.right)
         expect(tile.top).toBeGreaterThanOrEqual(GRID_RECT.top)
@@ -65,23 +65,21 @@ describe('Tesseract Tiles', () => {
     it('should respect gap parameter', () => {
       const gap = 0.01
       const tiles = generateTilesFromGridRect(GRID_RECT, 5, 5, gap)
-      
+
       // Tiles should be slightly smaller due to gap
       const tilesNoGap = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
-      
-      expect(tiles[0].right - tiles[0].left).toBeLessThan(
-        tilesNoGap[0].right - tilesNoGap[0].left
-      )
+
+      expect(tiles[0].right - tiles[0].left).toBeLessThan(tilesNoGap[0].right - tilesNoGap[0].left)
     })
 
     it('should generate tiles in row-major order', () => {
       const tiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
-      
+
       // First row should be indices 0-4
       expect(tiles[0].row).toBe(0)
       expect(tiles[4].row).toBe(0)
       expect(tiles[4].col).toBe(4)
-      
+
       // Second row should be indices 5-9
       expect(tiles[5].row).toBe(1)
       expect(tiles[5].col).toBe(0)
@@ -95,9 +93,9 @@ describe('Tesseract Tiles', () => {
       const tiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
       const imageWidth = 1000
       const imageHeight = 1000
-      
+
       const pixelTiles = tilesToPixelCoords(tiles, imageWidth, imageHeight)
-      
+
       expect(pixelTiles[0].leftPx).toBe(tiles[0].left * imageWidth)
       expect(pixelTiles[0].topPx).toBe(tiles[0].top * imageHeight)
       expect(pixelTiles[0].rightPx).toBe(tiles[0].right * imageWidth)
@@ -108,15 +106,11 @@ describe('Tesseract Tiles', () => {
       const tiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
       const imageWidth = 1000
       const imageHeight = 1000
-      
+
       const pixelTiles = tilesToPixelCoords(tiles, imageWidth, imageHeight)
-      
-      expect(pixelTiles[0].widthPx).toBe(
-        (tiles[0].right - tiles[0].left) * imageWidth
-      )
-      expect(pixelTiles[0].heightPx).toBe(
-        (tiles[0].bottom - tiles[0].top) * imageHeight
-      )
+
+      expect(pixelTiles[0].widthPx).toBe((tiles[0].right - tiles[0].left) * imageWidth)
+      expect(pixelTiles[0].heightPx).toBe((tiles[0].bottom - tiles[0].top) * imageHeight)
     })
   })
 
@@ -124,12 +118,12 @@ describe('Tesseract Tiles', () => {
     it('should return tile when point is inside tile bounds', () => {
       const tiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
       const pixelTiles = tilesToPixelCoords(tiles, 1000, 1000)
-      
+
       // Get first tile and test a point in its center
       const firstTile = pixelTiles[0]
       const centerX = (firstTile.leftPx! + firstTile.rightPx!) / 2
       const centerY = (firstTile.topPx! + firstTile.bottomPx!) / 2
-      
+
       const result = getTileAtPoint(pixelTiles, centerX, centerY)
       expect(result).toBe(firstTile)
     })
@@ -137,7 +131,7 @@ describe('Tesseract Tiles', () => {
     it('should return null when point is outside all tiles', () => {
       const tiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
       const pixelTiles = tilesToPixelCoords(tiles, 1000, 1000)
-      
+
       // Test point at (0, 0) which should be in the border area
       const result = getTileAtPoint(pixelTiles, 0, 0)
       expect(result).toBeNull()
@@ -146,12 +140,12 @@ describe('Tesseract Tiles', () => {
     it('should return correct tile for different grid positions', () => {
       const tiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
       const pixelTiles = tilesToPixelCoords(tiles, 1000, 1000)
-      
+
       // Test middle tile (2, 2) - should be at index 12
       const middleTile = pixelTiles[12]
       const centerX = (middleTile.leftPx! + middleTile.rightPx!) / 2
       const centerY = (middleTile.topPx! + middleTile.bottomPx!) / 2
-      
+
       const result = getTileAtPoint(pixelTiles, centerX, centerY)
       expect(result?.row).toBe(2)
       expect(result?.col).toBe(2)

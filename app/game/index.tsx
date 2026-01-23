@@ -24,7 +24,7 @@ import {
   processRangedAttackImpact,
   checkCombatEnd,
 } from '../../modules/combat'
-import { enterSubGame } from '../../lib/subGames'
+import { enterSubGame } from '../../modules/subGames'
 
 // Constants
 const { width, height } = Dimensions.get('window')

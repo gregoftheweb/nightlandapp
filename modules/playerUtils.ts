@@ -167,7 +167,7 @@ export const checkObjectInteractions = (
   // Apply each effect through the unified effects system
   objectAtPosition.effects.forEach((effect: any) => {
     console.log('Triggering effect through unified system:', effect)
-    
+
     const context = {
       state,
       dispatch,
@@ -179,7 +179,7 @@ export const checkObjectInteractions = (
     }
 
     const result = applyEffect(effect, context)
-    
+
     if (result.success && result.message) {
       console.log(`Effect applied: ${result.message}`)
     }

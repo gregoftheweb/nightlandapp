@@ -1,6 +1,7 @@
 # Tesseract Grid Calibration Guide
 
 ## Purpose
+
 This guide explains how to visually verify and fine-tune the grid alignment for the Tesseract puzzle board to ensure accurate tile hit detection.
 
 ## Quick Start
@@ -10,6 +11,7 @@ This guide explains how to visually verify and fine-tune the grid alignment for 
    - Verify line ~24 has: `const DEBUG = true`
 
 2. **Run the App**
+
    ```bash
    cd /home/runner/work/nightlandapp/nightlandapp
    npm start
@@ -31,7 +33,7 @@ This guide explains how to visually verify and fine-tune the grid alignment for 
    - Shows the GRID_RECT bounds
    - Should tightly frame the 5x5 letter tile area (not the outer stone border)
 
-2. **Magenta Grid Lines**  
+2. **Magenta Grid Lines**
    - Thin magenta lines dividing the grid into 5x5 cells
    - Should align with each letter tile face
    - Should NOT overlap the grout lines between tiles
@@ -69,30 +71,35 @@ This guide explains how to visually verify and fine-tune the grid alignment for 
 If the alignment is off, adjust the values in `app/sub-games/tesseract/tiles.ts`:
 
 ### Current Values
+
 ```typescript
 export const GRID_RECT: GridRect = {
-  left: 0.075,    // 7.5% from left edge
-  top: 0.065,     // 6.5% from top edge
-  right: 0.925,   // 7.5% from right edge
-  bottom: 0.89,   // 11% from bottom edge
+  left: 0.075, // 7.5% from left edge
+  top: 0.065, // 6.5% from top edge
+  right: 0.925, // 7.5% from right edge
+  bottom: 0.89, // 11% from bottom edge
 }
 ```
 
 ### Adjustment Guidelines
 
 **If yellow border is too far from tile edges:**
+
 - Decrease margins (move values toward 0.5)
 - Example: `left: 0.07` (if border too far right)
 
 **If yellow border overlaps outer stone border:**
+
 - Increase margins (move values away from 0.5)
 - Example: `left: 0.08` (if border too far left)
 
 **If top/bottom alignment is off:**
+
 - Adjust `top` and `bottom` independently
 - The bottom border is typically larger than top
 
 **If left/right alignment is off:**
+
 - Adjust `left` and `right` independently
 - Typically these should be symmetric
 
@@ -106,6 +113,7 @@ export const GRID_RECT: GridRect = {
 ### Example Adjustments
 
 **Grid too small (border showing inside tiles):**
+
 ```typescript
 left: 0.07,     // was 0.075, moved 0.005 left
 top: 0.055,     // was 0.065, moved 0.01 up
@@ -114,6 +122,7 @@ bottom: 0.90,   // was 0.89, moved 0.01 down
 ```
 
 **Grid too large (border in outer stone area):**
+
 ```typescript
 left: 0.085,    // was 0.075, moved 0.01 right
 top: 0.075,     // was 0.065, moved 0.01 down
@@ -139,6 +148,7 @@ const normalizedTiles = generateTilesFromGridRect(GRID_RECT, 5, 5, 0)
 ## Testing on Multiple Devices
 
 Test on various screen sizes to ensure responsive behavior:
+
 - Small phone (iPhone SE)
 - Standard phone (iPhone 14)
 - Large phone (iPhone 14 Pro Max)
@@ -169,11 +179,13 @@ or
 Once calibration is complete:
 
 1. **Disable Debug Mode**
+
    ```typescript
-   const DEBUG = false  // in screen2.tsx
+   const DEBUG = false // in screen2.tsx
    ```
 
 2. **Run Tests**
+
    ```bash
    npm test -- app/sub-games/tesseract/__tests__/tiles.test.ts
    ```
@@ -190,24 +202,29 @@ Once calibration is complete:
 ## Troubleshooting
 
 **Problem: Can't see any overlays**
+
 - Check that `__DEV__` is true (development build)
 - Verify `DEBUG = true` in screen2.tsx
 - Ensure you're on Screen 2 (puzzle board screen)
 
 **Problem: Grid appears on every screen**
+
 - The overlays are only on Screen 2
 - Navigate to Tesseract > "explore the stone ruins"
 
 **Problem: Overlays don't update after changes**
+
 - Hard reload: Shake device > "Reload"
 - Or restart: `npm start` again
 
 **Problem: Tests failing**
+
 - Run: `npm test -- app/sub-games/tesseract/__tests__/tiles.test.ts`
 - All 12 tests should pass
 - If GRID_RECT changed, tests validate bounds are still valid (0..1 range)
 
 **Problem: Tiles not responsive to taps**
+
 - Check that Pressable overlay is rendering
 - Verify imageLayout state is set (check console for "Image layout" log)
 - Ensure tiles array has 25 elements (check console for "Generated 25 tiles")

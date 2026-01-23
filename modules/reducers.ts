@@ -16,7 +16,14 @@ export const reducer = (state: GameState = initialState, action: any): GameState
   switch (action.type) {
     // ============ LEVEL MANAGEMENT ============
     case 'SET_LEVEL':
-      const newLevelConfig = levels[String(action.levelId)]
+      const raw = action.levelId
+      if (!(raw in levels)) {
+        logIfDev(`[reducer] Unknown levelId: ${String(raw)}`)
+        return state
+      }
+
+      const levelId = raw as keyof typeof levels
+      const newLevelConfig = levels[levelId]
       return {
         ...state,
         level: newLevelConfig,

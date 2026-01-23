@@ -22,9 +22,9 @@ export async function getSubGameSave<T = any>(key: string): Promise<SubGameSaveD
 
     const parsed = JSON.parse(jsonValue) as SubGameSaveData<T>
 
-    if (__DEV__) {
-      console.log(`[SubGamePersistence] Loaded save for ${key}:`, parsed)
-    }
+    // if (__DEV__) {
+    //   console.log(`[SubGamePersistence] Loaded save for ${key}:`, parsed)
+    // }
 
     return parsed
   } catch (error) {
@@ -57,9 +57,9 @@ export async function setSubGameSave<T = any>(
     const jsonValue = JSON.stringify(saveData)
     await AsyncStorage.setItem(storageKey, jsonValue)
 
-    if (__DEV__) {
-      console.log(`[SubGamePersistence] Saved data for ${key}:`, saveData)
-    }
+    // if (__DEV__) {
+    //   console.log(`[SubGamePersistence] Saved data for ${key}:`, saveData)
+    // }
   } catch (error) {
     if (__DEV__) {
       console.error(`[SubGamePersistence] Error saving data for ${key}:`, error)
@@ -76,9 +76,9 @@ export async function clearSubGameSave(key: string): Promise<void> {
     const storageKey = `${SUB_GAME_STORAGE_PREFIX}${key}`
     await AsyncStorage.removeItem(storageKey)
 
-    if (__DEV__) {
-      console.log(`[SubGamePersistence] Cleared save for ${key}`)
-    }
+    // if (__DEV__) {
+    //   console.log(`[SubGamePersistence] Cleared save for ${key}`)
+    // }
   } catch (error) {
     if (__DEV__) {
       console.error(`[SubGamePersistence] Error clearing save for ${key}:`, error)

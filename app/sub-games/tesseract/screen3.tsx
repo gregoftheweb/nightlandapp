@@ -1,8 +1,7 @@
 // app/sub-games/tesseract/screen3.tsx
-// Screen 3: Failure screen for the tesseract sub-game
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { useRouter } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { subGameTheme } from '../_shared/subGameTheme'
@@ -14,46 +13,46 @@ export default function TesseractScreen3() {
   const { dispatch } = useGameContext()
 
   const handleAcceptDoom = () => {
-    if (__DEV__) {
-      console.log('[Tesseract] Player accepts doom - triggering death with suppressDeathDialog')
-    }
-    
-    // Dispatch GAME_OVER action to set death state
-    // suppressDeathDialog prevents the death InfoBox from appearing
     dispatch({
       type: 'GAME_OVER',
       payload: {
-        message: 'Christos failed to guess the right word. An ancient evil rose from the earth and devoured his soul.',
+        message: 'Christos failed to guess the right word.',
         killerName: 'Ancient Evil',
-        suppressDeathDialog: true, // Suppress the death dialog for puzzle death
+        suppressDeathDialog: true,
       },
     })
-    
-    // Navigate to death screen
-    router.push('/death' as any)
+
+    router.replace('/death' as any)
   }
 
   return (
-    <BackgroundImage source={bgScreen3} foregroundFit="cover">
-      <View style={styles.container}>
-        <View style={styles.contentArea}>
-          <Text style={styles.descriptionText}>
-            Christos fails to guess the right word.{'\n\n'}
-            An ancient evil rises from the earth and devours his soul.
-          </Text>
-        </View>
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: false, // removes native header + back button
+          animation: 'none', // removes nav transition blink
+          gestureEnabled: false, // optional: prevents swipe-back on iOS
+        }}
+      />
 
-        <View style={styles.bottomBar}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleAcceptDoom}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>accept your doom</Text>
-          </TouchableOpacity>
+      <BackgroundImage source={bgScreen3} foregroundFit="cover">
+        <View style={styles.container}>
+          <View style={styles.contentArea}>
+            <Text style={styles.descriptionText}>
+              Christos fails to guess the right word.
+              {'\n\n'}
+              An ancient evil rises from the earth.
+            </Text>
+          </View>
+
+          <View style={styles.bottomBar}>
+            <TouchableOpacity style={styles.button} onPress={handleAcceptDoom} activeOpacity={0.7}>
+              <Text style={styles.buttonText}>Accept your doom</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </BackgroundImage>
+      </BackgroundImage>
+    </>
   )
 }
 
@@ -67,8 +66,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 30,
-    paddingTop: 60,
-    paddingBottom: 140, // Fixed padding to account for bottom bar
+    paddingBottom: 160,
   },
   descriptionText: {
     fontSize: 18,
@@ -79,31 +77,24 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
+    bottom: 0,
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 30, // Fixed bottom padding (no safe area calculation)
+    paddingBottom: 30,
+    gap: 12,
   },
   button: {
     paddingVertical: 16,
-    paddingHorizontal: 40,
     backgroundColor: subGameTheme.red,
     borderRadius: 14,
     borderWidth: 2,
     borderColor: subGameTheme.blue,
-    shadowColor: subGameTheme.red,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-    alignSelf: 'stretch',
+    alignItems: 'center',
   },
   buttonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: subGameTheme.black,
-    textAlign: 'center',
   },
 })

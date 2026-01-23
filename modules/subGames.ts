@@ -28,7 +28,7 @@ export function exitSubGame(result?: SubGameResult) {
   }
 
   // Navigate back to the game
-  router.back()
+  router.replace('/game')
 }
 
 /**
