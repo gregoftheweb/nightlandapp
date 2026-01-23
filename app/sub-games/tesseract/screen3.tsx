@@ -5,7 +5,6 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
-import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 
 const bgScreen3 = require('@/assets/images/teseract-screen3.png')
@@ -44,7 +43,7 @@ export default function TesseractScreen3() {
           </Text>
         </View>
 
-        <BottomActionBar>
+        <View style={styles.bottomBar}>
           <TouchableOpacity
             style={styles.button}
             onPress={handleAcceptDoom}
@@ -52,7 +51,7 @@ export default function TesseractScreen3() {
           >
             <Text style={styles.buttonText}>accept your doom</Text>
           </TouchableOpacity>
-        </BottomActionBar>
+        </View>
       </View>
     </BackgroundImage>
   )
@@ -68,8 +67,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 30,
-    paddingTop: 60, // Fixed top padding to prevent layout shift
-    paddingBottom: 120, // Fixed bottom padding for button area
+    paddingTop: 60,
+    paddingBottom: 140, // Fixed padding to account for bottom bar
   },
   descriptionText: {
     fontSize: 18,
@@ -77,6 +76,15 @@ const styles = StyleSheet.create({
     color: subGameTheme.red,
     textAlign: 'center',
     lineHeight: 26,
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 30, // Fixed bottom padding (no safe area calculation)
   },
   button: {
     paddingVertical: 16,
