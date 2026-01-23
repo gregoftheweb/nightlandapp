@@ -15,11 +15,15 @@ const bgScreen4 = require('@/assets/images/tesseract-screen4.png')
 
 const PERSIUS_SCROLL_TEXT = `Christos,
 
-Return to the Redoubt.
+Return to the Redoubt. Do not follow me. Do not hinder me!
 
-Your quest may yet save mankind, but you must risk no other souls in its pursuit.
+It can free mankind from this horror of the black night and all the dark evils.
 
-I go now in search of the Tesseract.
+Do not stop me in my quest.
+
+I go now in search of the Tesseract, the device of the ancient science-wizards.
+
+I must.
 
 — Persius`
 
@@ -218,7 +222,7 @@ const styles = StyleSheet.create({
   modalText: {
     fontSize: 16,
     color: '#fff',
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 20,
     lineHeight: 22,
   },

@@ -1,9 +1,8 @@
 // app/sub-games/aerowreckage-puzzle/safe.tsx
 // Screen [B]: Safe cracking puzzle screen
-import React, { useEffect, useRef, useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { View, StyleSheet, TouchableOpacity, Text, useWindowDimensions } from 'react-native'
 import { useRouter } from 'expo-router'
-import { exitSubGame } from '@/modules/subGames'
 import { usePuzzleState } from './hooks/usePuzzleState'
 import { Dial } from './components/Dial'
 import { StepIndicator } from './components/StepIndicator'
@@ -18,6 +17,7 @@ const bgPuzzle = require('@/assets/images/aerowreck-safe2.png')
 export default function AeroWreckageSafe() {
   const router = useRouter()
   const { state, updateAngle, attemptLock } = usePuzzleState()
+  const { width, height } = useWindowDimensions()
 
   const [modalVisible, setModalVisible] = useState(false)
   const [attemptResult, setAttemptResult] = useState<AttemptResult | null>(null)
@@ -47,7 +47,6 @@ export default function AeroWreckageSafe() {
   // When puzzle opens, transition to success page (but only once)
   useEffect(() => {
     if (state.isOpened) {
-      // If we scheduled a delayed nav, cancel it and just go now
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current)
         successTimerRef.current = null
@@ -58,7 +57,7 @@ export default function AeroWreckageSafe() {
 
   const handleLeaveWithoutUnlocking = () => {
     if (__DEV__) console.log('[AeroWreckageSafe] Player leaving without unlocking')
-     router.back()
+    router.back()
   }
 
   const handleTryCombination = () => {
@@ -75,7 +74,6 @@ export default function AeroWreckageSafe() {
         successTimerRef.current = null
         setModalVisible(false)
         if (__DEV__) console.log('[AeroWreckageSafe] Closing modal after safe_opened delay')
-        // ✅ no router.replace here
       }, 2000)
     }
   }
@@ -87,6 +85,25 @@ export default function AeroWreckageSafe() {
   const handleModalDismiss = () => {
     setModalVisible(false)
   }
+
+  /**
+   * Responsive dial scaling:
+   * - Base off the shortest dimension, so portrait phones shrink the dial.
+   * - Clamp so it never gets absurdly huge on tablets or too tiny on small phones.
+   */
+  const dialScale = useMemo(() => {
+    const shortest = Math.min(width, height)
+
+    // Target: dial uses ~70% of shortest dimension; clamp to avoid extremes.
+    const targetDialPx = Math.max(240, Math.min(380, shortest * 0.7))
+
+    // Dial component likely has an internal "comfortable" size around 340-360px.
+    // Scaling an outer wrapper is safest without changing Dial internals.
+    const base = 360
+    const scale = targetDialPx / base
+
+    return Math.max(0.72, Math.min(1.0, scale))
+  }, [width, height])
 
   return (
     <BackgroundImage source={bgPuzzle}>
@@ -101,28 +118,35 @@ export default function AeroWreckageSafe() {
             />
           </View>
 
-          {/* Dial Centered */}
-          <View style={styles.dialContainer}>
-            <Dial
-              currentAngle={state.currentAngle}
-              currentNumber={state.currentNumber}
-              onAngleChange={updateAngle}
-              onCenterTap={handleCenterTap}
-            />
+          {/* Dial Centered + Responsive Scale */}
+          <View style={styles.dialArea}>
+            <View
+              style={[
+                styles.dialScaledWrapper,
+                { transform: [{ translateX: 22 }, { scale: dialScale }] }, // 👈 nudge right
+              ]}
+            >
+              <Dial
+                currentAngle={state.currentAngle}
+                currentNumber={state.currentNumber}
+                onAngleChange={updateAngle}
+                onCenterTap={handleCenterTap}
+              />
+            </View>
           </View>
 
           {/* Buttons at Bottom */}
           <BottomActionBar>
             <View style={styles.buttonRow}>
+              
 
               <TouchableOpacity
-                style={styles.primaryButton}
+                style={[styles.buttonBase, styles.primaryButton]}
                 onPress={handleLeaveWithoutUnlocking}
                 activeOpacity={0.7}
               >
                 <Text style={styles.primaryButtonText}>Leave Without Unlocking</Text>
               </TouchableOpacity>
-
             </View>
           </BottomActionBar>
         </View>
@@ -149,30 +173,61 @@ const styles = StyleSheet.create({
   },
   puzzleContent: {
     flex: 1,
-    justifyContent: 'space-between',
   },
+
   stepContainer: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingHorizontal: 16,
     alignItems: 'center',
   },
-  dialContainer: {
+
+  /**
+   * dialArea takes remaining space between StepIndicator and BottomActionBar.
+   * Padding ensures the dial never kisses the edges on portrait.
+   */
+  dialArea: {
     flex: 1,
+    minHeight: 240,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 300,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
+
+  /**
+   * Scaling wrapper: keeps the dial centered while shrinking on phones.
+   * Important: scale affects the dial and its side buttons together.
+   */
+  dialScaledWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  /**
+   * Two buttons, always visible:
+   * - On wider screens: side-by-side
+   * - On narrow screens: wraps into two rows
+   */
   buttonRow: {
     flexDirection: 'row',
-    gap: 14,
+    flexWrap: 'wrap',
+    gap: 12,
+    rowGap: 12,
   },
-  primaryButton: {
-    flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    backgroundColor: subGameTheme.red,
+
+  buttonBase: {
+    flexGrow: 1,
+    flexBasis: 180,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     borderRadius: 14,
     borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  primaryButton: {
+    backgroundColor: subGameTheme.red,
     borderColor: subGameTheme.blue,
     shadowColor: subGameTheme.red,
     shadowOffset: { width: 0, height: 4 },
@@ -184,6 +239,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: subGameTheme.black,
+    textAlign: 'center',
+  },
+
+  secondaryButton: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderColor: subGameTheme.blue,
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: subGameTheme.white,
     textAlign: 'center',
   },
 })

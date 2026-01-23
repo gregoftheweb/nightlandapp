@@ -456,7 +456,7 @@ useEffect(() => {
             onPress={handleLeaveCourtyard}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>leave the courtyard</Text>
+            <Text style={styles.buttonText}>Leave the stone courtyard</Text>
           </TouchableOpacity>
         </BottomActionBar>
       </View>
@@ -508,24 +508,24 @@ const styles = StyleSheet.create({
   },
   // Debug styles (dev only)
   debugGridRect: {
-    position: 'absolute',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 0, 0.8)',
-    backgroundColor: 'rgba(255, 255, 0, 0.1)',
+    // position: 'absolute',
+    // borderWidth: 2,
+    // borderColor: 'rgba(255, 255, 0, 0.8)',
+    // backgroundColor: 'rgba(255, 255, 0, 0.1)',
   },
   debugTileOutline: {
-    position: 'absolute',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 0, 255, 0.5)',
-    backgroundColor: 'transparent',
-    justifyContent: 'center',
-    alignItems: 'center',
+    // position: 'absolute',
+    // borderWidth: 1,
+    // borderColor: 'rgba(255, 0, 255, 0.5)',
+    // backgroundColor: 'transparent',
+    // justifyContent: 'center',
+    // alignItems: 'center',
   },
   debugTileText: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.8)',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 2,
+    // fontSize: 10,
+    // color: 'rgba(255, 255, 255, 0.8)',
+    // backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    // padding: 2,
   },
   button: {
     paddingVertical: 16,

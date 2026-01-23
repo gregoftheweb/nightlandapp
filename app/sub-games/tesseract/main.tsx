@@ -63,7 +63,7 @@ const handleResetGame = () => {
               onPress={handleLeaveWithoutExploring}
               activeOpacity={0.7}
             >
-              <Text style={styles.buttonText}>leave without exploring</Text>
+              <Text style={styles.buttonText}>Leave without exploring.</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -71,7 +71,7 @@ const handleResetGame = () => {
               onPress={handleExploreRuins}
               activeOpacity={0.7}
             >
-              <Text style={styles.buttonText}>explore the stone ruins</Text>
+              <Text style={styles.buttonText}>Explore the stone ruin.</Text>
             </TouchableOpacity>
           </View>
         </BottomActionBar>

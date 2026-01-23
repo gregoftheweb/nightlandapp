@@ -41,13 +41,13 @@ export default function TesseractScreen3() {
             <Text style={styles.descriptionText}>
               Christos fails to guess the right word.
               {'\n\n'}
-              An ancient evil rises from the earth.
+              A Great Power, a malevolent force of ancient evil rises from the earth to consume Christos&apos; soul in black fire.
             </Text>
           </View>
 
           <View style={styles.bottomBar}>
             <TouchableOpacity style={styles.button} onPress={handleAcceptDoom} activeOpacity={0.7}>
-              <Text style={styles.buttonText}>Accept your doom</Text>
+              <Text style={styles.buttonText}>Christos&apos; doom awaits.</Text>
             </TouchableOpacity>
           </View>
         </View>

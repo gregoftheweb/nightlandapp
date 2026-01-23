@@ -84,7 +84,7 @@ export default function AeroWreckageEntry() {
               onPress={handleExploreCockpit}
               activeOpacity={0.7}
             >
-              <Text style={styles.primaryButtonText}>Explore the cockpit</Text>
+              <Text style={styles.primaryButtonText}>Explore cockpit</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -92,7 +92,7 @@ export default function AeroWreckageEntry() {
               onPress={handleExitWithoutExploring}
               activeOpacity={0.7}
             >
-              <Text style={styles.primaryButtonText}>Exit without exploring</Text>
+              <Text style={styles.primaryButtonText}>Exit</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
