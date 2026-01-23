@@ -14,7 +14,7 @@ export function usePuzzleState() {
 
   // Refs for tracking
   const lastNumberRef = useRef<number>(0)
-  const saveThrottleRef = useRef<NodeJS.Timeout | null>(null)
+  const saveThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastAngleRef = useRef<number>(0)
 
   // Load saved state on mount

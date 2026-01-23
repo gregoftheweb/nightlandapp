@@ -75,20 +75,18 @@ export default function TesseractScreen2() {
     }
   }, [])
 
-  // Expose reset function globally for dev button on screen 1
-  useEffect(() => {
-    if (__DEV__) {
-      // @ts-ignore - global for dev only
-      global.resetTesseractTiles = resetPuzzle
-    }
-    return () => {
-      if (__DEV__) {
-        // @ts-ignore
-        delete global.resetTesseractTiles
-      }
-    }
-  }, [resetPuzzle])
+// Expose reset function globally for dev button on screen 1
+useEffect(() => {
+  if (__DEV__) {
+    globalThis.resetTesseractTiles = resetPuzzle
+  }
 
+  return () => {
+    if (__DEV__) {
+      delete globalThis.resetTesseractTiles
+    }
+  }
+}, [resetPuzzle])
   // Trigger fade-out animation when a tile is tapped
   useEffect(() => {
     if (lastTappedTile) {

@@ -8,7 +8,11 @@ import { reducer } from './reducers'
 import { initializeStartingMonsters } from './turnManager'
 
 export const getInitialState = (levelId: string = '1'): GameState => {
-  const levelConfig = levels[levelId] as Level
+  
+  
+const levelConfig = (levels as Record<string, Level>)[String(levelId)]
+
+
   return {
     level: levelConfig,
     currentLevelId: levelId,

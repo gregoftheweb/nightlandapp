@@ -55,6 +55,12 @@ export interface GameObject {
   projectileThicknessPx?: number // Optional thickness of projectile in pixels
   projectileGlow?: boolean // Optional glow effect for projectile
   subGame?: SubGameLaunch // Optional sub-game launch config
+
+  //  preventing breakage
+
+  collectible?: boolean
+  usable?: boolean
+  consumeOnUse?: boolean
 }
 
 export interface Monster extends GameObject {

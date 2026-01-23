@@ -53,6 +53,10 @@ describe('Unified Effects System', () => {
       maxInventorySize: 10,
       weapons: [],
       maxWeaponsSize: 4,
+      meleeWeaponId: 'fists',
+      equippedRangedWeaponId: '',
+      rangedWeaponInventoryIds: [],
+
       soulKey: '000000',
       moveSpeed: 1,
     }
@@ -65,6 +69,7 @@ describe('Unified Effects System', () => {
       inCombat: false,
       combatTurn: null,
       attackSlots: [],
+      activeProjectiles: [],
       waitingMonsters: [],
       turnOrder: [],
       combatLog: [],
@@ -300,11 +305,11 @@ describe('Unified Effects System', () => {
 
   // ==================== CLOAKING EFFECT TESTS ====================
 
-  describe('Cloaking Effect', () => {
+  describe('hide Effect', () => {
     test('should set player to hidden with duration', () => {
       const state = createMockGameState()
       const cloakingEffect: Effect = {
-        type: 'cloaking',
+        type: 'hide',
         duration: 5,
       }
 
@@ -334,7 +339,7 @@ describe('Unified Effects System', () => {
     test('should use default duration if not specified', () => {
       const state = createMockGameState()
       const cloakingEffect: Effect = {
-        type: 'cloaking',
+        type: 'hide',
         // no duration specified
       }
 
