@@ -8,7 +8,8 @@ import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
-import { consumables, collectible } from '@/config/objects'
+import { collectible } from '@/config/objects'
+import { Item } from '@/config/types'
 
 const bgScreen4 = require('@/assets/images/teseract-screen4.png')
 
@@ -35,13 +36,21 @@ export default function TesseractScreen4() {
     if (!alreadyHasScroll) {
       if (__DEV__) {
         console.log('[Tesseract] Adding Persius Scroll to inventory')
+        console.log('[Tesseract] persiusScroll template:', collectible.persiusScroll)
       }
       
       // Create the scroll item from the collectible template
-      const scrollItem = {
+      // Cast to Item type to ensure all properties are preserved
+      const scrollItem: Item = {
         ...collectible.persiusScroll,
         id: persiusScrollId,
+        type: 'collectible',
         collectible: true,
+      } as Item
+      
+      if (__DEV__) {
+        console.log('[Tesseract] Created scroll item:', scrollItem)
+        console.log('[Tesseract] Scroll item effects:', scrollItem.effects)
       }
       
       dispatch({
