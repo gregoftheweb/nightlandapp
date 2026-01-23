@@ -27,11 +27,33 @@ export default function TesseractMain() {
     router.push('/sub-games/tesseract/screen2' as any)
   }
 
+  const handleResetGame = () => {
+    if (__DEV__) {
+      console.log('[Tesseract] Reset game button pressed')
+      // @ts-ignore - global function set by screen2
+      if (typeof global.resetTesseractTiles === 'function') {
+        global.resetTesseractTiles()
+        console.log('[Tesseract] Tiles reset successfully')
+      } else {
+        console.log('[Tesseract] Reset function not available (screen2 not loaded yet)')
+      }
+    }
+  }
+
   return (
     <BackgroundImage source={bgScreen1}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          {/* Content area for potential flavor text or UI elements */}
+          {/* Dev-only reset button */}
+          {__DEV__ && (
+            <TouchableOpacity
+              style={styles.devButton}
+              onPress={handleResetGame}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.devButtonText}>🔄 Reset Game (Dev)</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <BottomActionBar>
@@ -68,6 +90,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 30,
+  },
+  devButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255, 165, 0, 0.9)', // Orange with transparency
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  devButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
   },
   buttonRow: {
     flexDirection: 'row',
