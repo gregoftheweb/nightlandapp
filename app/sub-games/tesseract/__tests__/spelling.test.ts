@@ -32,12 +32,12 @@ describe('Tesseract Spelling', () => {
       expect(getLetterForTile(3, 3)).toBe('O')
       expect(getLetterForTile(3, 4)).toBe('M')
 
-      // Row 4: E C H R Z
+      // Row 4: E C H R S
       expect(getLetterForTile(4, 0)).toBe('E')
       expect(getLetterForTile(4, 1)).toBe('C')
       expect(getLetterForTile(4, 2)).toBe('H')
       expect(getLetterForTile(4, 3)).toBe('R')
-      expect(getLetterForTile(4, 4)).toBe('Z')
+      expect(getLetterForTile(4, 4)).toBe('S')
     })
 
     it('should return empty string for out of bounds positions', () => {
@@ -48,18 +48,19 @@ describe('Tesseract Spelling', () => {
     })
   })
 
-  describe('TESERACT Solution Path', () => {
-    it('should verify that TESERACT is solvable with the grid', () => {
-      // One valid solution path for T-E-S-E-R-A-C-T
-      const targetWord = ['T', 'E', 'S', 'E', 'R', 'A', 'C', 'T']
+  describe('TESSERACT Solution Path', () => {
+    it('should verify that TESSERACT is solvable with the grid', () => {
+      // One valid solution path for T-E-S-S-E-R-A-C-T
+      const targetWord = ['T', 'E', 'S', 'S', 'E', 'R', 'A', 'C', 'T']
 
       // One possible solution:
-      // T(0,1) -> E(1,3) -> S(2,2) -> E(4,0) -> R(1,2) -> A(0,3) -> C(4,1) -> T(2,3)
+      // T(0,1) -> E(1,3) -> S(2,2) -> S(4,4) -> E(4,0) -> R(1,2) -> A(0,3) -> C(4,1) -> T(2,3)
       const solutionPath = [
         { row: 0, col: 1 }, // T
         { row: 1, col: 3 }, // E
         { row: 2, col: 2 }, // S
-        { row: 4, col: 0 }, // E (second E)
+        { row: 4, col: 4 }, // S (second S)
+        { row: 4, col: 0 }, // E
         { row: 1, col: 2 }, // R
         { row: 0, col: 3 }, // A
         { row: 4, col: 1 }, // C

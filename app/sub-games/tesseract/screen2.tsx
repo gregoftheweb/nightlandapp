@@ -24,10 +24,10 @@ import {
   type Tile,
 } from './tiles'
 
-const puzzleBoard = require('@/assets/images/teseract-puzzle-board.png')
+const puzzleBoard = require('@/assets/images/tesseract-puzzle-board.png')
 
 // Target word to spell
-const TARGET = ['T', 'E', 'S', 'E', 'R', 'A', 'C', 'T']
+const TARGET = ['T', 'E', 'S', 'S', 'E', 'R', 'A', 'C', 'T']
 
 // Debug mode: Set to true to see grid overlay (dev only)
 // When enabled, shows yellow grid rect outline and magenta tile outlines with row,col labels

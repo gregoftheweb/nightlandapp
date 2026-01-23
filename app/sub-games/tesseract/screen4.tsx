@@ -11,7 +11,7 @@ import { subGameTheme } from '../_shared/subGameTheme'
 import { collectible } from '@/config/objects'
 import { Item } from '@/config/types'
 
-const bgScreen4 = require('@/assets/images/teseract-screen4.png')
+const bgScreen4 = require('@/assets/images/tesseract-screen4.png')
 
 const PERSIUS_SCROLL_TEXT = `Christos,
 
