@@ -35,7 +35,7 @@ export default function TesseractScreen3() {
   }
 
   return (
-    <BackgroundImage source={bgScreen3}>
+    <BackgroundImage source={bgScreen3} foregroundFit="cover">
       <View style={styles.container}>
         <View style={styles.contentArea}>
           <Text style={styles.descriptionText}>
