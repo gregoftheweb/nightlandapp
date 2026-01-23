@@ -68,6 +68,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 30,
+    paddingTop: 60, // Fixed top padding to prevent layout shift
+    paddingBottom: 120, // Fixed bottom padding for button area
   },
   descriptionText: {
     fontSize: 18,

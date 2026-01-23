@@ -16,7 +16,7 @@
 // - If image is taller than screen: vertically centered, overflow parts are clipped
 //   (center portion visible)
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   View,
   Image,
@@ -56,40 +56,47 @@ export function BackgroundImage({
 }: BackgroundImageProps) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions()
 
-  // Calculate foreground image dimensions
-  let foregroundStyle = {}
-  if (source && foregroundFit === 'screenWidthCenter') {
-    try {
-      // Get intrinsic dimensions of the foreground image
-      const resolved = Image.resolveAssetSource(source)
-      if (resolved && resolved.width && resolved.height) {
-        const aspectRatio = resolved.width / resolved.height
+  // Calculate foreground image dimensions - memoized to prevent recalculation
+  const foregroundStyle = useMemo(() => {
+    if (source && foregroundFit === 'screenWidthCenter') {
+      try {
+        // Get intrinsic dimensions of the foreground image
+        const resolved = Image.resolveAssetSource(source)
+        if (resolved && resolved.width && resolved.height) {
+          const aspectRatio = resolved.width / resolved.height
 
-        // Always size to screen width, compute height from aspect ratio
-        const displayedWidth = screenWidth
-        const displayedHeight = displayedWidth / aspectRatio
+          // Always size to screen width, compute height from aspect ratio
+          const displayedWidth = screenWidth
+          const displayedHeight = displayedWidth / aspectRatio
 
-        // Always center vertically
-        // If taller than screen, parts will be cut off (overflow hidden by container)
-        // If shorter than screen, letterbox areas show puzzle background
-        foregroundStyle = {
-          width: displayedWidth,
-          height: displayedHeight,
-          position: 'absolute' as const,
-          left: 0,
-          top: (screenHeight - displayedHeight) / 2,
+          // Always center vertically
+          // If taller than screen, parts will be cut off (overflow hidden by container)
+          // If shorter than screen, letterbox areas show puzzle background
+          return {
+            width: displayedWidth,
+            height: displayedHeight,
+            position: 'absolute' as const,
+            left: 0,
+            top: (screenHeight - displayedHeight) / 2,
+          }
         }
+      } catch (error) {
+        // If we can't resolve dimensions, fall back to cover mode
+        console.warn('[BackgroundImage] Could not resolve image dimensions, using cover mode', error)
       }
-    } catch (error) {
-      // If we can't resolve dimensions, fall back to cover mode
-      console.warn('[BackgroundImage] Could not resolve image dimensions, using cover mode', error)
     }
-  }
+    return {}
+  }, [source, screenWidth, screenHeight, foregroundFit])
 
   return (
     <View style={styles.container}>
       {/* Base layer: puzzle background texture - always visible, covers full screen */}
-      <ImageBackground source={puzzleBackground} style={styles.baseBackground} resizeMode="cover" />
+      <ImageBackground 
+        source={puzzleBackground} 
+        style={styles.baseBackground} 
+        resizeMode="cover"
+        fadeDuration={0}
+      />
 
       {/* Foreground layer: screen-specific image (optional) */}
       {source &&
@@ -98,12 +105,14 @@ export function BackgroundImage({
             source={source}
             style={[styles.foregroundImage, foregroundStyle]}
             resizeMode="contain"
+            fadeDuration={0}
           />
         ) : (
           <ImageBackground
             source={source}
             style={styles.baseBackground}
             resizeMode={foregroundFit === 'cover' ? 'cover' : 'contain'}
+            fadeDuration={0}
           />
         ))}
 
