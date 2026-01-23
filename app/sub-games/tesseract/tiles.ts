@@ -28,7 +28,7 @@ export interface Tile {
  * GridRect defines the normalized bounds of the inner tile field
  * within the puzzle board image.
  *
- * IMPORTANT: These values are tuned to match teseract-puzzle-board.png
+ * IMPORTANT: These values are tuned to match tesseract-puzzle-board.png
  * The 5x5 letter tile area does NOT extend to the image edges.
  * There is an outer stone/brick border and margin.
  *
@@ -45,7 +45,7 @@ export interface GridRect {
  * GRID_RECT: The calibrated inner grid bounds
  *
  * These values define where the letter tile field sits within the puzzle board image.
- * Tuned to match the visual layout of teseract-puzzle-board.png
+ * Tuned to match the visual layout of tesseract-puzzle-board.png
  *
  * The puzzle board has a stone/brick border around a 5x5 grid of letter tiles.
  * These normalized coordinates (0..1) define the bounds of the inner tile field:
@@ -65,21 +65,21 @@ export const GRID_RECT: GridRect = {
 
 /**
  * Letter mapping for the 5x5 grid
- * Based on the visual layout of teseract-puzzle-board.png
+ * Based on the visual layout of tesseract-puzzle-board.png
  *
  * Grid layout (row, col):
  * Row 0: Z T V A N
  * Row 1: L G R E Y
  * Row 2: W P S T H
  * Row 3: D < T O M
- * Row 4: E C H R Z
+ * Row 4: E C H R S
  */
 const LETTER_GRID: string[][] = [
   ['Z', 'T', 'V', 'A', 'N'],
   ['L', 'G', 'R', 'E', 'Y'],
   ['W', 'P', 'S', 'T', 'H'],
   ['D', '<', 'T', 'O', 'M'],
-  ['E', 'C', 'H', 'R', 'Z'],
+  ['E', 'C', 'H', 'R', 'S'],
 ]
 
 /**

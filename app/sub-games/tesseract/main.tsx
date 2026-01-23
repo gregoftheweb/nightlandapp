@@ -8,7 +8,7 @@ import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 
-const bgScreen1 = require('@/assets/images/teseract-screen1.png')
+const bgScreen1 = require('@/assets/images/tesseract-screen1.png')
 
 export default function TesseractMain() {
   const router = useRouter()
