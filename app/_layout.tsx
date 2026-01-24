@@ -14,6 +14,18 @@ SplashScreen.preventAutoHideAsync()
 export default function Layout() {
   const [fontsLoaded] = useFonts({
     Gabrielle: require('../assets/fonts/Gabrielle.ttf'),
+
+    Sofia: require('../assets/fonts/Sofia-Regular.ttf'),
+    //Niconne-Regular
+    Niconne: require('../assets/fonts/Niconne-Regular.ttf'),
+    //Satisfy-Regular
+    Satisfy: require('../assets/fonts/Satisfy-Regular.ttf'),
+    //SpaceMono-Regular
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    //Thank You So Much Font by 7NTypes
+    ThankYou: require('../assets/fonts/ThankYou.otf'),
+    //BilboSwashCaps-Regular
+    Bilbo: require('../assets/fonts/BilboSwashCaps-Regular.ttf'),
   })
 
   const [gameState] = useState(() => {

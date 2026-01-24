@@ -4,15 +4,16 @@ export const SPLASH_STRINGS = {
   },
 
   princessScreen: {
-    text: `My love, my warrior. Don't go out into the Nightland. Don't go! 
-You will surely die or worse, the evil powers will consume your everlasting soul. 
-Persius is lost to the Silent Ones, there is no hope of saving him... your quest is doomed 
-and my love will become sorrow...
+text: `My love, my warrior… do not go into the Nightland. There is only death there, or worse, the unmaking of the soul.
 
-She turns from you and quietly sobs.
+Persius followed foolish dreams and broken tales; always that word on his lips, the Tesseract, the Tesseract; a stone of lies, a shape of false hope.
 
-You say nothing and depart. For even though hopeless, you must try.`,
-    buttonText: 'Leave your love and depart into the Nightland and your doom...',
+He is lost to the Silent Ones. She turns away and weeps.
+
+You say nothing, and depart. For though hope is a shadow, you must follow it. The Tesseract and Persius...`,
+
+
+    buttonText: 'Depart into the Nightland and your doom...',
   },
 
   deathScreen: {

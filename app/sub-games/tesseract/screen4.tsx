@@ -17,7 +17,7 @@ const PERSIUS_SCROLL_TEXT = `Christos,
 
 Return to the Redoubt. Do not follow me. Do not hinder me!
 
-It can free mankind from this horror of the black night and all the dark evils.
+I can free mankind from this horror of the black night and all the dark evils.
 
 Do not stop me in my quest.
 

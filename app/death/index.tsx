@@ -71,13 +71,13 @@ const styles = StyleSheet.create({
   },
   title: {
     color: 'red',
-    fontSize: 28,
+    fontSize: 50,
     fontFamily: 'Gabrielle',
-    fontWeight: 'bold',
+    textAlign: 'center',
   },
   text: {
     color: 'red',
-    fontSize: 22,
+    fontSize: 30,
     fontFamily: 'Gabrielle',
   },
   overlay: {
@@ -97,7 +97,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: 'red',
-    fontSize: 26,
+    fontSize: 30,
     fontFamily: 'Gabrielle',
+    textAlign: 'center',
   },
 })
