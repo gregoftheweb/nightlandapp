@@ -38,6 +38,17 @@ export default function Game() {
   const [targetId, setTargetId] = useState<string | undefined>()
   const router = useRouter()
 
+  // Generate unique instance ID for this component
+  const instanceId = useRef(`Game-${Math.random().toString(36).substr(2, 9)}`)
+
+  // Log component lifecycle
+  useEffect(() => {
+    console.log(`🎯🎯🎯 [${instanceId.current}] Game component MOUNTED`)
+    return () => {
+      console.log(`🎯🎯🎯 [${instanceId.current}] Game component UNMOUNTED`)
+    }
+  }, [])
+
   // Map to track projectile ID -> target monster ID for impact handling
   const projectileTargets = useRef<Map<string, string>>(new Map())
 
@@ -94,7 +105,7 @@ export default function Game() {
     if (!state.gameOver) return
 
     if (__DEV__) {
-      console.log('Game Over detected')
+      console.log(`🔴🔴🔴 [${instanceId.current}] Game Over detected - gameOver state changed to true`)
     }
     audioManager.pauseBackgroundMusic()
   }, [state.gameOver])
@@ -841,7 +852,7 @@ export default function Game() {
 
   const handleDeathInfoBoxClose = useCallback(() => {
     if (__DEV__) {
-      console.log('Death InfoBox closed, navigating to death screen immediately')
+      console.log(`💀💀💀 [${instanceId.current}] Death InfoBox closed, navigating to death screen immediately`)
     }
     router.replace('/death')
   }, [router])

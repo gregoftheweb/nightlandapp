@@ -11,8 +11,19 @@ export default function DeathScreen() {
   const router = useRouter()
   const { state, dispatch } = useGameContext()
 
+  // Generate unique instance ID for this component
+  const instanceId = React.useRef(`DeathScreen-${Math.random().toString(36).substr(2, 9)}`)
+
+  // Log component lifecycle
+  React.useEffect(() => {
+    console.log(`☠️☠️☠️ [${instanceId.current}] DeathScreen component MOUNTED`)
+    return () => {
+      console.log(`☠️☠️☠️ [${instanceId.current}] DeathScreen component UNMOUNTED`)
+    }
+  }, [])
+
   const handlePress = () => {
-    console.log('Restarting game from death screen')
+    console.log(`☠️☠️☠️ [${instanceId.current}] Restarting game from death screen`)
     dispatch({ type: 'RESET_GAME' })
     router.replace('/game')
   }
@@ -22,7 +33,7 @@ export default function DeathScreen() {
   const distanceTraveled = state.distanceTraveled || 0
   const killerName = state.killerName || 'unknown horror'
 
-  console.log('Rendering DeathScreen component')
+  console.log(`☠️☠️☠️ [${instanceId.current}] Rendering DeathScreen component`)
   return (
     <ImageBackground
       source={require('../../assets/images/splashscreen.png')}
