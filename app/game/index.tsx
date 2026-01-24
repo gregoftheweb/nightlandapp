@@ -843,7 +843,7 @@ export default function Game() {
     if (__DEV__) {
       console.log('Death InfoBox closed, navigating to death screen immediately')
     }
-    router.push('/death')
+    router.replace('/death')
   }, [router])
 
   // Create showDialog wrapper for inventory items
