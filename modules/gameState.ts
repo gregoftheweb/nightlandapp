@@ -49,8 +49,15 @@ export const getInitialState = (levelId: string = '1'): GameState => {
 /**
  * Internal helper to build the initial state from a level config.
  * Extracted to avoid recursion in getInitialState.
+ * 
+ * This function constructs a complete GameState object from a level configuration,
+ * applying all default values for combat, UI, and meta state.
+ * 
+ * @param levelId - The level ID string
+ * @param levelConfig - The level configuration object (from levels registry)
+ * @returns A complete GameState object initialized for the given level
  */
-function buildInitialState(levelId: string, levelConfig: any): GameState {
+function buildInitialState(levelId: string, levelConfig: typeof levels[keyof typeof levels]): GameState {
 
   return {
     // ===== LEVEL DOMAIN =====
