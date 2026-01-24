@@ -14,7 +14,7 @@ export default function DeathScreen() {
   const handlePress = () => {
     console.log('Restarting game from death screen')
     dispatch({ type: 'RESET_GAME' })
-    router.push('/game')
+    router.replace('/game')
   }
 
   // Extract stats from game state
