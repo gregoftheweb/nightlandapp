@@ -116,7 +116,6 @@ export default function Layout() {
             <Stack.Screen
               name="game/index"
               options={{
-                presentation: 'fullScreenModal',
                 statusBarHidden: true,
               }}
             />
