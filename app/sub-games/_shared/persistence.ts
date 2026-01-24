@@ -87,6 +87,33 @@ export async function clearSubGameSave(key: string): Promise<void> {
 }
 
 /**
+ * Clear all sub-game saves
+ * This should be called when the game is reset (e.g., on player death)
+ */
+export async function clearAllSubGameSaves(): Promise<void> {
+  try {
+    // Get all keys from AsyncStorage
+    const allKeys = await AsyncStorage.getAllKeys()
+    
+    // Filter keys that start with our sub-game prefix
+    const subGameKeys = allKeys.filter(key => key.startsWith(SUB_GAME_STORAGE_PREFIX))
+    
+    if (subGameKeys.length > 0) {
+      // Remove all sub-game saves
+      await AsyncStorage.multiRemove(subGameKeys)
+      
+      if (__DEV__) {
+        console.log(`[SubGamePersistence] Cleared ${subGameKeys.length} sub-game save(s):`, subGameKeys)
+      }
+    }
+  } catch (error) {
+    if (__DEV__) {
+      console.error('[SubGamePersistence] Error clearing all sub-game saves:', error)
+    }
+  }
+}
+
+/**
  * Check if a save exists for a sub-game
  * @param key - Unique key for the sub-game
  * @returns True if save exists, false otherwise

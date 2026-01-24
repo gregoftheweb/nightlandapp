@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions }
 import { useRouter } from 'expo-router'
 import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
 import { useGameContext } from '@/context/GameContext'
+import { clearAllSubGameSaves } from '../sub-games/_shared/persistence'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -22,8 +23,12 @@ export default function DeathScreen() {
     }
   }, [])
 
-  const handlePress = () => {
+  const handlePress = async () => {
     console.log(`☠️☠️☠️ [${instanceId.current}] Restarting game from death screen`)
+    
+    // Clear all sub-game puzzle saves (aerowreck, tesseract, etc.)
+    await clearAllSubGameSaves()
+    
     dispatch({ type: 'RESET_GAME' })
     router.replace('/game')
   }
