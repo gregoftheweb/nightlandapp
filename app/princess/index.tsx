@@ -26,6 +26,8 @@ export default function PrincessScreen() {
           <Text style={styles.text}>{SPLASH_STRINGS.princessScreen.text}</Text>
         </View>
 
+  <View style={styles.spacer} />
+
         <View style={styles.overlay}>
           <TouchableOpacity style={styles.button} onPress={handlePress}>
             <Text style={styles.buttonText}>{SPLASH_STRINGS.princessScreen.buttonText}</Text>
@@ -56,7 +58,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: 'red',
-    fontSize: 22,
+    fontSize: 28,
     fontFamily: 'Gabrielle',
   },
   overlay: {
@@ -76,4 +78,8 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontFamily: 'Gabrielle',
   },
+  spacer: {
+  height: 24, // <- guaranteed minimum gap (tune this)
+},
+
 })
