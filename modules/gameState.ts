@@ -13,7 +13,7 @@
  * - validateGameState(): Development-only state validation
  */
 import { levels } from '../config/levels'
-import { GameState, GameSnapshot, Level } from '../config/types'
+import { GameState, GameSnapshot } from '../config/types'
 import { playerConfig } from '../config/player'
 import { weaponsCatalog } from '../config/weapons'
 import { gameConfig } from '../config/gameConfig'
@@ -33,7 +33,6 @@ export const getInitialState = (levelId: string = '1'): GameState => {
   
   if (!levelConfig) {
     logIfDev(`⚠️  Unknown levelId: ${levelId}, falling back to level 1`)
-    const fallbackLevel = levels['1']
     return getInitialState('1') // Recursively call with valid level
   }
 
