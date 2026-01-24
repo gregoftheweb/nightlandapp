@@ -33,10 +33,24 @@ export const getInitialState = (levelId: string = '1'): GameState => {
   
   if (!levelConfig) {
     logIfDev(`⚠️  Unknown levelId: ${levelId}, falling back to level 1`)
-    return getInitialState('1') // Recursively call with valid level
+    // Direct fallback to avoid infinite recursion if level '1' is missing
+    const fallbackConfig = levels['1']
+    if (!fallbackConfig) {
+      throw new Error('Critical error: Level 1 configuration is missing!')
+    }
+    // Use fallback config directly rather than recursive call
+    return buildInitialState('1', fallbackConfig)
   }
 
   logIfDev(`🎮 Creating initial state for level: ${levelId}`)
+  return buildInitialState(levelId, levelConfig)
+}
+
+/**
+ * Internal helper to build the initial state from a level config.
+ * Extracted to avoid recursion in getInitialState.
+ */
+function buildInitialState(levelId: string, levelConfig: any): GameState {
 
   return {
     // ===== LEVEL DOMAIN =====
@@ -136,11 +150,14 @@ export const toSnapshot = (state: GameState): GameSnapshot => {
  * @param snapshot - The serialized game snapshot
  * @returns A reconstructed GameState
  */
-export const fromSnapshot = (snapshot: GameSnapshot): GameState => {
+export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameState => {
   // TODO: Implement full deserialization when save/load is added
   // For now, return fresh state (this is a stub for future implementation)
   logIfDev('⚠️  fromSnapshot is not fully implemented yet, returning fresh initial state')
-  return getInitialState(snapshot.currentLevelId || '1')
+  
+  // Safe fallback - use level ID from snapshot if available, otherwise default to '1'
+  const levelId = (snapshot?.currentLevelId) || '1'
+  return getInitialState(levelId)
 }
 
 /**

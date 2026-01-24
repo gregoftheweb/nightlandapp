@@ -24,7 +24,7 @@ import { getInitialState, validateGameState } from './gameState'
 import { createMonsterFromTemplate } from '../modules/monsterUtils'
 import { logIfDev } from './utils'
 
-export const reducer = (state: GameState, action: any): GameState => {
+export const reducer = (state: GameState = getInitialState('1'), action: any): GameState => {
   let newState: GameState
 
   switch (action.type) {
