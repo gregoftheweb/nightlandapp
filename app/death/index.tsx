@@ -24,7 +24,7 @@ export default function DeathScreen() {
   }, [])
 
   // Prevent multiple restart button presses
-  const isRestarting = useRef(false)
+  const isRestarting = React.useRef(false)
 
   const handlePress = async () => {
     // Guard against multiple button presses
