@@ -1,5 +1,5 @@
-// app/sub-games/tesseract/screen4.tsx
-// Screen 4: Success screen for the tesseract sub-game
+// app/sub-games/_subgame-template/success.tsx
+// Screen 3: Success screen after completing the puzzle
 import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -8,83 +8,75 @@ import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
-import { collectible } from '@/config/objects'
-import { Item } from '@/config/types'
 
-const bgScreen4 = require('@/assets/images/tesseract-screen4.png')
+// TODO: Replace with your sub-game's background image
+const bgSuccess = require('@/assets/images/tesseract-screen4.png')
 
-const PERSIUS_SCROLL_TEXT = `Christos,
+// TODO: Change this to your sub-game's name (use kebab-case, e.g., 'my-puzzle')
+const SUB_GAME_NAME = '_subgame-template'
 
-Return to the Redoubt. Do not follow me. Do not hinder me!
+// TODO: Define your reward item ID
+const REWARD_ITEM_ID = 'template-reward-item'
 
-I can free mankind from this horror of the black night and all the dark evils.
-
-Do not stop me in my quest.
-
-I go now in search of the Tesseract, the device of the ancient science-wizards.
-
-I must.
-
-— Persius`
-
-export default function TesseractScreen4() {
+export default function SubGameTemplateSuccess() {
   const router = useRouter()
   const { state, dispatch, signalRpgResume } = useGameContext()
-  const [showScrollModal, setShowScrollModal] = useState(false)
+  const [showRewardModal, setShowRewardModal] = useState(false)
 
-  // Add Persius Scroll to inventory on mount (only once)
+  // TODO: Replace with your reward logic
+  // Example: Add item to inventory on mount (only once)
   useEffect(() => {
-    const persiusScrollId = 'persius-scroll'
-    const alreadyHasScroll = state.player.inventory.some((item) => item.id === persiusScrollId)
+    const alreadyHasReward = state.player.inventory.some((item) => item.id === REWARD_ITEM_ID)
 
-    if (!alreadyHasScroll) {
+    if (!alreadyHasReward) {
       if (__DEV__) {
-        console.log('[Tesseract] Adding Persius Scroll to inventory')
-        console.log('[Tesseract] persiusScroll template:', collectible.persiusScroll)
+        console.log(`[${SUB_GAME_NAME}] Adding reward to inventory`)
       }
 
-      // Create the scroll item from the collectible template
-      // Cast to Item type to ensure all properties are preserved
-      const scrollItem: Item = {
-        ...collectible.persiusScroll,
-        id: persiusScrollId,
-        type: 'collectible',
-        collectible: true,
-      } as Item
+      // TODO: Replace with your actual reward item
+      // Example: Add a collectible, weapon, or other item
+      // dispatch({
+      //   type: 'ADD_TO_INVENTORY',
+      //   payload: {
+      //     item: {
+      //       id: REWARD_ITEM_ID,
+      //       name: 'Template Reward',
+      //       type: 'collectible',
+      //       collectible: true,
+      //       description: 'A reward from completing the template puzzle',
+      //     },
+      //   },
+      // })
+
+      // Or for a weapon:
+      // dispatch({
+      //   type: 'ADD_RANGED_WEAPON',
+      //   payload: { id: REWARD_ITEM_ID },
+      // })
 
       if (__DEV__) {
-        console.log('[Tesseract] Created scroll item:', scrollItem)
-        console.log('[Tesseract] Scroll item effects:', scrollItem.effects)
-      }
-
-      dispatch({
-        type: 'ADD_TO_INVENTORY',
-        payload: { item: scrollItem },
-      })
-    } else {
-      if (__DEV__) {
-        console.log('[Tesseract] Persius Scroll already in inventory')
+        console.log(`[${SUB_GAME_NAME}] TODO: Implement reward grant`)
       }
     }
   }, [dispatch, state.player.inventory])
 
-  const handleReadScroll = () => {
+  const handleClaimReward = () => {
     if (__DEV__) {
-      console.log('[Tesseract] Opening scroll modal')
+      console.log(`[${SUB_GAME_NAME}] Claiming reward`)
     }
-    setShowScrollModal(true)
+    setShowRewardModal(true)
   }
 
-  const handleReturnToNightLand = () => {
+  const handleReturnToGame = () => {
     if (__DEV__) {
-      console.log('[Tesseract] Returning to Night Land')
+      console.log(`[${SUB_GAME_NAME}] Returning to game`)
     }
 
-    // Mark tesseract puzzle as completed
+    // Mark sub-game as completed
     dispatch({
       type: 'SET_SUB_GAME_COMPLETED',
       payload: {
-        subGameName: 'tesseract',
+        subGameName: SUB_GAME_NAME,
         completed: true,
       },
     })
@@ -97,12 +89,13 @@ export default function TesseractScreen4() {
   }
 
   return (
-    <BackgroundImage source={bgScreen4}>
+    <BackgroundImage source={bgSuccess}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
+          {/* TODO: Replace with your success message */}
+          <Text style={styles.successText}>Success!</Text>
           <Text style={styles.descriptionText}>
-            Christos successfully spelled TESSERACT.{'\n\n'}A scroll appears at his feet. It is a
-            message from Persius.
+            Christos has successfully completed the puzzle.
           </Text>
         </View>
 
@@ -110,37 +103,40 @@ export default function TesseractScreen4() {
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={[styles.button, styles.buttonHalf]}
-              onPress={handleReadScroll}
+              onPress={handleClaimReward}
               activeOpacity={0.7}
             >
-              <Text style={styles.buttonText}>read the scroll</Text>
+              <Text style={styles.buttonText}>Claim Reward</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.button, styles.buttonHalf]}
-              onPress={handleReturnToNightLand}
+              onPress={handleReturnToGame}
               activeOpacity={0.7}
             >
-              <Text style={styles.buttonText}>return to the Night Land</Text>
+              <Text style={styles.buttonText}>Return to Quest</Text>
             </TouchableOpacity>
           </View>
         </BottomActionBar>
 
-        {/* Scroll Modal */}
-        {showScrollModal && (
+        {/* Reward Modal */}
+        {showRewardModal && (
           <Modal
             visible
             transparent={true}
             animationType="fade"
-            onRequestClose={() => setShowScrollModal(false)}
+            onRequestClose={() => setShowRewardModal(false)}
           >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContainer}>
-                <Text style={styles.modalTitle}>Message from Persius</Text>
-                <Text style={styles.modalText}>{PERSIUS_SCROLL_TEXT}</Text>
+                <Text style={styles.modalTitle}>Reward Claimed!</Text>
+                {/* TODO: Replace with your reward description */}
+                <Text style={styles.modalText}>
+                  TODO: Replace this with your actual reward description and item details.
+                </Text>
                 <TouchableOpacity
                   style={styles.modalButton}
-                  onPress={() => setShowScrollModal(false)}
+                  onPress={() => setShowRewardModal(false)}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.modalButtonText}>Close</Text>
@@ -164,11 +160,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 30,
+    gap: 20,
+  },
+  successText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: subGameTheme.red,
+    textAlign: 'center',
+    letterSpacing: 2,
   },
   descriptionText: {
     fontSize: 18,
     fontWeight: '600',
-    color: subGameTheme.red,
+    color: '#fff',
     textAlign: 'center',
     lineHeight: 26,
   },
@@ -224,7 +228,7 @@ const styles = StyleSheet.create({
   modalText: {
     fontSize: 16,
     color: '#fff',
-    textAlign: 'left',
+    textAlign: 'center',
     marginBottom: 20,
     lineHeight: 22,
   },

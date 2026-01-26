@@ -30,12 +30,14 @@ export default function AeroWreckageSuccess() {
 
   const onRootLayout = (e: LayoutChangeEvent) => {
     const { width, height, x, y } = e.nativeEvent.layout
-    console.log(`[AeroWreckageSuccess] root onLayout +${Date.now() - t0.current}ms`, {
-      width,
-      height,
-      x,
-      y,
-    })
+    if (__DEV__) {
+      console.log(`[AeroWreckageSuccess] root onLayout +${Date.now() - t0.current}ms`, {
+        width,
+        height,
+        x,
+        y,
+      })
+    }
   }
 
   // Preload background to prevent decode snap
@@ -58,21 +60,27 @@ export default function AeroWreckageSuccess() {
   const hasLazerPistol = state.player.rangedWeaponInventoryIds.includes(LAZER_PISTOL_WEAPON_ID)
 
   // ✅ Safe: this is not a hook; just a log
-  console.log(
-    `[AeroWreckageSuccess] render #${renderCount.current} +${Date.now() - t0.current}ms`,
-    { ready, showAcquiredModal, hasLazerPistol }
-  )
+  if (__DEV__) {
+    console.log(
+      `[AeroWreckageSuccess] render #${renderCount.current} +${Date.now() - t0.current}ms`,
+      { ready, showAcquiredModal, hasLazerPistol }
+    )
+  }
 
   // (optional but useful) log when these flip
   useEffect(() => {
-    console.log(`[AeroWreckageSuccess] ready changed +${Date.now() - t0.current}ms`, ready)
+    if (__DEV__) {
+      console.log(`[AeroWreckageSuccess] ready changed +${Date.now() - t0.current}ms`, ready)
+    }
   }, [ready])
 
   useEffect(() => {
-    console.log(
-      `[AeroWreckageSuccess] showAcquiredModal changed +${Date.now() - t0.current}ms`,
-      showAcquiredModal
-    )
+    if (__DEV__) {
+      console.log(
+        `[AeroWreckageSuccess] showAcquiredModal changed +${Date.now() - t0.current}ms`,
+        showAcquiredModal
+      )
+    }
   }, [showAcquiredModal])
 
   if (!ready) {
