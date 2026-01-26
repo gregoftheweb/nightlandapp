@@ -11,7 +11,7 @@ export default function PrincessScreen() {
 
   const handlePress = () => {
     console.log('Navigating to gameplay')
-    router.push('/game') // Updated to match route
+    router.replace('/game') // Use replace to avoid stacking screens
   }
 
   console.log('Rendering PrincessScreen component')

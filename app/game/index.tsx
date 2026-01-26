@@ -38,6 +38,24 @@ export default function Game() {
   const [targetId, setTargetId] = useState<string | undefined>()
   const router = useRouter()
 
+  // Generate unique instance ID for this component
+  const instanceId = useRef(`Game-${Math.random().toString(36).substr(2, 9)}`)
+  
+  // Prevent multiple death navigations from the same instance
+  const isNavigatingToDeath = useRef(false)
+
+  // Log component lifecycle
+  useEffect(() => {
+    console.log(`🎯🎯🎯 [${instanceId.current}] Game component MOUNTED`)
+    console.log(`🎯🎯🎯 [${instanceId.current}] Navigation stack depth check - this instance is mounting`)
+    
+    return () => {
+      console.log(`🎯🎯🎯 [${instanceId.current}] Game component UNMOUNTED`)
+      // Reset navigation guard on unmount
+      isNavigatingToDeath.current = false
+    }
+  }, [])
+
   // Map to track projectile ID -> target monster ID for impact handling
   const projectileTargets = useRef<Map<string, string>>(new Map())
 
@@ -94,7 +112,7 @@ export default function Game() {
     if (!state.gameOver) return
 
     if (__DEV__) {
-      console.log('Game Over detected')
+      console.log(`🔴🔴🔴 [${instanceId.current}] Game Over detected - gameOver state changed to true`)
     }
     audioManager.pauseBackgroundMusic()
   }, [state.gameOver])
@@ -840,10 +858,20 @@ export default function Game() {
   }, [state, dispatch, targetId])
 
   const handleDeathInfoBoxClose = useCallback(() => {
-    if (__DEV__) {
-      console.log('Death InfoBox closed, navigating to death screen immediately')
+    // Guard against multiple navigation calls
+    if (isNavigatingToDeath.current) {
+      if (__DEV__) {
+        console.log(`💀💀💀 [${instanceId.current}] Death navigation already in progress, ignoring duplicate call`)
+      }
+      return
     }
-    router.push('/death')
+    
+    isNavigatingToDeath.current = true
+    
+    if (__DEV__) {
+      console.log(`💀💀💀 [${instanceId.current}] Death InfoBox closed, navigating to death screen immediately`)
+    }
+    router.replace('/death')
   }, [router])
 
   // Create showDialog wrapper for inventory items

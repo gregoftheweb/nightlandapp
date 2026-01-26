@@ -70,6 +70,17 @@ export default function GameBoard({
   onShowInfoRef,
   onCloseInfoRef,
 }: GameBoardProps) {
+  // Generate unique instance ID for this component
+  const instanceId = useRef(`GameBoard-${Math.random().toString(36).substr(2, 9)}`)
+
+  // Log component lifecycle
+  useEffect(() => {
+    console.log(`🎲🎲🎲 [${instanceId.current}] GameBoard component MOUNTED`)
+    return () => {
+      console.log(`🎲🎲🎲 [${instanceId.current}] GameBoard component UNMOUNTED`)
+    }
+  }, [])
+
   const [infoVisible, setInfoVisible] = useState(false)
   const [infoData, setInfoData] = useState<{
     name: string
@@ -250,7 +261,13 @@ export default function GameBoard({
         const deathMessage =
           state.gameOverMessage || 'Your journey ends here. The darkness claims another soul...'
         if (__DEV__) {
-          console.log('DEATH DETECTED - Showing InfoBox (alive->dead transition):', deathMessage)
+          console.log(
+            `💀💀💀 [${instanceId.current}] DEATH DETECTED - Showing InfoBox (alive->dead transition):`,
+            deathMessage
+          )
+          console.log(
+            `💀💀💀 [${instanceId.current}] Setting infoVisible to TRUE, infoData.name to "DEATH"`
+          )
         }
         setInfoData({
           name: 'DEATH',
@@ -260,7 +277,9 @@ export default function GameBoard({
         setInfoVisible(true)
       } else {
         if (__DEV__) {
-          console.log('DEATH DETECTED - Dialog suppressed (suppressDeathDialog=true)')
+          console.log(
+            `💀💀💀 [${instanceId.current}] DEATH DETECTED - Dialog suppressed (suppressDeathDialog=true)`
+          )
         }
       }
     }
@@ -1032,11 +1051,19 @@ export default function GameBoard({
         onCtaPress={infoData.onCtaPress}
         onClose={() => {
           if (__DEV__) {
-            console.log('InfoBox onClose called, setting infoVisible to false')
+            console.log(
+              `📦📦📦 [${instanceId.current}] InfoBox onClose called, setting infoVisible to false`
+            )
+            console.log(`📦📦📦 [${instanceId.current}] infoData.name = "${infoData.name}"`)
           }
           setInfoVisible(false)
           // If this is the death InfoBox, trigger navigation to death screen
           if (infoData.name === 'DEATH' && onDeathInfoBoxClose) {
+            if (__DEV__) {
+              console.log(
+                `📦📦📦 [${instanceId.current}] This is a DEATH InfoBox, calling onDeathInfoBoxClose()`
+              )
+            }
             onDeathInfoBoxClose()
           }
         }}

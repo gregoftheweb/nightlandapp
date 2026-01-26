@@ -1,4 +1,16 @@
 // modules/reducers.ts
+/**
+ * GameState Reducer
+ * 
+ * This is the central reducer that handles all game state transitions.
+ * All reducer cases must be pure functions that do not mutate the state.
+ * 
+ * Key Principles:
+ * - Pure functions: No mutations, always return new state
+ * - Single source of truth: Use getInitialState() for resets
+ * - Comprehensive logging: Log key state transitions in dev mode
+ * - Type safety: Avoid unsafe casts when possible
+ */
 import {
   GameState,
   CombatLogEntry,
@@ -8,21 +20,25 @@ import {
   NonCollisionObject,
 } from '../config/types'
 import { levels } from '../config/levels'
-import { initialState } from './gameState'
+import { getInitialState, validateGameState } from './gameState'
 import { createMonsterFromTemplate } from '../modules/monsterUtils'
 import { logIfDev } from './utils'
 
-export const reducer = (state: GameState = initialState, action: any): GameState => {
+export const reducer = (state: GameState = getInitialState('1'), action: any): GameState => {
+  let newState: GameState
+
   switch (action.type) {
     // ============ LEVEL MANAGEMENT ============
-    case 'SET_LEVEL':
-      const raw = action.levelId
-      if (!(raw in levels)) {
-        logIfDev(`[reducer] Unknown levelId: ${String(raw)}`)
+    case 'SET_LEVEL': {
+      const targetLevelId = action.levelId
+      if (!(targetLevelId in levels)) {
+        logIfDev(`⚠️  Unknown levelId: ${String(targetLevelId)}`)
         return state
       }
 
-      const levelId = raw as keyof typeof levels
+      logIfDev(`🗺️  Changing level to: ${targetLevelId}`)
+      
+      const levelId = targetLevelId as keyof typeof levels
       const newLevelConfig = levels[levelId]
       return {
         ...state,
@@ -46,6 +62,7 @@ export const reducer = (state: GameState = initialState, action: any): GameState
           position: { row: 395, col: 200 },
         },
       }
+    }
 
     // ============ PLAYER MOVEMENT ============
     case 'MOVE_PLAYER':
@@ -286,7 +303,11 @@ export const reducer = (state: GameState = initialState, action: any): GameState
       }
 
     case 'GAME_OVER': {
-      // This should set the death state but NOT reset anything yet
+      // Mark the player as dead and clear combat state
+      // Full reset happens when RESET_GAME is dispatched from death screen
+      logIfDev(`💀 GAME_OVER: ${action.payload?.message || 'Player died'}`)
+      logIfDev(`   Killer: ${action.payload?.killerName || 'unknown'}`)
+      
       return {
         ...state,
         gameOver: true,
@@ -299,12 +320,28 @@ export const reducer = (state: GameState = initialState, action: any): GameState
         turnOrder: [],
         combatTurn: null,
         combatLog: [],
-        activeMonsters: [], // <-- Add this to flush monsters immediately
+        activeMonsters: [], // Clear all active monsters
       }
     }
 
     case 'RESET_GAME': {
-      return initialState
+      /**
+       * Complete game reset to initial state.
+       * This is triggered from the death screen or manual restart.
+       * 
+       * Decision: Reset ALL state including sub-game completion flags
+       * to provide a "fresh run" experience. Players who died should
+       * start from scratch, including re-completing sub-games.
+       * 
+       * If we want to preserve sub-game progress across deaths in the future,
+       * we can modify this to:
+       *   const preservedFlags = state.subGamesCompleted
+       *   return { ...getInitialState('1'), subGamesCompleted: preservedFlags }
+       */
+      logIfDev('🔄 RESET_GAME: Resetting to fresh initial state')
+      
+      // Return a FRESH initial state (not the stale initialState constant)
+      return getInitialState('1')
     }
 
     // ============ INVENTORY MANAGEMENT ============
@@ -594,8 +631,8 @@ export const reducer = (state: GameState = initialState, action: any): GameState
     // ============ CLEANUP ============
     default:
       if (__DEV__) {
-        console.warn(`Unhandled action type: ${action.type}`)
+        console.warn(`⚠️  Unhandled action type: ${action.type}`)
       }
-      return state || initialState
+      return state
   }
 }

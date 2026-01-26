@@ -34,8 +34,22 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
   const [opacity] = useState(new Animated.Value(0))
   const [isModalVisible, setIsModalVisible] = useState(false)
 
+  // Generate unique instance ID for this InfoBox
+  const instanceId = React.useRef(`InfoBox-${Math.random().toString(36).substr(2, 9)}`)
+
+  // Log component lifecycle
+  React.useEffect(() => {
+    console.log(`📦📦📦 [${instanceId.current}] InfoBox component MOUNTED`)
+    return () => {
+      console.log(`📦📦📦 [${instanceId.current}] InfoBox component UNMOUNTED`)
+    }
+  }, [])
+
   useEffect(() => {
     if (visible) {
+      if (__DEV__) {
+        console.log(`📦📦📦 [${instanceId.current}] InfoBox becoming VISIBLE - name: "${name}"`)
+      }
       setIsModalVisible(true)
       // Fade in
       Animated.timing(opacity, {
@@ -44,6 +58,9 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
         useNativeDriver: true,
       }).start()
     } else {
+      if (__DEV__) {
+        console.log(`📦📦📦 [${instanceId.current}] InfoBox becoming HIDDEN - name: "${name}"`)
+      }
       // Fade out
       Animated.timing(opacity, {
         toValue: 0,
@@ -53,10 +70,13 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
         setIsModalVisible(false)
       })
     }
-  }, [visible, opacity])
+  }, [visible, opacity, name])
 
   const handleClosePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
     event.stopPropagation()
+    if (__DEV__) {
+      console.log(`📦📦📦 [${instanceId.current}] InfoBox close button pressed - name: "${name}"`)
+    }
     onClose()
   }
 

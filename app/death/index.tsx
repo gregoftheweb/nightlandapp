@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions }
 import { useRouter } from 'expo-router'
 import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
 import { useGameContext } from '@/context/GameContext'
+import { clearAllSubGameSaves } from '../sub-games/_shared/persistence'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -11,10 +12,43 @@ export default function DeathScreen() {
   const router = useRouter()
   const { state, dispatch } = useGameContext()
 
-  const handlePress = () => {
-    console.log('Restarting game from death screen')
-    dispatch({ type: 'RESET_GAME' })
-    router.push('/game')
+  // Generate unique instance ID for this component
+  const instanceId = React.useRef(`DeathScreen-${Math.random().toString(36).substr(2, 9)}`)
+
+  // Log component lifecycle
+  React.useEffect(() => {
+    console.log(`☠️☠️☠️ [${instanceId.current}] DeathScreen component MOUNTED`)
+    return () => {
+      console.log(`☠️☠️☠️ [${instanceId.current}] DeathScreen component UNMOUNTED`)
+    }
+  }, [])
+
+  // Prevent multiple restart button presses
+  const isRestarting = React.useRef(false)
+
+  const handlePress = async () => {
+    // Guard against multiple button presses
+    if (isRestarting.current) {
+      console.log(`☠️☠️☠️ [${instanceId.current}] Restart already in progress, ignoring duplicate press`)
+      return
+    }
+    
+    isRestarting.current = true
+    console.log(`☠️☠️☠️ [${instanceId.current}] Restarting game from death screen`)
+    
+    try {
+      // Clear all sub-game puzzle saves (aerowreck, tesseract, etc.)
+      await clearAllSubGameSaves()
+      
+      dispatch({ type: 'RESET_GAME' })
+      router.replace('/game')
+    } finally {
+      // Reset the flag after navigation completes (or fails)
+      // Use a small delay to ensure navigation has started
+      setTimeout(() => {
+        isRestarting.current = false
+      }, 1000)
+    }
   }
 
   // Extract stats from game state
@@ -22,7 +56,7 @@ export default function DeathScreen() {
   const distanceTraveled = state.distanceTraveled || 0
   const killerName = state.killerName || 'unknown horror'
 
-  console.log('Rendering DeathScreen component')
+  console.log(`☠️☠️☠️ [${instanceId.current}] Rendering DeathScreen component`)
   return (
     <ImageBackground
       source={require('../../assets/images/splashscreen.png')}
