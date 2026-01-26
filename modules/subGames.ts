@@ -14,7 +14,8 @@ export function enterSubGame(subGameName: string, context?: { objectId?: string 
   logIfDev(`🎯 Entering sub-game: ${subGameName}`, context)
 
   // Navigate to the sub-game route
-  router.push(`/sub-games/${subGameName}` as any)
+  // Use replace to prevent navigation stack buildup when entering/exiting sub-games
+  router.replace(`/sub-games/${subGameName}` as any)
 }
 
 /**
