@@ -127,26 +127,28 @@ export default function TesseractScreen4() {
         </BottomActionBar>
 
         {/* Scroll Modal */}
-        <Modal
-          visible={showScrollModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowScrollModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Message from Persius</Text>
-              <Text style={styles.modalText}>{PERSIUS_SCROLL_TEXT}</Text>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => setShowScrollModal(false)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.modalButtonText}>Close</Text>
-              </TouchableOpacity>
+        {showScrollModal && (
+          <Modal
+            visible
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowScrollModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>Message from Persius</Text>
+                <Text style={styles.modalText}>{PERSIUS_SCROLL_TEXT}</Text>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={() => setShowScrollModal(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
+        )}
       </View>
     </BackgroundImage>
   )
