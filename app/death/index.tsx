@@ -23,14 +23,32 @@ export default function DeathScreen() {
     }
   }, [])
 
+  // Prevent multiple restart button presses
+  const isRestarting = useRef(false)
+
   const handlePress = async () => {
+    // Guard against multiple button presses
+    if (isRestarting.current) {
+      console.log(`☠️☠️☠️ [${instanceId.current}] Restart already in progress, ignoring duplicate press`)
+      return
+    }
+    
+    isRestarting.current = true
     console.log(`☠️☠️☠️ [${instanceId.current}] Restarting game from death screen`)
     
-    // Clear all sub-game puzzle saves (aerowreck, tesseract, etc.)
-    await clearAllSubGameSaves()
-    
-    dispatch({ type: 'RESET_GAME' })
-    router.replace('/game')
+    try {
+      // Clear all sub-game puzzle saves (aerowreck, tesseract, etc.)
+      await clearAllSubGameSaves()
+      
+      dispatch({ type: 'RESET_GAME' })
+      router.replace('/game')
+    } finally {
+      // Reset the flag after navigation completes (or fails)
+      // Use a small delay to ensure navigation has started
+      setTimeout(() => {
+        isRestarting.current = false
+      }, 1000)
+    }
   }
 
   // Extract stats from game state

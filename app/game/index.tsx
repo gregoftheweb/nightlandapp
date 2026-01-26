@@ -40,12 +40,19 @@ export default function Game() {
 
   // Generate unique instance ID for this component
   const instanceId = useRef(`Game-${Math.random().toString(36).substr(2, 9)}`)
+  
+  // Prevent multiple death navigations from the same instance
+  const isNavigatingToDeath = useRef(false)
 
   // Log component lifecycle
   useEffect(() => {
     console.log(`🎯🎯🎯 [${instanceId.current}] Game component MOUNTED`)
+    console.log(`🎯🎯🎯 [${instanceId.current}] Navigation stack depth check - this instance is mounting`)
+    
     return () => {
       console.log(`🎯🎯🎯 [${instanceId.current}] Game component UNMOUNTED`)
+      // Reset navigation guard on unmount
+      isNavigatingToDeath.current = false
     }
   }, [])
 
@@ -851,6 +858,16 @@ export default function Game() {
   }, [state, dispatch, targetId])
 
   const handleDeathInfoBoxClose = useCallback(() => {
+    // Guard against multiple navigation calls
+    if (isNavigatingToDeath.current) {
+      if (__DEV__) {
+        console.log(`💀💀💀 [${instanceId.current}] Death navigation already in progress, ignoring duplicate call`)
+      }
+      return
+    }
+    
+    isNavigatingToDeath.current = true
+    
     if (__DEV__) {
       console.log(`💀💀💀 [${instanceId.current}] Death InfoBox closed, navigating to death screen immediately`)
     }
