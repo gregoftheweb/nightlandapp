@@ -1,8 +1,9 @@
 // /context/GameContext.tsx
-import React, { createContext, useContext, ReactNode, useReducer, useState } from 'react'
+import React, { createContext, useContext, ReactNode, useReducer, useState, useEffect, useRef } from 'react'
 import { deserializeGameState, createInitialGameState } from '../modules/gameState'
 import { reducer } from '../modules/reducers'
 import { GameState } from '../config/types'
+import { requestAutoSave, getStateSaveFingerprint } from '../modules/autoSave'
 
 interface GameContextType {
   state: GameState
@@ -26,6 +27,9 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
 
   const [state, dispatch] = useReducer(reducer, initialState)
   const [rpgResumeNonce, setRpgResumeNonce] = useState(0)
+  
+  // Autosave controller - tracks state fingerprint to trigger saves
+  const lastSaveFingerprintRef = useRef<string>('')
 
   const setOverlay = (overlay: any) => console.log('Overlay:', overlay)
 
@@ -35,6 +39,19 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
       console.log('[GameContext] RPG resume signaled, nonce:', rpgResumeNonce + 1)
     }
   }
+  
+  // Autosave effect - triggers save when important state changes
+  useEffect(() => {
+    const currentFingerprint = getStateSaveFingerprint(state)
+    
+    // Only trigger autosave if fingerprint changed
+    if (currentFingerprint !== lastSaveFingerprintRef.current) {
+      lastSaveFingerprintRef.current = currentFingerprint
+      
+      // Request autosave (throttled)
+      requestAutoSave(state)
+    }
+  }, [state])
 
   return (
     <GameContext.Provider value={{ state, dispatch, setOverlay, rpgResumeNonce, signalRpgResume }}>

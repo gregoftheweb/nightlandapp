@@ -23,6 +23,7 @@ import { levels } from '../config/levels'
 import { getInitialState, validateGameState } from './gameState'
 import { createMonsterFromTemplate } from '../modules/monsterUtils'
 import { logIfDev } from './utils'
+import { deleteCurrentGame } from './saveGame'
 
 export const reducer = (state: GameState = getInitialState('1'), action: any): GameState => {
   let newState: GameState
@@ -307,6 +308,11 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
       // Full reset happens when RESET_GAME is dispatched from death screen
       logIfDev(`💀 GAME_OVER: ${action.payload?.message || 'Player died'}`)
       logIfDev(`   Killer: ${action.payload?.killerName || 'unknown'}`)
+      
+      // Delete current save when player dies (async, but don't block state update)
+      deleteCurrentGame().catch(err => 
+        console.error('Failed to delete current save on death:', err)
+      )
       
       return {
         ...state,
@@ -625,6 +631,26 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
         subGamesCompleted: {
           ...(state.subGamesCompleted || {}),
           [action.payload.subGameName]: action.payload.completed,
+        },
+      }
+
+    // ============ SAVE/LOAD MANAGEMENT ============
+    case 'HYDRATE_GAME_STATE':
+      logIfDev('💾 HYDRATE_GAME_STATE: Loading saved game state')
+      logIfDev(`💾 Current state moveCount: ${state.moveCount}`)
+      logIfDev(`💾 New state moveCount: ${action.payload.state.moveCount}`)
+      logIfDev(`💾 Current state player position: ${JSON.stringify(state.player?.position)}`)
+      logIfDev(`💾 New state player position: ${JSON.stringify(action.payload.state.player?.position)}`)
+      // Replace entire state with loaded state (fromSnapshot already handles cleanup)
+      return action.payload.state
+
+    case 'SET_WAYPOINT_CREATED':
+      logIfDev(`💾 SET_WAYPOINT_CREATED: ${action.payload.waypointName}`)
+      return {
+        ...state,
+        waypointSavesCreated: {
+          ...(state.waypointSavesCreated || {}),
+          [action.payload.waypointName]: true,
         },
       }
 

@@ -1,19 +1,25 @@
 // app/sub-games/hermit-hollow/main.tsx
 // Main dialogue screen for the hermit-hollow sub-game
 import React, { useState, useMemo, useEffect } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native'
 import { exitSubGame } from '@/modules/subGames'
 import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { HERMIT_DIALOGUE, DialogueNode } from './dialogue'
+import { saveWaypoint } from '@/modules/saveGame'
 
 const bgHermit = require('@/assets/images/hermit-screen1.png')
 const SUB_GAME_NAME = 'hermit-hollow'
+const WAYPOINT_NAME = 'hermit-hollow waypoint'
 
 export default function HermitHollowMain() {
   const { state, dispatch, signalRpgResume } = useGameContext()
+  
+  // Waypoint toast state
+  const [showWaypointToast, setShowWaypointToast] = useState(false)
+  const toastOpacity = useState(new Animated.Value(0))[0]
   
   // Build dialogue map from array for O(1) lookups
   const dialogueMap = useMemo(() => {
@@ -70,6 +76,37 @@ export default function HermitHollowMain() {
             type: 'SET_SUB_GAME_COMPLETED',
             payload: { subGameName: SUB_GAME_NAME, completed: true }
           })
+          
+          // Create waypoint save (replaces any existing waypoint with same name)
+          saveWaypoint(state, WAYPOINT_NAME)
+            .then(() => {
+              if (__DEV__) {
+                console.log(`[HermitHollow] Waypoint save created/updated: ${WAYPOINT_NAME}`)
+              }
+              
+              // Show toast
+              setShowWaypointToast(true)
+              
+              // Animate toast in
+              Animated.sequence([
+                Animated.timing(toastOpacity, {
+                  toValue: 1,
+                  duration: 300,
+                  useNativeDriver: true,
+                }),
+                Animated.delay(2400), // Show for 2.4s
+                Animated.timing(toastOpacity, {
+                  toValue: 0,
+                  duration: 300,
+                  useNativeDriver: true,
+                }),
+              ]).start(() => {
+                setShowWaypointToast(false)
+              })
+            })
+            .catch(err => {
+              console.error('[HermitHollow] Failed to create waypoint save:', err)
+            })
         }
         
         // Store other effects as persistent flags in subGamesCompleted
@@ -85,7 +122,7 @@ export default function HermitHollowMain() {
       
       setAppliedEffectsForNode(currentNodeId)
     }
-  }, [currentNodeId, currentNode, appliedEffectsForNode, dispatch])
+  }, [currentNodeId, currentNode, appliedEffectsForNode, dispatch, state, toastOpacity])
   
   const handleChoicePress = (nextNodeId: string) => {
     if (__DEV__) {
@@ -178,6 +215,18 @@ export default function HermitHollowMain() {
             </View>
           )}
         </BottomActionBar>
+        
+        {/* Waypoint Saved Toast */}
+        {showWaypointToast && (
+          <Animated.View 
+            style={[
+              styles.waypointToast,
+              { opacity: toastOpacity }
+            ]}
+          >
+            <Text style={styles.waypointToastText}>Waypoint Saved</Text>
+          </Animated.View>
+        )}
       </View>
     </BackgroundImage>
   )
@@ -271,5 +320,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: subGameTheme.white,
     textAlign: 'center',
+  },
+  waypointToast: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  waypointToastText: {
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    color: subGameTheme.blue,
+    fontSize: 24,
+    fontWeight: 'bold',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: subGameTheme.blue,
+    shadowColor: subGameTheme.blue,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.8,
+    shadowRadius: 12,
+    elevation: 10,
   },
 })

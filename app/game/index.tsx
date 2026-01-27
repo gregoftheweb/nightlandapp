@@ -47,7 +47,11 @@ export default function Game() {
   // Log component lifecycle
   useEffect(() => {
     console.log(`🎯🎯🎯 [${instanceId.current}] Game component MOUNTED`)
-    console.log(`🎯🎯🎯 [${instanceId.current}] Navigation stack depth check - this instance is mounting`)
+    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state currentLevelId:`, state.currentLevelId)
+    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state player position:`, state.player?.position)
+    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state player HP:`, state.player?.hp)
+    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state moveCount:`, state.moveCount)
+    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state subGamesCompleted:`, Object.keys(state.subGamesCompleted || {}).length)
     
     return () => {
       console.log(`🎯🎯🎯 [${instanceId.current}] Game component UNMOUNTED`)
