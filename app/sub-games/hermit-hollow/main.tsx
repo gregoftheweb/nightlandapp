@@ -13,7 +13,7 @@ const bgHermit = require('@/assets/images/hermit-screen1.png')
 const SUB_GAME_NAME = 'hermit-hollow'
 
 export default function HermitHollowMain() {
-  const { state, dispatch } = useGameContext()
+  const { state, dispatch, signalRpgResume } = useGameContext()
   
   // Build dialogue map from array for O(1) lookups
   const dialogueMap = useMemo(() => {
@@ -99,6 +99,11 @@ export default function HermitHollowMain() {
     if (__DEV__) {
       console.log(`[HermitHollow] Exiting sub-game`)
     }
+    
+    // Signal RPG to refresh/resume at player's current position
+    signalRpgResume()
+    
+    // Exit sub-game and return to RPG
     exitSubGame({ completed: true })
   }
   
