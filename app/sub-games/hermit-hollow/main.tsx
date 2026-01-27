@@ -27,14 +27,15 @@ export default function HermitHollowMain() {
     return HERMIT_DIALOGUE.find(node => node.end === true)
   }, [])
   
-  // Check if hermit has entered trance (return visit scenario)
-  const hermitInTrance = useMemo(() => {
+  // Check if player has already completed the hermit conversation
+  // (hermit entered trance, so return visits should start at end-state)
+  const isHermitConversationCompleted = useMemo(() => {
     return state.subGamesCompleted?.[SUB_GAME_NAME] === true
   }, [state.subGamesCompleted])
   
-  // Initialize current node - start at end if trance, otherwise start node
+  // Initialize current node - start at end if completed, otherwise start node
   const [currentNodeId, setCurrentNodeId] = useState<string>(() => {
-    if (hermitInTrance && endNode) {
+    if (isHermitConversationCompleted && endNode) {
       if (__DEV__) {
         console.log('[HermitHollow] Returning visit - starting at trance state')
       }
@@ -71,8 +72,11 @@ export default function HermitHollowMain() {
           })
         }
         
-        // Store other effects as flags in subGamesCompleted for persistence
-        // Using a convention: effect flags are stored as `hermit-hollow:effect_name`
+        // Store other effects as persistent flags in subGamesCompleted
+        // Pattern: Use sub-game name as namespace to avoid collisions
+        // Format: `{sub-game-name}:{effect_flag}`
+        // Example: `hermit-hollow:learned_great_power_exists`
+        // These can be checked later by other systems for quest/lore progression
         dispatch({
           type: 'SET_SUB_GAME_COMPLETED',
           payload: { subGameName: `${SUB_GAME_NAME}:${effect}`, completed: true }
