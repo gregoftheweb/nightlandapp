@@ -333,7 +333,7 @@ export const buildings: Record<string, GameObject> = {
       },
     ],
     subGame: {
-      subGameName: 'hermit',
+      subGameName: 'hermit-hollow',
       ctaLabel: 'Investigate',
       requiresPlayerOnObject: true,
     },
