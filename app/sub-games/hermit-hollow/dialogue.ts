@@ -9,6 +9,14 @@ export interface DialogueNode {
 export const HERMIT_DIALOGUE: DialogueNode[] = [
   {
     'id': 'start',
+    'npcText': 'Welcome traveler, come sit by my fire and have some warm cider.',
+    'choices': [
+      { 'text': 'Christos sits down by the little campfire in disbelief in finding this haven in the dark of the evil land.', 'next': 'welcome_response' }
+    ]
+  },
+
+  {
+    'id': 'welcome_response',
     'npcText': 'You walk loudly for a man alone in the Night Land.',
     'choices': [
       { 'text': 'How do you survive here with no armor, no discos, alone?', 'next': 'quietly' }

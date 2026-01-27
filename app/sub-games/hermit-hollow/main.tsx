@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   textBoxContainer: {
     width: '100%',
     maxWidth: 600,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 12,
     borderWidth: 2,
     borderColor: subGameTheme.blue,
