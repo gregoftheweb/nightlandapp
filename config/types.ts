@@ -446,6 +446,7 @@ export interface GameState {
   playTime: number // Total play time in seconds
   lastAction: string // Last action performed (for debugging)
   subGamesCompleted?: Record<string, boolean> // Track completed sub-games (tesseract, aerowreck, etc.)
+  waypointSavesCreated?: Record<string, boolean> // Track which waypoint saves have been created (to prevent duplicates)
 }
 
 /**

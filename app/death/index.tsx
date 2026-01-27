@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router'
 import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
 import { useGameContext } from '@/context/GameContext'
 import { clearAllSubGameSaves } from '../sub-games/_shared/persistence'
+import { deleteCurrentGame } from '@/modules/saveGame'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -39,6 +40,9 @@ export default function DeathScreen() {
     try {
       // Clear all sub-game puzzle saves (aerowreck, tesseract, etc.)
       await clearAllSubGameSaves()
+      
+      // Delete current game autosave (death deletes autosave, but NOT waypoint saves)
+      await deleteCurrentGame()
       
       dispatch({ type: 'RESET_GAME' })
       router.replace('/game')

@@ -117,6 +117,7 @@ function buildInitialState(levelId: string, levelConfig: typeof levels[keyof typ
     playTime: 0,
     lastAction: '',
     subGamesCompleted: {}, // Decision: Reset on death for "fresh run" experience
+    waypointSavesCreated: {}, // Track which waypoint saves have been created
   }
 }
 
@@ -152,19 +153,43 @@ export const toSnapshot = (state: GameState): GameSnapshot => {
 
 /**
  * Reconstructs GameState from a serialized snapshot.
- * Currently returns initialState as a stub. Will be expanded when save/load is implemented.
+ * Merges saved state with default values to ensure all fields are present.
+ * Clears transient UI state that shouldn't persist.
  * 
  * @param snapshot - The serialized game snapshot
  * @returns A reconstructed GameState
  */
 export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameState => {
-  // TODO: Implement full deserialization when save/load is added
-  // For now, return fresh state (this is a stub for future implementation)
-  logIfDev('⚠️  fromSnapshot is not fully implemented yet, returning fresh initial state')
+  if (!snapshot) {
+    logIfDev('⚠️  No snapshot provided, returning fresh initial state')
+    return getInitialState('1')
+  }
   
-  // Safe fallback - use level ID from snapshot if available, otherwise default to '1'
-  const levelId = (snapshot?.currentLevelId) || '1'
-  return getInitialState(levelId)
+  logIfDev('💾 Reconstructing GameState from snapshot')
+  
+  // Get fresh initial state as base
+  const base = getInitialState(snapshot.currentLevelId || '1')
+  
+  // Merge snapshot data with base, clearing transient UI state
+  return {
+    ...base,
+    ...snapshot,
+    // Convert ISO string back to Date
+    lastSaved: new Date(snapshot.lastSaved),
+    // Clear transient UI flags that should not persist
+    showInventory: false,
+    showWeaponsInventory: false,
+    dropSuccess: false,
+    dialogData: undefined,
+    // Clear combat UI state (combat mechanics will restore if needed)
+    combatLog: [],
+    activeProjectiles: [],
+    // Keep game state flags from snapshot
+    gameOver: snapshot.gameOver || false,
+    inCombat: snapshot.inCombat || false,
+    // Ensure waypoint tracking is preserved
+    waypointSavesCreated: snapshot.waypointSavesCreated || {},
+  }
 }
 
 /**
