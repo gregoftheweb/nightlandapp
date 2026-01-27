@@ -77,6 +77,9 @@ export default function SplashScreen() {
       dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: loadedState } })
       console.log('[SplashScreen] HYDRATE_GAME_STATE dispatched')
       
+      // Wait a tick to ensure state update is processed before navigation
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       // Navigate to game
       router.replace('/game')
       console.log('[SplashScreen] Navigated to /game')

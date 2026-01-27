@@ -31,6 +31,10 @@ export function requestAutoSave(state: GameState): void {
   // Mark that we have a pending save
   pendingSave = true
   
+  if (__DEV__) {
+    console.log('[AutoSave] Save requested, moveCount:', state.moveCount, 'pendingTimeout:', saveTimeout !== null)
+  }
+  
   // If already scheduled, do nothing (the pending flag will trigger a save when the timeout fires)
   if (saveTimeout !== null) {
     return
