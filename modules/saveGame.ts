@@ -152,11 +152,30 @@ export async function hasCurrentGame(): Promise<boolean> {
 /**
  * Save a waypoint (hard save).
  * Creates a new waypoint save with the given name.
+ * If a waypoint with the same name already exists, it will be replaced.
+ * This ensures only ONE waypoint save per waypoint type.
  * Returns the ID of the created waypoint.
  */
 export async function saveWaypoint(state: GameState, waypointName: string): Promise<string> {
   try {
     const snapshot = toSnapshot(state)
+    
+    // Check for existing waypoint with the same name and delete it
+    const index = await loadWaypointIndex()
+    const existingWaypoint = index.find(item => item.name === waypointName)
+    
+    if (existingWaypoint) {
+      if (__DEV__) {
+        console.log('[SaveGame] Replacing existing waypoint:', waypointName, 'ID:', existingWaypoint.id)
+      }
+      // Delete the old waypoint data
+      const oldWaypointKey = WAYPOINT_ITEM_PREFIX + existingWaypoint.id
+      await AsyncStorage.removeItem(oldWaypointKey)
+      
+      // Remove from index (we'll add the new one below)
+      const filteredIndex = index.filter(item => item.id !== existingWaypoint.id)
+      await saveWaypointIndex(filteredIndex)
+    }
     
     // Generate unique ID using timestamp and high-precision random
     // Collision probability is virtually zero given timestamp + 9-char random string
@@ -183,10 +202,10 @@ export async function saveWaypoint(state: GameState, waypointName: string): Prom
     const waypointKey = WAYPOINT_ITEM_PREFIX + id
     await AsyncStorage.setItem(waypointKey, JSON.stringify(record))
     
-    // Update index
-    const index = await loadWaypointIndex()
-    index.push(metadata)
-    await saveWaypointIndex(index)
+    // Update index with new waypoint
+    const updatedIndex = await loadWaypointIndex()
+    updatedIndex.push(metadata)
+    await saveWaypointIndex(updatedIndex)
     
     if (__DEV__) {
       console.log('[SaveGame] Waypoint saved:', waypointName, 'ID:', id)

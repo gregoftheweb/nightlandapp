@@ -77,46 +77,36 @@ export default function HermitHollowMain() {
             payload: { subGameName: SUB_GAME_NAME, completed: true }
           })
           
-          // Create waypoint save (only if not already created)
-          const waypointAlreadyCreated = state.waypointSavesCreated?.[WAYPOINT_NAME]
-          if (!waypointAlreadyCreated) {
-            // Create the waypoint save
-            saveWaypoint(state, WAYPOINT_NAME)
-              .then(() => {
-                if (__DEV__) {
-                  console.log(`[HermitHollow] Waypoint save created: ${WAYPOINT_NAME}`)
-                }
-                
-                // Mark waypoint as created
-                dispatch({
-                  type: 'SET_WAYPOINT_CREATED',
-                  payload: { waypointName: WAYPOINT_NAME }
-                })
-                
-                // Show toast
-                setShowWaypointToast(true)
-                
-                // Animate toast in
-                Animated.sequence([
-                  Animated.timing(toastOpacity, {
-                    toValue: 1,
-                    duration: 300,
-                    useNativeDriver: true,
-                  }),
-                  Animated.delay(2400), // Show for 2.4s
-                  Animated.timing(toastOpacity, {
-                    toValue: 0,
-                    duration: 300,
-                    useNativeDriver: true,
-                  }),
-                ]).start(() => {
-                  setShowWaypointToast(false)
-                })
+          // Create waypoint save (replaces any existing waypoint with same name)
+          saveWaypoint(state, WAYPOINT_NAME)
+            .then(() => {
+              if (__DEV__) {
+                console.log(`[HermitHollow] Waypoint save created/updated: ${WAYPOINT_NAME}`)
+              }
+              
+              // Show toast
+              setShowWaypointToast(true)
+              
+              // Animate toast in
+              Animated.sequence([
+                Animated.timing(toastOpacity, {
+                  toValue: 1,
+                  duration: 300,
+                  useNativeDriver: true,
+                }),
+                Animated.delay(2400), // Show for 2.4s
+                Animated.timing(toastOpacity, {
+                  toValue: 0,
+                  duration: 300,
+                  useNativeDriver: true,
+                }),
+              ]).start(() => {
+                setShowWaypointToast(false)
               })
-              .catch(err => {
-                console.error('[HermitHollow] Failed to create waypoint save:', err)
-              })
-          }
+            })
+            .catch(err => {
+              console.error('[HermitHollow] Failed to create waypoint save:', err)
+            })
         }
         
         // Store other effects as persistent flags in subGamesCompleted
