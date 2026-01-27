@@ -72,7 +72,7 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'riddles',
-    'npcText': 'Forgive an old man his pleasures.\n\nAnd riddles teach better than truth.',
+    'npcText': 'Forgive an old man his meager pleasures.\n\nAnd riddles teach better than truth.',
     'choices': [
       { 'text': 'You cannot be the first.', 'next': 'line_of_hermits' }
     ]
@@ -118,7 +118,7 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'tesseract_partial_history',
-    'npcText': 'It was made long ago.\n\nIn epochs when night had not yet descended on us fully.\n\nOne called the Salamander crafted it.\n\nA wizard of vast reach.\nA thinker who could weigh stars as lightly as pebbles.\n\nHe created it as a catalyst...a detonator - those words are not right - A Tesseract is a Tesseract: a tool of great change...vast change.\nA cleansing token to bring back the light.\nA powerful artifact of the purest gold and eldest magic.',
+    'npcText': 'It was made long ago. In an epoch when night had not yet descended on us fully.\n\nOne called the Salamander crafted it.\n\nA wizard of vast reach.\nA thinker who could weigh stars as lightly as pebbles.\n\nHe created it as a catalyst...a detonator - ...aach - those words are not right - A Tesseract is a Tesseract: a tool of great change...vast change.\nA cleansing token to bring back the light.\nA powerful artifact of the purest gold and eldest magic.',
     'choices': [
       { 'text': 'What happened, why is the Night Land our prison?', 'next': 'tesseract_lost' },
       { 'text': 'Where is it now?', 'next': 'tesseract_lost' }
