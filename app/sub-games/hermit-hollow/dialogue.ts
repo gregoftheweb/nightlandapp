@@ -25,20 +25,20 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'quietly',
-    'npcText': 'Quietly.\nReverently.\n\nNoise is a kind of pride.',
+    'npcText': 'Quietly.\nReverently.\n\nThe Dark Powers slide by my peace like oily snakes, never sensing my calm.',
     'choices': [
-      { 'text': 'You should not be alive out here.', 'next': 'impossible' },
-      { 'text': 'Then you are protected.', 'next': 'protected' },
+      { 'text': 'How do you survive?', 'next': 'impossible' },
+      { 'text': 'Are you protected?', 'next': 'protected' },
       { 'text': 'Who are you?', 'next': 'who' }
     ]
   },
 
   {
     'id': 'impossible',
-    'npcText': 'And yet I sit. And breathe. And grow old.\n\nThe Watchers pass.\nThey do not see.',
+    'npcText': 'I endure, I sit and breathe...and grow old.\n\nThe Watchers pass.\nThey do not see.',
     'choices': [
-      { 'text': 'Why not?', 'next': 'protected' },
-      { 'text': 'What hides you?', 'next': 'protected' }
+      { 'text': 'How can they not see you?', 'next': 'protected' },
+      { 'text': 'Who are you?', 'next': 'who' }
     ]
   },
 
@@ -46,16 +46,16 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
     'id': 'who',
     'npcText': 'I no longer carry my name.\n\nNames echo too far in the dark.',
     'choices': [
-      { 'text': 'Then what are you?', 'next': 'protected' },
+      { 'text': 'And yet you are here and not discovered...how?', 'next': 'protected' },
       { 'text': 'How long have you been here?', 'next': 'protected' }
     ]
   },
 
   {
     'id': 'protected',
-    'npcText': 'By a great power for good.\n\nThey do exist… for those who still believe such things can endure.\n\nIt sleeps now.\nNot dead. Not gone.\nOnly dozing. Waiting.\n\nI live in the hush of its dreams.\nWhere its breathing is slow…\nand the dark does not look too closely.',
+    'npcText': 'By a great power for good.\n\nFor they do exist traveler… such things endure still.\n\nIt is here in this hollow.  It sleeps now.\nDozes, dreams, waits.\n\nI live in the hush of its dreams.\nWhere its breathing is slow…\nand the dark does not look too closely.',
     'choices': [
-      { 'text': 'Silence is not armor.', 'next': 'silence' },
+      { 'text': 'Its dreams protect you?', 'next': 'silence' },
       { 'text': 'You speak in riddles.', 'next': 'riddles' }
     ],
     'effects': ['learned_great_power_exists']
@@ -63,15 +63,16 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'silence',
-    'npcText': 'No.\nBut it is shelter.\n\nArmor resists the blow.\nSilence teaches the blow to pass elsewhere.',
+    'npcText': 'In part, but I am its solace, its company, its friend, its only friend.\n\nIt needs me as much as I need him.',
     'choices': [
-      { 'text': 'You cannot be the first.', 'next': 'line_of_hermits' }
+      { 'text': 'You cannot be the first.', 'next': 'line_of_hermits' },
+      { 'text': 'You speak in riddles.', 'next': 'riddles' }
     ]
   },
 
   {
     'id': 'riddles',
-    'npcText': 'Plain truth is dangerous in the Night Land.\n\nIt echoes too far.',
+    'npcText': 'Forgive an old man his pleasures.\n\nAnd riddles teach better than truth.',
     'choices': [
       { 'text': 'You cannot be the first.', 'next': 'line_of_hermits' }
     ]
@@ -79,18 +80,17 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'line_of_hermits',
-    'npcText': 'No.\n\nNor the last.\n\nWhen my breath grows thin… another will come.\nDrawn. Not chosen.\n\nThe Power dreams.\nAnd its dreams require a human shape to rest against.',
+    'npcText': 'No.\n\nNor will I be the last.\n\nWhen my breath grows thin… another will come.\nDrawn to this hollow.\n\nTo keep this goodness company, a friend in the dark.\nTo share its dreams.',
     'choices': [
       { 'text': 'That is sacrifice.', 'next': 'warning' },
-      { 'text': 'That is madness.', 'next': 'warning' },
-      { 'text': 'Who decides?', 'next': 'warning' }
+      { 'text': 'That is madness.', 'next': 'warning' }
     ],
     'effects': ['learned_line_of_hermits', 'location_is_balanced']
   },
 
   {
     'id': 'warning',
-    'npcText': 'Do not return often.\nDo not bring hope here.\n\nHope shouts.\n\nGo, Christos of the Redoubt.\nWalk softly.\nYou carry too many futures already.',
+    'npcText': 'A man must follow the path chosen for him.\n\nEven when hope seems lost.\n\nYour path is chosen, you seek hope, even though you believe it lost.',
     'choices': [
       { 'text': 'You speak as if you know my path.', 'next': 'tesseract_reveal' },
       { 'text': 'What futures?', 'next': 'tesseract_reveal' }
@@ -99,7 +99,7 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'tesseract_reveal',
-    'npcText': 'You hunt the Tesseract.',
+    'npcText': 'You search for the Tesseract.',
     'choices': [
       { 'text': 'How do you know that?', 'next': 'tesseract_knowing' },
       { 'text': 'Who told you?', 'next': 'tesseract_knowing' },
@@ -110,17 +110,17 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'tesseract_knowing',
-    'npcText': 'The quiet hears what shouting cannot.\n\nThe great power dreams… and in its dreams there are shapes.\n\nOne of them is yours.\n\nAnother is a wound in the world, folded too many times.\n\nThat wound has a name.',
+    'npcText': 'The great power sleeps, but his dreams cary truths, whispers in the air.\n\nOne of them is yours.\n\nAnother is of your friend.\n\nI do not envy you and your quest for the Tesseract.',
     'choices': [
-      { 'text': 'Tell me of it.', 'next': 'tesseract_partial_history' }
+      { 'text': 'What can you tell me of the Tesseract?', 'next': 'tesseract_partial_history' }
     ]
   },
 
   {
     'id': 'tesseract_partial_history',
-    'npcText': 'It was made long ago.\n\nIn epochs when night had not yet learned its own strength.\n\nBy one called the Salamander.\n\nA wizard of vast reach.\nA thinker who could weigh stars as lightly as numbers.\n\nHe meant it as a vessel.\nA shelter for mankind.\nA geometry that could outlast the dark.',
+    'npcText': 'It was made long ago.\n\nIn epochs when night had not yet descended on us fully.\n\nOne called the Salamander crafted it.\n\nA wizard of vast reach.\nA thinker who could weigh stars as lightly as pebbles.\n\nHe created it as a catalyst...a detonator - those words are not right - A Tesseract is a Tesseract: a tool of great change...vast change.\nA cleansing token to bring back the light.\nA powerful artifact of the purest gold and eldest magic.',
     'choices': [
-      { 'text': 'Then why is the world still dying?', 'next': 'tesseract_lost' },
+      { 'text': 'What happened, why is the Night Land our prison?', 'next': 'tesseract_lost' },
       { 'text': 'Where is it now?', 'next': 'tesseract_lost' }
     ],
     'effects': ['learned_salamander']
@@ -128,7 +128,7 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'tesseract_lost',
-    'npcText': 'Because the dark noticed.\n\nBecause genius shines.\n\nThe great enemies came upon him before the work was sealed.\n\nThe Salamander was unmade.\n\nThe Tesseract was scattered.\nLost into folds of distance and untime.\n\nNot destroyed.\n\nOnly misplaced… beyond honest reach.',
+      'npcText': 'The Great Dark Powers came upon The Salamander and devoured him before he could wield it.\n\nThey stole it and hid the Tesseract, because they could not unmake it.  The Tesseract is an artifact of the light.\n\nIt remains hidden, and your friend believes he has found its vault.\n\nHis quest is not in vain Christos, it is hopeless, but not in  vain...the creatures of the Night Land have become aware of your quest even now.',
     'choices': [
       { 'text': 'Can it still save us?', 'next': 'tesseract_can_save' }
     ],
@@ -137,7 +137,7 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'tesseract_can_save',
-    'npcText': 'Yes.\n\nOr damn what little remains.\n\nGreat tools do not care who lifts them.\n\nBut it was built to shelter life.\n\nIf it is ever made whole…\n\nmankind will not need walls of metal again.\n\nThe night itself would be forced to step around us.',
+    'npcText': 'Yes...if found...\n\n...and if a man of great learning could weild it.\n\nAt least that is what the whispers of the sleeping god tell me.',
     'choices': [
       { 'text': 'Tell me everything you know.', 'next': 'too_much' },
       { 'text': 'Help me find it.', 'next': 'too_much' }
@@ -147,7 +147,7 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'too_much',
-    'npcText': 'No.\n\nWe have spoken too much.\n\nToo loudly.\n\nThought too strong thoughts.\n\nEven sleeping things can turn in their dreams.',
+    'npcText': 'No.\n\nWe have spoken too much.\n\nWe have spoken too loudly.\n\nThought too strong a\'thoughts.\n\nThe Dark Evil Powers are alerted and sniffing... I must be quiet now... for some time...ssshhhhhhhh',
     'choices': [
       { 'text': 'Wait—', 'next': 'silence_end' }
     ]
@@ -155,7 +155,7 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
 
   {
     'id': 'silence_end',
-    'npcText': 'Shhhhh.\n\nI must go quiet.\n\nSo must you.\n\nRemember what silence kept alive here.\n\nAnd do not bring your wars to sleeping gods.',
+    'npcText': 'Shhhhh.\n\nquiet...shhhhh\n\nthey hear you...they are coming\n\nsshhhh\n\nThe hermit is in a trance.',
     'end': true,
     'effects': [
       'hermit_enters_trance',
