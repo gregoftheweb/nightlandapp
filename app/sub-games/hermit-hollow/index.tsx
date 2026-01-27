@@ -1,6 +1,6 @@
 // app/sub-games/hermit-hollow/index.tsx
 // Main entry point for the hermit-hollow sub-game - routes to main screen
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'expo-router'
 
 export default function HermitHollowIndex() {
