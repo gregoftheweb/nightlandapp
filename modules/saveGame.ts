@@ -58,9 +58,18 @@ export async function saveCurrentGame(state: GameState): Promise<void> {
       savedAt: new Date().toISOString(),
     }
     
+    if (__DEV__) {
+      console.log('[SaveGame] === SAVING CURRENT GAME ===')
+      console.log('[SaveGame] State currentLevelId:', state.currentLevelId)
+      console.log('[SaveGame] State player position:', state.player?.position)
+      console.log('[SaveGame] State player HP:', state.player?.hp)
+      console.log('[SaveGame] State moveCount:', state.moveCount)
+      console.log('[SaveGame] State subGamesCompleted:', Object.keys(state.subGamesCompleted || {}).length)
+    }
+    
     await AsyncStorage.setItem(CURRENT_GAME_KEY, JSON.stringify(savedGame))
     if (__DEV__) {
-      console.log('[SaveGame] Current game saved')
+      console.log('[SaveGame] Current game saved successfully')
     }
   } catch (error) {
     console.error('[SaveGame] Failed to save current game:', error)
@@ -91,7 +100,14 @@ export async function loadCurrentGame(): Promise<GameSnapshot | null> {
     }
     
     if (__DEV__) {
-      console.log('[SaveGame] Current game loaded, saved at:', savedGame.savedAt)
+      console.log('[SaveGame] === LOADING CURRENT GAME ===')
+      console.log('[SaveGame] Save version:', savedGame.version)
+      console.log('[SaveGame] Saved at:', savedGame.savedAt)
+      console.log('[SaveGame] Snapshot currentLevelId:', savedGame.snapshot.currentLevelId)
+      console.log('[SaveGame] Snapshot player position:', savedGame.snapshot.player?.position)
+      console.log('[SaveGame] Snapshot player HP:', savedGame.snapshot.player?.hp)
+      console.log('[SaveGame] Snapshot moveCount:', savedGame.snapshot.moveCount)
+      console.log('[SaveGame] Snapshot subGamesCompleted:', Object.keys(savedGame.snapshot.subGamesCompleted || {}).length)
     }
     
     return savedGame.snapshot

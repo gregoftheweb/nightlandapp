@@ -637,6 +637,10 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
     // ============ SAVE/LOAD MANAGEMENT ============
     case 'HYDRATE_GAME_STATE':
       logIfDev('💾 HYDRATE_GAME_STATE: Loading saved game state')
+      logIfDev(`💾 Current state moveCount: ${state.moveCount}`)
+      logIfDev(`💾 New state moveCount: ${action.payload.state.moveCount}`)
+      logIfDev(`💾 Current state player position: ${JSON.stringify(state.player?.position)}`)
+      logIfDev(`💾 New state player position: ${JSON.stringify(action.payload.state.player?.position)}`)
       // Replace entire state with loaded state (fromSnapshot already handles cleanup)
       return action.payload.state
 

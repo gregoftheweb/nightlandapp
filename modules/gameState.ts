@@ -166,12 +166,16 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
   }
   
   logIfDev('💾 Reconstructing GameState from snapshot')
+  logIfDev(`💾 Snapshot has ${Object.keys(snapshot).length} keys`)
+  logIfDev(`💾 Snapshot currentLevelId: ${snapshot.currentLevelId}`)
+  logIfDev(`💾 Snapshot player position: ${JSON.stringify(snapshot.player?.position)}`)
+  logIfDev(`💾 Snapshot moveCount: ${snapshot.moveCount}`)
   
   // Get fresh initial state as base
   const base = getInitialState(snapshot.currentLevelId || '1')
   
   // Merge snapshot data with base, clearing transient UI state
-  return {
+  const result = {
     ...base,
     ...snapshot,
     // Convert ISO string back to Date
@@ -190,6 +194,12 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
     // Ensure waypoint tracking is preserved
     waypointSavesCreated: snapshot.waypointSavesCreated || {},
   }
+  
+  logIfDev(`💾 Result currentLevelId: ${result.currentLevelId}`)
+  logIfDev(`💾 Result player position: ${JSON.stringify(result.player?.position)}`)
+  logIfDev(`💾 Result moveCount: ${result.moveCount}`)
+  
+  return result
 }
 
 /**

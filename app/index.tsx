@@ -52,18 +52,34 @@ export default function SplashScreen() {
 
   const handleContinue = async () => {
     try {
+      console.log('[SplashScreen] ===== LOADING CURRENT GAME =====')
       const snapshot = await loadCurrentGame()
       if (!snapshot) {
         console.error('[SplashScreen] No current save found')
         return
       }
       
+      console.log('[SplashScreen] Snapshot loaded successfully')
+      console.log('[SplashScreen] Snapshot currentLevelId:', snapshot.currentLevelId)
+      console.log('[SplashScreen] Snapshot player position:', snapshot.player?.position)
+      console.log('[SplashScreen] Snapshot player HP:', snapshot.player?.hp)
+      console.log('[SplashScreen] Snapshot moveCount:', snapshot.moveCount)
+      console.log('[SplashScreen] Snapshot subGamesCompleted:', Object.keys(snapshot.subGamesCompleted || {}).length)
+      
       // Hydrate game state from snapshot
       const loadedState = fromSnapshot(snapshot)
+      console.log('[SplashScreen] State hydrated from snapshot')
+      console.log('[SplashScreen] Loaded state currentLevelId:', loadedState.currentLevelId)
+      console.log('[SplashScreen] Loaded state player position:', loadedState.player?.position)
+      console.log('[SplashScreen] Loaded state player HP:', loadedState.player?.hp)
+      console.log('[SplashScreen] Loaded state moveCount:', loadedState.moveCount)
+      
       dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: loadedState } })
+      console.log('[SplashScreen] HYDRATE_GAME_STATE dispatched')
       
       // Navigate to game
       router.replace('/game')
+      console.log('[SplashScreen] Navigated to /game')
     } catch (error) {
       console.error('[SplashScreen] Failed to load current game:', error)
     }
