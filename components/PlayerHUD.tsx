@@ -67,29 +67,35 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
     onZapPress?.()
   }
 
-  return (
-    <View
-      style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
-      pointerEvents="box-none"
-    >
-       <View style={styles.statusBar} pointerEvents="box-none">
+return (
+  <View
+    style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
+    pointerEvents="box-none"
+  >
+    <View style={styles.hudFrame} pointerEvents="box-none">
+      <View style={styles.statusBar} pointerEvents="box-none">
         <Text style={styles.hpText}>HP: {hp}</Text>
-        <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
+
+        <TouchableOpacity
+          style={styles.gearButton}
+          onPress={handleGearPress}
+          activeOpacity={0.7}
+        >
           <Image source={require('@assets/images/gear.png')} style={styles.gearIcon} />
         </TouchableOpacity>
       </View>
 
-      {/* Zap Button - Left of center */}
+      {/* Zap Button */}
       <TouchableOpacity style={styles.zapButton} onPress={handleZapPress} activeOpacity={0.7}>
         <Image source={zapButtonIMG} style={styles.zapButtonImage} />
       </TouchableOpacity>
 
-      {/* Dynamic Turn/Attack Button - Always centered */}
+      {/* Center Turn/Attack */}
       <TouchableOpacity style={styles.turnButton} onPress={handleActionPress} activeOpacity={0.7}>
         <Image source={inCombat ? attackButtonIMG : turnButtonIMG} style={styles.turnButtonImage} />
       </TouchableOpacity>
 
-      {/* Inventory Button - Right side */}
+      {/* Inventory Button */}
       <TouchableOpacity
         style={styles.inventoryButton}
         onPress={handleInventoryPress}
@@ -98,8 +104,16 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         <Image source={inventoryButtonIMG} style={styles.inventoryButtonImage} />
       </TouchableOpacity>
     </View>
-  )
+  </View>
+)
+
+
+
 }
+
+const HUD_WIDTH = 350      // your long bar width (tweak once)
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -111,8 +125,18 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     pointerEvents: 'box-none',
   },
+
+  // NEW: the reference box for absolute positioning
+  hudFrame: {
+    width: HUD_WIDTH,
+    position: 'relative',
+    alignItems: 'center',
+    pointerEvents: 'box-none',
+  },
+
+  // Your existing bar (the only bar)
   statusBar: {
-  width: 350, 
+    width: HUD_WIDTH,              // <-- make the bar wide enough
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -123,7 +147,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#990000',
     marginBottom: 10,
+    zIndex:15,
+
   },
+
   hpText: {
     color: '#990000',
     fontSize: 14,
@@ -132,47 +159,62 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
+
   gearButton: {
     padding: 4,
     borderRadius: 12,
   },
+
   gearIcon: {
     width: 20,
     height: 20,
     tintColor: '#990000',
-    left: -10,
+    zIndex:20,
   },
+
+  // Buttons now position relative to hudFrame width, not screen
   turnButton: {
     position: 'absolute',
-    bottom: 14,
+    bottom: 2,
     left: '50%',
     marginLeft: -30,
+    zIndex:20,
   },
+
   turnButtonImage: {
     width: 65,
     height: 65,
     resizeMode: 'contain',
   },
+
   zapButton: {
     position: 'absolute',
-    bottom: 24,
-    left: 110,
+    bottom: 15,
+    left: 80,    
+    zIndex:20,
   },
+
   zapButtonImage: {
     width: 40,
     height: 40,
     resizeMode: 'contain',
   },
+
   inventoryButton: {
     position: 'absolute',
-    bottom: 24,
-    right: 110,
+    bottom: 15,
+    right: 72,        
+    zIndex:20,
   },
+
   inventoryButtonImage: {
     width: 40,
     height: 40,
     resizeMode: 'contain',
   },
 })
+
+
+
 
 export default PlayerHUD
