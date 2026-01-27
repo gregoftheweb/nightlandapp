@@ -292,6 +292,42 @@ export async function deleteAllWaypointSaves(): Promise<void> {
   }
 }
 
+/**
+ * Debug utility to inspect current save in AsyncStorage.
+ * Only available in development mode.
+ */
+export async function debugInspectCurrentSave(): Promise<void> {
+  if (!__DEV__) return
+  
+  try {
+    console.log('[SaveGame] ===== DEBUG INSPECT CURRENT SAVE =====')
+    const data = await AsyncStorage.getItem(CURRENT_GAME_KEY)
+    
+    if (!data) {
+      console.log('[SaveGame] No save found in storage')
+      return
+    }
+    
+    const parsed = JSON.parse(data)
+    console.log('[SaveGame] Save exists!')
+    console.log('[SaveGame] Version:', parsed.version)
+    console.log('[SaveGame] Saved at:', parsed.savedAt)
+    
+    if (parsed.snapshot) {
+      console.log('[SaveGame] Snapshot currentLevelId:', parsed.snapshot.currentLevelId)
+      console.log('[SaveGame] Snapshot moveCount:', parsed.snapshot.moveCount)
+      console.log('[SaveGame] Snapshot player position:', parsed.snapshot.player?.position)
+      console.log('[SaveGame] Snapshot player HP:', parsed.snapshot.player?.hp)
+      console.log('[SaveGame] Snapshot subGamesCompleted keys:', Object.keys(parsed.snapshot.subGamesCompleted || {}))
+    }
+    
+    console.log('[SaveGame] Raw save data length:', data.length)
+    console.log('[SaveGame] ===== END DEBUG INSPECT =====')
+  } catch (error) {
+    console.error('[SaveGame] Failed to inspect save:', error)
+  }
+}
+
 // ===== INTERNAL HELPERS =====
 
 /**

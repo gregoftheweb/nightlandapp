@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router'
 import { STRINGS } from '../assets/copy/strings'
 import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
 import { useGameContext } from '@/context/GameContext'
-import { hasCurrentGame, loadCurrentGame, deleteCurrentGame, listWaypointSaves, loadWaypoint, WaypointSaveMetadata } from '@/modules/saveGame'
+import { hasCurrentGame, loadCurrentGame, deleteCurrentGame, listWaypointSaves, loadWaypoint, WaypointSaveMetadata, debugInspectCurrentSave } from '@/modules/saveGame'
 import { fromSnapshot } from '@/modules/gameState'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
@@ -21,6 +21,11 @@ export default function SplashScreen() {
   // Check for saves on mount
   React.useEffect(() => {
     checkSaves()
+    
+    // Debug: inspect current save on mount (development only)
+    if (__DEV__) {
+      debugInspectCurrentSave()
+    }
   }, [])
 
   const checkSaves = async () => {
