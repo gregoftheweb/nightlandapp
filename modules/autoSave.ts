@@ -79,6 +79,15 @@ async function performAutoSave(state: GameState): Promise<void> {
     return
   }
   
+  // Don't save initial state (moveCount=0 means no gameplay has happened yet)
+  // This prevents saving a fresh state that would be useless on load
+  if (state.moveCount === 0) {
+    if (__DEV__) {
+      console.log('[AutoSave] Skipping autosave - no gameplay yet (moveCount=0)')
+    }
+    return
+  }
+  
   // Prevent overlapping saves
   if (isSaving) {
     if (__DEV__) {
