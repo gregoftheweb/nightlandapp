@@ -224,6 +224,7 @@ export const levels: Record<LevelId, Level> = {
       createObjectInstance('healingPool', { row: 375, col: 20 }),
       createObjectInstance('poisonPool', { row: 250, col: 250 }),
       createObjectInstance('cursedTotem', { row: 385, col: 220 }),
+      createObjectInstance('hermit', { row: 385, col: 201 }),
       createObjectInstance('aeroWreckage', { row: 383, col: 192 }),//{ row: 364, col: 60 }),
       createObjectInstance('tesseract', { row: 391, col: 186 }),//{ row: 345, col: 20 })
     ],

@@ -12,6 +12,7 @@ import sanctuaryPoolImg from '@assets/images/poolofpeace.png'
 import footprintsIMG from '@assets/images/footprints-blue.png'
 import aeroWreckageIMG from '@assets/images/aero-wreckage.png'
 import tesseractIMG from '@assets/images/tesseract-puzzle1.png'
+import hermitIMG from '@assets/images/hermit-save2.png'
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
@@ -312,6 +313,27 @@ export const buildings: Record<string, GameObject> = {
     ],
     subGame: {
       subGameName: 'tesseract',
+      ctaLabel: 'Investigate',
+      requiresPlayerOnObject: true,
+    },
+  },
+    hermit: {
+    shortName: 'hermit',
+    category: 'building',
+    name: 'Hermit',
+    description: 'A lonely hermit sits next to quiet pool, safety and calm eminate from him and the small copse of woods around him.',
+    width: 4,
+    height: 4,
+    image: hermitIMG,
+    active: true,
+    zIndex: 0,
+    effects: [
+      {
+        type: 'hide',
+      },
+    ],
+    subGame: {
+      subGameName: 'hermit',
       ctaLabel: 'Investigate',
       requiresPlayerOnObject: true,
     },
