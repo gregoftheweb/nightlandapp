@@ -16,7 +16,7 @@ import attackButtonIMG from '@assets/images/buttonAttack.png'
 import inventoryButtonIMG from '@assets/images/buttonInventory.png'
 import zapButtonIMG from '@assets/images/buttonZap.png'
 
-const { width } = Dimensions.get('window')
+
 
 interface PlayerHUDProps {
   hp: number
@@ -40,6 +40,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onZapPress, // New prop
 }) => {
   const insets = useSafeAreaInsets()
+
 
   const handleGearPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
     event.stopPropagation()
@@ -71,7 +72,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
       style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
       pointerEvents="box-none"
     >
-      <View style={styles.statusBar} pointerEvents="box-none">
+       <View style={styles.statusBar} pointerEvents="box-none">
         <Text style={styles.hpText}>HP: {hp}</Text>
         <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
           <Image source={require('@assets/images/gear.png')} style={styles.gearIcon} />
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
   },
   statusBar: {
-    width: width * 0.7, // Widened from 0.55 to 0.75
+  width: 350, 
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -139,6 +140,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     tintColor: '#990000',
+    left: -10,
   },
   turnButton: {
     position: 'absolute',
@@ -154,7 +156,7 @@ const styles = StyleSheet.create({
   zapButton: {
     position: 'absolute',
     bottom: 24,
-    left: width * 0.28,
+    left: 110,
   },
   zapButtonImage: {
     width: 40,
@@ -164,7 +166,7 @@ const styles = StyleSheet.create({
   inventoryButton: {
     position: 'absolute',
     bottom: 24,
-    right: width * 0.28,
+    right: 110,
   },
   inventoryButtonImage: {
     width: 40,
