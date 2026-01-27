@@ -142,8 +142,9 @@ export async function saveWaypoint(state: GameState, waypointName: string): Prom
   try {
     const snapshot = toSnapshot(state)
     
-    // Generate unique ID
-    const id = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+    // Generate unique ID using timestamp and high-precision random
+    // Collision probability is virtually zero given timestamp + 9-char random string
+    const id = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}-${Math.random().toString(36).substring(2, 11)}`
     
     // Create metadata
     const metadata: WaypointSaveMetadata = {

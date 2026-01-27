@@ -77,12 +77,12 @@ export default function SplashScreen() {
         return
       }
       
-      // Delete current save (loading waypoint replaces current)
-      await deleteCurrentGame()
-      
       // Hydrate game state from snapshot
       const loadedState = fromSnapshot(snapshot)
       dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: loadedState } })
+      
+      // Only delete current save after successful load and hydration
+      await deleteCurrentGame()
       
       // Close modal and navigate to game
       setShowWaypointModal(false)
