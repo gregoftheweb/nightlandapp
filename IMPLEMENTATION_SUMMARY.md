@@ -5,7 +5,8 @@
 This PR successfully implements fixes for:
 1. Death screen navigation workflow
 2. Sub-game completion state persistence (tesseract)
-3. **Hermit-hollow waypoint save race condition** (NEW)
+3. Hermit-hollow waypoint save race condition
+4. **Hermit-hollow waypoint save only once** (NEW)
 
 ## What Was Fixed
 
@@ -39,7 +40,7 @@ if (isCompleted) {
 }
 ```
 
-### 3. Hermit-Hollow Waypoint Save Race Condition ✅ **NEW**
+### 3. Hermit-Hollow Waypoint Save Race Condition ✅
 **Issue:** Completing hermit-hollow created a waypoint save, but loading it after death allowed replaying the conversation.
 
 **Root Cause:** Race condition between `dispatch` (async) and `saveWaypoint` (immediate). The waypoint was saved with OLD state before the completion flag was applied.
@@ -67,7 +68,31 @@ const stateWithCompletion = {
 saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
 ```
 
-### 3. Prevent Duplicate Rewards ✅
+### 4. Hermit-Hollow: Save Waypoint Only Once ✅ **NEW**
+**Issue:** Hermit-hollow waypoint was saved every time the player reached the trance state, even on subsequent completions.
+
+**Requirement:** Waypoint should save ONLY ONCE - the first time through the conversation.
+
+**Fix:** Check `waypointSavesCreated` flag before saving, dispatch `SET_WAYPOINT_CREATED` after first save.
+
+**Code:**
+```typescript
+// app/sub-games/hermit-hollow/main.tsx
+const waypointAlreadyCreated = state.waypointSavesCreated?.[WAYPOINT_NAME] === true
+
+if (waypointAlreadyCreated) {
+  console.log('[HermitHollow] Waypoint already created - skipping save')
+} else {
+  saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
+    .then(() => {
+      // Mark as created to prevent future saves
+      dispatch({ type: 'SET_WAYPOINT_CREATED', payload: { waypointName: WAYPOINT_NAME } })
+      // Show toast
+    })
+}
+```
+
+### 5. Prevent Duplicate Rewards ✅
 **Issue:** Re-entering completed tesseract could award duplicate Persius scroll.
 
 **Fix:** Check if return visit and skip reward logic.
@@ -120,39 +145,45 @@ The hermit-hollow sub-game already checked completion on entry (like tesseract n
 1. **app/death/index.tsx** - Navigation fix (1 line)
 2. **app/sub-games/tesseract/index.tsx** - Entry guard (19 lines)
 3. **app/sub-games/tesseract/screen4.tsx** - Return visit handling (26 lines)
-4. **app/sub-games/hermit-hollow/main.tsx** - Race condition fix (23 lines) **NEW**
+4. **app/sub-games/hermit-hollow/main.tsx** - Race condition fix + save-once logic (40 lines) **UPDATED**
 5. **modules/saveGame.ts** - Diagnostics (4 lines)
 6. **modules/gameState.ts** - Diagnostics (2 lines)
 7. **.gitignore** - Exclude compiled scripts (4 lines)
 
 ### New Files:
 8. **DEATH_SCREEN_AND_SUBGAME_SAVE_FIX.md** - Original implementation docs (314 lines)
-9. **IMPLEMENTATION_SUMMARY.md** - This file
-10. **HERMIT_HOLLOW_WAYPOINT_FIX.md** - Waypoint race condition docs (218 lines) **NEW**
+9. **IMPLEMENTATION_SUMMARY.md** - This file (updated)
+10. **HERMIT_HOLLOW_WAYPOINT_FIX.md** - Waypoint race condition docs (218 lines)
+11. **HERMIT_HOLLOW_SAVE_ONCE.md** - Save-once implementation docs (245 lines) **NEW**
 
 ## Testing Checklist
 
 ### Required Manual Testing:
 - [ ] Kill player → Death screen appears
 - [ ] Click button → Navigates to load screen (shows New | Current | Saved)
-- [ ] Complete hermit-hollow → Save → Load → Still completed (can't replay) **UPDATED**
+- [ ] Complete hermit-hollow → Waypoint saved (toast shows) **UPDATED**
+- [ ] Re-enter hermit-hollow → No waypoint save (no toast) **NEW**
 - [ ] Complete tesseract → Save → Load → Still completed (no duplicate scroll)
 - [ ] Console shows subGames keys during save/load (in dev mode)
 
 ### Expected Behavior:
 ✅ Death screen → Load screen → Player chooses action  
-✅ Hermit-hollow completion persists across saves **UPDATED**  
-✅ Hermit-hollow waypoint includes completion flag **NEW**  
+✅ Hermit-hollow completion persists across saves  
+✅ Hermit-hollow waypoint includes completion flag  
+✅ **Hermit-hollow waypoint saves ONLY ONCE (first completion)** **NEW**  
 ✅ Tesseract completion persists across saves  
 ✅ No duplicate Persius scroll  
 ✅ Console logs show subGames state  
 
 ## Documentation
 
-See **DEATH_SCREEN_AND_SUBGAME_SAVE_FIX.md** for:
-- Detailed technical analysis
-- Root cause explanation
-- Implementation details
+Four comprehensive docs added:
+- **IMPLEMENTATION_SUMMARY.md** - Quick reference (this file)
+- **DEATH_SCREEN_AND_SUBGAME_SAVE_FIX.md** - Death screen & tesseract fix details
+- **HERMIT_HOLLOW_WAYPOINT_FIX.md** - Hermit-hollow race condition fix
+- **HERMIT_HOLLOW_SAVE_ONCE.md** - Hermit-hollow save-once implementation **NEW**
+
+All include testing instructions and acceptance criteria.
 - Testing procedures
 - Acceptance criteria
 
