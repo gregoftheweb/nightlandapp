@@ -2,7 +2,10 @@
 
 ## ✅ ALL TASKS COMPLETE
 
-This PR successfully implements all requested changes to fix the death screen navigation and sub-game save/load persistence issues.
+This PR successfully implements fixes for:
+1. Death screen navigation workflow
+2. Sub-game completion state persistence (tesseract)
+3. **Hermit-hollow waypoint save race condition** (NEW)
 
 ## What Was Fixed
 
@@ -17,10 +20,10 @@ This PR successfully implements all requested changes to fix the death screen na
 router.replace('/')  // Was: router.replace('/game')
 ```
 
-### 2. Sub-Game Completion Persistence ✅
-**Issue:** Loading saves reset hermit-hollow and tesseract completion, allowing replay and duplicate rewards.
+### 2. Sub-Game Completion Persistence (Tesseract) ✅
+**Issue:** Loading saves reset tesseract completion, allowing replay and duplicate rewards.
 
-**Root Cause:** Save system worked correctly, but sub-games didn't check completion state on entry.
+**Root Cause:** Save system worked correctly, but tesseract didn't check completion state on entry.
 
 **Fix:** Added entry guards to check `state.subGamesCompleted[subGameName]` and route accordingly.
 
@@ -34,6 +37,34 @@ if (isCompleted) {
 } else {
   router.replace('/sub-games/tesseract/main')     // Start screen
 }
+```
+
+### 3. Hermit-Hollow Waypoint Save Race Condition ✅ **NEW**
+**Issue:** Completing hermit-hollow created a waypoint save, but loading it after death allowed replaying the conversation.
+
+**Root Cause:** Race condition between `dispatch` (async) and `saveWaypoint` (immediate). The waypoint was saved with OLD state before the completion flag was applied.
+
+**Fix:** Build updated state object synchronously before saving waypoint.
+
+**Code:**
+```typescript
+// app/sub-games/hermit-hollow/main.tsx
+// Build updated state with ALL effects
+const updatedSubGamesCompleted = {
+  ...(state.subGamesCompleted || {}),
+  [SUB_GAME_NAME]: true,
+  [`${SUB_GAME_NAME}:${effect}`]: true,
+  // ... all effects
+}
+
+// Create state with completion flags
+const stateWithCompletion = {
+  ...state,
+  subGamesCompleted: updatedSubGamesCompleted,
+}
+
+// Save with UPDATED state (not current state)
+saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
 ```
 
 ### 3. Prevent Duplicate Rewards ✅
@@ -72,45 +103,46 @@ The save/load system was **already correctly** saving and restoring `subGamesCom
 2. **fromSnapshot()** spreads snapshot back → restores `subGamesCompleted`
 3. **AsyncStorage** serializes/deserializes → preserves the data
 
-The bug was in **sub-game entry logic**, not the save system.
+The bugs were in:
+- **Tesseract:** Sub-game entry logic (didn't check completion)
+- **Hermit-hollow:** Waypoint save race condition (saved before completion flag applied)
 
-### Hermit-Hollow Already Had the Solution 💡
-The hermit-hollow sub-game already implemented the correct pattern:
-- Checks completion on entry
-- Shows end state for return visits
-- Was working correctly
-
-We simply applied the same pattern to tesseract.
+### Hermit-Hollow Already Had Entry Guard 💡
+The hermit-hollow sub-game already checked completion on entry (like tesseract now does). However, it had a different bug: the waypoint save was created with the OLD state before the completion flag was applied due to async dispatch timing.
 
 ## Changes Made
 
 ```
-7 files changed, 373 insertions(+), 21 deletions(-)
+8 files changed, 585 insertions(+), 52 deletions(-)
 ```
 
 ### Modified Files:
 1. **app/death/index.tsx** - Navigation fix (1 line)
 2. **app/sub-games/tesseract/index.tsx** - Entry guard (19 lines)
 3. **app/sub-games/tesseract/screen4.tsx** - Return visit handling (26 lines)
-4. **modules/saveGame.ts** - Diagnostics (4 lines)
-5. **modules/gameState.ts** - Diagnostics (2 lines)
-6. **.gitignore** - Exclude compiled scripts (4 lines)
+4. **app/sub-games/hermit-hollow/main.tsx** - Race condition fix (23 lines) **NEW**
+5. **modules/saveGame.ts** - Diagnostics (4 lines)
+6. **modules/gameState.ts** - Diagnostics (2 lines)
+7. **.gitignore** - Exclude compiled scripts (4 lines)
 
 ### New Files:
-7. **DEATH_SCREEN_AND_SUBGAME_SAVE_FIX.md** - Comprehensive documentation (314 lines)
+8. **DEATH_SCREEN_AND_SUBGAME_SAVE_FIX.md** - Original implementation docs (314 lines)
+9. **IMPLEMENTATION_SUMMARY.md** - This file
+10. **HERMIT_HOLLOW_WAYPOINT_FIX.md** - Waypoint race condition docs (218 lines) **NEW**
 
 ## Testing Checklist
 
 ### Required Manual Testing:
 - [ ] Kill player → Death screen appears
 - [ ] Click button → Navigates to load screen (shows New | Current | Saved)
-- [ ] Complete hermit-hollow → Save → Load → Still completed (can't replay)
+- [ ] Complete hermit-hollow → Save → Load → Still completed (can't replay) **UPDATED**
 - [ ] Complete tesseract → Save → Load → Still completed (no duplicate scroll)
 - [ ] Console shows subGames keys during save/load (in dev mode)
 
 ### Expected Behavior:
 ✅ Death screen → Load screen → Player chooses action  
-✅ Hermit-hollow completion persists across saves  
+✅ Hermit-hollow completion persists across saves **UPDATED**  
+✅ Hermit-hollow waypoint includes completion flag **NEW**  
 ✅ Tesseract completion persists across saves  
 ✅ No duplicate Persius scroll  
 ✅ Console logs show subGames state  
