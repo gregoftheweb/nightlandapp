@@ -6,7 +6,9 @@ This PR successfully implements fixes for:
 1. Death screen navigation workflow
 2. Sub-game completion state persistence (tesseract)
 3. Hermit-hollow waypoint save race condition
-4. **Hermit-hollow waypoint save only once** (NEW)
+4. Hermit-hollow waypoint save only once
+5. **Hermit-hollow return visit waypoint save bug** (NEW)
+6. **Misleading sub-game count logging** (NEW)
 
 ## What Was Fixed
 
@@ -119,6 +121,37 @@ logIfDev('💾 Snapshot subGamesCompleted:', snapshot.subGamesCompleted)
 logIfDev('💾 Result subGamesCompleted:', result.subGamesCompleted)
 ```
 
+### 5. Hermit-Hollow Return Visit Waypoint Save Bug ✅ **NEW**
+**Issue:** After death and loading a hermit-hollow waypoint save, re-entering hermit-hollow triggered:
+- Waypoint save dialog appearing
+- New waypoint save being created
+- All effects being re-applied
+
+**Root Cause:** On return visits, the component correctly started at the end node but still applied its effects, triggering waypoint save logic.
+
+**Fix:** Skip effect application on return visits to the end node:
+```typescript
+// app/sub-games/hermit-hollow/main.tsx
+if (isHermitConversationCompleted && currentNode.end === true) {
+  console.log('[HermitHollow] Return visit - skipping effects for end node (already applied)')
+  setAppliedEffectsForNode(currentNodeId)
+  return
+}
+```
+
+### 6. Misleading Sub-Game Count Logging ✅ **NEW**
+**Issue:** Console logs showed "State subGamesCompleted: 12" when only 2 sub-games were actually completed (tesseract and hermit-hollow).
+
+**Root Cause:** Logging counted ALL keys in `subGamesCompleted`, including effect flags like `hermit-hollow:learned_great_power_exists` (10 effect flags + 2 main sub-games = 12).
+
+**Fix:** Filter to count only main sub-games (keys without colons):
+```typescript
+// modules/saveGame.ts, app/game/index.tsx
+const mainSubGames = Object.keys(state.subGamesCompleted || {}).filter(key => !key.includes(':'))
+console.log('[SaveGame] State subGamesCompleted (main):', mainSubGames.length, mainSubGames)
+// Output: State subGamesCompleted (main): 2 ["tesseract", "hermit-hollow"]
+```
+
 ## Key Insights
 
 ### The Save System Already Worked! 🎉
@@ -130,10 +163,14 @@ The save/load system was **already correctly** saving and restoring `subGamesCom
 
 The bugs were in:
 - **Tesseract:** Sub-game entry logic (didn't check completion)
-- **Hermit-hollow:** Waypoint save race condition (saved before completion flag applied)
+- **Hermit-hollow (issue 1):** Waypoint save race condition (saved before completion flag applied)
+- **Hermit-hollow (issue 2):** Effects re-applied on return visits (triggered duplicate saves)
 
-### Hermit-Hollow Already Had Entry Guard 💡
-The hermit-hollow sub-game already checked completion on entry (like tesseract now does). However, it had a different bug: the waypoint save was created with the OLD state before the completion flag was applied due to async dispatch timing.
+### Hermit-Hollow Bug Evolution 💡
+The hermit-hollow sub-game had multiple bugs that were fixed incrementally:
+1. **First bug:** Waypoint saved with OLD state (race condition) - FIXED
+2. **Second bug:** Waypoint saved every completion instead of once - FIXED
+3. **Third bug:** Effects re-applied on return visits, triggering saves - FIXED ✅
 
 ## Changes Made
 
@@ -145,32 +182,39 @@ The hermit-hollow sub-game already checked completion on entry (like tesseract n
 1. **app/death/index.tsx** - Navigation fix (1 line)
 2. **app/sub-games/tesseract/index.tsx** - Entry guard (19 lines)
 3. **app/sub-games/tesseract/screen4.tsx** - Return visit handling (26 lines)
-4. **app/sub-games/hermit-hollow/main.tsx** - Race condition fix + save-once logic (40 lines) **UPDATED**
-5. **modules/saveGame.ts** - Diagnostics (4 lines)
+4. **app/sub-games/hermit-hollow/main.tsx** - Race condition fix + save-once logic + return visit fix (50 lines) **UPDATED**
+5. **modules/saveGame.ts** - Diagnostics + logging fixes (12 lines) **UPDATED**
 6. **modules/gameState.ts** - Diagnostics (2 lines)
-7. **.gitignore** - Exclude compiled scripts (4 lines)
+7. **app/game/index.tsx** - Logging fix (5 lines) **NEW**
+8. **.gitignore** - Exclude compiled scripts (4 lines)
 
 ### New Files:
-8. **DEATH_SCREEN_AND_SUBGAME_SAVE_FIX.md** - Original implementation docs (314 lines)
-9. **IMPLEMENTATION_SUMMARY.md** - This file (updated)
-10. **HERMIT_HOLLOW_WAYPOINT_FIX.md** - Waypoint race condition docs (218 lines)
-11. **HERMIT_HOLLOW_SAVE_ONCE.md** - Save-once implementation docs (245 lines) **NEW**
+9. **DEATH_SCREEN_AND_SUBGAME_SAVE_FIX.md** - Original implementation docs (314 lines)
+10. **IMPLEMENTATION_SUMMARY.md** - This file (updated)
+11. **HERMIT_HOLLOW_WAYPOINT_FIX.md** - Waypoint race condition docs (218 lines)
+12. **HERMIT_HOLLOW_SAVE_ONCE.md** - Save-once implementation docs (245 lines)
+13. **HERMIT_HOLLOW_FIX_SUMMARY.md** - User-facing summary
+14. **HERMIT_HOLLOW_SAVE_ONCE_SUMMARY.md** - Save-once summary
+15. **HERMIT_HOLLOW_RETURN_VISIT_FIX.md** - Return visit fix docs (300 lines) **NEW**
 
 ## Testing Checklist
 
 ### Required Manual Testing:
 - [ ] Kill player → Death screen appears
 - [ ] Click button → Navigates to load screen (shows New | Current | Saved)
-- [ ] Complete hermit-hollow → Waypoint saved (toast shows) **UPDATED**
-- [ ] Re-enter hermit-hollow → No waypoint save (no toast) **NEW**
+- [ ] Complete hermit-hollow → Waypoint saved (toast shows)
+- [ ] **Re-enter hermit-hollow → No waypoint save (no toast)** **CRITICAL**
+- [ ] **Die → Load waypoint → Re-enter hermit-hollow → No waypoint save** **NEW**
 - [ ] Complete tesseract → Save → Load → Still completed (no duplicate scroll)
-- [ ] Console shows subGames keys during save/load (in dev mode)
+- [ ] **Check console: Sub-game count shows 2 not 12** **NEW**
 
 ### Expected Behavior:
 ✅ Death screen → Load screen → Player chooses action  
 ✅ Hermit-hollow completion persists across saves  
 ✅ Hermit-hollow waypoint includes completion flag  
-✅ **Hermit-hollow waypoint saves ONLY ONCE (first completion)** **NEW**  
+✅ **Hermit-hollow waypoint saves ONLY ONCE (first completion)**  
+✅ **Hermit-hollow return visit: NO effects, NO save, NO toast** **NEW**  
+✅ **Console shows accurate sub-game count (2 not 12)** **NEW**  
 ✅ Tesseract completion persists across saves  
 ✅ No duplicate Persius scroll  
 ✅ Console logs show subGames state  
