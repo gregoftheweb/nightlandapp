@@ -70,46 +70,26 @@ export default function HermitHollowMain() {
         )
       }
 
+      // Build updated subGamesCompleted object with all effects
+      const updatedSubGamesCompleted = {
+        ...(state.subGamesCompleted || {}),
+      }
+
+      // Track if we need to create a waypoint
+      let shouldCreateWaypoint = false
+
       // Apply each effect
       currentNode.effects.forEach((effect) => {
         // Check if this is the final trance effect
         if (effect === 'hermit_enters_trance') {
+          shouldCreateWaypoint = true
+          updatedSubGamesCompleted[SUB_GAME_NAME] = true
+          
           // Mark sub-game as completed
           dispatch({
             type: 'SET_SUB_GAME_COMPLETED',
             payload: { subGameName: SUB_GAME_NAME, completed: true },
           })
-
-          // Create waypoint save (replaces any existing waypoint with same name)
-          saveWaypoint(state, WAYPOINT_NAME)
-            .then(() => {
-              if (__DEV__) {
-                console.log(`[HermitHollow] Waypoint save created/updated: ${WAYPOINT_NAME}`)
-              }
-
-              // Show toast
-              setShowWaypointToast(true)
-
-              // Animate toast in
-              Animated.sequence([
-                Animated.timing(toastOpacity, {
-                  toValue: 1,
-                  duration: 300,
-                  useNativeDriver: true,
-                }),
-                Animated.delay(2400), // Show for 2.4s
-                Animated.timing(toastOpacity, {
-                  toValue: 0,
-                  duration: 300,
-                  useNativeDriver: true,
-                }),
-              ]).start(() => {
-                setShowWaypointToast(false)
-              })
-            })
-            .catch((err) => {
-              console.error('[HermitHollow] Failed to create waypoint save:', err)
-            })
         }
 
         // Store other effects as persistent flags in subGamesCompleted
@@ -117,11 +97,54 @@ export default function HermitHollowMain() {
         // Format: `{sub-game-name}:{effect_flag}`
         // Example: `hermit-hollow:learned_great_power_exists`
         // These can be checked later by other systems for quest/lore progression
+        updatedSubGamesCompleted[`${SUB_GAME_NAME}:${effect}`] = true
+        
         dispatch({
           type: 'SET_SUB_GAME_COMPLETED',
           payload: { subGameName: `${SUB_GAME_NAME}:${effect}`, completed: true },
         })
       })
+
+      // Create waypoint save with ALL completion flags included
+      // IMPORTANT: We must create an updated state object because dispatch is async
+      // and won't have updated the state yet when saveWaypoint is called
+      if (shouldCreateWaypoint) {
+        const stateWithCompletion = {
+          ...state,
+          subGamesCompleted: updatedSubGamesCompleted,
+        }
+        
+        saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
+          .then(() => {
+            if (__DEV__) {
+              console.log(`[HermitHollow] Waypoint save created/updated: ${WAYPOINT_NAME}`)
+              console.log(`[HermitHollow] Saved with subGamesCompleted:`, updatedSubGamesCompleted)
+            }
+
+            // Show toast
+            setShowWaypointToast(true)
+
+            // Animate toast in
+            Animated.sequence([
+              Animated.timing(toastOpacity, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+              }),
+              Animated.delay(2400), // Show for 2.4s
+              Animated.timing(toastOpacity, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+              }),
+            ]).start(() => {
+              setShowWaypointToast(false)
+            })
+          })
+          .catch((err) => {
+            console.error('[HermitHollow] Failed to create waypoint save:', err)
+          })
+      }
 
       setAppliedEffectsForNode(currentNodeId)
     }
