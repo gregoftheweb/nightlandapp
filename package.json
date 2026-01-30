@@ -9,9 +9,12 @@
     "web": "npx expo start --web",
     "reset-project": "node ./scripts/reset-project.js",
     "test": "jest --watchAll",
-    "lint": "npx expo lint",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "lint": "npx expo lint",
+    "lint:all": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:all:strict": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings=0",
+    "lint:all:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix"
   },
   "jest": {
     "preset": "jest-expo"
