@@ -439,7 +439,8 @@ export default function GameBoard({
                   isPlayer,
                   monsterAtPosition,
                   greatPowerAtPosition,
-                  !!state.inCombat
+                  !!state.inCombat,
+                  !!state.player?.hideActive
                 ),
                 backgroundColor: getCellBackgroundColor(
                   isPlayer,
@@ -970,8 +971,10 @@ const getCellBorderColor = (
   isPlayer: boolean,
   hasMonster: Monster | undefined,
   _hasGreatPower: GreatPower | undefined,
-  _inCombat: boolean
+  _inCombat: boolean,
+  hideActive: boolean
 ) => {
+  if (isPlayer && hideActive) return '#00aa00' // Green when hide is active
   if (isPlayer) return 'rgba(84, 124, 255, 0.7)'
   if (hasMonster) return 'rgba(255, 8, 8, 0.6)'
   return 'rgba(17, 17, 17, 0.3)'

@@ -15,6 +15,7 @@ import turnButtonIMG from '@assets/images/buttonTurn.png'
 import attackButtonIMG from '@assets/images/buttonAttack.png'
 import inventoryButtonIMG from '@assets/images/buttonInventory.png'
 import zapButtonIMG from '@assets/images/buttonZap.png'
+import hideButtonIMG from '@assets/images/buttonHide.png'
 
 interface PlayerHUDProps {
   hp: number
@@ -25,6 +26,11 @@ interface PlayerHUDProps {
   onAttackPress?: () => void
   onInventoryPress?: () => void // New prop for inventory
   onZapPress?: () => void // New prop for zap button
+  onHidePress?: () => void // New prop for hide button
+  // Hide ability state
+  hideUnlocked?: boolean
+  hideChargeTurns?: number
+  hideActive?: boolean
 }
 
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
@@ -36,6 +42,10 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onAttackPress,
   onInventoryPress, // New prop
   onZapPress, // New prop
+  onHidePress, // New prop
+  hideUnlocked = false,
+  hideChargeTurns = 0,
+  hideActive = false,
 }) => {
   const insets = useSafeAreaInsets()
 
@@ -64,6 +74,11 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
     onZapPress?.()
   }
 
+  const handleHidePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    event.stopPropagation()
+    onHidePress?.()
+  }
+
   return (
     <View
       style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
@@ -82,6 +97,42 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         <TouchableOpacity style={styles.zapButton} onPress={handleZapPress} activeOpacity={0.7}>
           <Image source={zapButtonIMG} style={styles.zapButtonImage} />
         </TouchableOpacity>
+
+        {/* Hide Button - only show if unlocked */}
+        {hideUnlocked && (
+          <View style={styles.hideButtonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.hideButton,
+                hideActive && styles.hideButtonActive,
+                hideChargeTurns === 0 && styles.hideButtonDepleted,
+              ]}
+              onPress={handleHidePress}
+              activeOpacity={0.7}
+              disabled={hideChargeTurns === 0 && !hideActive}
+            >
+              <Image
+                source={hideButtonIMG}
+                style={[
+                  styles.hideButtonImage,
+                  hideChargeTurns === 0 && styles.hideButtonImageDepleted,
+                ]}
+              />
+            </TouchableOpacity>
+            {/* Charge meter */}
+            <View style={styles.chargeMeter}>
+              {Array.from({ length: 10 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.chargeTick,
+                    i < hideChargeTurns && styles.chargeTickFilled,
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Center Turn/Attack */}
         <TouchableOpacity style={styles.turnButton} onPress={handleActionPress} activeOpacity={0.7}>
@@ -201,6 +252,58 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     resizeMode: 'contain',
+  },
+
+  // Hide button (between Turn and Zap)
+  hideButtonContainer: {
+    position: 'absolute',
+    bottom: 15,
+    left: 40,
+    zIndex: 20,
+    alignItems: 'center',
+  },
+
+  hideButton: {
+    width: 40,
+    height: 40,
+  },
+
+  hideButtonActive: {
+    borderWidth: 2,
+    borderColor: '#00aa00',
+    borderRadius: 20,
+  },
+
+  hideButtonDepleted: {
+    opacity: 0.4,
+  },
+
+  hideButtonImage: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+  },
+
+  hideButtonImageDepleted: {
+    opacity: 0.5,
+  },
+
+  // Charge meter below hide button
+  chargeMeter: {
+    flexDirection: 'row',
+    marginTop: 2,
+    gap: 1,
+  },
+
+  chargeTick: {
+    width: 3,
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 1,
+  },
+
+  chargeTickFilled: {
+    backgroundColor: '#00aa00',
   },
 })
 

@@ -69,7 +69,8 @@ export const calculateMonsterMovement = (
   playerPos: Position,
   state: GameState
 ): Position => {
-  if (state.player.isHidden) {
+  // Check if player is hidden (either by object/zone effect or by Hide ability)
+  if (state.player.isHidden || state.player.hideActive) {
     return moveAway(monster, playerPos, state.gridWidth, state.gridHeight)
   }
 

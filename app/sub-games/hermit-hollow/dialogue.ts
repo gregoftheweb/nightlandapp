@@ -157,7 +157,15 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
     id: 'too_much',
     npcText:
       "No.\n\nWe have spoken too much.\n\nWe have spoken too loudly.\n\nThought too strong a'thoughts.\n\nThe Dark Evil Powers are alerted and sniffing... I must be quiet now... for some time...ssshhhhhhhh",
-    choices: [{ text: 'Wait—', next: 'silence_end' }],
+    choices: [{ text: 'Wait—', next: 'hermit_gift_hide' }],
+  },
+
+  {
+    id: 'hermit_gift_hide',
+    npcText:
+      'But before you go, I bestow upon you a portion of my peace and calm.\n\nUsed wisely, it can hide or obscure you from the creatures of the dark.\n\nChristos feels the new power within him.',
+    choices: [{ text: 'Thank you.', next: 'silence_end' }],
+    effects: ['unlock_hide_ability'],
   },
 
   {

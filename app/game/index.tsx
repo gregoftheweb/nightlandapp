@@ -855,6 +855,24 @@ export default function Game() {
     }
   }, [state, dispatch, cameraOffset])
 
+  const handleHidePress = useCallback(() => {
+    if (!state.player.hideUnlocked) {
+      if (__DEV__) {
+        console.log('🥷 Hide ability not unlocked')
+      }
+      return
+    }
+
+    if (__DEV__) {
+      console.log('🥷 handleHidePress - toggling hide', {
+        current: state.player.hideActive,
+        charge: state.player.hideChargeTurns,
+      })
+    }
+
+    dispatch({ type: 'TOGGLE_HIDE' })
+  }, [state.player.hideUnlocked, state.player.hideActive, state.player.hideChargeTurns, dispatch])
+
   const handleTurnPress = useCallback(() => {
     if (state.inCombat) return
     handlePassTurn(state, dispatch)
@@ -938,6 +956,10 @@ export default function Game() {
           onAttackPress={handleAttackPress}
           onInventoryPress={handleInventoryPress}
           onZapPress={handleZapPress}
+          onHidePress={handleHidePress}
+          hideUnlocked={state.player.hideUnlocked}
+          hideChargeTurns={state.player.hideChargeTurns}
+          hideActive={state.player.hideActive}
           inCombat={state.inCombat}
         />
         <Settings visible={settingsVisible} onClose={handleCloseSettings} />

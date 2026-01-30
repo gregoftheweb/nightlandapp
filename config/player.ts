@@ -34,4 +34,9 @@ export const playerConfig: Player = {
   isHidden: false,
   hideTurns: 0,
   soulKey: '7C6368627E64',
+  // Hide ability state (granted by Hermit in hermit-hollow)
+  hideUnlocked: false,
+  hideChargeTurns: 0,
+  hideActive: false,
+  hideRechargeProgressTurns: 0,
 }

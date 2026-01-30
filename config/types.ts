@@ -154,6 +154,11 @@ export interface Player {
   level?: number
   experience?: number
   zIndex?: number
+  // Hide ability state (granted by Hermit in hermit-hollow)
+  hideUnlocked: boolean // Whether the hide ability has been unlocked
+  hideChargeTurns: number // Current charge (0-10 turns)
+  hideActive: boolean // Whether hide is currently active
+  hideRechargeProgressTurns: number // Progress toward next charge (0-2)
 }
 
 export interface NonCollisionObject {
