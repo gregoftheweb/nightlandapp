@@ -108,42 +108,59 @@ export default function HermitHollowMain() {
       // Create waypoint save with ALL completion flags included
       // IMPORTANT: We must create an updated state object because dispatch is async
       // and won't have updated the state yet when saveWaypoint is called
+      // ALSO: Only create the waypoint ONCE - the first time through the conversation
       if (shouldCreateWaypoint) {
-        const stateWithCompletion = {
-          ...state,
-          subGamesCompleted: updatedSubGamesCompleted,
-        }
+        // Check if waypoint has already been created
+        const waypointAlreadyCreated = state.waypointSavesCreated?.[WAYPOINT_NAME] === true
         
-        saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
-          .then(() => {
-            if (__DEV__) {
-              console.log(`[HermitHollow] Waypoint save created/updated: ${WAYPOINT_NAME}`)
-              console.log(`[HermitHollow] Saved with subGamesCompleted:`, updatedSubGamesCompleted)
-            }
+        if (waypointAlreadyCreated) {
+          if (__DEV__) {
+            console.log(`[HermitHollow] Waypoint already created - skipping save: ${WAYPOINT_NAME}`)
+          }
+        } else {
+          // First time completing - create the waypoint
+          const stateWithCompletion = {
+            ...state,
+            subGamesCompleted: updatedSubGamesCompleted,
+          }
+          
+          saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
+            .then(() => {
+              if (__DEV__) {
+                console.log(`[HermitHollow] Waypoint save created (FIRST TIME): ${WAYPOINT_NAME}`)
+                console.log(`[HermitHollow] Saved with subGamesCompleted:`, updatedSubGamesCompleted)
+              }
 
-            // Show toast
-            setShowWaypointToast(true)
+              // Mark waypoint as created to prevent future saves
+              dispatch({
+                type: 'SET_WAYPOINT_CREATED',
+                payload: { waypointName: WAYPOINT_NAME },
+              })
 
-            // Animate toast in
-            Animated.sequence([
-              Animated.timing(toastOpacity, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: true,
-              }),
-              Animated.delay(2400), // Show for 2.4s
-              Animated.timing(toastOpacity, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true,
-              }),
-            ]).start(() => {
-              setShowWaypointToast(false)
+              // Show toast
+              setShowWaypointToast(true)
+
+              // Animate toast in
+              Animated.sequence([
+                Animated.timing(toastOpacity, {
+                  toValue: 1,
+                  duration: 300,
+                  useNativeDriver: true,
+                }),
+                Animated.delay(2400), // Show for 2.4s
+                Animated.timing(toastOpacity, {
+                  toValue: 0,
+                  duration: 300,
+                  useNativeDriver: true,
+                }),
+              ]).start(() => {
+                setShowWaypointToast(false)
+              })
             })
-          })
-          .catch((err) => {
-            console.error('[HermitHollow] Failed to create waypoint save:', err)
-          })
+            .catch((err) => {
+              console.error('[HermitHollow] Failed to create waypoint save:', err)
+            })
+        }
       }
 
       setAppliedEffectsForNode(currentNodeId)
