@@ -30,20 +30,22 @@ export default function DeathScreen() {
   const handlePress = async () => {
     // Guard against multiple button presses
     if (isRestarting.current) {
-      console.log(`☠️☠️☠️ [${instanceId.current}] Restart already in progress, ignoring duplicate press`)
+      console.log(
+        `☠️☠️☠️ [${instanceId.current}] Restart already in progress, ignoring duplicate press`
+      )
       return
     }
-    
+
     isRestarting.current = true
     console.log(`☠️☠️☠️ [${instanceId.current}] Restarting game from death screen`)
-    
+
     try {
       // Clear all sub-game puzzle saves (aerowreck, tesseract, etc.)
       await clearAllSubGameSaves()
-      
+
       // Delete current game autosave (death deletes autosave, but NOT waypoint saves)
       await deleteCurrentGame()
-      
+
       dispatch({ type: 'RESET_GAME' })
       router.replace('/game')
     } finally {

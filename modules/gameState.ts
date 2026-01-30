@@ -1,11 +1,11 @@
 // modules/gameState.ts
 /**
  * GameState Management Module
- * 
+ *
  * This module provides the single source of truth for game state initialization,
  * serialization, and reset operations. It ensures type safety and consistency
  * across the application.
- * 
+ *
  * Key Functions:
  * - getInitialState(): Creates a fresh initial state for a given level
  * - toSnapshot(): Converts GameState to a JSON-serializable format
@@ -23,14 +23,14 @@ import { logIfDev } from './utils'
 /**
  * Creates a fresh initial game state for a given level.
  * This is the single source of truth for the default/initial state.
- * 
+ *
  * @param levelId - The level ID to initialize (defaults to '1')
  * @returns A complete, fresh GameState object
  */
 export const getInitialState = (levelId: string = '1'): GameState => {
   // Type-safe level lookup with validation
   const levelConfig = levels[levelId as keyof typeof levels]
-  
+
   if (!levelConfig) {
     logIfDev(`⚠️  Unknown levelId: ${levelId}, falling back to level 1`)
     // Direct fallback to avoid infinite recursion if level '1' is missing
@@ -49,16 +49,18 @@ export const getInitialState = (levelId: string = '1'): GameState => {
 /**
  * Internal helper to build the initial state from a level config.
  * Extracted to avoid recursion in getInitialState.
- * 
+ *
  * This function constructs a complete GameState object from a level configuration,
  * applying all default values for combat, UI, and meta state.
- * 
+ *
  * @param levelId - The level ID string
  * @param levelConfig - The level configuration object (from levels registry)
  * @returns A complete GameState object initialized for the given level
  */
-function buildInitialState(levelId: string, levelConfig: typeof levels[keyof typeof levels]): GameState {
-
+function buildInitialState(
+  levelId: string,
+  levelConfig: (typeof levels)[keyof typeof levels]
+): GameState {
   return {
     // ===== LEVEL DOMAIN =====
     level: levelConfig,
@@ -139,7 +141,7 @@ export const createInitialGameState = (levelId: string = '1'): GameState => {
  * Converts GameState to a JSON-serializable snapshot.
  * This excludes non-serializable fields like Date objects and prepares
  * the state for persistence (e.g., AsyncStorage, file save).
- * 
+ *
  * @param state - The current game state
  * @returns A JSON-serializable GameSnapshot
  */
@@ -155,7 +157,7 @@ export const toSnapshot = (state: GameState): GameSnapshot => {
  * Reconstructs GameState from a serialized snapshot.
  * Merges saved state with default values to ensure all fields are present.
  * Clears transient UI state that shouldn't persist.
- * 
+ *
  * @param snapshot - The serialized game snapshot
  * @returns A reconstructed GameState
  */
@@ -164,16 +166,16 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
     logIfDev('⚠️  No snapshot provided, returning fresh initial state')
     return getInitialState('1')
   }
-  
+
   logIfDev('💾 Reconstructing GameState from snapshot')
   logIfDev(`💾 Snapshot has ${Object.keys(snapshot).length} keys`)
   logIfDev(`💾 Snapshot currentLevelId: ${snapshot.currentLevelId}`)
   logIfDev(`💾 Snapshot player position: ${JSON.stringify(snapshot.player?.position)}`)
   logIfDev(`💾 Snapshot moveCount: ${snapshot.moveCount}`)
-  
+
   // Get fresh initial state as base
   const base = getInitialState(snapshot.currentLevelId || '1')
-  
+
   // Merge snapshot data with base, clearing transient UI state
   const result = {
     ...base,
@@ -194,11 +196,11 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
     // Ensure waypoint tracking is preserved
     waypointSavesCreated: snapshot.waypointSavesCreated || {},
   }
-  
+
   logIfDev(`💾 Result currentLevelId: ${result.currentLevelId}`)
   logIfDev(`💾 Result player position: ${JSON.stringify(result.player?.position)}`)
   logIfDev(`💾 Result moveCount: ${result.moveCount}`)
-  
+
   return result
 }
 
@@ -227,7 +229,7 @@ export const deserializeGameState = (serializedState: string): GameState => {
 /**
  * Validates GameState structure in development builds.
  * Checks for required fields and type consistency.
- * 
+ *
  * @param state - The state to validate
  * @param actionType - The action that produced this state (for logging)
  */
@@ -258,7 +260,7 @@ export const validateGameState = (state: GameState, actionType?: string): void =
 
   if (errors.length > 0) {
     console.error(`❌ GameState validation failed${actionType ? ` after ${actionType}` : ''}:`)
-    errors.forEach(err => console.error(`  - ${err}`))
+    errors.forEach((err) => console.error(`  - ${err}`))
   }
 }
 

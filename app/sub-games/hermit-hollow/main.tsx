@@ -16,29 +16,29 @@ const WAYPOINT_NAME = 'hermit-hollow waypoint'
 
 export default function HermitHollowMain() {
   const { state, dispatch, signalRpgResume } = useGameContext()
-  
+
   // Waypoint toast state
   const [showWaypointToast, setShowWaypointToast] = useState(false)
   const toastOpacity = useState(new Animated.Value(0))[0]
-  
+
   // Build dialogue map from array for O(1) lookups
   const dialogueMap = useMemo(() => {
     const map = new Map<string, DialogueNode>()
-    HERMIT_DIALOGUE.forEach(node => map.set(node.id, node))
+    HERMIT_DIALOGUE.forEach((node) => map.set(node.id, node))
     return map
   }, [])
-  
+
   // Find the end node (for return visits)
   const endNode = useMemo(() => {
-    return HERMIT_DIALOGUE.find(node => node.end === true)
+    return HERMIT_DIALOGUE.find((node) => node.end === true)
   }, [])
-  
+
   // Check if player has already completed the hermit conversation
   // (hermit entered trance, so return visits should start at end-state)
   const isHermitConversationCompleted = useMemo(() => {
     return state.subGamesCompleted?.[SUB_GAME_NAME] === true
   }, [state.subGamesCompleted])
-  
+
   // Initialize current node - start at end if completed, otherwise start node
   const [currentNodeId, setCurrentNodeId] = useState<string>(() => {
     if (isHermitConversationCompleted && endNode) {
@@ -49,44 +49,47 @@ export default function HermitHollowMain() {
     }
     return 'start'
   })
-  
+
   // Track if effects have been applied for current node (to avoid duplicates)
   const [appliedEffectsForNode, setAppliedEffectsForNode] = useState<string | null>(null)
-  
+
   // Get current node from map
   const currentNode = dialogueMap.get(currentNodeId)
-  
+
   // Apply effects when node changes
   useEffect(() => {
     if (!currentNode || appliedEffectsForNode === currentNodeId) {
       return
     }
-    
+
     if (currentNode.effects && currentNode.effects.length > 0) {
       if (__DEV__) {
-        console.log(`[HermitHollow] Applying effects for node ${currentNodeId}:`, currentNode.effects)
+        console.log(
+          `[HermitHollow] Applying effects for node ${currentNodeId}:`,
+          currentNode.effects
+        )
       }
-      
+
       // Apply each effect
-      currentNode.effects.forEach(effect => {
+      currentNode.effects.forEach((effect) => {
         // Check if this is the final trance effect
         if (effect === 'hermit_enters_trance') {
           // Mark sub-game as completed
           dispatch({
             type: 'SET_SUB_GAME_COMPLETED',
-            payload: { subGameName: SUB_GAME_NAME, completed: true }
+            payload: { subGameName: SUB_GAME_NAME, completed: true },
           })
-          
+
           // Create waypoint save (replaces any existing waypoint with same name)
           saveWaypoint(state, WAYPOINT_NAME)
             .then(() => {
               if (__DEV__) {
                 console.log(`[HermitHollow] Waypoint save created/updated: ${WAYPOINT_NAME}`)
               }
-              
+
               // Show toast
               setShowWaypointToast(true)
-              
+
               // Animate toast in
               Animated.sequence([
                 Animated.timing(toastOpacity, {
@@ -104,11 +107,11 @@ export default function HermitHollowMain() {
                 setShowWaypointToast(false)
               })
             })
-            .catch(err => {
+            .catch((err) => {
               console.error('[HermitHollow] Failed to create waypoint save:', err)
             })
         }
-        
+
         // Store other effects as persistent flags in subGamesCompleted
         // Pattern: Use sub-game name as namespace to avoid collisions
         // Format: `{sub-game-name}:{effect_flag}`
@@ -116,14 +119,14 @@ export default function HermitHollowMain() {
         // These can be checked later by other systems for quest/lore progression
         dispatch({
           type: 'SET_SUB_GAME_COMPLETED',
-          payload: { subGameName: `${SUB_GAME_NAME}:${effect}`, completed: true }
+          payload: { subGameName: `${SUB_GAME_NAME}:${effect}`, completed: true },
         })
       })
-      
+
       setAppliedEffectsForNode(currentNodeId)
     }
   }, [currentNodeId, currentNode, appliedEffectsForNode, dispatch, state, toastOpacity])
-  
+
   const handleChoicePress = (nextNodeId: string) => {
     if (__DEV__) {
       console.log(`[HermitHollow] Choice selected, transitioning to node: ${nextNodeId}`)
@@ -131,19 +134,19 @@ export default function HermitHollowMain() {
     setCurrentNodeId(nextNodeId)
     setAppliedEffectsForNode(null) // Reset to allow effects on new node
   }
-  
+
   const handleReturnToNightLand = () => {
     if (__DEV__) {
       console.log(`[HermitHollow] Exiting sub-game`)
     }
-    
+
     // Signal RPG to refresh/resume at player's current position
     signalRpgResume()
-    
+
     // Exit sub-game and return to RPG
     exitSubGame({ completed: true })
   }
-  
+
   // Safety check
   if (!currentNode) {
     if (__DEV__) {
@@ -168,27 +171,25 @@ export default function HermitHollowMain() {
       </BackgroundImage>
     )
   }
-  
+
   const isEndState = currentNode.end === true
-  
+
   return (
     <BackgroundImage source={bgHermit}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
           {/* NPC Text Box */}
           <View style={styles.textBoxContainer}>
-            <ScrollView 
+            <ScrollView
               style={styles.textBoxScroll}
               contentContainerStyle={styles.textBoxContent}
               showsVerticalScrollIndicator={true}
             >
-              <Text style={styles.npcText}>
-                {currentNode.npcText}
-              </Text>
+              <Text style={styles.npcText}>{currentNode.npcText}</Text>
             </ScrollView>
           </View>
         </View>
-        
+
         <BottomActionBar>
           {isEndState ? (
             // End state: Show only "Return to the Night Land" button
@@ -215,15 +216,10 @@ export default function HermitHollowMain() {
             </View>
           )}
         </BottomActionBar>
-        
+
         {/* Waypoint Saved Toast */}
         {showWaypointToast && (
-          <Animated.View 
-            style={[
-              styles.waypointToast,
-              { opacity: toastOpacity }
-            ]}
-          >
+          <Animated.View style={[styles.waypointToast, { opacity: toastOpacity }]}>
             <Text style={styles.waypointToastText}>Waypoint Saved</Text>
           </Animated.View>
         )}

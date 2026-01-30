@@ -27,18 +27,18 @@ export default function TesseractMain() {
     router.push('/sub-games/tesseract/screen2' as any)
   }
 
-const handleResetGame = () => {
-  if (!__DEV__) return
+  const handleResetGame = () => {
+    if (!__DEV__) return
 
-  console.log('[Tesseract] Reset game button pressed')
+    console.log('[Tesseract] Reset game button pressed')
 
-  if (typeof globalThis.resetTesseractTiles === 'function') {
-    globalThis.resetTesseractTiles()
-    console.log('[Tesseract] Tiles reset successfully')
-  } else {
-    console.log('[Tesseract] Reset function not available (screen2 not loaded yet)')
+    if (typeof globalThis.resetTesseractTiles === 'function') {
+      globalThis.resetTesseractTiles()
+      console.log('[Tesseract] Tiles reset successfully')
+    } else {
+      console.log('[Tesseract] Reset function not available (screen2 not loaded yet)')
+    }
   }
-}
 
   return (
     <BackgroundImage source={bgScreen1}>

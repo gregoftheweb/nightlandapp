@@ -1,10 +1,10 @@
 // modules/reducers.ts
 /**
  * GameState Reducer
- * 
+ *
  * This is the central reducer that handles all game state transitions.
  * All reducer cases must be pure functions that do not mutate the state.
- * 
+ *
  * Key Principles:
  * - Pure functions: No mutations, always return new state
  * - Single source of truth: Use getInitialState() for resets
@@ -38,7 +38,7 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
       }
 
       logIfDev(`🗺️  Changing level to: ${targetLevelId}`)
-      
+
       const levelId = targetLevelId as keyof typeof levels
       const newLevelConfig = levels[levelId]
       return {
@@ -308,12 +308,12 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
       // Full reset happens when RESET_GAME is dispatched from death screen
       logIfDev(`💀 GAME_OVER: ${action.payload?.message || 'Player died'}`)
       logIfDev(`   Killer: ${action.payload?.killerName || 'unknown'}`)
-      
+
       // Delete current save when player dies (async, but don't block state update)
-      deleteCurrentGame().catch(err => 
+      deleteCurrentGame().catch((err) =>
         console.error('Failed to delete current save on death:', err)
       )
-      
+
       return {
         ...state,
         gameOver: true,
@@ -334,18 +334,18 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
       /**
        * Complete game reset to initial state.
        * This is triggered from the death screen or manual restart.
-       * 
+       *
        * Decision: Reset ALL state including sub-game completion flags
        * to provide a "fresh run" experience. Players who died should
        * start from scratch, including re-completing sub-games.
-       * 
+       *
        * If we want to preserve sub-game progress across deaths in the future,
        * we can modify this to:
        *   const preservedFlags = state.subGamesCompleted
        *   return { ...getInitialState('1'), subGamesCompleted: preservedFlags }
        */
       logIfDev('🔄 RESET_GAME: Resetting to fresh initial state')
-      
+
       // Return a FRESH initial state (not the stale initialState constant)
       return getInitialState('1')
     }
@@ -640,7 +640,9 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
       logIfDev(`💾 Current state moveCount: ${state.moveCount}`)
       logIfDev(`💾 New state moveCount: ${action.payload.state.moveCount}`)
       logIfDev(`💾 Current state player position: ${JSON.stringify(state.player?.position)}`)
-      logIfDev(`💾 New state player position: ${JSON.stringify(action.payload.state.player?.position)}`)
+      logIfDev(
+        `💾 New state player position: ${JSON.stringify(action.payload.state.player?.position)}`
+      )
       // Replace entire state with loaded state (fromSnapshot already handles cleanup)
       return action.payload.state
 

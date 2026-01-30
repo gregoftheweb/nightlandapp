@@ -58,11 +58,7 @@ export default function SubGameTemplatePuzzle() {
 
         <BottomActionBar>
           <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleGiveUp}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.button} onPress={handleGiveUp} activeOpacity={0.7}>
               <Text style={styles.buttonText}>Give up</Text>
             </TouchableOpacity>
           </View>

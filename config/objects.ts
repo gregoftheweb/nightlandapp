@@ -317,17 +317,18 @@ export const buildings: Record<string, GameObject> = {
       requiresPlayerOnObject: true,
     },
   },
-    hermit: {
+  hermit: {
     shortName: 'hermit',
     category: 'building',
     name: 'Hermit',
-    description: 'A lonely hermit sits next to small campfire, safety and peace eminate from him and the small copse of woods around him.',
+    description:
+      'A lonely hermit sits next to small campfire, safety and peace eminate from him and the small copse of woods around him.',
     width: 4,
     height: 4,
     image: hermitIMG,
     active: true,
     zIndex: 0,
-   effects: [
+    effects: [
       {
         type: 'recuperate',
         value: 10,

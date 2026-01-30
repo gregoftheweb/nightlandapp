@@ -59,8 +59,6 @@ export default function AeroWreckageRearEntry() {
           )}
 
           <View style={styles.buttonRow}>
-          
-
             <TouchableOpacity
               style={styles.primaryButton}
               onPress={handleLeaveTreasure}
@@ -69,7 +67,7 @@ export default function AeroWreckageRearEntry() {
               <Text style={styles.primaryButtonText}>Leave It</Text>
             </TouchableOpacity>
 
-              <TouchableOpacity
+            <TouchableOpacity
               style={styles.primaryButton}
               onPress={handleAttemptOpen}
               activeOpacity={0.7}

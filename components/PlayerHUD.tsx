@@ -16,8 +16,6 @@ import attackButtonIMG from '@assets/images/buttonAttack.png'
 import inventoryButtonIMG from '@assets/images/buttonInventory.png'
 import zapButtonIMG from '@assets/images/buttonZap.png'
 
-
-
 interface PlayerHUDProps {
   hp: number
   maxHP: number
@@ -40,7 +38,6 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onZapPress, // New prop
 }) => {
   const insets = useSafeAreaInsets()
-
 
   const handleGearPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
     event.stopPropagation()
@@ -67,53 +64,47 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
     onZapPress?.()
   }
 
-return (
-  <View
-    style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
-    pointerEvents="box-none"
-  >
-    <View style={styles.hudFrame} pointerEvents="box-none">
-      <View style={styles.statusBar} pointerEvents="box-none">
-        <Text style={styles.hpText}>HP: {hp}</Text>
+  return (
+    <View
+      style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
+      pointerEvents="box-none"
+    >
+      <View style={styles.hudFrame} pointerEvents="box-none">
+        <View style={styles.statusBar} pointerEvents="box-none">
+          <Text style={styles.hpText}>HP: {hp}</Text>
 
+          <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
+            <Image source={require('@assets/images/gear.png')} style={styles.gearIcon} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Zap Button */}
+        <TouchableOpacity style={styles.zapButton} onPress={handleZapPress} activeOpacity={0.7}>
+          <Image source={zapButtonIMG} style={styles.zapButtonImage} />
+        </TouchableOpacity>
+
+        {/* Center Turn/Attack */}
+        <TouchableOpacity style={styles.turnButton} onPress={handleActionPress} activeOpacity={0.7}>
+          <Image
+            source={inCombat ? attackButtonIMG : turnButtonIMG}
+            style={styles.turnButtonImage}
+          />
+        </TouchableOpacity>
+
+        {/* Inventory Button */}
         <TouchableOpacity
-          style={styles.gearButton}
-          onPress={handleGearPress}
+          style={styles.inventoryButton}
+          onPress={handleInventoryPress}
           activeOpacity={0.7}
         >
-          <Image source={require('@assets/images/gear.png')} style={styles.gearIcon} />
+          <Image source={inventoryButtonIMG} style={styles.inventoryButtonImage} />
         </TouchableOpacity>
       </View>
-
-      {/* Zap Button */}
-      <TouchableOpacity style={styles.zapButton} onPress={handleZapPress} activeOpacity={0.7}>
-        <Image source={zapButtonIMG} style={styles.zapButtonImage} />
-      </TouchableOpacity>
-
-      {/* Center Turn/Attack */}
-      <TouchableOpacity style={styles.turnButton} onPress={handleActionPress} activeOpacity={0.7}>
-        <Image source={inCombat ? attackButtonIMG : turnButtonIMG} style={styles.turnButtonImage} />
-      </TouchableOpacity>
-
-      {/* Inventory Button */}
-      <TouchableOpacity
-        style={styles.inventoryButton}
-        onPress={handleInventoryPress}
-        activeOpacity={0.7}
-      >
-        <Image source={inventoryButtonIMG} style={styles.inventoryButtonImage} />
-      </TouchableOpacity>
     </View>
-  </View>
-)
-
-
-
+  )
 }
 
-const HUD_WIDTH = 350      // your long bar width (tweak once)
-
-
+const HUD_WIDTH = 350 // your long bar width (tweak once)
 
 const styles = StyleSheet.create({
   container: {
@@ -136,7 +127,7 @@ const styles = StyleSheet.create({
 
   // Your existing bar (the only bar)
   statusBar: {
-    width: HUD_WIDTH,              // <-- make the bar wide enough
+    width: HUD_WIDTH, // <-- make the bar wide enough
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -147,8 +138,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#990000',
     marginBottom: 10,
-    zIndex:15,
-
+    zIndex: 15,
   },
 
   hpText: {
@@ -169,7 +159,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     tintColor: '#990000',
-    zIndex:20,
+    zIndex: 20,
   },
 
   // Buttons now position relative to hudFrame width, not screen
@@ -178,7 +168,7 @@ const styles = StyleSheet.create({
     bottom: 2,
     left: '50%',
     marginLeft: -30,
-    zIndex:20,
+    zIndex: 20,
   },
 
   turnButtonImage: {
@@ -190,8 +180,8 @@ const styles = StyleSheet.create({
   zapButton: {
     position: 'absolute',
     bottom: 15,
-    left: 80,    
-    zIndex:20,
+    left: 80,
+    zIndex: 20,
   },
 
   zapButtonImage: {
@@ -203,8 +193,8 @@ const styles = StyleSheet.create({
   inventoryButton: {
     position: 'absolute',
     bottom: 15,
-    right: 72,        
-    zIndex:20,
+    right: 72,
+    zIndex: 20,
   },
 
   inventoryButtonImage: {
@@ -213,8 +203,5 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 })
-
-
-
 
 export default PlayerHUD

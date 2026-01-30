@@ -138,8 +138,6 @@ export default function AeroWreckageSafe() {
           {/* Buttons at Bottom */}
           <BottomActionBar>
             <View style={styles.buttonRow}>
-              
-
               <TouchableOpacity
                 style={[styles.buttonBase, styles.primaryButton]}
                 onPress={handleLeaveWithoutUnlocking}
