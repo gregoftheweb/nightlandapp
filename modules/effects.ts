@@ -612,7 +612,7 @@ export const executeEffect = (effect: Effect, context: any): EffectResult => {
  * Handle item usage from inventory.
  * Executes all effects on the item and determines if item should be consumed.
  */
-export const useItem = (
+export const applyItem = (
   item: Item,
   state: GameState,
   dispatch: (action: any) => void,

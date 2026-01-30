@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native'
 import { Item } from '@/config/types'
 import { useGameContext } from '../context/GameContext'
-import { useItem, canUseItem } from '@/modules/effects'
+import { applyItem, canUseItem } from '@/modules/effects' // <-- renamed from useItem
 
 const { width, height } = Dimensions.get('window')
 
@@ -27,153 +27,163 @@ interface InventoryProps {
 
 export default function Inventory({ visible, onClose, inventory, showDialog }: InventoryProps) {
   const [activeTab, setActiveTab] = useState<TabType>('items')
-
-  const handleClosePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
-    event.stopPropagation() // Prevent touch from bubbling to parent
-    onClose()
-  }
-
   const { state, dispatch } = useGameContext()
 
-  const handleDrop = (item: Item) => {
-    console.log('Dropping item:', item.name)
+  const handleClosePress = useCallback(
+    (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+      event.stopPropagation()
+      onClose()
+    },
+    [onClose]
+  )
 
-    dispatch({
-      type: 'DROP_ITEM',
-      payload: {
-        item,
-        position: { ...state.player.position },
-      },
-    })
-  }
+  const handleDrop = useCallback(
+    (item: Item) => {
+      if (__DEV__) console.log('Dropping item:', item.name)
 
-  const handleUse = (item: Item) => {
-    console.log('Using item:', item.name)
+      dispatch({
+        type: 'DROP_ITEM',
+        payload: {
+          item,
+          position: { ...state.player.position },
+        },
+      })
+    },
+    [dispatch, state.player.position]
+  )
 
-    // Check if item can be used
-    if (!canUseItem(item)) {
-      showDialog?.(`${item.name} cannot be used.`, 2000)
-      return
-    }
+  const handleUse = useCallback(
+    (item: Item) => {
+      if (__DEV__) console.log('Using item:', item.name)
 
-    // Use the item through the unified effects system
-    const result = useItem(item, state, dispatch, showDialog)
-
-    // Handle the result
-    if (result.success) {
-      // Remove item from inventory if it should be consumed
-      if (result.consumeItem) {
-        dispatch({
-          type: 'REMOVE_FROM_INVENTORY',
-          payload: { id: item.id },
-        })
-        console.log(`Consumed item: ${item.name}`)
+      // Check if item can be used
+      if (!canUseItem(item)) {
+        showDialog?.(`${item.name} cannot be used.`, 2000)
+        return
       }
-    } else {
-      // Show failure message
-      showDialog?.(result.message, 2000)
-    }
-  }
 
-  const handleEquip = (item: Item) => {
-    console.log('Equip weapon:', item.name)
+      // Use the item through the unified effects system
+      // NOTE: applyItem is a normal function; it is NOT a React hook
+      const result = applyItem(item, state, dispatch, showDialog)
+
+      if (result.success) {
+        if (result.consumeItem) {
+          dispatch({
+            type: 'REMOVE_FROM_INVENTORY',
+            payload: { id: item.id },
+          })
+          if (__DEV__) console.log(`Consumed item: ${item.name}`)
+        }
+      } else {
+        showDialog?.(result.message, 2000)
+      }
+    },
+    [dispatch, showDialog, state]
+  )
+
+  const handleEquip = useCallback((item: Item) => {
+    if (__DEV__) console.log('Equip weapon:', item.name)
     // TODO: Implement equip functionality
-  }
+  }, [])
 
-  const handleEquipRangedWeapon = (weaponId: string) => {
-    console.log('Equipping ranged weapon:', weaponId)
-    dispatch({
-      type: 'EQUIP_RANGED_WEAPON',
-      payload: { id: weaponId },
-    })
-  }
+  const handleEquipRangedWeapon = useCallback(
+    (weaponId: string) => {
+      if (__DEV__) console.log('Equipping ranged weapon:', weaponId)
+      dispatch({
+        type: 'EQUIP_RANGED_WEAPON',
+        payload: { id: weaponId },
+      })
+    },
+    [dispatch]
+  )
 
-  const getRangedWeapons = () => {
+  const rangedWeapons = useMemo(() => {
     const rangedWeaponIds = state.player.rangedWeaponInventoryIds || []
-
     return state.weapons.filter(
       (weapon) =>
         weapon.weaponType === 'ranged' && weapon.id != null && rangedWeaponIds.includes(weapon.id)
     )
-  }
-  const renderWeaponRow = (weapon: Item, index: number) => {
-    const isEquipped = weapon.id === state.player.equippedRangedWeaponId
+  }, [state.player.rangedWeaponInventoryIds, state.weapons])
 
-    return (
-      <View key={`${weapon.id}_${index}`} style={styles.inventoryItem}>
-        <Text style={[styles.itemName, isEquipped && styles.equippedWeaponName]}>
-          {weapon.name}
-        </Text>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.actionButton, isEquipped && styles.disabledButton]}
-            onPress={() => handleEquipRangedWeapon(weapon.id!)}
-            activeOpacity={isEquipped ? 1 : 0.7}
-            disabled={isEquipped}
-          >
-            <Text style={[styles.actionButtonText, isEquipped && styles.disabledButtonText]}>
-              {isEquipped ? 'equipped' : 'equip'}
-            </Text>
-          </TouchableOpacity>
+  const renderWeaponRow = useCallback(
+    (weapon: Item, index: number) => {
+      const isEquipped = weapon.id === state.player.equippedRangedWeaponId
+
+      return (
+        <View key={`${weapon.id}_${index}`} style={styles.inventoryItem}>
+          <Text style={[styles.itemName, isEquipped && styles.equippedWeaponName]}>
+            {weapon.name}
+          </Text>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={[styles.actionButton, isEquipped && styles.disabledButton]}
+              onPress={() => handleEquipRangedWeapon(weapon.id!)}
+              activeOpacity={isEquipped ? 1 : 0.7}
+              disabled={isEquipped}
+            >
+              <Text style={[styles.actionButtonText, isEquipped && styles.disabledButtonText]}>
+                {isEquipped ? 'equipped' : 'equip'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    )
-  }
+      )
+    },
+    [handleEquipRangedWeapon, state.player.equippedRangedWeaponId]
+  )
 
-  const renderInventoryItem = (item: Item, index: number) => {
-    const isWeapon = item.type === 'weapon'
-    const isUsable = canUseItem(item)
+  const renderInventoryItem = useCallback(
+    (item: Item, index: number) => {
+      const isWeapon = item.type === 'weapon'
+      const isUsable = canUseItem(item)
 
-    console.log('in inventory render:', item.name)
+      return (
+        <View key={`${item.id || item.shortName}_${index}`} style={styles.inventoryItem}>
+          <Text style={styles.itemName}>{item.name}</Text>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleDrop(item)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.actionButtonText}>drop</Text>
+            </TouchableOpacity>
 
-    return (
-      <View key={`${item.id || item.shortName}_${index}`} style={styles.inventoryItem}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleDrop(item)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.actionButtonText}>drop</Text>
-          </TouchableOpacity>
+            <Text style={styles.separator}>|</Text>
 
-          <Text style={styles.separator}>|</Text>
+            <TouchableOpacity
+              style={[styles.actionButton, !isUsable && styles.disabledButton]}
+              onPress={() => handleUse(item)}
+              activeOpacity={isUsable ? 0.7 : 1}
+              disabled={!isUsable}
+            >
+              <Text style={[styles.actionButtonText, !isUsable && styles.disabledButtonText]}>
+                use
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionButton, !isUsable && styles.disabledButton]}
-            onPress={() => handleUse(item)}
-            activeOpacity={isUsable ? 0.7 : 1}
-            disabled={!isUsable}
-          >
-            <Text style={[styles.actionButtonText, !isUsable && styles.disabledButtonText]}>
-              use
-            </Text>
-          </TouchableOpacity>
-
-          {isWeapon && (
-            <>
-              <Text style={styles.separator}>|</Text>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => handleEquip(item)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.actionButtonText}>equip</Text>
-              </TouchableOpacity>
-            </>
-          )}
+            {isWeapon && (
+              <>
+                <Text style={styles.separator}>|</Text>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => handleEquip(item)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.actionButtonText}>equip</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </View>
-      </View>
-    )
-  }
+      )
+    },
+    [handleDrop, handleEquip, handleUse]
+  )
 
   return (
-    <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
-      <View
-        style={styles.overlay}
-        onTouchStart={(event) => event.stopPropagation()} // Capture touches on overlay
-      >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.overlay} onTouchStart={(event) => event.stopPropagation()}>
         <View style={styles.inventoryContainer}>
           <View style={styles.header}>
             <Text style={styles.title}>Inventory</Text>
@@ -197,6 +207,7 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
                 Items
               </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               style={[styles.tab, activeTab === 'weapons' && styles.activeTab]}
               onPress={() => setActiveTab('weapons')}
@@ -211,17 +222,15 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
           <View style={styles.content}>
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
               {activeTab === 'items' ? (
-                // Items Tab
                 inventory.length === 0 ? (
                   <Text style={styles.emptyInventoryText}>Your inventory is empty</Text>
                 ) : (
-                  inventory.map((item, index) => renderInventoryItem(item, index))
+                  inventory.map(renderInventoryItem)
                 )
-              ) : // Weapons Tab
-              getRangedWeapons().length === 0 ? (
+              ) : rangedWeapons.length === 0 ? (
                 <Text style={styles.emptyInventoryText}>No ranged weapons in inventory</Text>
               ) : (
-                getRangedWeapons().map((weapon, index) => renderWeaponRow(weapon, index))
+                rangedWeapons.map(renderWeaponRow)
               )}
             </ScrollView>
           </View>

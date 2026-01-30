@@ -1,14 +1,12 @@
+// components/GameBoard.tsx
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { View, Image, StyleSheet, Dimensions, ImageSourcePropType } from 'react-native'
-import {
+import type {
   Monster,
   LevelObjectInstance,
-  Player,
   GameState,
-  CombatLogEntry,
   Item,
   GreatPower,
-  Position,
   NonCollisionObject,
 } from '@/config/types'
 import { InfoBox } from './InfoBox'
@@ -71,13 +69,14 @@ export default function GameBoard({
   onCloseInfoRef,
 }: GameBoardProps) {
   // Generate unique instance ID for this component
-  const instanceId = useRef(`GameBoard-${Math.random().toString(36).substr(2, 9)}`)
+  const instanceId = useRef(`GameBoard-${Math.random().toString(36).slice(2, 11)}`)
 
   // Log component lifecycle
   useEffect(() => {
-    console.log(`🎲🎲🎲 [${instanceId.current}] GameBoard component MOUNTED`)
+    const id = instanceId.current
+    if (__DEV__) console.log(`🎲🎲🎲 [${id}] GameBoard component MOUNTED`)
     return () => {
-      console.log(`🎲🎲🎲 [${instanceId.current}] GameBoard component UNMOUNTED`)
+      if (__DEV__) console.log(`🎲🎲🎲 [${id}] GameBoard component UNMOUNTED`)
     }
   }, [])
 
@@ -95,207 +94,81 @@ export default function GameBoard({
     ctaLabel: undefined,
     onCtaPress: undefined,
   })
+
   const [combatInfoVisible, setCombatInfoVisible] = useState(false)
   const [combatMessages, setCombatMessages] = useState<string[]>([])
-  const [previousInCombat, setPreviousInCombat] = useState(false)
-  const [previousCombatLogLength, setPreviousCombatLogLength] = useState(0)
-  const [previousRangedMode, setPreviousRangedMode] = useState(false)
+
+  // Use refs for “previous” values so the main combat effect can have correct deps
+  const prevInCombatRef = useRef<boolean>(false)
+  const prevCombatLogLenRef = useRef<number>(0)
+  const prevRangedModeRef = useRef<boolean>(false)
+
+  // Track gameOver transition so the death dialog does not stack
+  const previousGameOver = useRef(false)
+
+  // ---- Defensive fallbacks (NO early returns before hooks) ----
+  const level = state.level
+  const levelObjects = level?.objects ?? []
+  const levelMonsters = level?.monsters ?? []
+  const activeMonsters = state.activeMonsters ?? []
+  const levelGreatPowers = level?.greatPowers ?? []
+  const items = state.items ?? []
+  const combatLog = state.combatLog ?? []
+  const attackSlots = state.attackSlots ?? []
+  const nonCollisionObjects = state.nonCollisionObjects ?? []
+  const activeProjectiles = state.activeProjectiles ?? []
 
   // Memoized entity position maps for O(1) lookups (perf: replaces linear scans)
   const monsterPositionMap = useMemo(() => {
     const map = new Map<string, Monster>()
-    ;[...(state.activeMonsters || []), ...(state.level.monsters || [])].forEach((m) => {
+    ;[...activeMonsters, ...levelMonsters].forEach((m) => {
       if (m.position && !m.inCombatSlot && m.active !== false) {
-        const key = `${m.position.row}-${m.position.col}`
-        map.set(key, m)
+        map.set(`${m.position.row}-${m.position.col}`, m)
       }
     })
     return map
-  }, [state.activeMonsters, state.level.monsters])
+  }, [activeMonsters, levelMonsters])
 
   const greatPowerPositionMap = useMemo(() => {
     const map = new Map<string, GreatPower>()
-    ;(state.level.greatPowers || []).forEach((gp) => {
+    levelGreatPowers.forEach((gp) => {
       if (gp.position && gp.active !== false) {
-        const key = `${gp.position.row}-${gp.position.col}`
-        map.set(key, gp)
+        map.set(`${gp.position.row}-${gp.position.col}`, gp)
       }
     })
     return map
-  }, [state.level.greatPowers])
+  }, [levelGreatPowers])
 
   const itemPositionMap = useMemo(() => {
     const map = new Map<string, Item>()
-    ;(state.items || []).forEach((item) => {
+    items.forEach((item) => {
       if (item.active && item.position) {
-        const key = `${item.position.row}-${item.position.col}`
-        map.set(key, item)
+        map.set(`${item.position.row}-${item.position.col}`, item)
       }
     })
     return map
-  }, [state.items])
+  }, [items])
 
   // Fast position finders using maps (perf: O(1) vs O(n))
-  const findMonsterAtPosition = useMemo(
-    () =>
-      (worldRow: number, worldCol: number): Monster | undefined =>
-        monsterPositionMap.get(`${worldRow}-${worldCol}`),
+  const findMonsterAtPosition = useCallback(
+    (worldRow: number, worldCol: number): Monster | undefined =>
+      monsterPositionMap.get(`${worldRow}-${worldCol}`),
     [monsterPositionMap]
   )
 
-  const findGreatPowerAtPosition = useMemo(
-    () =>
-      (worldRow: number, worldCol: number): GreatPower | undefined =>
-        greatPowerPositionMap.get(`${worldRow}-${worldCol}`),
+  const findGreatPowerAtPosition = useCallback(
+    (worldRow: number, worldCol: number): GreatPower | undefined =>
+      greatPowerPositionMap.get(`${worldRow}-${worldCol}`),
     [greatPowerPositionMap]
   )
 
-  const findItemAtPosition = useMemo(
-    () =>
-      (worldRow: number, worldCol: number): Item | undefined =>
-        itemPositionMap.get(`${worldRow}-${worldCol}`),
+  const findItemAtPosition = useCallback(
+    (worldRow: number, worldCol: number): Item | undefined =>
+      itemPositionMap.get(`${worldRow}-${worldCol}`),
     [itemPositionMap]
   )
 
-  // Handle combat start and log updates (dev logs wrapped)
-  useEffect(() => {
-    // if (__DEV__) {
-    //   console.log(
-    //     '🎯 Combat effect running - inCombat:',
-    //     state.inCombat,
-    //     'combatLog.length:',
-    //     state.combatLog.length,
-    //     'previousCombatLogLength:',
-    //     previousCombatLogLength,
-    //     'rangedAttackMode:',
-    //     state.rangedAttackMode
-    //   )
-    // }
-
-    // PRIORITY 1: Check if we just entered ranged attack mode (MUST be first to show dialog immediately)
-    if (state.rangedAttackMode && !previousRangedMode && state.combatLog.length > 0) {
-      // Just entered ranged mode - show dialog immediately with targeting message
-      setCombatMessages(state.combatLog.map((log) => log.message))
-      setCombatInfoVisible(true)
-      if (__DEV__) {
-        console.log(
-          '🎯 Entered ranged attack mode, showing CombatDialog immediately with targeting message'
-        )
-      }
-    }
-    // PRIORITY 2: Check if combat just started
-    else if (state.inCombat && !previousInCombat && state.attackSlots.length > 0) {
-      const firstMonster = state.attackSlots[0]
-      const monsterName = firstMonster.name || firstMonster.shortName || 'Monster'
-      const combatStartMessage = getTextContent('combatStart', [monsterName])
-      setCombatMessages([combatStartMessage, ...state.combatLog.map((log) => log.message)])
-      setCombatInfoVisible(true)
-      if (__DEV__) {
-        console.log(
-          '🎯 Combat started (detected transition), showing CombatDialog with message:',
-          combatStartMessage
-        )
-      }
-    } else if (state.inCombat && state.combatLog.length > 0) {
-      setCombatMessages(state.combatLog.map((log) => log.message))
-      setCombatInfoVisible(true)
-      if (__DEV__) {
-        console.log('🎯 In combat, updating messages')
-      }
-    } else if (!state.inCombat && previousInCombat) {
-      // Combat ended - hide dialog UNLESS we're in ranged mode with messages
-      if (!state.rangedAttackMode || state.combatLog.length === 0) {
-        setCombatInfoVisible(false)
-        setCombatMessages([])
-        if (__DEV__) {
-          console.log('🎯 Combat ended (detected transition), hiding CombatDialog')
-        }
-      } else {
-        // Keep dialog visible if in ranged mode with messages
-        setCombatMessages(state.combatLog.map((log) => log.message))
-        setCombatInfoVisible(true)
-        if (__DEV__) {
-          console.log(
-            '🎯 Combat ended but ranged mode active with messages, keeping dialog visible'
-          )
-        }
-      }
-    } else if (!state.inCombat && state.combatLog.length > previousCombatLogLength) {
-      // Show combat dialog for ranged attacks (outside of combat)
-      // Only show when new messages are added (prevents showing stale messages)
-      setCombatMessages(state.combatLog.map((log) => log.message))
-      setCombatInfoVisible(true)
-      if (__DEV__) {
-        console.log('🎯 Showing CombatDialog for ranged attack messages')
-      }
-    } else if (!state.inCombat && state.combatLog.length === 0 && previousCombatLogLength > 0) {
-      // Combat log was cleared (all monsters defeated in ranged mode)
-      setCombatInfoVisible(false)
-      setCombatMessages([])
-      if (__DEV__) {
-        console.log('🎯 Combat log cleared, hiding CombatDialog')
-      }
-    }
-    setPreviousInCombat(state.inCombat)
-    setPreviousCombatLogLength(state.combatLog.length)
-    setPreviousRangedMode(state.rangedAttackMode || false)
-
-    if (__DEV__) {
-      console.log(
-        '🎯 Combat effect complete - combatInfoVisible:',
-        state.inCombat || state.combatLog.length > 0
-      )
-    }
-  }, [state.inCombat, state.attackSlots, state.combatLog, state.rangedAttackMode, previousInCombat])
-
-  // Game over effect - only show dialog on transition and respect suppressDeathDialog
-  // Use a ref to track previous gameOver state to prevent stacking dialogs
-  const previousGameOver = useRef(false)
-
-  useEffect(() => {
-    // Only trigger on alive->dead transition (edge trigger, not level trigger)
-    // This prevents dialog stacking on repeated deaths
-    if (state.gameOver && !previousGameOver.current) {
-      // Check if death dialog should be suppressed (e.g., for puzzle deaths)
-      if (!state.suppressDeathDialog) {
-        const deathMessage =
-          state.gameOverMessage || 'Your journey ends here. The darkness claims another soul...'
-        if (__DEV__) {
-          console.log(
-            `💀💀💀 [${instanceId.current}] DEATH DETECTED - Showing InfoBox (alive->dead transition):`,
-            deathMessage
-          )
-          console.log(
-            `💀💀💀 [${instanceId.current}] Setting infoVisible to TRUE, infoData.name to "DEATH"`
-          )
-        }
-        setInfoData({
-          name: 'DEATH',
-          description: deathMessage,
-          image: deadChristosIMG,
-        })
-        setInfoVisible(true)
-      } else {
-        if (__DEV__) {
-          console.log(
-            `💀💀💀 [${instanceId.current}] DEATH DETECTED - Dialog suppressed (suppressDeathDialog=true)`
-          )
-        }
-      }
-    }
-
-    // Update previous state for next render
-    previousGameOver.current = state.gameOver || false
-  }, [state.gameOver, state.gameOverMessage, state.suppressDeathDialog])
-
-  if (!state.level || !state.level.objects) {
-    if (__DEV__) {
-      console.warn('GameBoard: state.level is undefined or missing objects!')
-    }
-    return <View style={styles.gridContainer} />
-  }
-
-  // Memoized showInfo (perf: avoids closure recreation; dev log wrapped)
+  // Memoized showInfo
   const showInfo = useCallback(
     (
       name: string,
@@ -305,13 +178,7 @@ export default function GameBoard({
       onCtaPress?: () => void
     ) => {
       if (__DEV__) {
-        console.log('showInfo called:', {
-          name,
-          description,
-          image,
-          ctaLabel,
-          infoVisible,
-        })
+        console.log('showInfo called:', { name, ctaLabel, infoVisible })
       }
       setInfoData({ name, description, image, ctaLabel, onCtaPress })
       setInfoVisible(true)
@@ -319,128 +186,174 @@ export default function GameBoard({
     [infoVisible]
   )
 
-  // Memoized closeInfo to hide InfoBox
+  // Memoized closeInfo
   const closeInfo = useCallback(() => {
-    if (__DEV__) {
-      console.log('closeInfo called')
-    }
+    if (__DEV__) console.log('closeInfo called')
     setInfoVisible(false)
   }, [])
 
-  // Expose showInfo to parent component via ref
+  // Expose showInfo to parent via ref
   useEffect(() => {
-    if (onShowInfoRef) {
-      onShowInfoRef.current = showInfo
-    }
-  }, [showInfo, onShowInfoRef])
+    if (!onShowInfoRef) return
+    onShowInfoRef.current = showInfo
+  }, [onShowInfoRef, showInfo])
 
-  // Expose closeInfo to parent component via ref
+  // Expose closeInfo to parent via ref
   useEffect(() => {
-    if (onCloseInfoRef) {
-      onCloseInfoRef.current = closeInfo
-    }
-  }, [closeInfo, onCloseInfoRef])
+    if (!onCloseInfoRef) return
+    onCloseInfoRef.current = closeInfo
+  }, [onCloseInfoRef, closeInfo])
 
-  // Memoized handlers (perf: stable refs for child props/optimizations)
+  // ---- Combat dialog orchestration ----
+  useEffect(() => {
+    const prevInCombat = prevInCombatRef.current
+    const prevCombatLogLength = prevCombatLogLenRef.current
+    const prevRanged = prevRangedModeRef.current
+
+    const rangedMode = !!state.rangedAttackMode
+    const inCombat = !!state.inCombat
+    const logLen = combatLog.length
+
+    // PRIORITY 1: Just entered ranged mode and there are messages
+    if (rangedMode && !prevRanged && logLen > 0) {
+      setCombatMessages(combatLog.map((log) => log.message))
+      setCombatInfoVisible(true)
+      if (__DEV__) console.log('🎯 Entered ranged attack mode; showing CombatDialog')
+    }
+    // PRIORITY 2: Combat just started
+    else if (inCombat && !prevInCombat && attackSlots.length > 0) {
+      const firstMonster = attackSlots[0]
+      const monsterName = firstMonster.name || firstMonster.shortName || 'Monster'
+      const combatStartMessage = getTextContent('combatStart', [monsterName])
+      setCombatMessages([combatStartMessage, ...combatLog.map((log) => log.message)])
+      setCombatInfoVisible(true)
+      if (__DEV__) console.log('🎯 Combat started; showing CombatDialog')
+    }
+    // In combat: show/update if there are messages
+    else if (inCombat && logLen > 0) {
+      setCombatMessages(combatLog.map((log) => log.message))
+      setCombatInfoVisible(true)
+    }
+    // Combat ended: hide unless ranged mode wants to keep it
+    else if (!inCombat && prevInCombat) {
+      if (!rangedMode || logLen === 0) {
+        setCombatInfoVisible(false)
+        setCombatMessages([])
+      } else {
+        setCombatMessages(combatLog.map((log) => log.message))
+        setCombatInfoVisible(true)
+      }
+    }
+    // Outside combat: ranged log updates
+    else if (!inCombat && logLen > prevCombatLogLength) {
+      setCombatMessages(combatLog.map((log) => log.message))
+      setCombatInfoVisible(true)
+    }
+    // Log cleared
+    else if (!inCombat && logLen === 0 && prevCombatLogLength > 0) {
+      setCombatInfoVisible(false)
+      setCombatMessages([])
+    }
+
+    prevInCombatRef.current = inCombat
+    prevCombatLogLenRef.current = logLen
+    prevRangedModeRef.current = rangedMode
+  }, [state.inCombat, state.rangedAttackMode, attackSlots, combatLog])
+
+  // Game over effect - only show dialog on transition and respect suppressDeathDialog
+  useEffect(() => {
+    const id = instanceId.current
+    if (state.gameOver && !previousGameOver.current) {
+      if (!state.suppressDeathDialog) {
+        const deathMessage =
+          state.gameOverMessage || 'Your journey ends here. The darkness claims another soul...'
+        if (__DEV__) {
+          console.log(`💀💀💀 [${id}] DEATH DETECTED - Showing InfoBox`)
+        }
+        setInfoData({
+          name: 'DEATH',
+          description: deathMessage,
+          image: deadChristosIMG,
+        })
+        setInfoVisible(true)
+      } else {
+        if (__DEV__) {
+          console.log(`💀💀💀 [${id}] DEATH DETECTED - Dialog suppressed`)
+        }
+      }
+    }
+    previousGameOver.current = !!state.gameOver
+  }, [state.gameOver, state.gameOverMessage, state.suppressDeathDialog])
+
+  // ---- Tap handlers (stable, unconditionally declared) ----
   const handlePlayerTap = useCallback(() => {
-    if (__DEV__) {
-      console.log('handlePlayerTap called, player:', state.player)
-    }
     const player = state.player
-    const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : ''
+    if (!player) return
+
+    if (__DEV__) console.log('handlePlayerTap called, player:', player)
+
     showInfo(
       player.name || 'Christos',
       `${
         player.description || 'The brave hero of the Last Redoubt.'
-      }\n\n Level: ${state.level.name}\n${state.level.description}\n${
-        player.position.row
-      }- ${player.position.col}`,
-      player.image || require('../assets/images/christos.png') // Use player's image if available, fallback to hardcoded
+      }\n\nLevel: ${level?.name ?? ''}\n${level?.description ?? ''}\n${player.position.row}- ${
+        player.position.col
+      }`,
+      player.image || require('../assets/images/christos.png')
     )
     onPlayerTap?.()
-  }, [state.player, state.level, showInfo, onPlayerTap])
+  }, [state.player, level?.name, level?.description, onPlayerTap, showInfo])
 
   const handleMonsterTap = useCallback(
     (monster: Monster) => {
-      if (__DEV__) {
-        console.log('handleMonsterTap called, monster:', monster)
-      }
-      // Don't show info dialog if in ranged attack mode (player is targeting/retargeting)
+      if (__DEV__) console.log('handleMonsterTap called, monster:', monster)
+
       if (!state.rangedAttackMode) {
         showInfo(
           monster.name || monster.shortName || 'Monster',
-          monster.description || `A dangerous creature. HP: ${monster.hp || 'Unknown'}`,
+          monster.description || `A dangerous creature. HP: ${monster.hp ?? 'Unknown'}`,
           getMonsterImage(monster)
         )
       }
       onMonsterTap?.(monster)
     },
-    [showInfo, onMonsterTap, state.rangedAttackMode]
+    [onMonsterTap, showInfo, state.rangedAttackMode]
   )
-
-  const handleCombatDialogClose = useCallback(() => {
-    setCombatInfoVisible(false)
-  }, [])
 
   const handleGreatPowerTap = useCallback(
     (greatPower: GreatPower) => {
-      if (__DEV__) {
-        console.log('handleGreatPowerTap called, greatPower:', greatPower)
-      }
+      if (__DEV__) console.log('handleGreatPowerTap called, greatPower:', greatPower)
       const statusInfo = greatPower.awakened ? 'AWAKENED' : 'Sleeping'
       showInfo(
         greatPower.name || greatPower.shortName || 'Great Power',
         `${
           greatPower.description || 'An ancient entity of immense power.'
-        }\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${
-          greatPower.maxHP
-        }\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`,
+        }\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${greatPower.maxHP}\nAC: ${
+          greatPower.ac
+        }\nAttack: ${greatPower.attack}`,
         getGreatPowerImage(greatPower)
       )
       onGreatPowerTap?.(greatPower)
     },
-    [showInfo, onGreatPowerTap]
+    [onGreatPowerTap, showInfo]
   )
 
   const handleBuildingTap = useCallback(
     (building: LevelObjectInstance) => {
-      if (__DEV__) {
-        console.log('handleBuildingTap called, building:', building)
-      }
+      if (__DEV__) console.log('handleBuildingTap called, building:', building)
 
-      // Check if building has sub-game launch config
       const launch = building.subGame
-      // Get dimensions from size object or fallback to width/height properties
       const buildingWidth = building.size?.width || building.width || 1
       const buildingHeight = building.size?.height || building.height || 1
 
+      const playerPos = state.player?.position
       const playerOnObject =
-        launch && building.position
-          ? isPlayerOnObject(
-              state.player.position,
-              building.position,
-              buildingWidth,
-              buildingHeight
-            )
-          : false
+        !!(launch && building.position && playerPos) &&
+        isPlayerOnObject(playerPos, building.position, buildingWidth, buildingHeight)
 
-      const canLaunch = launch && (!launch.requiresPlayerOnObject || playerOnObject)
-
-      if (__DEV__) {
-        console.log('Sub-game check:', {
-          hasSubGame: !!launch,
-          subGameName: launch?.subGameName,
-          requiresPlayerOnObject: launch?.requiresPlayerOnObject,
-          playerPosition: state.player.position,
-          buildingPosition: building.position,
-          buildingSize: { width: buildingWidth, height: buildingHeight },
-          playerOnObject,
-          canLaunch,
-        })
-      }
+      const canLaunch = !!(launch && (!launch.requiresPlayerOnObject || playerOnObject))
 
       if (canLaunch && launch) {
-        // Show InfoBox with CTA button
         const handleCtaPress = () => {
           setInfoVisible(false)
           enterSubGame(launch.subGameName, { objectId: building.id })
@@ -454,7 +367,6 @@ export default function GameBoard({
           handleCtaPress
         )
       } else {
-        // Show InfoBox without CTA
         showInfo(
           building.name || building.shortName || 'Building',
           building.description || 'An interesting structure in the world.',
@@ -464,14 +376,12 @@ export default function GameBoard({
 
       onBuildingTap?.(building)
     },
-    [showInfo, onBuildingTap, state.player.position]
+    [onBuildingTap, showInfo, state.player?.position]
   )
 
   const handleItemTap = useCallback(
     (item: Item) => {
-      if (__DEV__) {
-        console.log('handleItemTap called, item:', item)
-      }
+      if (__DEV__) console.log('handleItemTap called, item:', item)
       showInfo(
         item.name || item.shortName || 'Item',
         item.description || 'An object of interest.',
@@ -479,14 +389,12 @@ export default function GameBoard({
       )
       onItemTap?.(item)
     },
-    [showInfo, onItemTap]
+    [onItemTap, showInfo]
   )
 
   const handleNonCollisionObjectTap = useCallback(
     (obj: NonCollisionObject) => {
-      if (__DEV__) {
-        console.log('handleNonCollisionObjectTap called, obj:', obj)
-      }
+      if (__DEV__) console.log('handleNonCollisionObjectTap called, obj:', obj)
       showInfo(
         obj.name || obj.shortName || 'Object',
         obj.description || 'A decorative object in the world.',
@@ -494,26 +402,17 @@ export default function GameBoard({
       )
       onNonCollisionObjectTap?.(obj)
     },
-    [showInfo, onNonCollisionObjectTap]
+    [onNonCollisionObjectTap, showInfo]
   )
 
-  // Background style (unchanged, but memoized for consistency)
-  const getBackgroundStyle = useMemo(
-    () => () => {
-      const scaledTileSize = BACKGROUND_TILE_SIZE * BACKGROUND_SCALE
-      const offsetX = -(cameraOffset.offsetX * CELL_SIZE) % scaledTileSize
-      const offsetY = -(cameraOffset.offsetY * CELL_SIZE) % scaledTileSize
-      return {
-        transform: [{ translateX: offsetX }, { translateY: offsetY }],
-        width: width + scaledTileSize,
-        height: height + scaledTileSize,
-      }
-    },
-    [cameraOffset.offsetX, cameraOffset.offsetY]
-  )
+  const handleCombatDialogClose = useCallback(() => {
+    setCombatInfoVisible(false)
+  }, [])
 
-  // Memoized grid cells (perf: deps on camera + entities; skips if unchanged)
+  // ---- Memoized grid cells (always computed; returns [] if level missing) ----
   const renderGridCells = useMemo(() => {
+    if (!level) return []
+
     const tiles: React.ReactNode[] = []
     for (let row = 0; row < VIEWPORT_ROWS; row++) {
       for (let col = 0; col < VIEWPORT_COLS; col++) {
@@ -524,6 +423,7 @@ export default function GameBoard({
           !!state.player?.position &&
           worldRow === state.player.position.row &&
           worldCol === state.player.position.col
+
         const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol)
         const greatPowerAtPosition = findGreatPowerAtPosition(worldRow, worldCol)
 
@@ -539,13 +439,13 @@ export default function GameBoard({
                   isPlayer,
                   monsterAtPosition,
                   greatPowerAtPosition,
-                  state.inCombat
+                  !!state.inCombat
                 ),
                 backgroundColor: getCellBackgroundColor(
                   isPlayer,
                   monsterAtPosition,
                   greatPowerAtPosition,
-                  state.inCombat
+                  !!state.inCombat
                 ),
               },
             ]}
@@ -555,27 +455,29 @@ export default function GameBoard({
     }
     return tiles
   }, [
+    level,
     cameraOffset.offsetY,
     cameraOffset.offsetX,
     state.player?.position,
-    monsterPositionMap,
-    greatPowerPositionMap,
     state.inCombat,
+    findMonsterAtPosition,
+    findGreatPowerAtPosition,
   ])
 
-  // Memoized entity renders (perf: deps on relevant state slices)
   const renderCombatMonsters = useMemo(() => {
-    if (!state.inCombat || !state.attackSlots) return []
-    return state.attackSlots
+    if (!state.inCombat || attackSlots.length === 0) return []
+
+    return attackSlots
       .map((monster: Monster, index) => {
         if (!monster.position || !monster.uiSlot) return null
+
         const screenRow = monster.position.row - cameraOffset.offsetY
         const screenCol = monster.position.col - cameraOffset.offsetX
+
         const inView =
           screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS
         if (!inView) return null
 
-        // Check if this monster is the targeted monster for ranged attack
         const isTargeted = state.targetedMonsterId === monster.id
 
         return (
@@ -606,22 +508,19 @@ export default function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [
-    state.inCombat,
-    state.attackSlots,
-    state.targetedMonsterId,
-    cameraOffset.offsetY,
-    cameraOffset.offsetX,
-    handleMonsterTap,
-  ])
+  }, [state.inCombat, attackSlots, state.targetedMonsterId, cameraOffset.offsetY, cameraOffset.offsetX])
 
   const renderPlayer = useMemo(() => {
-    if (!state.player?.position) return null
-    const screenRow = state.player.position.row - cameraOffset.offsetY
-    const screenCol = state.player.position.col - cameraOffset.offsetX
+    const pos = state.player?.position
+    if (!pos) return null
+
+    const screenRow = pos.row - cameraOffset.offsetY
+    const screenCol = pos.col - cameraOffset.offsetX
+
     const inView =
       screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS
     if (!inView) return null
+
     return (
       <View
         key="player"
@@ -642,20 +541,22 @@ export default function GameBoard({
         />
       </View>
     )
-  }, [state.player?.position, cameraOffset.offsetY, cameraOffset.offsetX, handlePlayerTap])
+  }, [state.player?.position, cameraOffset.offsetY, cameraOffset.offsetX])
 
   const renderMonsters = useMemo(() => {
-    if (!state.activeMonsters) return []
-    return state.activeMonsters
+    if (activeMonsters.length === 0) return []
+
+    return activeMonsters
       .map((monster, index) => {
         if (!monster.position || monster.inCombatSlot) return null
+
         const screenRow = monster.position.row - cameraOffset.offsetY
         const screenCol = monster.position.col - cameraOffset.offsetX
+
         const inView =
           screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS
         if (!inView) return null
 
-        // Check if this monster is the targeted monster for ranged attack
         const isTargeted = state.targetedMonsterId === monster.id
 
         return (
@@ -686,29 +587,28 @@ export default function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [
-    state.activeMonsters,
-    state.targetedMonsterId,
-    cameraOffset.offsetY,
-    cameraOffset.offsetX,
-    handleMonsterTap,
-  ])
+  }, [activeMonsters, state.targetedMonsterId, cameraOffset.offsetY, cameraOffset.offsetX])
 
   const renderGreatPowers = useMemo(() => {
-    if (!state.level.greatPowers) return []
-    return state.level.greatPowers
+    if (levelGreatPowers.length === 0) return []
+
+    return levelGreatPowers
       .map((greatPower, index) => {
         if (!greatPower.position || greatPower.active === false) return null
+
         const screenRow = greatPower.position.row - cameraOffset.offsetY
         const screenCol = greatPower.position.col - cameraOffset.offsetX
+
         const gpWidth = greatPower.width || 1
         const gpHeight = greatPower.height || 1
+
         const inView =
           screenRow + gpHeight > 0 &&
           screenRow < VIEWPORT_ROWS &&
           screenCol + gpWidth > 0 &&
           screenCol < VIEWPORT_COLS
         if (!inView) return null
+
         return (
           <View
             key={`greatpower-${greatPower.id}-${index}`}
@@ -735,18 +635,22 @@ export default function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [state.level.greatPowers, cameraOffset.offsetY, cameraOffset.offsetX, handleGreatPowerTap])
+  }, [levelGreatPowers, cameraOffset.offsetY, cameraOffset.offsetX])
 
   const renderItems = useMemo(() => {
-    if (!state.items) return []
-    return state.items
+    if (items.length === 0) return []
+
+    return items
       .map((item, index) => {
         if (!item.position || !item.active) return null
+
         const screenRow = item.position.row - cameraOffset.offsetY
         const screenCol = item.position.col - cameraOffset.offsetX
+
         const inView =
           screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS
         if (!inView) return null
+
         return (
           <View
             key={`item-${item.id}-${index}`}
@@ -775,16 +679,21 @@ export default function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [state.items, cameraOffset.offsetY, cameraOffset.offsetX, handleItemTap])
+  }, [items, cameraOffset.offsetY, cameraOffset.offsetX])
 
   const renderBuildings = useMemo(() => {
-    return state.level.objects
+    if (!level || levelObjects.length === 0) return []
+
+    return levelObjects
       .map((obj: LevelObjectInstance, index) => {
         if (!obj.position || !obj.image) return null
+
         const screenRow = obj.position.row - cameraOffset.offsetY
         const screenCol = obj.position.col - cameraOffset.offsetX
+
         const objWidth = obj.size?.width ?? 1
         const objHeight = obj.size?.height ?? 1
+
         const inView =
           screenRow + objHeight > 0 &&
           screenRow < VIEWPORT_ROWS &&
@@ -792,7 +701,6 @@ export default function GameBoard({
           screenCol < VIEWPORT_COLS
         if (!inView) return null
 
-        // Get rotation from instance, default to 0
         const rotation = obj.rotation ?? 0
 
         return (
@@ -821,14 +729,14 @@ export default function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [state.level.objects, cameraOffset.offsetY, cameraOffset.offsetX, handleBuildingTap])
+  }, [level, levelObjects, cameraOffset.offsetY, cameraOffset.offsetX])
 
   const renderNonCollisionObjects = useMemo(() => {
-    if (!state.nonCollisionObjects || state.nonCollisionObjects.length === 0) return []
+    if (nonCollisionObjects.length === 0) return []
 
     const elements: React.ReactElement[] = []
 
-    state.nonCollisionObjects.forEach((obj, index) => {
+    nonCollisionObjects.forEach((obj, index) => {
       if (!obj.position) return
 
       const screenRow = obj.position.row - cameraOffset.offsetY
@@ -841,25 +749,10 @@ export default function GameBoard({
         screenRow < VIEWPORT_ROWS &&
         screenCol + objWidth > 0 &&
         screenCol < VIEWPORT_COLS
-
       if (!inView) return
 
-      const isInteractable = obj.canTap !== false
+      const hasCollisionMask = !!(obj.collisionMask && obj.collisionMask.length > 0)
 
-      // Render the main image (non-interactable if it has collision mask)
-      const hasCollisionMask = obj.collisionMask && obj.collisionMask.length > 0
-
-      // if (hasCollisionMask) {
-      //   console.log(
-      //     'Rendering collision mask for:',
-      //     obj.name,
-      //     'mask tiles:',
-      //     obj.collisionMask?.length
-      //   )
-      // }
-
-      // All non-collision objects now use View instead of TouchableOpacity
-      // Interaction is handled via long-press in game/index.tsx
       elements.push(
         <View
           key={`noncollision-${obj.id}-${index}`}
@@ -885,7 +778,6 @@ export default function GameBoard({
         </View>
       )
 
-      // Render collision mask tiles (also as non-interactive Views)
       if (hasCollisionMask) {
         obj.collisionMask!.forEach((mask, maskIndex) => {
           const maskScreenRow = screenRow + mask.row
@@ -903,9 +795,6 @@ export default function GameBoard({
                 width: maskWidth * CELL_SIZE,
                 height: maskHeight * CELL_SIZE,
                 zIndex: (obj.zIndex || 1) + 1,
-                // backgroundColor: "rgba(0, 255, 255, 0.2)", // Debug visualization
-                // borderWidth: 1,
-                // borderColor: "cyan",
               }}
               pointerEvents="none"
             />
@@ -915,20 +804,13 @@ export default function GameBoard({
     })
 
     return elements
-  }, [
-    state.nonCollisionObjects,
-    cameraOffset.offsetY,
-    cameraOffset.offsetX,
-    handleNonCollisionObjectTap,
-  ])
+  }, [nonCollisionObjects, cameraOffset.offsetY, cameraOffset.offsetX])
 
   // Render active projectiles
   const renderProjectiles = useMemo(() => {
-    if (!state.activeProjectiles || state.activeProjectiles.length === 0) {
-      return []
-    }
+    if (activeProjectiles.length === 0) return []
 
-    return state.activeProjectiles.map((projectile) => (
+    return activeProjectiles.map((projectile) => (
       <Projectile
         key={projectile.id}
         id={projectile.id}
@@ -945,9 +827,9 @@ export default function GameBoard({
         onComplete={onProjectileComplete || (() => {})}
       />
     ))
-  }, [state.activeProjectiles, onProjectileComplete])
+  }, [activeProjectiles, onProjectileComplete])
 
-  // Memoized grid render (perf: batches entities + z-sort only if needed)
+  // Memoized grid render
   const renderGrid = useMemo(() => {
     const gridCells = renderGridCells
     const allEntities = [
@@ -960,7 +842,6 @@ export default function GameBoard({
       renderPlayer,
     ].filter((entity): entity is React.ReactElement => entity !== null)
 
-    // Sort by z-index (perf: only if allEntities changed)
     if (allEntities.length > 1) {
       allEntities.sort((a, b) => {
         const getZIndex = (element: React.ReactElement): number => {
@@ -968,9 +849,7 @@ export default function GameBoard({
           const style = props.style
           if (Array.isArray(style)) {
             for (const s of style) {
-              if (s && typeof s === 'object' && 'zIndex' in s) {
-                return (s as any).zIndex || 0
-              }
+              if (s && typeof s === 'object' && 'zIndex' in s) return (s as any).zIndex || 0
             }
             return 0
           }
@@ -992,7 +871,7 @@ export default function GameBoard({
     renderPlayer,
   ])
 
-  // Tiled background (unchanged; already memoized well)
+  // Tiled background
   const tiledBackground = useMemo(() => {
     const cols = Math.ceil(width / SCALED_TILE_SIZE) + 2
     const rows = Math.ceil(height / SCALED_TILE_SIZE) + 2
@@ -1004,6 +883,7 @@ export default function GameBoard({
       SCALED_TILE_SIZE
     const offsetX = -rawX
     const offsetY = -rawY
+
     const tiles: React.ReactNode[] = []
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -1026,7 +906,14 @@ export default function GameBoard({
       }
     }
     return tiles
-  }, [cameraOffset.offsetX, cameraOffset.offsetY, width, height, SCALED_TILE_SIZE])
+  }, [cameraOffset.offsetX, cameraOffset.offsetY])
+
+  const safeEmptyBoard = useMemo(() => {
+    // If level or objects are missing, render an empty board (but DO NOT early return before hooks)
+    if (!level) return true
+    if (!Array.isArray(levelObjects)) return true
+    return false
+  }, [level, levelObjects])
 
   return (
     <View style={styles.gridContainer}>
@@ -1036,9 +923,9 @@ export default function GameBoard({
       </View>
 
       {/* Game Content */}
-      <View style={styles.gameContent}>{renderGrid}</View>
+      <View style={styles.gameContent}>{safeEmptyBoard ? null : renderGrid}</View>
 
-      {/* Projectiles - render above game content */}
+      {/* Projectiles */}
       {renderProjectiles}
 
       <InfoBox
@@ -1049,40 +936,30 @@ export default function GameBoard({
         ctaLabel={infoData.ctaLabel}
         onCtaPress={infoData.onCtaPress}
         onClose={() => {
+          const id = instanceId.current
           if (__DEV__) {
-            console.log(
-              `📦📦📦 [${instanceId.current}] InfoBox onClose called, setting infoVisible to false`
-            )
-            console.log(`📦📦📦 [${instanceId.current}] infoData.name = "${infoData.name}"`)
+            console.log(`📦📦📦 [${id}] InfoBox onClose called; setting infoVisible=false`)
+            console.log(`📦📦📦 [${id}] infoData.name = "${infoData.name}"`)
           }
           setInfoVisible(false)
-          // If this is the death InfoBox, trigger navigation to death screen
           if (infoData.name === 'DEATH' && onDeathInfoBoxClose) {
-            if (__DEV__) {
-              console.log(
-                `📦📦📦 [${instanceId.current}] This is a DEATH InfoBox, calling onDeathInfoBoxClose()`
-              )
-            }
+            if (__DEV__) console.log(`📦📦📦 [${id}] DEATH InfoBox; calling onDeathInfoBoxClose()`)
             onDeathInfoBoxClose()
           }
         }}
       />
 
-      <CombatDialog
-        visible={combatInfoVisible}
-        messages={combatMessages}
-        onClose={handleCombatDialogClose}
-      />
+      <CombatDialog visible={combatInfoVisible} messages={combatMessages} onClose={handleCombatDialogClose} />
     </View>
   )
 }
 
-// Utility functions (unchanged, but could memoize if called in loops)
+// Utility functions
 const getCellBackgroundColor = (
   isPlayer: boolean,
   hasMonster: Monster | undefined,
-  hasGreatPower: GreatPower | undefined,
-  inCombat: boolean
+  _hasGreatPower: GreatPower | undefined,
+  _inCombat: boolean
 ) => {
   if (isPlayer) return 'rgba(45, 81, 105, 0.4)'
   if (hasMonster) return 'rgba(88, 57, 57, 0.4)'
@@ -1092,8 +969,8 @@ const getCellBackgroundColor = (
 const getCellBorderColor = (
   isPlayer: boolean,
   hasMonster: Monster | undefined,
-  hasGreatPower: GreatPower | undefined,
-  inCombat: boolean
+  _hasGreatPower: GreatPower | undefined,
+  _inCombat: boolean
 ) => {
   if (isPlayer) return 'rgba(84, 124, 255, 0.7)'
   if (hasMonster) return 'rgba(255, 8, 8, 0.6)'
