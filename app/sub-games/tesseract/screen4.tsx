@@ -31,15 +31,19 @@ export default function TesseractScreen4() {
   const router = useRouter()
   const { state, dispatch, signalRpgResume } = useGameContext()
   const [showScrollModal, setShowScrollModal] = useState(false)
+  
+  // Check if this is a return visit (tesseract already completed)
+  const isReturnVisit = state.subGamesCompleted?.['tesseract'] === true
 
   // Add Persius Scroll to inventory on mount (only once)
   useEffect(() => {
     const persiusScrollId = 'persius-scroll'
     const alreadyHasScroll = state.player.inventory.some((item) => item.id === persiusScrollId)
 
-    if (!alreadyHasScroll) {
+    // Only add scroll on first completion, not on return visits
+    if (!alreadyHasScroll && !isReturnVisit) {
       if (__DEV__) {
-        console.log('[Tesseract] Adding Persius Scroll to inventory')
+        console.log('[Tesseract] Adding Persius Scroll to inventory (first completion)')
         console.log('[Tesseract] persiusScroll template:', collectible.persiusScroll)
       }
 
@@ -63,10 +67,15 @@ export default function TesseractScreen4() {
       })
     } else {
       if (__DEV__) {
-        console.log('[Tesseract] Persius Scroll already in inventory')
+        if (alreadyHasScroll) {
+          console.log('[Tesseract] Persius Scroll already in inventory')
+        }
+        if (isReturnVisit) {
+          console.log('[Tesseract] Return visit - not adding scroll again')
+        }
       }
     }
-  }, [dispatch, state.player.inventory])
+  }, [dispatch, state.player.inventory, isReturnVisit])
 
   const handleReadScroll = () => {
     if (__DEV__) {
@@ -80,14 +89,16 @@ export default function TesseractScreen4() {
       console.log('[Tesseract] Returning to Night Land')
     }
 
-    // Mark tesseract puzzle as completed
-    dispatch({
-      type: 'SET_SUB_GAME_COMPLETED',
-      payload: {
-        subGameName: 'tesseract',
-        completed: true,
-      },
-    })
+    // Mark tesseract puzzle as completed (idempotent - safe to call multiple times)
+    if (!isReturnVisit) {
+      dispatch({
+        type: 'SET_SUB_GAME_COMPLETED',
+        payload: {
+          subGameName: 'tesseract',
+          completed: true,
+        },
+      })
+    }
 
     // Signal RPG to refresh
     signalRpgResume()
@@ -101,8 +112,9 @@ export default function TesseractScreen4() {
       <View style={styles.container}>
         <View style={styles.contentArea}>
           <Text style={styles.descriptionText}>
-            Christos successfully spelled TESSERACT.{'\n\n'}A scroll appears at his feet. It is a
-            message from Persius.
+            {isReturnVisit 
+              ? "The stone ruins are silent. The tesseract puzzle has already been solved.\n\nThe scroll from Persius is in your inventory."
+              : "Christos successfully spelled TESSERACT.\n\nA scroll appears at his feet. It is a message from Persius."}
           </Text>
         </View>
 
