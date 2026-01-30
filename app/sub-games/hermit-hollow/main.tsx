@@ -62,6 +62,17 @@ export default function HermitHollowMain() {
       return
     }
 
+    // IMPORTANT: On return visits (when hermit is already completed),
+    // we start at the end node but should NOT re-apply its effects.
+    // The effects were already applied during the first playthrough.
+    if (isHermitConversationCompleted && currentNode.end === true) {
+      if (__DEV__) {
+        console.log('[HermitHollow] Return visit - skipping effects for end node (already applied)')
+      }
+      setAppliedEffectsForNode(currentNodeId)
+      return
+    }
+
     if (currentNode.effects && currentNode.effects.length > 0) {
       if (__DEV__) {
         console.log(
@@ -70,22 +81,72 @@ export default function HermitHollowMain() {
         )
       }
 
+      // Build updated subGamesCompleted object with all effects
+      const updatedSubGamesCompleted = {
+        ...(state.subGamesCompleted || {}),
+      }
+
+      // Track if we need to create a waypoint
+      let shouldCreateWaypoint = false
+
       // Apply each effect
       currentNode.effects.forEach((effect) => {
         // Check if this is the final trance effect
         if (effect === 'hermit_enters_trance') {
+          shouldCreateWaypoint = true
+          updatedSubGamesCompleted[SUB_GAME_NAME] = true
+          
           // Mark sub-game as completed
           dispatch({
             type: 'SET_SUB_GAME_COMPLETED',
             payload: { subGameName: SUB_GAME_NAME, completed: true },
           })
+        }
 
-          // Create waypoint save (replaces any existing waypoint with same name)
-          saveWaypoint(state, WAYPOINT_NAME)
+        // Store other effects as persistent flags in subGamesCompleted
+        // Pattern: Use sub-game name as namespace to avoid collisions
+        // Format: `{sub-game-name}:{effect_flag}`
+        // Example: `hermit-hollow:learned_great_power_exists`
+        // These can be checked later by other systems for quest/lore progression
+        updatedSubGamesCompleted[`${SUB_GAME_NAME}:${effect}`] = true
+        
+        dispatch({
+          type: 'SET_SUB_GAME_COMPLETED',
+          payload: { subGameName: `${SUB_GAME_NAME}:${effect}`, completed: true },
+        })
+      })
+
+      // Create waypoint save with ALL completion flags included
+      // IMPORTANT: We must create an updated state object because dispatch is async
+      // and won't have updated the state yet when saveWaypoint is called
+      // ALSO: Only create the waypoint ONCE - the first time through the conversation
+      if (shouldCreateWaypoint) {
+        // Check if waypoint has already been created
+        const waypointAlreadyCreated = state.waypointSavesCreated?.[WAYPOINT_NAME] === true
+        
+        if (waypointAlreadyCreated) {
+          if (__DEV__) {
+            console.log(`[HermitHollow] Waypoint already created - skipping save: ${WAYPOINT_NAME}`)
+          }
+        } else {
+          // First time completing - create the waypoint
+          const stateWithCompletion = {
+            ...state,
+            subGamesCompleted: updatedSubGamesCompleted,
+          }
+          
+          saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
             .then(() => {
               if (__DEV__) {
-                console.log(`[HermitHollow] Waypoint save created/updated: ${WAYPOINT_NAME}`)
+                console.log(`[HermitHollow] Waypoint save created (FIRST TIME): ${WAYPOINT_NAME}`)
+                console.log(`[HermitHollow] Saved with subGamesCompleted:`, updatedSubGamesCompleted)
               }
+
+              // Mark waypoint as created to prevent future saves
+              dispatch({
+                type: 'SET_WAYPOINT_CREATED',
+                payload: { waypointName: WAYPOINT_NAME },
+              })
 
               // Show toast
               setShowWaypointToast(true)
@@ -111,17 +172,7 @@ export default function HermitHollowMain() {
               console.error('[HermitHollow] Failed to create waypoint save:', err)
             })
         }
-
-        // Store other effects as persistent flags in subGamesCompleted
-        // Pattern: Use sub-game name as namespace to avoid collisions
-        // Format: `{sub-game-name}:{effect_flag}`
-        // Example: `hermit-hollow:learned_great_power_exists`
-        // These can be checked later by other systems for quest/lore progression
-        dispatch({
-          type: 'SET_SUB_GAME_COMPLETED',
-          payload: { subGameName: `${SUB_GAME_NAME}:${effect}`, completed: true },
-        })
-      })
+      }
 
       setAppliedEffectsForNode(currentNodeId)
     }
