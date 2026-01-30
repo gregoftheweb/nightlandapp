@@ -57,9 +57,12 @@ export default function Game() {
     )
     console.log(`🎯🎯🎯 [${instanceId.current}] Initial state player HP:`, state.player?.hp)
     console.log(`🎯🎯🎯 [${instanceId.current}] Initial state moveCount:`, state.moveCount)
+    // Count only actual sub-games (keys without colons are main sub-games)
+    const mainSubGames = Object.keys(state.subGamesCompleted || {}).filter(key => !key.includes(':'))
     console.log(
-      `🎯🎯🎯 [${instanceId.current}] Initial state subGamesCompleted:`,
-      Object.keys(state.subGamesCompleted || {}).length
+      `🎯🎯🎯 [${instanceId.current}] Initial state subGamesCompleted (main):`,
+      mainSubGames.length,
+      mainSubGames
     )
 
     return () => {

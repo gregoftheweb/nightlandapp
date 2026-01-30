@@ -62,6 +62,17 @@ export default function HermitHollowMain() {
       return
     }
 
+    // IMPORTANT: On return visits (when hermit is already completed),
+    // we start at the end node but should NOT re-apply its effects.
+    // The effects were already applied during the first playthrough.
+    if (isHermitConversationCompleted && currentNode.end === true) {
+      if (__DEV__) {
+        console.log('[HermitHollow] Return visit - skipping effects for end node (already applied)')
+      }
+      setAppliedEffectsForNode(currentNodeId)
+      return
+    }
+
     if (currentNode.effects && currentNode.effects.length > 0) {
       if (__DEV__) {
         console.log(
