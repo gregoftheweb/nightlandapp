@@ -620,18 +620,18 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
           newActive = false // Auto-disable when depleted
           logIfDev('[Hide] depleted')
         }
-      }
-
-      // 2. Recharge logic (always recharge when not at max)
-      if (newCharge < 10) {
-        newProgress = hideRechargeProgressTurns + 1
-        if (newProgress >= 3) {
-          newCharge = Math.min(10, newCharge + 1)
-          newProgress = 0
-          logIfDev(`[Hide] recharge tick: charge=${newCharge}`)
-        }
       } else {
-        newProgress = 0 // Reset progress when at max
+        // 2. Recharge logic (only recharge when hide is NOT active)
+        if (newCharge < 10) {
+          newProgress = hideRechargeProgressTurns + 1
+          if (newProgress >= 3) {
+            newCharge = Math.min(10, newCharge + 1)
+            newProgress = 0
+            logIfDev(`[Hide] recharge tick: charge=${newCharge}`)
+          }
+        } else {
+          newProgress = 0 // Reset progress when at max
+        }
       }
 
       return {
