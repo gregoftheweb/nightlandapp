@@ -383,7 +383,7 @@ export interface Projectile {
 
 /**
  * GameState represents the complete state of the game.
- * 
+ *
  * State Domains:
  * - Level: Current level configuration and level-specific data
  * - Player: Player stats, position, inventory, and equipment
@@ -420,7 +420,7 @@ export interface GameState {
   combatLog: CombatLogEntry[] // Combat event log
   maxAttackers: number // Maximum simultaneous attackers
   monstersKilled?: number // Total monsters killed (for stats)
-  
+
   // ===== RANGED COMBAT =====
   rangedAttackMode?: boolean // True when player is in ranged attack targeting mode
   targetedMonsterId?: string | null // ID of the currently targeted monster for ranged attack

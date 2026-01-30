@@ -94,16 +94,19 @@ export async function clearAllSubGameSaves(): Promise<void> {
   try {
     // Get all keys from AsyncStorage
     const allKeys = await AsyncStorage.getAllKeys()
-    
+
     // Filter keys that start with our sub-game prefix
-    const subGameKeys = allKeys.filter(key => key.startsWith(SUB_GAME_STORAGE_PREFIX))
-    
+    const subGameKeys = allKeys.filter((key) => key.startsWith(SUB_GAME_STORAGE_PREFIX))
+
     if (subGameKeys.length > 0) {
       // Remove all sub-game saves
       await AsyncStorage.multiRemove(subGameKeys)
-      
+
       if (__DEV__) {
-        console.log(`[SubGamePersistence] Cleared ${subGameKeys.length} sub-game save(s):`, subGameKeys)
+        console.log(
+          `[SubGamePersistence] Cleared ${subGameKeys.length} sub-game save(s):`,
+          subGameKeys
+        )
       }
     }
   } catch (error) {

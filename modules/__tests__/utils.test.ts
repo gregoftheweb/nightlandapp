@@ -61,7 +61,7 @@ describe('getObjectAtPoint', () => {
     }
 
     return {
-    level: mockLevel,
+      level: mockLevel,
       currentLevelId: '1',
       player: mockPlayer,
       moveCount: 0,
@@ -211,7 +211,7 @@ describe('getObjectAtPoint', () => {
       width: 3,
       height: 3,
       rotation: 0,
-    image: { uri: 'test://image' } as any,
+      image: { uri: 'test://image' } as any,
       zIndex: 0,
       canTap: true,
       active: true,

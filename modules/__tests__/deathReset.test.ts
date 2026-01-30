@@ -1,6 +1,6 @@
 /**
  * Death Reset Tests
- * 
+ *
  * Validates that when a player dies, the game state properly resets to
  * the true default/initial state through the GAME_OVER -> RESET_GAME flow.
  */
@@ -12,7 +12,7 @@ describe('Death Reset System', () => {
   describe('getInitialState', () => {
     test('should create a fresh initial state for level 1', () => {
       const state = getInitialState('1')
-      
+
       expect(state.currentLevelId).toBe('1')
       expect(state.gameOver).toBe(false)
       expect(state.player.hp).toBeGreaterThan(0)
@@ -28,13 +28,13 @@ describe('Death Reset System', () => {
     test('should create fresh state with different references each call', () => {
       const state1 = getInitialState('1')
       const state2 = getInitialState('1')
-      
+
       // Should be equal values but different object references
       // (excluding lastSaved which will have different timestamps)
       expect(state1.currentLevelId).toEqual(state2.currentLevelId)
       expect(state1.player).toEqual(state2.player)
       expect(state1.activeMonsters).toEqual(state2.activeMonsters)
-      
+
       // Object references should be different
       expect(state1).not.toBe(state2)
       expect(state1.player).not.toBe(state2.player)
@@ -43,7 +43,7 @@ describe('Death Reset System', () => {
 
     test('should handle invalid level gracefully', () => {
       const state = getInitialState('invalid-level-99')
-      
+
       // Should fall back to level 1
       expect(state.currentLevelId).toBe('1')
       expect(state.level).toBeDefined()
@@ -149,19 +149,19 @@ describe('Death Reset System', () => {
       expect(resetState.gameOver).toBe(false)
       expect(resetState.gameOverMessage).toBeUndefined()
       expect(resetState.killerName).toBeUndefined()
-      
+
       // Player should be restored
       expect(resetState.player.hp).toBeGreaterThan(0)
       expect(resetState.player.inventory).toEqual([])
-      
+
       // Stats should be reset
       expect(resetState.monstersKilled).toBe(0)
       expect(resetState.distanceTraveled).toBe(0)
       expect(resetState.moveCount).toBe(0)
-      
+
       // Sub-game flags should be reset (fresh run)
       expect(resetState.subGamesCompleted).toEqual({})
-      
+
       // Combat state should be clean
       expect(resetState.inCombat).toBe(false)
       expect(resetState.activeMonsters).toEqual([])
@@ -192,9 +192,7 @@ describe('Death Reset System', () => {
       const dirtyState = getInitialState('1')
       const modifiedState: GameState = {
         ...dirtyState,
-        activeProjectiles: [
-          { id: 'proj1', position: { row: 5, col: 5 } } as any,
-        ],
+        activeProjectiles: [{ id: 'proj1', position: { row: 5, col: 5 } } as any],
         player: {
           ...dirtyState.player,
           isHidden: true,
@@ -239,7 +237,7 @@ describe('Death Reset System', () => {
   describe('State Validation', () => {
     test('validateGameState should pass for valid state', () => {
       const state = getInitialState('1')
-      
+
       // Should not throw
       expect(() => validateGameState(state, 'TEST')).not.toThrow()
     })
@@ -254,7 +252,7 @@ describe('Death Reset System', () => {
 
       expect(consoleErrorSpy).toHaveBeenCalled()
       expect(consoleErrorSpy.mock.calls[0][0]).toContain('validation failed')
-      
+
       consoleErrorSpy.mockRestore()
     })
 
@@ -267,7 +265,7 @@ describe('Death Reset System', () => {
       validateGameState(invalidState, 'TEST')
 
       expect(consoleErrorSpy).toHaveBeenCalled()
-      
+
       consoleErrorSpy.mockRestore()
     })
   })
@@ -308,7 +306,7 @@ describe('Death Reset System', () => {
 
       // 5. State should be fresh and ready for new game
       const freshState = getInitialState('1')
-      
+
       // Compare key fields (excluding lastSaved timestamp)
       expect(state.gameOver).toEqual(freshState.gameOver)
       expect(state.player).toEqual(freshState.player)

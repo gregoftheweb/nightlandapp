@@ -1,10 +1,10 @@
 // modules/autoSave.ts
 /**
  * Autosave Controller
- * 
+ *
  * Manages automatic saving of the current game state with throttling
  * to avoid performance degradation.
- * 
+ *
  * Features:
  * - Throttled saves (max once per 2 seconds)
  * - Dirty flag tracking to avoid unnecessary saves
@@ -24,26 +24,31 @@ const SAVE_THROTTLE_MS = 2000 // Save at most once per 2 seconds
 /**
  * Request an autosave of the current game state.
  * This is throttled and non-blocking.
- * 
+ *
  * @param state - The current game state
  */
 export function requestAutoSave(state: GameState): void {
   // Mark that we have a pending save
   pendingSave = true
-  
+
   if (__DEV__) {
-    console.log('[AutoSave] Save requested, moveCount:', state.moveCount, 'pendingTimeout:', saveTimeout !== null)
+    console.log(
+      '[AutoSave] Save requested, moveCount:',
+      state.moveCount,
+      'pendingTimeout:',
+      saveTimeout !== null
+    )
   }
-  
+
   // If already scheduled, do nothing (the pending flag will trigger a save when the timeout fires)
   if (saveTimeout !== null) {
     return
   }
-  
+
   // Schedule save
   saveTimeout = setTimeout(() => {
     saveTimeout = null
-    
+
     // Only save if we have pending changes and not currently saving
     if (pendingSave && !isSaving) {
       performAutoSave(state)
@@ -54,7 +59,7 @@ export function requestAutoSave(state: GameState): void {
 /**
  * Force an immediate autosave (bypasses throttling).
  * Use sparingly, only for critical moments like level transitions.
- * 
+ *
  * @param state - The current game state
  */
 export async function forceAutoSave(state: GameState): Promise<void> {
@@ -63,7 +68,7 @@ export async function forceAutoSave(state: GameState): Promise<void> {
     clearTimeout(saveTimeout)
     saveTimeout = null
   }
-  
+
   await performAutoSave(state)
 }
 
@@ -78,7 +83,7 @@ async function performAutoSave(state: GameState): Promise<void> {
     }
     return
   }
-  
+
   // Don't save initial state (moveCount=0 means no gameplay has happened yet)
   // This prevents saving a fresh state that would be useless on load
   if (state.moveCount === 0) {
@@ -87,7 +92,7 @@ async function performAutoSave(state: GameState): Promise<void> {
     }
     return
   }
-  
+
   // Prevent overlapping saves
   if (isSaving) {
     if (__DEV__) {
@@ -97,13 +102,13 @@ async function performAutoSave(state: GameState): Promise<void> {
     requestAutoSave(state)
     return
   }
-  
+
   try {
     isSaving = true
     pendingSave = false
-    
+
     await saveCurrentGame(state)
-    
+
     if (__DEV__) {
       console.log('[AutoSave] Game autosaved successfully')
     }

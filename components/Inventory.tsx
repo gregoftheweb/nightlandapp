@@ -88,16 +88,14 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
     })
   }
 
- const getRangedWeapons = () => {
-  const rangedWeaponIds = state.player.rangedWeaponInventoryIds || []
+  const getRangedWeapons = () => {
+    const rangedWeaponIds = state.player.rangedWeaponInventoryIds || []
 
-  return state.weapons.filter(
-    (weapon) =>
-      weapon.weaponType === 'ranged' &&
-      weapon.id != null &&
-      rangedWeaponIds.includes(weapon.id)
-  )
-}
+    return state.weapons.filter(
+      (weapon) =>
+        weapon.weaponType === 'ranged' && weapon.id != null && rangedWeaponIds.includes(weapon.id)
+    )
+  }
   const renderWeaponRow = (weapon: Item, index: number) => {
     const isEquipped = weapon.id === state.player.equippedRangedWeaponId
 

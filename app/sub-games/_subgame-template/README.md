@@ -7,6 +7,7 @@ This directory contains a minimal, copy-pasteable template for creating new sub-
 To create a new sub-game from this template:
 
 1. **Copy the entire `_subgame-template` directory** to a new folder with your sub-game's name:
+
    ```bash
    cp -r app/sub-games/_subgame-template app/sub-games/my-new-puzzle
    ```
@@ -24,17 +25,22 @@ To create a new sub-game from this template:
 When cloning this template, you **must** rename/replace the following:
 
 ### 1. Folder Name
+
 - **Current**: `_subgame-template`
 - **Action**: Rename to your sub-game name in kebab-case (e.g., `crystal-maze`, `ancient-library`)
 
 ### 2. Sub-Game Name Constant
+
 In all `.tsx` files (`index.tsx`, `main.tsx`, `puzzle.tsx`, `success.tsx`):
+
 - **Find**: `const SUB_GAME_NAME = '_subgame-template'`
 - **Replace with**: Your sub-game name in kebab-case (e.g., `'crystal-maze'`)
 - **Used in**: Logging and completion tracking
 
 ### 3. Route Paths
+
 In all navigation calls (`router.replace`, `router.push`):
+
 - **Find**: `/sub-games/_subgame-template/...`
 - **Replace with**: `/sub-games/your-subgame-name/...`
 - **Files to update**:
@@ -43,7 +49,9 @@ In all navigation calls (`router.replace`, `router.push`):
   - `puzzle.tsx` (line 38): `router.push('/sub-games/YOUR-NAME/success' as any)`
 
 ### 4. Background Images
+
 Replace the placeholder image `require()` statements with your own assets:
+
 - **main.tsx** (line 11): `const bgMain = require('@/assets/images/YOUR-IMAGE.png')`
 - **puzzle.tsx** (line 11): `const bgPuzzle = require('@/assets/images/YOUR-IMAGE.png')`
 - **success.tsx** (line 13): `const bgSuccess = require('@/assets/images/YOUR-IMAGE.png')`
@@ -51,12 +59,16 @@ Replace the placeholder image `require()` statements with your own assets:
 Add your background images to `/assets/images/` before updating these paths.
 
 ### 5. Reward Item ID
+
 In `success.tsx`:
+
 - **Find** (line 18): `const REWARD_ITEM_ID = 'template-reward-item'`
 - **Replace with**: Your unique reward item ID (e.g., `'crystal-shard'`, `'ancient-tome'`)
 
 ### 6. Reward Grant Logic
+
 In `success.tsx` (lines 28-60):
+
 - Uncomment and customize the reward dispatch logic
 - Choose the appropriate action type:
   - `ADD_TO_INVENTORY` for collectibles/items
@@ -65,7 +77,9 @@ In `success.tsx` (lines 28-60):
 - Define your reward item properties (name, description, effects, etc.)
 
 ### 7. Placeholder Text
+
 Replace all TODO placeholder content:
+
 - **main.tsx** (line 40): Intro text describing the sub-game scenario
 - **puzzle.tsx** (lines 44-48): Puzzle UI and interaction logic
 - **success.tsx** (lines 101, 104): Success message and reward description
@@ -119,6 +133,7 @@ Edit the level configuration where you want the sub-game to appear (e.g., `/conf
 ### 2. Object Interaction
 
 When the player interacts with this object, the game will:
+
 1. Show an InfoBox with the description and CTA button
 2. When clicked, call `enterSubGame('my-new-puzzle')`
 3. Navigate to `/sub-games/my-new-puzzle/index.tsx`
@@ -130,17 +145,20 @@ When the player interacts with this object, the game will:
 This template follows the established sub-game lifecycle pattern:
 
 ### Entry
+
 1. Player interacts with a game object that has a `subGame` property
 2. `enterSubGame(subGameName)` is called from GameBoard/InfoBox
 3. Routes to `/sub-games/{subGameName}/index.tsx`
 4. Index routes to the main screen
 
 ### During Gameplay
+
 - Use `router.push()` for forward navigation between screens
 - Access `useGameContext()` for shared game state
 - Use `BackgroundImage` and `BottomActionBar` components for consistent UI
 
 ### Exit
+
 1. Call `dispatch({ type: 'SET_SUB_GAME_COMPLETED', payload: { subGameName, completed: true/false } })`
 2. Call `signalRpgResume()` to trigger RPG refresh
 3. Call `exitSubGame({ completed: boolean })` to navigate back to `/game`
@@ -157,6 +175,7 @@ The template uses these shared components from `/app/sub-games/_shared/`:
 - **subGameTheme**: Shared color scheme (red, blue, black)
 
 Import them like this:
+
 ```typescript
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
@@ -168,21 +187,25 @@ import { subGameTheme } from '../_shared/subGameTheme'
 ## Development Tips
 
 ### Logging
+
 - Always wrap `console.log` in `if (__DEV__)` checks
 - Use descriptive prefixes: `[YourSubGameName] Message`
 
 ### Navigation
+
 - Use absolute paths: `/sub-games/your-name/screen`
 - Always use `router.replace()` for index routing
 - Use `router.push()` for forward navigation within the sub-game
 - Use `exitSubGame()` to return to the main game
 
 ### State Management
+
 - Access global game state via `useGameContext()`
 - Dispatch actions to update inventory, completion status, etc.
 - Local screen state can use `useState()` as needed
 
 ### Testing
+
 1. Add your sub-game to a test object in a level
 2. Run the app and navigate to that object
 3. Test the full flow: enter → solve → claim reward → exit

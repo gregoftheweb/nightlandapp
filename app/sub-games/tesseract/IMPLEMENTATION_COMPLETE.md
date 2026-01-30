@@ -97,6 +97,7 @@ Continue playing
     ```
 
   - Modal has "Close" button
+
 - Button 2: "return to the Night Land"
   - Marks tesseract as completed in game state
   - Signals RPG to refresh

@@ -1,10 +1,28 @@
 import React from 'react'
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions, Modal, ScrollView, ActivityIndicator } from 'react-native'
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  TouchableOpacity,
+  Dimensions,
+  Modal,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native'
 import { useRouter } from 'expo-router'
 import { STRINGS } from '../assets/copy/strings'
 import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
 import { useGameContext } from '@/context/GameContext'
-import { hasCurrentGame, loadCurrentGame, deleteCurrentGame, listWaypointSaves, loadWaypoint, WaypointSaveMetadata, debugInspectCurrentSave } from '@/modules/saveGame'
+import {
+  hasCurrentGame,
+  loadCurrentGame,
+  deleteCurrentGame,
+  listWaypointSaves,
+  loadWaypoint,
+  WaypointSaveMetadata,
+  debugInspectCurrentSave,
+} from '@/modules/saveGame'
 import { fromSnapshot } from '@/modules/gameState'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
@@ -12,7 +30,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window')
 export default function SplashScreen() {
   const router = useRouter()
   const { dispatch } = useGameContext()
-  
+
   const [hasCurrentSave, setHasCurrentSave] = React.useState(false)
   const [waypointSaves, setWaypointSaves] = React.useState<WaypointSaveMetadata[]>([])
   const [showWaypointModal, setShowWaypointModal] = React.useState(false)
@@ -21,7 +39,7 @@ export default function SplashScreen() {
   // Check for saves on mount
   React.useEffect(() => {
     checkSaves()
-    
+
     // Debug: inspect current save on mount (development only)
     if (__DEV__) {
       debugInspectCurrentSave()
@@ -31,10 +49,7 @@ export default function SplashScreen() {
   const checkSaves = async () => {
     setIsLoading(true)
     try {
-      const [currentExists, waypoints] = await Promise.all([
-        hasCurrentGame(),
-        listWaypointSaves(),
-      ])
+      const [currentExists, waypoints] = await Promise.all([hasCurrentGame(), listWaypointSaves()])
       setHasCurrentSave(currentExists)
       setWaypointSaves(waypoints)
     } catch (error) {
@@ -63,14 +78,17 @@ export default function SplashScreen() {
         console.error('[SplashScreen] No current save found')
         return
       }
-      
+
       console.log('[SplashScreen] Snapshot loaded successfully')
       console.log('[SplashScreen] Snapshot currentLevelId:', snapshot.currentLevelId)
       console.log('[SplashScreen] Snapshot player position:', snapshot.player?.position)
       console.log('[SplashScreen] Snapshot player HP:', snapshot.player?.hp)
       console.log('[SplashScreen] Snapshot moveCount:', snapshot.moveCount)
-      console.log('[SplashScreen] Snapshot subGamesCompleted:', Object.keys(snapshot.subGamesCompleted || {}).length)
-      
+      console.log(
+        '[SplashScreen] Snapshot subGamesCompleted:',
+        Object.keys(snapshot.subGamesCompleted || {}).length
+      )
+
       // Hydrate game state from snapshot
       const loadedState = fromSnapshot(snapshot)
       console.log('[SplashScreen] State hydrated from snapshot')
@@ -78,14 +96,14 @@ export default function SplashScreen() {
       console.log('[SplashScreen] Loaded state player position:', loadedState.player?.position)
       console.log('[SplashScreen] Loaded state player HP:', loadedState.player?.hp)
       console.log('[SplashScreen] Loaded state moveCount:', loadedState.moveCount)
-      
+
       dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: loadedState } })
       console.log('[SplashScreen] HYDRATE_GAME_STATE dispatched')
-      
+
       // Wait for React to process the state update before navigating
       // This ensures the Game component mounts with the hydrated state
-      await new Promise(resolve => setTimeout(resolve, 50))
-      
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
       // Navigate to game
       router.replace('/game')
       console.log('[SplashScreen] Navigated to /game')
@@ -101,14 +119,14 @@ export default function SplashScreen() {
         console.error('[SplashScreen] Waypoint not found:', waypointId)
         return
       }
-      
+
       // Hydrate game state from snapshot
       const loadedState = fromSnapshot(snapshot)
       dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: loadedState } })
-      
+
       // Only delete current save after successful load and hydration
       await deleteCurrentGame()
-      
+
       // Close modal and navigate to game
       setShowWaypointModal(false)
       router.replace('/game')
@@ -136,7 +154,7 @@ export default function SplashScreen() {
             <TouchableOpacity style={styles.button} onPress={handleNewGame}>
               <Text style={styles.buttonText}>New</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.button, !hasCurrentSave && styles.buttonDisabled]}
               onPress={handleContinue}
@@ -146,13 +164,15 @@ export default function SplashScreen() {
                 Current
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.button, waypointSaves.length === 0 && styles.buttonDisabled]}
               onPress={() => setShowWaypointModal(true)}
               disabled={waypointSaves.length === 0}
             >
-              <Text style={[styles.buttonText, waypointSaves.length === 0 && styles.buttonTextDisabled]}>
+              <Text
+                style={[styles.buttonText, waypointSaves.length === 0 && styles.buttonTextDisabled]}
+              >
                 Saved
               </Text>
             </TouchableOpacity>
@@ -170,7 +190,7 @@ export default function SplashScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Waypoint Saves</Text>
-            
+
             <ScrollView style={styles.savesList}>
               {waypointSaves.map((save) => (
                 <View key={save.id} style={styles.saveItem}>
@@ -192,7 +212,7 @@ export default function SplashScreen() {
                 </View>
               ))}
             </ScrollView>
-            
+
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setShowWaypointModal(false)}

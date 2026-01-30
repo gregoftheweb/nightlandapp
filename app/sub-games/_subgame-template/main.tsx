@@ -52,11 +52,7 @@ export default function SubGameTemplateMain() {
               <Text style={styles.buttonText}>Leave without exploring</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleStartPuzzle}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.button} onPress={handleStartPuzzle} activeOpacity={0.7}>
               <Text style={styles.buttonText}>Investigate</Text>
             </TouchableOpacity>
           </View>

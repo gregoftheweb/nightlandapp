@@ -40,8 +40,8 @@ export default function TesseractScreen3() {
           <View style={styles.contentArea}>
             <Text style={styles.descriptionText}>
               Christos fails to guess the right word.
-              {'\n\n'}
-              A Great Power, a malevolent force of ancient evil rises from the earth to consume Christos&apos; soul in black fire.
+              {'\n\n'}A Great Power, a malevolent force of ancient evil rises from the earth to
+              consume Christos&apos; soul in black fire.
             </Text>
           </View>
 

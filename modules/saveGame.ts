@@ -1,11 +1,11 @@
 // modules/saveGame.ts
 /**
  * Save Game Module
- * 
+ *
  * Handles all save/load operations for the game:
  * - Autosave (current game)
  * - Waypoint saves (hard saves at specific locations)
- * 
+ *
  * Storage Strategy:
  * - Current save: Single slot that gets overwritten on each autosave
  * - Waypoint saves: Multiple indexed saves with metadata
@@ -57,7 +57,7 @@ export async function saveCurrentGame(state: GameState): Promise<void> {
       snapshot,
       savedAt: new Date().toISOString(),
     }
-    
+
     if (__DEV__) {
       console.log('[SaveGame] === SAVING CURRENT GAME ===')
       console.log('[SaveGame] State currentLevelId:', state.currentLevelId)
@@ -68,7 +68,7 @@ export async function saveCurrentGame(state: GameState): Promise<void> {
       console.log('[SaveGame] Included subGames keys:', Object.keys(state.subGamesCompleted || {}))
       console.log('[SaveGame] SubGames detail:', state.subGamesCompleted)
     }
-    
+
     await AsyncStorage.setItem(CURRENT_GAME_KEY, JSON.stringify(savedGame))
     if (__DEV__) {
       console.log('[SaveGame] Current game saved successfully')
@@ -92,15 +92,15 @@ export async function loadCurrentGame(): Promise<GameSnapshot | null> {
       }
       return null
     }
-    
+
     const savedGame: SavedGameV1 = JSON.parse(data)
-    
+
     // Validate version
     if (savedGame.version !== 'v1') {
       console.warn('[SaveGame] Unsupported save version:', savedGame.version)
       return null
     }
-    
+
     if (__DEV__) {
       console.log('[SaveGame] === LOADING CURRENT GAME ===')
       console.log('[SaveGame] Save version:', savedGame.version)
@@ -113,7 +113,7 @@ export async function loadCurrentGame(): Promise<GameSnapshot | null> {
       console.log('[SaveGame] Restored subGames keys:', Object.keys(savedGame.snapshot.subGamesCompleted || {}))
       console.log('[SaveGame] SubGames detail:', savedGame.snapshot.subGamesCompleted)
     }
-    
+
     return savedGame.snapshot
   } catch (error) {
     console.error('[SaveGame] Failed to load current game:', error)
@@ -163,16 +163,19 @@ export async function hasCurrentGame(): Promise<boolean> {
 export async function saveWaypoint(state: GameState, waypointName: string): Promise<string> {
   try {
     const snapshot = toSnapshot(state)
-    
+
     // Check for ALL existing waypoints with the same name and delete them
     const index = await loadWaypointIndex()
-    const existingWaypoints = index.filter(item => item.name === waypointName)
-    
+    const existingWaypoints = index.filter((item) => item.name === waypointName)
+
     if (existingWaypoints.length > 0) {
       if (__DEV__) {
-        console.log(`[SaveGame] Replacing ${existingWaypoints.length} existing waypoint(s):`, waypointName)
+        console.log(
+          `[SaveGame] Replacing ${existingWaypoints.length} existing waypoint(s):`,
+          waypointName
+        )
       }
-      
+
       // Delete ALL old waypoint data
       for (const waypoint of existingWaypoints) {
         const oldWaypointKey = WAYPOINT_ITEM_PREFIX + waypoint.id
@@ -181,16 +184,16 @@ export async function saveWaypoint(state: GameState, waypointName: string): Prom
           console.log('[SaveGame] Deleted waypoint ID:', waypoint.id)
         }
       }
-      
+
       // Remove ALL from index (we'll add the new one below)
-      const filteredIndex = index.filter(item => item.name !== waypointName)
+      const filteredIndex = index.filter((item) => item.name !== waypointName)
       await saveWaypointIndex(filteredIndex)
     }
-    
+
     // Generate unique ID using timestamp and high-precision random
     // Collision probability is virtually zero given timestamp + 9-char random string
     const id = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}-${Math.random().toString(36).substring(2, 11)}`
-    
+
     // Create metadata
     const metadata: WaypointSaveMetadata = {
       id,
@@ -201,26 +204,26 @@ export async function saveWaypoint(state: GameState, waypointName: string): Prom
       playerHP: state.player.hp,
       playerMaxHP: state.player.maxHP,
     }
-    
+
     // Create full record
     const record: WaypointSaveRecord = {
       ...metadata,
       snapshot,
     }
-    
+
     // Save the waypoint data
     const waypointKey = WAYPOINT_ITEM_PREFIX + id
     await AsyncStorage.setItem(waypointKey, JSON.stringify(record))
-    
+
     // Update index with new waypoint
     const updatedIndex = await loadWaypointIndex()
     updatedIndex.push(metadata)
     await saveWaypointIndex(updatedIndex)
-    
+
     if (__DEV__) {
       console.log('[SaveGame] Waypoint saved:', waypointName, 'ID:', id)
     }
-    
+
     return id
   } catch (error) {
     console.error('[SaveGame] Failed to save waypoint:', error)
@@ -236,18 +239,18 @@ export async function loadWaypoint(id: string): Promise<GameSnapshot | null> {
   try {
     const waypointKey = WAYPOINT_ITEM_PREFIX + id
     const data = await AsyncStorage.getItem(waypointKey)
-    
+
     if (!data) {
       console.warn('[SaveGame] Waypoint not found:', id)
       return null
     }
-    
+
     const record: WaypointSaveRecord = JSON.parse(data)
-    
+
     if (__DEV__) {
       console.log('[SaveGame] Waypoint loaded:', record.name, 'ID:', id)
     }
-    
+
     return record.snapshot
   } catch (error) {
     console.error('[SaveGame] Failed to load waypoint:', error)
@@ -262,11 +265,11 @@ export async function loadWaypoint(id: string): Promise<GameSnapshot | null> {
 export async function listWaypointSaves(): Promise<WaypointSaveMetadata[]> {
   try {
     const index = await loadWaypointIndex()
-    
+
     if (__DEV__) {
       console.log('[SaveGame] Listed', index.length, 'waypoint saves')
     }
-    
+
     return index
   } catch (error) {
     console.error('[SaveGame] Failed to list waypoint saves:', error)
@@ -282,12 +285,12 @@ export async function deleteWaypoint(id: string): Promise<void> {
     // Delete the waypoint data
     const waypointKey = WAYPOINT_ITEM_PREFIX + id
     await AsyncStorage.removeItem(waypointKey)
-    
+
     // Update index
     const index = await loadWaypointIndex()
     const newIndex = index.filter((item) => item.id !== id)
     await saveWaypointIndex(newIndex)
-    
+
     if (__DEV__) {
       console.log('[SaveGame] Waypoint deleted:', id)
     }
@@ -303,16 +306,16 @@ export async function deleteWaypoint(id: string): Promise<void> {
 export async function deleteAllWaypointSaves(): Promise<void> {
   try {
     const index = await loadWaypointIndex()
-    
+
     // Delete all waypoint items
     for (const item of index) {
       const waypointKey = WAYPOINT_ITEM_PREFIX + item.id
       await AsyncStorage.removeItem(waypointKey)
     }
-    
+
     // Clear index
     await saveWaypointIndex([])
-    
+
     if (__DEV__) {
       console.log('[SaveGame] All waypoint saves deleted')
     }
@@ -327,29 +330,32 @@ export async function deleteAllWaypointSaves(): Promise<void> {
  */
 export async function debugInspectCurrentSave(): Promise<void> {
   if (!__DEV__) return
-  
+
   try {
     console.log('[SaveGame] ===== DEBUG INSPECT CURRENT SAVE =====')
     const data = await AsyncStorage.getItem(CURRENT_GAME_KEY)
-    
+
     if (!data) {
       console.log('[SaveGame] No save found in storage')
       return
     }
-    
+
     const parsed = JSON.parse(data)
     console.log('[SaveGame] Save exists!')
     console.log('[SaveGame] Version:', parsed.version)
     console.log('[SaveGame] Saved at:', parsed.savedAt)
-    
+
     if (parsed.snapshot) {
       console.log('[SaveGame] Snapshot currentLevelId:', parsed.snapshot.currentLevelId)
       console.log('[SaveGame] Snapshot moveCount:', parsed.snapshot.moveCount)
       console.log('[SaveGame] Snapshot player position:', parsed.snapshot.player?.position)
       console.log('[SaveGame] Snapshot player HP:', parsed.snapshot.player?.hp)
-      console.log('[SaveGame] Snapshot subGamesCompleted keys:', Object.keys(parsed.snapshot.subGamesCompleted || {}))
+      console.log(
+        '[SaveGame] Snapshot subGamesCompleted keys:',
+        Object.keys(parsed.snapshot.subGamesCompleted || {})
+      )
     }
-    
+
     console.log('[SaveGame] Raw save data length:', data.length)
     console.log('[SaveGame] ===== END DEBUG INSPECT =====')
   } catch (error) {

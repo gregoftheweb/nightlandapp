@@ -379,7 +379,6 @@ export default function GameBoard({
   )
 
   const handleCombatDialogClose = useCallback(() => {
-   
     setCombatInfoVisible(false)
   }, [])
 

@@ -40,19 +40,28 @@ export default function Game() {
 
   // Generate unique instance ID for this component
   const instanceId = useRef(`Game-${Math.random().toString(36).substr(2, 9)}`)
-  
+
   // Prevent multiple death navigations from the same instance
   const isNavigatingToDeath = useRef(false)
 
   // Log component lifecycle
   useEffect(() => {
     console.log(`🎯🎯🎯 [${instanceId.current}] Game component MOUNTED`)
-    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state currentLevelId:`, state.currentLevelId)
-    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state player position:`, state.player?.position)
+    console.log(
+      `🎯🎯🎯 [${instanceId.current}] Initial state currentLevelId:`,
+      state.currentLevelId
+    )
+    console.log(
+      `🎯🎯🎯 [${instanceId.current}] Initial state player position:`,
+      state.player?.position
+    )
     console.log(`🎯🎯🎯 [${instanceId.current}] Initial state player HP:`, state.player?.hp)
     console.log(`🎯🎯🎯 [${instanceId.current}] Initial state moveCount:`, state.moveCount)
-    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state subGamesCompleted:`, Object.keys(state.subGamesCompleted || {}).length)
-    
+    console.log(
+      `🎯🎯🎯 [${instanceId.current}] Initial state subGamesCompleted:`,
+      Object.keys(state.subGamesCompleted || {}).length
+    )
+
     return () => {
       console.log(`🎯🎯🎯 [${instanceId.current}] Game component UNMOUNTED`)
       // Reset navigation guard on unmount
@@ -116,7 +125,9 @@ export default function Game() {
     if (!state.gameOver) return
 
     if (__DEV__) {
-      console.log(`🔴🔴🔴 [${instanceId.current}] Game Over detected - gameOver state changed to true`)
+      console.log(
+        `🔴🔴🔴 [${instanceId.current}] Game Over detected - gameOver state changed to true`
+      )
     }
     audioManager.pauseBackgroundMusic()
   }, [state.gameOver])
@@ -865,15 +876,19 @@ export default function Game() {
     // Guard against multiple navigation calls
     if (isNavigatingToDeath.current) {
       if (__DEV__) {
-        console.log(`💀💀💀 [${instanceId.current}] Death navigation already in progress, ignoring duplicate call`)
+        console.log(
+          `💀💀💀 [${instanceId.current}] Death navigation already in progress, ignoring duplicate call`
+        )
       }
       return
     }
-    
+
     isNavigatingToDeath.current = true
-    
+
     if (__DEV__) {
-      console.log(`💀💀💀 [${instanceId.current}] Death InfoBox closed, navigating to death screen immediately`)
+      console.log(
+        `💀💀💀 [${instanceId.current}] Death InfoBox closed, navigating to death screen immediately`
+      )
     }
     router.replace('/death')
   }, [router])
