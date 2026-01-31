@@ -94,7 +94,11 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         </View>
 
         {/* Zap Button */}
-        <TouchableOpacity style={styles.zapButton} onPress={handleZapPress} activeOpacity={0.7}>
+        <TouchableOpacity 
+          style={hideUnlocked ? styles.zapButtonExpanded : styles.zapButton} 
+          onPress={handleZapPress} 
+          activeOpacity={0.7}
+        >
           <Image source={zapButtonIMG} style={styles.zapButtonImage} />
         </TouchableOpacity>
 
@@ -261,6 +265,14 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
 
+  // Zap button when hide is unlocked - moved closer to center
+  zapButtonExpanded: {
+    position: 'absolute',
+    bottom: 15,
+    left: 130,
+    zIndex: 20,
+  },
+
   zapButtonImage: {
     width: 40,
     height: 40,
@@ -280,11 +292,11 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 
-  // Hide button (between Turn and Zap)
+  // Hide button (aligned with Zap button)
   hideButtonContainer: {
     position: 'absolute',
     bottom: 15,
-    left: 40,
+    left: 80,
     zIndex: 20,
     alignItems: 'center',
   },
@@ -321,9 +333,12 @@ const styles = StyleSheet.create({
 
   // Charge meter below hide button
   chargeMeter: {
+    position: 'absolute',
+    bottom: -8,
+    left: 0,
     flexDirection: 'row',
-    marginTop: 2,
     gap: 1,
+    zIndex: 25, // Above the hide button
   },
 
   chargeTick: {
