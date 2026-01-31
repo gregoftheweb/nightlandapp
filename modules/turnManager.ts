@@ -132,6 +132,12 @@ const doTurnCleanup = (): void => {
     logIfDev('Christos is hidden')
   }
 
+  // Update hide ability state (charge consumption and recharge)
+  if (currentGameState.player.hideUnlocked) {
+    gameDispatch({ type: 'UPDATE_HIDE_STATE' })
+    // Note: Current state will be updated by dispatcher
+  }
+
   // Apply self-healing if configured for the current level
   const turnsPerHitPoint = currentGameState.level.turnsPerHitPoint
   if (turnsPerHitPoint && turnsPerHitPoint > 0) {

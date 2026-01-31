@@ -520,6 +520,59 @@ const executeShowMessageEffect = (effect: Effect, context: EffectContext): Effec
   }
 }
 
+/**
+ * UNLOCK HIDE ABILITY EFFECT
+ * Unlocks the hide ability for the player and grants initial charge.
+ * This is a one-time effect granted by the Hermit in hermit-hollow.
+ *
+ * Behavior:
+ * - Sets hideUnlocked to true
+ * - Grants full charge (10 turns)
+ * - Does not activate the ability (player must toggle it)
+ */
+const executeUnlockHideAbilityEffect = (
+  effect: Effect,
+  context: EffectContext
+): EffectResult => {
+  const { state, dispatch, showDialog } = context
+
+  logIfDev('🎁 Executing unlock_hide_ability effect')
+
+  // Check if already unlocked
+  if (state.player.hideUnlocked) {
+    logIfDev('Hide ability already unlocked, skipping')
+    return {
+      success: false,
+      message: 'You already possess this ability.',
+      consumeItem: false,
+    }
+  }
+
+  // Unlock the ability with full charge
+  dispatch({
+    type: 'UPDATE_PLAYER',
+    payload: {
+      updates: {
+        hideUnlocked: true,
+        hideChargeTurns: 10, // Start with full charge
+        hideActive: false,
+        hideRechargeProgressTurns: 0,
+      },
+    },
+  })
+
+  const message = 'You have gained the power to Hide!'
+  showDialog?.(message, 3000)
+
+  logIfDev('✅ Hide ability unlocked with 10 charges')
+
+  return {
+    success: true,
+    message,
+    consumeItem: false,
+  }
+}
+
 // ==================== EFFECT HANDLER REGISTRY ====================
 
 /**
@@ -537,6 +590,7 @@ const EFFECT_HANDLERS: Record<string, EffectHandler> = {
   soulsuck: executeSoulsuckEffect,
   poison: executePoisonEffect,
   showMessage: executeShowMessageEffect,
+  unlock_hide_ability: executeUnlockHideAbilityEffect,
   // Add new effect handlers here as they are implemented
 }
 

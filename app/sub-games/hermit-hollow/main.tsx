@@ -9,6 +9,8 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { HERMIT_DIALOGUE, DialogueNode } from './dialogue'
 import { saveWaypoint } from '@/modules/saveGame'
+import { applyEffect } from '@/modules/effects'
+import { Effect } from '@/config/types'
 
 const bgHermit = require('@/assets/images/hermit-screen1.png')
 const SUB_GAME_NAME = 'hermit-hollow'
@@ -100,6 +102,28 @@ export default function HermitHollowMain() {
           dispatch({
             type: 'SET_SUB_GAME_COMPLETED',
             payload: { subGameName: SUB_GAME_NAME, completed: true },
+          })
+        }
+
+        // Execute the effect through the effects system if it has a handler
+        // This handles effects like unlock_hide_ability that modify player state
+        if (effect === 'unlock_hide_ability') {
+          if (__DEV__) {
+            console.log(`[HermitHollow] Executing effect handler: ${effect}`)
+          }
+          
+          // Create an Effect object for the applyEffect function
+          const effectObj: Effect = {
+            type: effect,
+          }
+          
+          // Execute the effect
+          applyEffect(effectObj, {
+            state,
+            dispatch,
+            sourceType: 'system',
+            sourceId: SUB_GAME_NAME,
+            trigger: 'onInteract',
           })
         }
 

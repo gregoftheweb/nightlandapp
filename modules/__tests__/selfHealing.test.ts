@@ -57,6 +57,11 @@ describe('Self-Healing Mechanic', () => {
       maxWeaponsSize: 4,
       soulKey: '000000',
       moveSpeed: 1,
+      // Hide ability state
+      hideUnlocked: false,
+      hideChargeTurns: 0,
+      hideActive: false,
+      hideRechargeProgressTurns: 0,
     }
 
     return {

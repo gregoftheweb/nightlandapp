@@ -15,6 +15,7 @@ import turnButtonIMG from '@assets/images/buttonTurn.png'
 import attackButtonIMG from '@assets/images/buttonAttack.png'
 import inventoryButtonIMG from '@assets/images/buttonInventory.png'
 import zapButtonIMG from '@assets/images/buttonZap.png'
+import hideButtonIMG from '@assets/images/buttonHide.png'
 
 interface PlayerHUDProps {
   hp: number
@@ -25,6 +26,11 @@ interface PlayerHUDProps {
   onAttackPress?: () => void
   onInventoryPress?: () => void // New prop for inventory
   onZapPress?: () => void // New prop for zap button
+  onHidePress?: () => void // New prop for hide button
+  // Hide ability state
+  hideUnlocked?: boolean
+  hideChargeTurns?: number
+  hideActive?: boolean
 }
 
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
@@ -36,6 +42,10 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onAttackPress,
   onInventoryPress, // New prop
   onZapPress, // New prop
+  onHidePress, // New prop
+  hideUnlocked = false,
+  hideChargeTurns = 0,
+  hideActive = false,
 }) => {
   const insets = useSafeAreaInsets()
 
@@ -64,13 +74,18 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
     onZapPress?.()
   }
 
+  const handleHidePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    event.stopPropagation()
+    onHidePress?.()
+  }
+
   return (
     <View
       style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
       pointerEvents="box-none"
     >
-      <View style={styles.hudFrame} pointerEvents="box-none">
-        <View style={styles.statusBar} pointerEvents="box-none">
+      <View style={hideUnlocked ? styles.hudFrameExpanded : styles.hudFrame} pointerEvents="box-none">
+        <View style={hideUnlocked ? styles.statusBarExpanded : styles.statusBar} pointerEvents="box-none">
           <Text style={styles.hpText}>HP: {hp}</Text>
 
           <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
@@ -79,9 +94,50 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         </View>
 
         {/* Zap Button */}
-        <TouchableOpacity style={styles.zapButton} onPress={handleZapPress} activeOpacity={0.7}>
+        <TouchableOpacity 
+          style={hideUnlocked ? styles.zapButtonExpanded : styles.zapButton} 
+          onPress={handleZapPress} 
+          activeOpacity={0.7}
+        >
           <Image source={zapButtonIMG} style={styles.zapButtonImage} />
         </TouchableOpacity>
+
+        {/* Hide Button - only show if unlocked */}
+        {hideUnlocked && (
+          <View style={styles.hideButtonContainer}>
+            {/* Background indicator - shows through the H */}
+            {hideActive && <View style={styles.hideActiveBackground} />}
+            <TouchableOpacity
+              style={[
+                styles.hideButton,
+                hideChargeTurns === 0 && styles.hideButtonDepleted,
+              ]}
+              onPress={handleHidePress}
+              activeOpacity={0.7}
+              disabled={hideChargeTurns === 0 && !hideActive}
+            >
+              <Image
+                source={hideButtonIMG}
+                style={[
+                  styles.hideButtonImage,
+                  hideChargeTurns === 0 && styles.hideButtonImageDepleted,
+                ]}
+              />
+            </TouchableOpacity>
+            {/* Charge meter */}
+            <View style={styles.chargeMeter}>
+              {Array.from({ length: 10 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.chargeTick,
+                    i < hideChargeTurns && styles.chargeTickFilled,
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Center Turn/Attack */}
         <TouchableOpacity style={styles.turnButton} onPress={handleActionPress} activeOpacity={0.7}>
@@ -93,7 +149,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
         {/* Inventory Button */}
         <TouchableOpacity
-          style={styles.inventoryButton}
+          style={hideUnlocked ? styles.inventoryButtonExpanded : styles.inventoryButton}
           onPress={handleInventoryPress}
           activeOpacity={0.7}
         >
@@ -104,7 +160,8 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   )
 }
 
-const HUD_WIDTH = 350 // your long bar width (tweak once)
+const HUD_WIDTH = 350 // Standard bar width
+const HUD_WIDTH_EXPANDED = 420 // Expanded bar width when hide button is unlocked
 
 const styles = StyleSheet.create({
   container: {
@@ -125,9 +182,33 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
   },
 
+  // Expanded frame when hide button is unlocked
+  hudFrameExpanded: {
+    width: HUD_WIDTH_EXPANDED,
+    position: 'relative',
+    alignItems: 'center',
+    pointerEvents: 'box-none',
+  },
+
   // Your existing bar (the only bar)
   statusBar: {
     width: HUD_WIDTH, // <-- make the bar wide enough
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#990000',
+    marginBottom: 10,
+    zIndex: 15,
+  },
+
+  // Expanded status bar when hide button is unlocked
+  statusBarExpanded: {
+    width: HUD_WIDTH_EXPANDED,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -184,6 +265,14 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
 
+  // Zap button when hide is unlocked - moved closer to center
+  zapButtonExpanded: {
+    position: 'absolute',
+    bottom: 15,
+    left: 130,
+    zIndex: 20,
+  },
+
   zapButtonImage: {
     width: 40,
     height: 40,
@@ -197,10 +286,78 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
 
+  // Inventory button when hide is unlocked - moved left to mirror zap movement
+  inventoryButtonExpanded: {
+    position: 'absolute',
+    bottom: 15,
+    right: 122,
+    zIndex: 20,
+  },
+
   inventoryButtonImage: {
     width: 40,
     height: 40,
     resizeMode: 'contain',
+  },
+
+  // Hide button (aligned with Zap button)
+  hideButtonContainer: {
+    position: 'absolute',
+    bottom: 15,
+    left: 80,
+    zIndex: 20,
+    alignItems: 'center',
+  },
+
+  // Background indicator that shows through the H
+  hideActiveBackground: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    backgroundColor: '#00aa00',
+    borderRadius: 20,
+    zIndex: 19,
+  },
+
+  hideButton: {
+    width: 40,
+    height: 40,
+    zIndex: 21,
+  },
+
+  hideButtonDepleted: {
+    opacity: 0.4,
+  },
+
+  hideButtonImage: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+  },
+
+  hideButtonImageDepleted: {
+    opacity: 0.5,
+  },
+
+  // Charge meter below hide button
+  chargeMeter: {
+    position: 'absolute',
+    bottom: -8,
+    left: 0,
+    flexDirection: 'row',
+    gap: 1,
+    zIndex: 25, // Above the hide button
+  },
+
+  chargeTick: {
+    width: 3,
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 1,
+  },
+
+  chargeTickFilled: {
+    backgroundColor: '#888888', // Changed from bright green to gray
   },
 })
 
