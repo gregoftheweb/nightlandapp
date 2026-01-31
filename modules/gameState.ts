@@ -198,6 +198,22 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
     waypointSavesCreated: snapshot.waypointSavesCreated || {},
   }
 
+  // MIGRATION: Fix hide ability if flag is set but player state isn't
+  // This fixes saves from before the effect handler was properly called
+  if (
+    result.subGamesCompleted?.['hermit-hollow:unlock_hide_ability'] === true &&
+    !result.player?.hideUnlocked
+  ) {
+    logIfDev('🔧 MIGRATION: Fixing hide ability unlock from flag')
+    result.player = {
+      ...result.player,
+      hideUnlocked: true,
+      hideChargeTurns: 10,
+      hideActive: false,
+      hideRechargeProgressTurns: 0,
+    }
+  }
+
   logIfDev(`💾 Result currentLevelId: ${result.currentLevelId}`)
   logIfDev(`💾 Result player position: ${JSON.stringify(result.player?.position)}`)
   logIfDev(`💾 Result moveCount: ${result.moveCount}`)
