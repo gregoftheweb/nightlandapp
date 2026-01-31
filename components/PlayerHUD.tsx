@@ -149,7 +149,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
         {/* Inventory Button */}
         <TouchableOpacity
-          style={styles.inventoryButton}
+          style={hideUnlocked ? styles.inventoryButtonExpanded : styles.inventoryButton}
           onPress={handleInventoryPress}
           activeOpacity={0.7}
         >
@@ -283,6 +283,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 15,
     right: 72,
+    zIndex: 20,
+  },
+
+  // Inventory button when hide is unlocked - moved left to mirror zap movement
+  inventoryButtonExpanded: {
+    position: 'absolute',
+    bottom: 15,
+    right: 122,
     zIndex: 20,
   },
 
