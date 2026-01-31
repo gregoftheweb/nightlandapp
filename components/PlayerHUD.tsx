@@ -84,8 +84,8 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
       style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
       pointerEvents="box-none"
     >
-      <View style={styles.hudFrame} pointerEvents="box-none">
-        <View style={styles.statusBar} pointerEvents="box-none">
+      <View style={hideUnlocked ? styles.hudFrameExpanded : styles.hudFrame} pointerEvents="box-none">
+        <View style={hideUnlocked ? styles.statusBarExpanded : styles.statusBar} pointerEvents="box-none">
           <Text style={styles.hpText}>HP: {hp}</Text>
 
           <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
@@ -101,10 +101,11 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         {/* Hide Button - only show if unlocked */}
         {hideUnlocked && (
           <View style={styles.hideButtonContainer}>
+            {/* Background indicator - shows through the H */}
+            {hideActive && <View style={styles.hideActiveBackground} />}
             <TouchableOpacity
               style={[
                 styles.hideButton,
-                hideActive && styles.hideButtonActive,
                 hideChargeTurns === 0 && styles.hideButtonDepleted,
               ]}
               onPress={handleHidePress}
@@ -155,7 +156,8 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   )
 }
 
-const HUD_WIDTH = 350 // your long bar width (tweak once)
+const HUD_WIDTH = 350 // Standard bar width
+const HUD_WIDTH_EXPANDED = 420 // Expanded bar width when hide button is unlocked
 
 const styles = StyleSheet.create({
   container: {
@@ -176,9 +178,33 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
   },
 
+  // Expanded frame when hide button is unlocked
+  hudFrameExpanded: {
+    width: HUD_WIDTH_EXPANDED,
+    position: 'relative',
+    alignItems: 'center',
+    pointerEvents: 'box-none',
+  },
+
   // Your existing bar (the only bar)
   statusBar: {
     width: HUD_WIDTH, // <-- make the bar wide enough
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#990000',
+    marginBottom: 10,
+    zIndex: 15,
+  },
+
+  // Expanded status bar when hide button is unlocked
+  statusBarExpanded: {
+    width: HUD_WIDTH_EXPANDED,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -263,15 +289,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  // Background indicator that shows through the H
+  hideActiveBackground: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    backgroundColor: '#00aa00',
+    borderRadius: 20,
+    zIndex: 19,
+  },
+
   hideButton: {
     width: 40,
     height: 40,
-  },
-
-  hideButtonActive: {
-    borderWidth: 2,
-    borderColor: '#00aa00',
-    borderRadius: 20,
+    zIndex: 21,
   },
 
   hideButtonDepleted: {
@@ -303,7 +334,7 @@ const styles = StyleSheet.create({
   },
 
   chargeTickFilled: {
-    backgroundColor: '#00aa00',
+    backgroundColor: '#888888', // Changed from bright green to gray
   },
 })
 

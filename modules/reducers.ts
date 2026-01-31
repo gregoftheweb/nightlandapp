@@ -624,7 +624,7 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
         // 2. Recharge logic (only recharge when hide is NOT active)
         if (newCharge < 10) {
           newProgress = hideRechargeProgressTurns + 1
-          if (newProgress >= 3) {
+          if (newProgress >= 5) {
             newCharge = Math.min(10, newCharge + 1)
             newProgress = 0
             logIfDev(`[Hide] recharge tick: charge=${newCharge}`)
