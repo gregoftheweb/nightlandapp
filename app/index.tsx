@@ -24,6 +24,7 @@ import {
   debugInspectCurrentSave,
 } from '@/modules/saveGame'
 import { fromSnapshot } from '@/modules/gameState'
+import { clearAllSubGameSaves } from './sub-games/_shared/persistence'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -61,8 +62,15 @@ export default function SplashScreen() {
 
   const handleNewGame = async () => {
     try {
+      // Reset game state to initial state
+      dispatch({ type: 'RESET_GAME' })
+      
+      // Clear all sub-game puzzle saves (aerowreck, tesseract, etc.)
+      await clearAllSubGameSaves()
+      
       // Delete current save
       await deleteCurrentGame()
+      
       // Navigate to princess intro (standard new game flow)
       router.replace('/princess')
     } catch (error) {
