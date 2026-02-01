@@ -39,6 +39,13 @@ export function BackgroundImage({
     if (__DEV__) console.log('[BackgroundImage] locked size', { width, height })
   }
 
+  // Determine if we're in portrait mode (height > width)
+  const isPortrait = size ? size.h > size.w : false
+
+  // For portrait screens, use 'contain' to respect full width and center vertically
+  // For square/landscape screens, keep using the foregroundFit prop (default 'cover')
+  const effectiveResizeMode = isPortrait ? 'contain' : foregroundFit
+
   const fillLocked = size
     ? { position: 'absolute' as const, left: 0, top: 0, width: size.w, height: size.h }
     : styles.fill
@@ -51,7 +58,7 @@ export function BackgroundImage({
         <Image
           source={source}
           style={fillLocked}
-          resizeMode={foregroundFit}
+          resizeMode={effectiveResizeMode}
           fadeDuration={0}
           onLoadEnd={() => {
             if (__DEV__) console.log('[BackgroundImage] foreground loaded')
