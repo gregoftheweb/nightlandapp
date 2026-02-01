@@ -40,6 +40,7 @@ export function BackgroundImage({
   }
 
   // Determine if we're in portrait mode (height > width)
+  // Default to false before layout completes - will use foregroundFit prop initially
   const isPortrait = size ? size.h > size.w : false
 
   // For portrait screens, use 'contain' to respect full width and center vertically
