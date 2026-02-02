@@ -11,6 +11,7 @@ import {
   Animated,
 } from 'react-native'
 import { audioManager } from '../modules/audioManager'
+import { settingsManager } from '../modules/settingsManager'
 
 const { width, height } = Dimensions.get('window')
 
@@ -72,11 +73,13 @@ function ModernToggle({ value, onToggle, label }: ToggleProps) {
 
 export default function Settings({ visible, onClose }: SettingsProps) {
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(audioManager.getIsEnabled())
+  const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
 
   // Update local state when modal becomes visible
   useEffect(() => {
     if (visible) {
       setBackgroundMusicEnabled(audioManager.getIsEnabled())
+      setShowCoordinates(settingsManager.getShowCoordinates())
     }
   }, [visible])
 
@@ -88,6 +91,11 @@ export default function Settings({ visible, onClose }: SettingsProps) {
   const handleBackgroundMusicToggle = (enabled: boolean) => {
     setBackgroundMusicEnabled(enabled)
     audioManager.setEnabled(enabled)
+  }
+
+  const handleShowCoordinatesToggle = (enabled: boolean) => {
+    setShowCoordinates(enabled)
+    settingsManager.setShowCoordinates(enabled)
   }
 
   return (
@@ -111,6 +119,14 @@ export default function Settings({ visible, onClose }: SettingsProps) {
                 value={backgroundMusicEnabled}
                 onToggle={handleBackgroundMusicToggle}
                 label="Background Music"
+              />
+            </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Display</Text>
+              <ModernToggle
+                value={showCoordinates}
+                onToggle={handleShowCoordinatesToggle}
+                label="Show Coordinates"
               />
             </View>
           </View>

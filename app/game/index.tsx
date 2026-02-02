@@ -17,6 +17,7 @@ import {
 } from '../../modules/turnManager'
 import { Monster, LevelObjectInstance, Item, GreatPower, NonCollisionObject } from '@/config/types'
 import { audioManager } from '../../modules/audioManager'
+import { settingsManager } from '../../modules/settingsManager'
 import { UI_CONSTANTS, TIMING_CONSTANTS, COMBAT_CONSTANTS } from '../../constants/Game'
 import { findNearestMonster } from '../../modules/monsterUtils'
 import {
@@ -36,6 +37,7 @@ export default function Game() {
   const [settingsVisible, setSettingsVisible] = useState(false)
   const [inventoryVisible, setInventoryVisible] = useState(false)
   const [targetId, setTargetId] = useState<string | undefined>()
+  const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
   const router = useRouter()
 
   // Generate unique instance ID for this component
@@ -621,6 +623,7 @@ export default function Game() {
 
   const handleCloseSettings = useCallback(() => {
     setSettingsVisible(false)
+    setShowCoordinates(settingsManager.getShowCoordinates())
   }, [])
 
   const handleInventoryPress = useCallback(() => {
@@ -947,7 +950,9 @@ export default function Game() {
           onShowInfoRef={showInfoRef}
           onCloseInfoRef={closeInfoRef}
         />
-        <PositionDisplay position={state.player.position} level={state.level} />
+        {showCoordinates && (
+          <PositionDisplay position={state.player.position} level={state.level} />
+        )}
         <PlayerHUD
           hp={state.player.hp}
           maxHP={state.player.maxHP}

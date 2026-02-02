@@ -8,6 +8,7 @@ import { createInitialGameState, serializeGameState } from '../modules/gameState
 import { GameProvider } from '../context/GameContext'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { audioManager } from '../modules/audioManager'
+import { settingsManager } from '../modules/settingsManager'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -62,6 +63,20 @@ export default function Layout() {
     return () => {
       audioManager.cleanup()
     }
+  }, [])
+
+  // Initialize settings system
+  useEffect(() => {
+    const initSettings = async () => {
+      try {
+        await settingsManager.initialize()
+        console.log('Settings system initialized')
+      } catch (error) {
+        console.error('Failed to initialize settings system:', error)
+      }
+    }
+
+    initSettings()
   }, [])
 
   // Android immersive mode and status bar handling
