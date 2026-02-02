@@ -309,11 +309,11 @@ describe('Unified Effects System', () => {
 
   // ==================== CLOAKING EFFECT TESTS ====================
 
-  describe('hide Effect', () => {
+  describe('Cloaking Effect', () => {
     test('should set player to hidden with duration', () => {
       const state = createMockGameState()
       const cloakingEffect: Effect = {
-        type: 'hide',
+        type: 'cloaking',
         duration: 5,
       }
 
@@ -343,7 +343,7 @@ describe('Unified Effects System', () => {
     test('should use default duration if not specified', () => {
       const state = createMockGameState()
       const cloakingEffect: Effect = {
-        type: 'hide',
+        type: 'cloaking',
         // no duration specified
       }
 

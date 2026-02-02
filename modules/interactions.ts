@@ -187,8 +187,6 @@ export const checkObjectInteractions = (
   // Handle collisions
   if (collidingObject) {
     handleObjectEffects(collidingObject.data, state, dispatch, playerPos)
-  } else {
-    dispatch({ type: 'CLEAR_HIDE' })
   }
 
   if (collidingGreatPower) {
@@ -199,6 +197,11 @@ export const checkObjectInteractions = (
     // Get the parent object from the entity data
     const obj = collidingNonCollisionObject.data as NonCollisionObject
     handleNonCollisionObjectEffects(obj, state, dispatch, playerPos)
+  }
+
+  // Only clear hide if player is not on any object with hide effects
+  if (!collidingObject && !collidingNonCollisionObject) {
+    dispatch({ type: 'CLEAR_HIDE' })
   }
 }
 
