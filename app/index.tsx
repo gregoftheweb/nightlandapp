@@ -150,7 +150,7 @@ export default function SplashScreen() {
 
   return (
     <ImageBackground
-      source={require('../assets/images/splashscreen.png')}
+      source={require('@assets/images/backgrounds/splash/splashscreen.png')}
       resizeMode="cover"
       style={styles.backgroundImage}
     >

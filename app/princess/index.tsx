@@ -17,7 +17,7 @@ export default function PrincessScreen() {
   console.log('Rendering PrincessScreen component')
   return (
     <ImageBackground
-      source={require('../../assets/images/sadprincess.png')}
+      source={require('@assets/images/backgrounds/splash/sadprincess.png')}
       resizeMode="cover"
       style={styles.backgroundImage}
     >

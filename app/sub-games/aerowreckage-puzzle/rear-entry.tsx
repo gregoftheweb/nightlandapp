@@ -9,7 +9,7 @@ import { subGameTheme } from '../_shared/subGameTheme'
 import { usePuzzleState } from './hooks/usePuzzleState'
 import { THEME } from './theme'
 
-const bgIntro = require('@/assets/images/aerowreck-safe1.png')
+const bgIntro = require('@assets/images/backgrounds/subgames/aerowreck-safe1.png')
 
 export default function AeroWreckageRearEntry() {
   const router = useRouter()

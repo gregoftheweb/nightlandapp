@@ -8,7 +8,7 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { THEME } from './theme'
 
-const bgCockpit = require('@/assets/images/aerowreck-safe5.png')
+const bgCockpit = require('@assets/images/backgrounds/subgames/aerowreck-safe5.png')
 
 export default function AeroWreckageCockpit() {
   const router = useRouter()

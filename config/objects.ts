@@ -1,18 +1,18 @@
 // config/objects.ts
 import { GameObject, NonCollisionObject } from './types'
 
-import redoubtImg from '@assets/images/redoubt2.png'
-import riverIMG from '@assets/images/river1.png'
-import cursedTotemIMG from '@assets/images/cursedtotem.png'
-import petrifiedWillowIMG from '@assets/images/petrifiedWillow.png'
-import maguffinRockIMG from '@assets/images/maguffinRock.png'
-import shortSwordIMG from '@assets/images/shortSword.png'
-import potionIMG from '@assets/images/potion.png'
-import sanctuaryPoolImg from '@assets/images/poolofpeace.png'
-import footprintsIMG from '@assets/images/footprints-blue.png'
-import aeroWreckageIMG from '@assets/images/aero-wreckage.png'
-import tesseractIMG from '@assets/images/tesseract-puzzle1.png'
-import hermitIMG from '@assets/images/hermit-save2.png'
+import redoubtImg from '@assets/images/sprites/buildings/redoubt2.png'
+import riverIMG from '@assets/images/sprites/buildings/river1.png'
+import cursedTotemIMG from '@assets/images/sprites/buildings/cursedtotem.png'
+import petrifiedWillowIMG from '@assets/images/sprites/buildings/petrifiedWillow.png'
+import maguffinRockIMG from '@assets/images/items/equipment/maguffinRock.png'
+import shortSwordIMG from '@assets/images/items/equipment/shortSword.png'
+import potionIMG from '@assets/images/items/consumables/potion.png'
+import sanctuaryPoolImg from '@assets/images/sprites/buildings/poolofpeace.png'
+import footprintsIMG from '@assets/images/items/quest/footprints-blue.png'
+import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.png'
+import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.png'
+import hermitIMG from '@assets/images/backgrounds/subgames/hermit-save2.png'
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {

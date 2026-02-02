@@ -9,7 +9,7 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 
 // TODO: Replace with your sub-game's background image
-const bgMain = require('@/assets/images/tesseract-screen1.png')
+const bgMain = require('@assets/images/backgrounds/subgames/tesseract-screen1.png')
 
 // TODO: Change this to your sub-game's name (use kebab-case, e.g., 'my-puzzle')
 const SUB_GAME_NAME = '_subgame-template'

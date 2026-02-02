@@ -13,7 +13,7 @@ import { InfoBox } from './InfoBox'
 import { CombatDialog } from './CombatDialog'
 import { getTextContent, isPlayerOnObject } from '../modules/utils'
 import { getItemTemplate } from '@/config/objects'
-import deadChristosIMG from '@assets/images/deadChristos.png'
+import deadChristosIMG from '@assets/images/ui/dialogs/deadChristos.png'
 import Projectile from './Projectile'
 import { enterSubGame } from '@/modules/subGames'
 
@@ -299,7 +299,7 @@ export default function GameBoard({
       }\n\nLevel: ${level?.name ?? ''}\n${level?.description ?? ''}\n${player.position.row}- ${
         player.position.col
       }`,
-      player.image || require('../assets/images/christos.png')
+      player.image || require('@assets/images/sprites/characters/christos.png')
     )
     onPlayerTap?.()
   }, [state.player, level?.name, level?.description, onPlayerTap, showInfo])
@@ -536,7 +536,7 @@ export default function GameBoard({
         pointerEvents="none"
       >
         <Image
-          source={require('../assets/images/christos.png')}
+          source={require('@assets/images/sprites/characters/christos.png')}
           style={styles.character}
           resizeMode="contain"
         />
@@ -893,7 +893,7 @@ export default function GameBoard({
         tiles.push(
           <Image
             key={`bg-${r}-${c}`}
-            source={require('../assets/images/dark-blue-bg-320.png')}
+            source={require('@assets/images/backgrounds/ui_screens/dark-blue-bg-320.png')}
             style={{
               position: 'absolute',
               left,
@@ -981,17 +981,17 @@ const getCellBorderColor = (
 }
 
 const getMonsterImage = (monster: Monster) => {
-  return monster.image || require('../assets/images/abhuman.png')
+  return monster.image || require('@assets/images/sprites/monsters/abhuman.png')
 }
 
 const getGreatPowerImage = (greatPower: GreatPower) => {
-  return greatPower.image || require('../assets/images/watcherse.png')
+  return greatPower.image || require('@assets/images/sprites/monsters/watcherse.png')
 }
 
 const getItemImage = (item: Item) => {
   if (item.image) return item.image
   const template = getItemTemplate(item.shortName)
-  return template?.image || require('../assets/images/potion.png')
+  return template?.image || require('@assets/images/items/consumables/potion.png')
 }
 
 const styles = StyleSheet.create({
