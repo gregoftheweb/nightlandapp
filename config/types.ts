@@ -18,9 +18,9 @@ export interface SubGameLaunch {
   requiresPlayerOnObject?: boolean // default true
 }
 
-export interface SubGameResult {
+export interface SubGameResult<TData = unknown> {
   completed: boolean
-  data?: any // Optional result data from sub-game
+  data?: TData // Optional result data from sub-game
 }
 
 export interface GameObject {
@@ -436,7 +436,7 @@ export interface GameState {
   showInventory?: boolean // Show inventory modal
   showWeaponsInventory?: boolean // Show weapons inventory modal
   dropSuccess?: boolean // Last drop operation success flag
-  dialogData?: any // Data for currently displayed dialog
+  dialogData?: unknown // Data for currently displayed dialog
   audioStarted?: boolean // Whether audio has been initialized
 
   // ===== DEATH/GAME OVER DOMAIN =====
