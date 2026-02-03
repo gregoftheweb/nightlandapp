@@ -2,6 +2,7 @@
   "name": "nightlandapp",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.18.1",
   "scripts": {
     "start": "npx expo start",
     "android": "npx expo start --android",

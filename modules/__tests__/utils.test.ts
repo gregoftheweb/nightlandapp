@@ -40,7 +40,7 @@ describe('getObjectAtPoint', () => {
       id: 'christos',
       description: 'Test player',
       lastComment: '',
-      image: '',
+      image: 0 as unknown as import('react-native').ImageSourcePropType,
       position: { row: 10, col: 10 },
       hp: 100,
       maxHP: 100,
@@ -58,6 +58,10 @@ describe('getObjectAtPoint', () => {
       rangedWeaponInventoryIds: [],
       soulKey: '000000',
       moveSpeed: 1,
+      hideUnlocked: false,
+      hideChargeTurns: 0,
+      hideActive: false,
+      hideRechargeProgressTurns: 0,
     }
 
     return {

@@ -196,6 +196,7 @@ export interface Effect {
     | 'recuperate'
     | 'soulsuck'
     | 'showMessage'
+    | 'unlock_hide_ability'
 
   description?: string
 

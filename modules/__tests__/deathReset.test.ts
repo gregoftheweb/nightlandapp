@@ -68,7 +68,7 @@ describe('Death Reset System', () => {
             position: { row: 10, col: 10 },
           } as any,
         ],
-        combatLog: [{ message: 'Combat started', turn: 1 }],
+       combatLog: [{ id: 'combat-start-1', message: 'Combat started', turn: 1 }],
         monstersKilled: 5,
         distanceTraveled: 100,
       }

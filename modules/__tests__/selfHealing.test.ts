@@ -39,7 +39,7 @@ describe('Self-Healing Mechanic', () => {
       id: 'christos',
       description: 'Test player',
       lastComment: '',
-      image: '',
+      image: 0 as unknown as import('react-native').ImageSourcePropType,
       position: { row: 200, col: 200 },
       hp: playerHP,
       maxHP: playerMaxHP,

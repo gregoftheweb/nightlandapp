@@ -15,7 +15,7 @@
 import { GameState } from '@/config/types'
 import { saveCurrentGame } from './saveGame'
 
-let saveTimeout: NodeJS.Timeout | null = null
+let saveTimeout: ReturnType<typeof setTimeout> | null = null
 let isSaving = false
 let pendingSave = false
 

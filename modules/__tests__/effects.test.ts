@@ -40,7 +40,7 @@ describe('Unified Effects System', () => {
       id: 'christos',
       description: 'Test player',
       lastComment: '',
-      image: '',
+      image: 0 as unknown as import('react-native').ImageSourcePropType,
       position: { row: 200, col: 200 },
       hp: playerHP,
       maxHP: playerMaxHP,
@@ -307,13 +307,14 @@ describe('Unified Effects System', () => {
     })
   })
 
-  // ==================== CLOAKING EFFECT TESTS ====================
+  // ==================== HIDE EFFECT TESTS ====================
 
-  describe('Cloaking Effect', () => {
+  describe('Hide Effect', () => {
     test('should set player to hidden with duration', () => {
       const state = createMockGameState()
-      const cloakingEffect: Effect = {
-        type: 'cloaking',
+
+      const hideEffect: Effect = {
+        type: 'hide',
         duration: 5,
       }
 
@@ -322,11 +323,11 @@ describe('Unified Effects System', () => {
         dispatch: mockDispatch,
         showDialog: mockShowDialog,
         sourceType: 'item',
-        sourceId: 'cloakingPotion',
+        sourceId: 'shadowPotion',
         trigger: 'onUseItem',
       }
 
-      const result = applyEffect(cloakingEffect, context)
+      const result = applyEffect(hideEffect, context)
 
       expect(result.success).toBe(true)
       expect(mockDispatch).toHaveBeenCalledWith({
@@ -334,7 +335,6 @@ describe('Unified Effects System', () => {
         payload: {
           updates: {
             isHidden: true,
-            hideTurns: 5,
           },
         },
       })
@@ -342,8 +342,9 @@ describe('Unified Effects System', () => {
 
     test('should use default duration if not specified', () => {
       const state = createMockGameState()
-      const cloakingEffect: Effect = {
-        type: 'cloaking',
+
+      const hideEffect: Effect = {
+        type: 'hide',
         // no duration specified
       }
 
@@ -354,7 +355,7 @@ describe('Unified Effects System', () => {
         trigger: 'onUseItem',
       }
 
-      const result = applyEffect(cloakingEffect, context)
+      const result = applyEffect(hideEffect, context)
 
       expect(result.success).toBe(true)
       expect(mockDispatch).toHaveBeenCalledWith({
@@ -362,7 +363,6 @@ describe('Unified Effects System', () => {
         payload: {
           updates: {
             isHidden: true,
-            hideTurns: 5, // default duration
           },
         },
       })
