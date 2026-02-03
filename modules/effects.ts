@@ -657,12 +657,12 @@ const dispatchEffect = (effect: Effect, context: EffectContext): EffectResult =>
     case 'stun':
     case 'teleport':
     case 'spawn':
-      // Placeholder effect types - not yet implemented
+      // TODO: Implement these placeholder effect types
       return unknownEffectResult(effect.type)
     default:
       // Exhaustiveness check - TypeScript will error if we miss a case
       const _exhaustive: never = effect
-      return unknownEffectResult((_exhaustive as Effect).type)
+      return unknownEffectResult('unknown')
   }
 }
 
