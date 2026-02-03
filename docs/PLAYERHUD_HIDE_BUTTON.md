@@ -3,23 +3,26 @@
 ## What Was Added to PlayerHUD.tsx
 
 ### 1. Import Statement
+
 ```typescript
 import hideButtonIMG from '@assets/images/buttonHide.png'
 ```
 
 ### 2. Props Interface Extension
+
 ```typescript
 interface PlayerHUDProps {
   // ... existing props ...
-  onHidePress?: () => void      // NEW: Hide button callback
+  onHidePress?: () => void // NEW: Hide button callback
   // Hide ability state
-  hideUnlocked?: boolean         // NEW: Whether ability is unlocked
-  hideChargeTurns?: number       // NEW: Current charge (0-10)
-  hideActive?: boolean           // NEW: Whether hide is active
+  hideUnlocked?: boolean // NEW: Whether ability is unlocked
+  hideChargeTurns?: number // NEW: Current charge (0-10)
+  hideActive?: boolean // NEW: Whether hide is active
 }
 ```
 
 ### 3. Component Props Destructuring
+
 ```typescript
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
   hp,
@@ -38,6 +41,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
 ```
 
 ### 4. Event Handler
+
 ```typescript
 const handleHidePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
   event.stopPropagation()
@@ -46,47 +50,47 @@ const handleHidePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
 ```
 
 ### 5. JSX - Hide Button Component
+
 Added between Zap Button and Turn/Attack Button:
 
 ```tsx
-{/* Hide Button - only show if unlocked */}
-{hideUnlocked && (
-  <View style={styles.hideButtonContainer}>
-    <TouchableOpacity
-      style={[
-        styles.hideButton,
-        hideActive && styles.hideButtonActive,
-        hideChargeTurns === 0 && styles.hideButtonDepleted,
-      ]}
-      onPress={handleHidePress}
-      activeOpacity={0.7}
-      disabled={hideChargeTurns === 0 && !hideActive}
-    >
-      <Image
-        source={hideButtonIMG}
+{
+  /* Hide Button - only show if unlocked */
+}
+{
+  hideUnlocked && (
+    <View style={styles.hideButtonContainer}>
+      <TouchableOpacity
         style={[
-          styles.hideButtonImage,
-          hideChargeTurns === 0 && styles.hideButtonImageDepleted,
+          styles.hideButton,
+          hideActive && styles.hideButtonActive,
+          hideChargeTurns === 0 && styles.hideButtonDepleted,
         ]}
-      />
-    </TouchableOpacity>
-    {/* Charge meter */}
-    <View style={styles.chargeMeter}>
-      {Array.from({ length: 10 }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.chargeTick,
-            i < hideChargeTurns && styles.chargeTickFilled,
-          ]}
+        onPress={handleHidePress}
+        activeOpacity={0.7}
+        disabled={hideChargeTurns === 0 && !hideActive}
+      >
+        <Image
+          source={hideButtonIMG}
+          style={[styles.hideButtonImage, hideChargeTurns === 0 && styles.hideButtonImageDepleted]}
         />
-      ))}
+      </TouchableOpacity>
+      {/* Charge meter */}
+      <View style={styles.chargeMeter}>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <View
+            key={i}
+            style={[styles.chargeTick, i < hideChargeTurns && styles.chargeTickFilled]}
+          />
+        ))}
+      </View>
     </View>
-  </View>
-)}
+  )
+}
 ```
 
 ### 6. Styles Added
+
 ```typescript
 // Hide button (between Turn and Zap)
 hideButtonContainer: {
@@ -144,10 +148,12 @@ chargeTickFilled: {
 ## Key Features
 
 ### Conditional Rendering
+
 - Button only appears AFTER the Hermit grants the ability (hideUnlocked === true)
 - Before ability is unlocked, no Hide button is visible
 
 ### Visual States
+
 1. **Normal** (charge > 0, not active)
    - Standard appearance
    - Button enabled
@@ -164,6 +170,7 @@ chargeTickFilled: {
    - Cannot activate until recharged
 
 ### Charge Meter
+
 - 10 segmented ticks below the button
 - Dynamically updates based on hideChargeTurns
 - Empty ticks: semi-transparent white
@@ -171,6 +178,7 @@ chargeTickFilled: {
 - Visual countdown as charge depletes
 
 ### Button Position
+
 - **Left**: 40px from left edge
 - **Bottom**: 15px from bottom
 - **Between**: Turn/Attack button (center) and Zap button (80px left)
@@ -207,6 +215,7 @@ const handleHidePress = useCallback(() => {
 ## Result
 
 The Hide button will:
+
 1. Not appear initially (ability not unlocked)
 2. Appear after completing Hermit Hollow sub-game
 3. Show full charge (10 ticks)

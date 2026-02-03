@@ -167,15 +167,12 @@ export default function Settings({ visible, onClose }: SettingsProps) {
               // Settings Tab Content
               <>
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Audio</Text>
                   <ModernToggle
                     value={backgroundMusicEnabled}
                     onToggle={handleBackgroundMusicToggle}
                     label="Background Music"
                   />
-                </View>
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Display</Text>
+
                   <ModernToggle
                     value={showCoordinates}
                     onToggle={handleShowCoordinatesToggle}
@@ -190,9 +187,9 @@ export default function Settings({ visible, onClose }: SettingsProps) {
                 contentContainerStyle={styles.scrollViewContent}
                 showsVerticalScrollIndicator={true}
               >
-                <Text style={styles.sectionTitle}>Completed Puzzles</Text>
+                <Text style={styles.sectionTitle}>Quest Discoveries</Text>
                 {completedPuzzles.length === 0 ? (
-                  <Text style={styles.emptyText}>No puzzles completed yet.</Text>
+                  <Text style={styles.emptyText}>Nothing discovered yet.</Text>
                 ) : (
                   <View style={styles.puzzleList}>
                     {completedPuzzles.map((puzzleName, index) => (
@@ -298,7 +295,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   puzzleList: {
-    marginTop: 15,
+    marginTop: 5,
   },
   puzzleItem: {
     color: '#fff',
@@ -322,9 +319,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 15,
+    marginBottom: 2,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+    borderBottomColor: 'rgba(161, 26, 26, 0.3)',
     paddingBottom: 5,
   },
   toggleContainer: {

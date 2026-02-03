@@ -1,11 +1,13 @@
 # Hide Ability Implementation Summary
 
 ## Overview
+
 This document describes the complete implementation of the Hide ability feature for Nightland, a toggleable player ability granted by the Hermit in the hermit-hollow sub-game.
 
 ## Feature Specification
 
 ### Core Mechanics
+
 - **Max Charge**: 10 turns
 - **Recharge Rate**: 1 charge per 3 Christos turns (incremental)
 - **Full Recharge Time**: 30 turns from empty
@@ -13,7 +15,9 @@ This document describes the complete implementation of the Hide ability feature 
 - **Auto-Disable**: Automatically disabled when charge reaches 0
 
 ### State Tracking
+
 The following fields are persisted in GameState and SaveGame:
+
 - `hideUnlocked: boolean` - Whether ability has been granted
 - `hideChargeTurns: number` - Current charge (0-10)
 - `hideActive: boolean` - Whether hide is currently active
@@ -22,6 +26,7 @@ The following fields are persisted in GameState and SaveGame:
 ## Implementation Details
 
 ### 1. Type Definitions (`config/types.ts`)
+
 ```typescript
 export interface Player {
   // ... existing fields ...
@@ -33,7 +38,9 @@ export interface Player {
 ```
 
 ### 2. Player Config (`config/player.ts`)
+
 Default values set to:
+
 ```typescript
 hideUnlocked: false,
 hideChargeTurns: 0,
@@ -42,12 +49,15 @@ hideRechargeProgressTurns: 0,
 ```
 
 ### 3. Hermit Hollow Dialogue (`app/sub-games/hermit-hollow/dialogue.ts`)
+
 Modified flow:
+
 ```
 too_much → hermit_gift_hide → silence_end
 ```
 
 New node:
+
 ```typescript
 {
   id: 'hermit_gift_hide',
@@ -58,7 +68,9 @@ New node:
 ```
 
 ### 4. Effects System (`modules/effects.ts`)
+
 New effect handler:
+
 ```typescript
 const executeUnlockHideAbilityEffect = (effect: Effect, context: EffectContext): EffectResult => {
   // Checks if already unlocked
@@ -68,6 +80,7 @@ const executeUnlockHideAbilityEffect = (effect: Effect, context: EffectContext):
 ```
 
 Registered in `EFFECT_HANDLERS`:
+
 ```typescript
 unlock_hide_ability: executeUnlockHideAbilityEffect,
 ```
@@ -75,14 +88,18 @@ unlock_hide_ability: executeUnlockHideAbilityEffect,
 ### 5. Reducers (`modules/reducers.ts`)
 
 #### TOGGLE_HIDE Action
+
 Handles button press:
+
 - Validates unlock status
 - Toggles OFF: Always allowed
 - Toggles ON: Requires charge > 0
 - Logs state changes in DEV mode
 
 #### UPDATE_HIDE_STATE Action
+
 Called each turn:
+
 1. **Charge Consumption** (if active):
    - Deduct 1 charge
    - Auto-disable if charge reaches 0
@@ -93,7 +110,9 @@ Called each turn:
      - Reset progress to 0
 
 ### 6. Turn Manager (`modules/turnManager.ts`)
+
 Integrated in `doTurnCleanup()`:
+
 ```typescript
 if (currentGameState.player.hideUnlocked) {
   gameDispatch({ type: 'UPDATE_HIDE_STATE' })
@@ -101,7 +120,9 @@ if (currentGameState.player.hideUnlocked) {
 ```
 
 ### 7. Monster Movement (`modules/movement.ts`)
+
 Updated `calculateMonsterMovement()`:
+
 ```typescript
 if (state.player.isHidden || state.player.hideActive) {
   return moveAway(monster, playerPos, state.gridWidth, state.gridHeight)
@@ -111,7 +132,9 @@ if (state.player.isHidden || state.player.hideActive) {
 Reuses existing `moveAway()` logic from zone-based hide effects.
 
 ### 8. Visual Indicator (`components/GameBoard.tsx`)
+
 Modified `getCellBorderColor()`:
+
 ```typescript
 const getCellBorderColor = (
   isPlayer: boolean,
@@ -127,6 +150,7 @@ const getCellBorderColor = (
 ```
 
 Call site updated to pass `hideActive`:
+
 ```typescript
 borderColor: getCellBorderColor(
   isPlayer,
@@ -140,6 +164,7 @@ borderColor: getCellBorderColor(
 ### 9. PlayerHUD Component (`components/PlayerHUD.tsx`)
 
 #### Props Interface
+
 ```typescript
 interface PlayerHUDProps {
   // ... existing props ...
@@ -151,54 +176,54 @@ interface PlayerHUDProps {
 ```
 
 #### Hide Button JSX
+
 ```tsx
-{hideUnlocked && (
-  <View style={styles.hideButtonContainer}>
-    <TouchableOpacity
-      style={[
-        styles.hideButton,
-        hideActive && styles.hideButtonActive,
-        hideChargeTurns === 0 && styles.hideButtonDepleted,
-      ]}
-      onPress={handleHidePress}
-      activeOpacity={0.7}
-      disabled={hideChargeTurns === 0 && !hideActive}
-    >
-      <Image
-        source={hideButtonIMG}
+{
+  hideUnlocked && (
+    <View style={styles.hideButtonContainer}>
+      <TouchableOpacity
         style={[
-          styles.hideButtonImage,
-          hideChargeTurns === 0 && styles.hideButtonImageDepleted,
+          styles.hideButton,
+          hideActive && styles.hideButtonActive,
+          hideChargeTurns === 0 && styles.hideButtonDepleted,
         ]}
-      />
-    </TouchableOpacity>
-    {/* Charge meter */}
-    <View style={styles.chargeMeter}>
-      {Array.from({ length: 10 }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.chargeTick,
-            i < hideChargeTurns && styles.chargeTickFilled,
-          ]}
+        onPress={handleHidePress}
+        activeOpacity={0.7}
+        disabled={hideChargeTurns === 0 && !hideActive}
+      >
+        <Image
+          source={hideButtonIMG}
+          style={[styles.hideButtonImage, hideChargeTurns === 0 && styles.hideButtonImageDepleted]}
         />
-      ))}
+      </TouchableOpacity>
+      {/* Charge meter */}
+      <View style={styles.chargeMeter}>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <View
+            key={i}
+            style={[styles.chargeTick, i < hideChargeTurns && styles.chargeTickFilled]}
+          />
+        ))}
+      </View>
     </View>
-  </View>
-)}
+  )
+}
 ```
 
 #### Button Positioning
+
 - **Position**: Left side, between Turn/Attack and Zap buttons
 - **Left offset**: 40px
 - **Bottom**: 15px
 
 #### Visual States
+
 1. **Normal** (charge > 0, not active): Standard appearance
 2. **Active** (hideActive === true): Green border (#00aa00)
 3. **Depleted** (charge === 0): Dimmed (opacity 0.4), disabled
 
 #### Charge Meter
+
 - 10 segmented ticks below button
 - Empty ticks: `rgba(255, 255, 255, 0.2)`
 - Filled ticks: `#00aa00` (green)
@@ -206,6 +231,7 @@ interface PlayerHUDProps {
 ### 10. Game Context (`app/game/index.tsx`)
 
 #### Handler Function
+
 ```typescript
 const handleHidePress = useCallback(() => {
   if (!state.player.hideUnlocked) {
@@ -216,6 +242,7 @@ const handleHidePress = useCallback(() => {
 ```
 
 #### Props Passed to PlayerHUD
+
 ```tsx
 <PlayerHUD
   hp={state.player.hp}
@@ -236,6 +263,7 @@ const handleHidePress = useCallback(() => {
 ## Save/Load Integration
 
 All hide ability state is automatically persisted through existing save/load infrastructure:
+
 - Auto-save (current game)
 - Waypoint saves
 - Death resets (ability state preserved if sub-game completed)
@@ -245,6 +273,7 @@ The state is serialized via `toSnapshot()` and deserialized via `fromSnapshot()`
 ## DEV Logging
 
 The following logs help track hide ability behavior in development:
+
 - `[Hide] activated, charge=X`
 - `[Hide] deactivated, charge=Y`
 - `[Hide] depleted`
@@ -255,6 +284,7 @@ The following logs help track hide ability behavior in development:
 ## Testing Checklist
 
 ### Basic Functionality
+
 - [ ] Complete Hermit Hollow sub-game
 - [ ] Verify hide button appears after receiving gift
 - [ ] Button shows 10 charge ticks initially
@@ -263,6 +293,7 @@ The following logs help track hide ability behavior in development:
 - [ ] Monsters move away while hidden
 
 ### Charge Mechanics
+
 - [ ] Charge depletes 1 per turn while active
 - [ ] Hide auto-disables at 0 charge
 - [ ] Recharge occurs at 1 charge per 3 turns
@@ -270,6 +301,7 @@ The following logs help track hide ability behavior in development:
 - [ ] Early deactivation preserves remaining charge
 
 ### Save/Load
+
 - [ ] Hide unlock persists through save/load
 - [ ] Current charge persists
 - [ ] Active state persists
@@ -277,6 +309,7 @@ The following logs help track hide ability behavior in development:
 - [ ] Hermit sub-game completion prevents re-grant
 
 ### Edge Cases
+
 - [ ] Button hidden when ability not unlocked
 - [ ] Button disabled when charge = 0
 - [ ] Cannot activate when depleted
@@ -299,6 +332,7 @@ The following logs help track hide ability behavior in development:
 ## Architecture Notes
 
 ### Design Decisions
+
 1. **Reused Existing Hide Logic**: The `moveAway()` function from zone-based effects is reused for consistency
 2. **Turn-Based System**: Integrated into existing turn cleanup flow
 3. **State-Driven UI**: All visual changes driven by GameState, not HUD-local state
@@ -306,6 +340,7 @@ The following logs help track hide ability behavior in development:
 5. **Auto-Disable**: Prevents player confusion when charge runs out mid-use
 
 ### Future Enhancements
+
 - Sound effects for hide activation/deactivation
 - Particle effects or glow on Christos when hidden
 - Cooldown period after depletion
@@ -313,4 +348,5 @@ The following logs help track hide ability behavior in development:
 - Different hide levels (visual vs detection)
 
 ## Credits
+
 Implementation completed according to specifications in original problem statement.

@@ -13,14 +13,15 @@ After completing the hermit-hollow conversation (hermit enters trance), a waypoi
 The waypoint save was being created with a **race condition**:
 
 ### The Bug
+
 ```typescript
 // In hermit-hollow/main.tsx (OLD CODE)
 dispatch({
   type: 'SET_SUB_GAME_COMPLETED',
-  payload: { subGameName: 'hermit-hollow', completed: true }
+  payload: { subGameName: 'hermit-hollow', completed: true },
 })
 
-saveWaypoint(state, WAYPOINT_NAME)  // ❌ BUG: uses OLD state!
+saveWaypoint(state, WAYPOINT_NAME) // ❌ BUG: uses OLD state!
 ```
 
 ### Why It Failed
@@ -31,6 +32,7 @@ saveWaypoint(state, WAYPOINT_NAME)  // ❌ BUG: uses OLD state!
 4. Result: Waypoint saved **without** the completion flag
 
 ### Timeline
+
 ```
 t=0: User completes conversation
 t=1: dispatch SET_SUB_GAME_COMPLETED (queued)
@@ -50,8 +52,8 @@ Build an updated state object **synchronously** before calling `saveWaypoint`:
 // Collect all effect flags
 const updatedSubGamesCompleted = {
   ...(state.subGamesCompleted || {}),
-  [SUB_GAME_NAME]: true,  // hermit-hollow completion
-  [`${SUB_GAME_NAME}:${effect}`]: true,  // each effect flag
+  [SUB_GAME_NAME]: true, // hermit-hollow completion
+  [`${SUB_GAME_NAME}:${effect}`]: true, // each effect flag
 }
 
 // Create updated state
@@ -73,6 +75,7 @@ Now the waypoint save includes the completion flag immediately, without waiting 
 **Lines changed:** 54 insertions, 31 deletions
 
 **Key changes:**
+
 1. Build `updatedSubGamesCompleted` object with all flags
 2. Create `stateWithCompletion` with updated completion data
 3. Pass updated state to `saveWaypoint` (not current state)
@@ -81,6 +84,7 @@ Now the waypoint save includes the completion flag immediately, without waiting 
 ## Expected Behavior (After Fix)
 
 ### Test Scenario
+
 1. **Complete hermit-hollow** - Talk to hermit until he enters trance
 2. **Waypoint created** - Automatically saved with completion flag
 3. **Die** - Player character dies
@@ -88,12 +92,14 @@ Now the waypoint save includes the completion flag immediately, without waiting 
 5. **Re-enter hermit-hollow** - Navigate back and enter sub-game
 
 ### Expected Result ✅
+
 - Hermit-hollow starts at END node (hermit in trance)
 - Cannot replay full conversation
 - Hermit is unresponsive/in meditation
 - Console logs show: `Saved with subGamesCompleted: { "hermit-hollow": true, ... }`
 
 ### What Was Broken Before ❌
+
 - Hermit-hollow started at BEGINNING
 - Could replay entire conversation
 - Hermit responded to questions again
@@ -143,6 +149,7 @@ This PR fixed **three distinct issues**:
 3. **Hermit-hollow waypoint** - Fixed race condition in save creation (this fix)
 
 ### Files Changed
+
 - 8 code files modified
 - 3 documentation files added
 - 337 insertions, 50 deletions (since last merge)
@@ -154,7 +161,7 @@ This PR fixed **three distinct issues**:
 ✅ **Hermit-hollow completion persists in waypoint saves**  
 ✅ **Hermit-hollow waypoint includes all effect flags**  
 ✅ Cannot replay completed sub-games  
-✅ No duplicate rewards  
+✅ No duplicate rewards
 
 ## Testing Recommendation
 
@@ -173,12 +180,14 @@ This PR fixed **three distinct issues**:
 11. **Verify:** Should show hermit in trance state, NOT full conversation
 
 ### Success Criteria
+
 - ✅ Hermit is unresponsive (in trance/meditation)
 - ✅ No dialogue options appear
 - ✅ Can exit and return to Night Land
 - ✅ Cannot replay conversation
 
 ### Failure Criteria (if bug still present)
+
 - ❌ Hermit greets you and starts conversation
 - ❌ Dialogue options appear
 - ❌ Can ask questions again

@@ -3,7 +3,9 @@
 ## User Request Implementation
 
 ### Original Request:
+
 > "when the hide button gets added to the playerHUD. The Zap button needs to move.
+>
 > - move buttonZap.png to the right - closer to the Turn/Attack button. (also may be a brand new css class and switch it when hide button is enabled)
 > - move the HIde button -buttonHide.png - to the right as well so that it does not sit on top of the HP
 > - move the hide button down so it is in alignment with the Zap button.
@@ -57,12 +59,14 @@
 ### Zap Button Movement ✅
 
 **Before (hide locked):**
+
 ```
 Position: left: 80px
 Style: zapButton
 ```
 
 **After (hide unlocked):**
+
 ```
 Position: left: 130px (+50px right)
 Style: zapButtonExpanded
@@ -70,8 +74,9 @@ Closer to Turn/Attack button ✅
 ```
 
 **Implementation:**
+
 ```typescript
-<TouchableOpacity 
+<TouchableOpacity
   style={hideUnlocked ? styles.zapButtonExpanded : styles.zapButton}
   onPress={handleZapPress}
 >
@@ -82,6 +87,7 @@ Closer to Turn/Attack button ✅
 ### Hide Button Positioning ✅
 
 **Position Changes:**
+
 ```
 Old: left: 40px (overlapped HP area)
 New: left: 80px (clear of HP) ✅
@@ -89,7 +95,8 @@ New: left: 80px (clear of HP) ✅
 Vertical: bottom: 15px (aligned with Zap) ✅
 ```
 
-**Result:** 
+**Result:**
+
 - 40px further right
 - No overlap with HP text
 - Vertically aligned with Zap button
@@ -99,6 +106,7 @@ Vertical: bottom: 15px (aligned with Zap) ✅
 ### Charge Meter Layering ✅
 
 **Before:**
+
 ```
 Position: Relative (marginTop: 2)
 zIndex: Not set (default)
@@ -106,6 +114,7 @@ Behavior: Pushed down by button
 ```
 
 **After:**
+
 ```
 Position: Absolute (bottom: -8, left: 0)
 zIndex: 25 (highest)
@@ -113,6 +122,7 @@ Behavior: Floats on top of button ✅
 ```
 
 **Layer Stack (bottom to top):**
+
 ```
 z-index 15: Status Bar
 z-index 19: Hide Active Background (green circle)
@@ -126,6 +136,7 @@ z-index 25: Charge Meter ⬅️ HIGHEST
 ## Horizontal Spacing Diagram
 
 ### Before (Hide Locked)
+
 ```
 0px          80px         175px (center)              350px
 |            |            |                            |
@@ -133,6 +144,7 @@ HP           ZAP          TURN                    INVENTORY
 ```
 
 ### After (Hide Unlocked)
+
 ```
 0px     80px    130px    210px (center)                420px
 |       |       |        |                              |
@@ -141,6 +153,7 @@ HP     HIDE    ZAP      TURN                       INVENTORY
 ```
 
 **Spacing Analysis:**
+
 - Hide to Zap: 50px gap
 - Provides visual breathing room
 - Balanced layout
@@ -181,6 +194,7 @@ Bottom of HUD Frame = 0px
 ```
 
 **Alignment Points:**
+
 - Hide Button: `bottom: 15px` ✅
 - Zap Button: `bottom: 15px` ✅
 - Inventory Button: `bottom: 15px`
@@ -194,12 +208,14 @@ Bottom of HUD Frame = 0px
 Following user's suggestion: "may be a brand new css class and switch it when hide button is enabled"
 
 **Implementation:**
+
 - Created `zapButtonExpanded` as new class
 - Switches based on `hideUnlocked` boolean
 - Clean separation of concerns
 - Easy to extend for future buttons
 
 **Pattern:**
+
 ```typescript
 // Default state
 const zapButton = { left: 80 }
@@ -212,6 +228,7 @@ style={hideUnlocked ? styles.zapButtonExpanded : styles.zapButton}
 ```
 
 This pattern can be repeated for future buttons:
+
 ```typescript
 inventoryButtonExpanded
 turnButtonExpanded
@@ -223,21 +240,25 @@ turnButtonExpanded
 ## Edge Cases Handled
 
 ### 1. State Transitions
+
 - Hide locks → Zap returns to 80px ✅
 - Hide unlocks → Zap moves to 130px ✅
 - Smooth visual transition ✅
 
 ### 2. Charge Meter Behavior
+
 - Always on top regardless of button state ✅
 - Doesn't shift when hide activates ✅
 - Absolute positioning prevents layout shifts ✅
 
 ### 3. Button Interactions
+
 - All buttons remain clickable ✅
 - No z-index conflicts ✅
 - Touch targets don't overlap ✅
 
 ### 4. Visual States
+
 - Hide depleted (dimmed) ✅
 - Hide active (green background) ✅
 - Charge levels 0-10 ✅
@@ -252,16 +273,19 @@ turnButtonExpanded
 **Lines Changed:** ~10
 
 **Additions:**
+
 1. `zapButtonExpanded` style (new)
 2. Conditional styling for Zap button
 3. Absolute positioning for charge meter
 
 **Modifications:**
+
 1. `hideButtonContainer.left`: 40 → 80
 2. `chargeMeter`: relative → absolute
 3. `chargeMeter.zIndex`: added (25)
 
 **Total Impact:**
+
 - Minimal code changes
 - Maximum visual improvement
 - Scalable for future additions
@@ -271,6 +295,7 @@ turnButtonExpanded
 ## Testing Scenarios
 
 ### Visual Verification
+
 ```
 ✓ Hide locked: Buttons at original positions
 ✓ Hide unlocked: Buttons repositioned correctly
@@ -281,6 +306,7 @@ turnButtonExpanded
 ```
 
 ### Functional Verification
+
 ```
 ✓ All buttons clickable in both states
 ✓ Charge meter updates correctly
@@ -297,6 +323,7 @@ turnButtonExpanded
 The layout now supports the "one more button later in the game" mentioned by the user.
 
 **Recommended positions for 5th button:**
+
 ```
 Option A (tight spacing):
 HIDE(80) - NEW(120) - ZAP(160) - TURN(center) - INV(right)
@@ -312,6 +339,7 @@ HIDE(80) - NEW(125) - ZAP(170) - TURN(center) - INV(right)
 ```
 
 **HUD width can be further expanded:**
+
 - Current: 420px
 - Could go to: 470px or 500px
 - Still fits most screen sizes

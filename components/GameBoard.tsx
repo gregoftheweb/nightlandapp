@@ -509,7 +509,13 @@ export default function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [state.inCombat, attackSlots, state.targetedMonsterId, cameraOffset.offsetY, cameraOffset.offsetX])
+  }, [
+    state.inCombat,
+    attackSlots,
+    state.targetedMonsterId,
+    cameraOffset.offsetY,
+    cameraOffset.offsetX,
+  ])
 
   const renderPlayer = useMemo(() => {
     const pos = state.player?.position
@@ -950,7 +956,11 @@ export default function GameBoard({
         }}
       />
 
-      <CombatDialog visible={combatInfoVisible} messages={combatMessages} onClose={handleCombatDialogClose} />
+      <CombatDialog
+        visible={combatInfoVisible}
+        messages={combatMessages}
+        onClose={handleCombatDialogClose}
+      />
     </View>
   )
 }

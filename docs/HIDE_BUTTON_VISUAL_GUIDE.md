@@ -3,6 +3,7 @@
 ## Change 1: Wider HUD Bar
 
 ### Before (Hide Locked)
+
 ```
 ┌────────────────────────────────────┐
 │  HP: 100              [GEAR]       │  Width: 350px
@@ -12,6 +13,7 @@
 ```
 
 ### After (Hide Unlocked)
+
 ```
 ┌──────────────────────────────────────────────┐
 │  HP: 100                    [GEAR]           │  Width: 420px ✨
@@ -23,6 +25,7 @@
 ```
 
 **Key Points:**
+
 - Bar automatically expands when hide ability is unlocked
 - Provides 70px additional space (350 → 420)
 - Room for future buttons
@@ -33,6 +36,7 @@
 ## Change 2: Gray Progress Dots
 
 ### Before
+
 ```
 Hide Button
 [🥷]
@@ -42,6 +46,7 @@ Hide Button
 ```
 
 ### After
+
 ```
 Hide Button
 [🥷]
@@ -51,6 +56,7 @@ Hide Button
 ```
 
 **Key Points:**
+
 - Less bright and distracting
 - Better contrast with green active indicator
 - More subtle appearance
@@ -61,6 +67,7 @@ Hide Button
 ## Change 3: Background Indicator
 
 ### Before (Active State)
+
 ```
 ┌────────┐
 │ ┌────┐ │  Green border around button
@@ -70,6 +77,7 @@ Hide Button
 ```
 
 ### After (Active State)
+
 ```
      ●       Green circle BEHIND button ✨
     ┌─┐      Shows through transparent areas
@@ -78,6 +86,7 @@ Hide Button
 ```
 
 **Visual Layers (z-index):**
+
 ```
 Layer 21: Button Image (PNG with transparency)
             ┌───┐
@@ -91,6 +100,7 @@ Layer 19: Green Circle (when active)
 ```
 
 **States:**
+
 - **Inactive:** No background, just button image
 - **Active:** Green circle visible behind button
 - **Depleted:** Dimmed (opacity 0.4), no background
@@ -100,6 +110,7 @@ Layer 19: Green Circle (when active)
 ## Change 4: Recharge Rate
 
 ### Before
+
 ```
 Turn Progression:
 Turn 1:  ░░░░░░░░░░  (0 charge, progress 1/3)
@@ -112,6 +123,7 @@ Turn 30: ██████████  (10 charge - FULL)
 ```
 
 ### After
+
 ```
 Turn Progression:
 Turn 1:  ░░░░░░░░░░  (0 charge, progress 1/5)
@@ -176,7 +188,7 @@ Turn 50: ██████████  (10 charge - FULL)
     │🥷│ [⚡] [⚔️] [🎒]   Button disabled
     └─┘
   ░░░░░░░░░░              0 dots filled
-  
+
   Recharge in 5 turns → 1 dot
   Recharge in 50 turns → 10 dots (full)
 ```
@@ -186,6 +198,7 @@ Turn 50: ██████████  (10 charge - FULL)
 ## Code Structure
 
 ### PlayerHUD.tsx - Dynamic Width
+
 ```typescript
 // Constants
 const HUD_WIDTH = 350
@@ -200,17 +213,18 @@ const HUD_WIDTH_EXPANDED = 420
 ```
 
 ### PlayerHUD.tsx - Background Indicator
+
 ```typescript
 {hideUnlocked && (
   <View style={styles.hideButtonContainer}>
     {/* Background only shows when active */}
     {hideActive && <View style={styles.hideActiveBackground} />}
-    
+
     {/* Button image on top */}
     <TouchableOpacity style={styles.hideButton}>
       <Image source={hideButtonIMG} />
     </TouchableOpacity>
-    
+
     {/* Charge meter below */}
     <View style={styles.chargeMeter}>...</View>
   </View>
@@ -218,6 +232,7 @@ const HUD_WIDTH_EXPANDED = 420
 ```
 
 ### reducers.ts - Recharge Logic
+
 ```typescript
 case 'UPDATE_HIDE_STATE': {
   // ...
@@ -237,12 +252,14 @@ case 'UPDATE_HIDE_STATE': {
 ## Implementation Summary
 
 All changes are **backward compatible**:
+
 - Old saves work correctly
 - HUD width adjusts automatically
 - No data migration needed
 - Visual changes only
 
 All changes are **user-visible**:
+
 - Wider HUD is immediately noticeable
 - Gray dots are more subtle
 - Green background clearly indicates active state
