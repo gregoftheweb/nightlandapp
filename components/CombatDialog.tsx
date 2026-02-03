@@ -101,9 +101,9 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
         timerRef.current = null
       }
     }
-  }, [visible, messages, opacity, onClose, displayMessages])
+  }, [visible, messages, opacity, onClose]) // Removed displayMessages from dependencies
 
-  if (!isVisible || displayedMessages.length === 0) {
+  if (!isVisible || messages.length === 0) {
     return null
   }
 
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     borderColor: '#ff0000', // Red border
     padding: 12,
     borderRadius: 8,
-    maxWidth: '49%', // Reduced from 70% to be 30% narrower
+    maxWidth: '49%', // 30% reduction from 70%
     minWidth: 200, // Reduced proportionally from 240
     zIndex: 1000, // High z-index to appear above other elements
   },

@@ -90,8 +90,13 @@ export default function Settings({ visible, onClose }: SettingsProps) {
   }
 
   // Get completed puzzles from state.subGamesCompleted
+  // Filter out effect flags (they contain ':' and have format "puzzle-name:effect-name")
   const completedPuzzles = Object.keys(state.subGamesCompleted || {})
-    .filter((key) => !key.includes(':')) // Filter out effect flags (e.g., "hermit-hollow:unlock_hide_ability")
+    .filter((key) => {
+      // Main puzzle keys don't contain colons; effect flags do (e.g., "hermit-hollow:unlock_hide_ability")
+      // This approach is safe because all current puzzle IDs use hyphens, not colons
+      return !key.includes(':')
+    })
     .filter((key) => state.subGamesCompleted?.[key] === true)
     .map((key) => PUZZLE_NAMES[key] || key) // Map to friendly names, fallback to key if not found
 
