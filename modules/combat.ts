@@ -603,6 +603,21 @@ export const executeRangedAttack = (
     payload: projectile,
   })
 
+  // Cancel Hide if active (ranged attacks break stealth)
+  if (state.player.hideActive) {
+    logIfDev('🥷 Ranged attack cancels Hide')
+    dispatch({
+      type: 'UPDATE_PLAYER',
+      payload: {
+        updates: { hideActive: false },
+      },
+    })
+    dispatch({
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: 'Hide cancelled by ranged attack!' },
+    })
+  }
+
   logIfDev(
     `🎯 Projectile spawned: id=${projectileId}, duration=${durationMs}ms, angle=${angleDeg}°`
   )
