@@ -214,10 +214,28 @@ export interface EffectBase {
   
   // Spawn/summon properties
   monsterType?: string
+  entityId?: string
   
   // Position and area effects
   position?: Position
   area?: Area
+  
+  // Conditional logic
+  condition?: {
+    type: 'hp_below' | 'hp_above' | 'has_item' | 'level_check' | 'random'
+    value?: number
+    probability?: number
+    itemId?: string
+  }
+  
+  // Status effects
+  statusEffect?: {
+    id: string
+    name: string
+    icon?: string
+    stackable?: boolean
+    maxStacks?: number
+  }
   
   // Resource costs
   cost?: {
@@ -228,8 +246,30 @@ export interface EffectBase {
     quantity?: number
   }
   
-  // Messaging
+  // Success/failure messaging
+  successMessage?: string
+  failureMessage?: string
   message?: string
+  
+  // Cooldown and usage limits
+  cooldown?: number
+  maxUses?: number
+  currentUses?: number
+  
+  // Animation and visual effects
+  animation?: {
+    type: string
+    duration: number
+    color?: string
+    particle?: string
+  }
+  
+  // Sound effects
+  sound?: {
+    trigger: string
+    success?: string
+    failure?: string
+  }
 }
 
 /**
