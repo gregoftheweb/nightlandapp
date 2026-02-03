@@ -1,9 +1,9 @@
 // config/monsters.ts
 import { Monster, GreatPower } from './types'
 
-import abhumanIMG from '@assets/images/sprites/monsters/abhuman.png'
-import night_houndIMG from '@assets/images/sprites/monsters/nighthound4.png'
-import watcher_seIMG from '@assets/images/sprites/monsters/watcherse.png'
+import abhumanIMG from '@assets/images/sprites/monsters/abhuman.webp'
+import night_houndIMG from '@assets/images/sprites/monsters/nighthound4.webp'
+import watcher_seIMG from '@assets/images/sprites/monsters/watcherse.webp'
 
 // -------------------- REGULAR MONSTERS --------------------
 // Base monster templates - NO spawn configuration here

@@ -66,7 +66,7 @@ export default function DeathScreen() {
   console.log(`☠️☠️☠️ [${instanceId.current}] Rendering DeathScreen component`)
   return (
     <ImageBackground
-      source={require('@assets/images/backgrounds/splash/splashscreen.png')}
+      source={require('@assets/images/backgrounds/splash/splashscreen.webp')}
       resizeMode="cover"
       style={styles.backgroundImage}
     >
