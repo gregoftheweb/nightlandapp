@@ -190,58 +190,35 @@ export interface NonCollisionObject {
   active: boolean
 }
 
-export interface Effect {
-  type:
-    | 'heal'
-    | 'stun'
-    | 'poison'
-    | 'teleport'
-    | 'spawn'
-    | 'swarm'
-    | 'hide'
-    | 'recuperate'
-    | 'soulsuck'
-    | 'showMessage'
-    | 'unlock_hide_ability'
+// ==================== EFFECT TYPE DEFINITIONS ====================
 
+/**
+ * Base interface for all effects.
+ * Contains optional properties that can be shared across effect types.
+ * All properties are optional in the base to allow for backward compatibility
+ * with existing code that doesn't use type narrowing.
+ */
+export interface EffectBase {
   description?: string
-
-  // Numeric values
+  
+  // Numeric values - optional in base, required in specific effect types as needed
   value?: number
+  amount?: number
   duration?: number
   range?: number
   count?: number
-  amount?: number
-
+  
   // Target specification
   target?: EffectTarget
   targetId?: string
-
+  
   // Spawn/summon properties
   monsterType?: string
-  entityId?: string
-
+  
   // Position and area effects
   position?: Position
   area?: Area
-
-  // Conditional logic
-  condition?: {
-    type: 'hp_below' | 'hp_above' | 'has_item' | 'level_check' | 'random'
-    value?: number
-    probability?: number
-    itemId?: string
-  }
-
-  // Status effects
-  statusEffect?: {
-    id: string
-    name: string
-    icon?: string
-    stackable?: boolean
-    maxStacks?: number
-  }
-
+  
   // Resource costs
   cost?: {
     hp?: number
@@ -250,32 +227,135 @@ export interface Effect {
     item?: string
     quantity?: number
   }
-
-  // Success/failure messaging
-  successMessage?: string
-  failureMessage?: string
-  message?: string // For showMessage effect
-
-  // Cooldown and usage limits
-  cooldown?: number
-  maxUses?: number
-  currentUses?: number
-
-  // Animation and visual effects
-  animation?: {
-    type: string
-    duration: number
-    color?: string
-    particle?: string
-  }
-
-  // Sound effects
-  sound?: {
-    trigger: string
-    success?: string
-    failure?: string
-  }
+  
+  // Messaging
+  message?: string
 }
+
+/**
+ * Heal Effect - Restores HP to the player
+ * Required: type
+ * Uses: value OR amount, cost (optional)
+ */
+export type HealEffect = EffectBase & {
+  type: 'heal'
+}
+
+/**
+ * Recuperate Effect - Heals player only if below max HP
+ * Required: type
+ * Uses: value OR amount
+ */
+export type RecuperateEffect = EffectBase & {
+  type: 'recuperate'
+}
+
+/**
+ * Hide Effect - Makes player invisible/hidden
+ * Required: type
+ */
+export type HideEffect = EffectBase & {
+  type: 'hide'
+}
+
+/**
+ * Cloaking Effect - Timed invisibility with turn-based duration
+ * Required: type
+ * Uses: duration
+ */
+export type CloakingEffect = EffectBase & {
+  type: 'cloaking'
+}
+
+/**
+ * Swarm Effect - Spawns multiple monsters in a circular pattern
+ * Required: type
+ * Uses: monsterType, count, range
+ */
+export type SwarmEffect = EffectBase & {
+  type: 'swarm'
+}
+
+/**
+ * Soulsuck Effect - Instant death effect used by Great Powers
+ * Required: type
+ */
+export type SoulsuckEffect = EffectBase & {
+  type: 'soulsuck'
+}
+
+/**
+ * Poison Effect - Deals damage to the player
+ * Required: type
+ * Uses: value OR amount
+ */
+export type PoisonEffect = EffectBase & {
+  type: 'poison'
+}
+
+/**
+ * ShowMessage Effect - Displays a message to the player
+ * Required: type
+ * Uses: message
+ */
+export type ShowMessageEffect = EffectBase & {
+  type: 'showMessage'
+}
+
+/**
+ * UnlockHideAbility Effect - Unlocks the hide ability for the player
+ * Required: type
+ */
+export type UnlockHideAbilityEffect = EffectBase & {
+  type: 'unlock_hide_ability'
+}
+
+/**
+ * Stun Effect - Stuns target (not yet implemented)
+ * Required: type
+ * Uses: duration, target, targetId (all optional)
+ */
+export type StunEffect = EffectBase & {
+  type: 'stun'
+}
+
+/**
+ * Teleport Effect - Teleports target to a position (not yet implemented)
+ * Required: type
+ * Uses: position, target, targetId (all optional)
+ */
+export type TeleportEffect = EffectBase & {
+  type: 'teleport'
+}
+
+/**
+ * Spawn Effect - Spawns a single entity (not yet implemented)
+ * Required: type
+ * Uses: monsterType, count, area, position (some optional)
+ */
+export type SpawnEffect = EffectBase & {
+  type: 'spawn'
+}
+
+/**
+ * Discriminated union of all effect types.
+ * Each effect type is keyed by its 'type' property for type narrowing.
+ * All properties from EffectBase are available on all effect types,
+ * but each effect documents which properties it actually uses.
+ */
+export type Effect =
+  | HealEffect
+  | RecuperateEffect
+  | HideEffect
+  | CloakingEffect
+  | SwarmEffect
+  | SoulsuckEffect
+  | PoisonEffect
+  | ShowMessageEffect
+  | UnlockHideAbilityEffect
+  | StunEffect
+  | TeleportEffect
+  | SpawnEffect
 
 export interface SpawnZone {
   id: string
