@@ -12,7 +12,7 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { AttemptResult } from './types'
 
-const bgPuzzle = require('@assets/images/backgrounds/subgames/aerowreck-safe2.png')
+const bgPuzzle = require('@assets/images/backgrounds/subgames/aerowreck-safe2.webp')
 
 export default function AeroWreckageSafe() {
   const router = useRouter()

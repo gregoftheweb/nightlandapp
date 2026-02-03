@@ -1,18 +1,18 @@
 // config/objects.ts
 import { GameObject, NonCollisionObject } from './types'
 
-import redoubtImg from '@assets/images/sprites/buildings/redoubt2.png'
-import riverIMG from '@assets/images/sprites/buildings/river1.png'
-import cursedTotemIMG from '@assets/images/sprites/buildings/cursedtotem.png'
-import petrifiedWillowIMG from '@assets/images/sprites/buildings/petrifiedWillow.png'
-import maguffinRockIMG from '@assets/images/items/equipment/maguffinRock.png'
-import shortSwordIMG from '@assets/images/items/equipment/shortSword.png'
-import potionIMG from '@assets/images/items/consumables/potion.png'
-import sanctuaryPoolImg from '@assets/images/sprites/buildings/poolofpeace.png'
-import footprintsIMG from '@assets/images/items/quest/footprints-blue.png'
-import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.png'
-import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.png'
-import hermitIMG from '@assets/images/backgrounds/subgames/hermit-save2.png'
+import redoubtImg from '@assets/images/sprites/buildings/redoubt2.webp'
+import riverIMG from '@assets/images/sprites/buildings/river1.webp'
+import cursedTotemIMG from '@assets/images/sprites/buildings/cursedtotem.webp'
+import petrifiedWillowIMG from '@assets/images/sprites/buildings/petrifiedWillow.webp'
+import maguffinRockIMG from '@assets/images/items/equipment/maguffinRock.webp'
+import shortSwordIMG from '@assets/images/items/equipment/shortSword.webp'
+import potionIMG from '@assets/images/items/consumables/potion.webp'
+import sanctuaryPoolImg from '@assets/images/sprites/buildings/poolofpeace.webp'
+import footprintsIMG from '@assets/images/items/quest/footprints-blue.webp'
+import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
+import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.webp'
+import hermitIMG from '@assets/images/backgrounds/subgames/hermit-save2.webp'
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {

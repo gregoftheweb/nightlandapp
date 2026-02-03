@@ -12,7 +12,7 @@ import { subGameTheme } from '../_shared/subGameTheme'
 //import { usePuzzleState } from './hooks/usePuzzleState'
 import { LayoutChangeEvent } from 'react-native'
 
-const bgSuccess = require('@assets/images/backgrounds/subgames/aerowreck-safe3.png')
+const bgSuccess = require('@assets/images/backgrounds/subgames/aerowreck-safe3.webp')
 const LAZER_PISTOL_WEAPON_ID = 'weapon-lazer-pistol-001'
 
 export default function AeroWreckageSuccess() {

@@ -12,7 +12,7 @@ import { saveWaypoint } from '@/modules/saveGame'
 import { applyEffect } from '@/modules/effects'
 import { Effect } from '@/config/types'
 
-const bgHermit = require('@assets/images/backgrounds/subgames/hermit-screen1.png')
+const bgHermit = require('@assets/images/backgrounds/subgames/hermit-screen1.webp')
 const SUB_GAME_NAME = 'hermit-hollow'
 const WAYPOINT_NAME = 'hermit-hollow waypoint'
 

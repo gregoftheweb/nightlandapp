@@ -11,11 +11,11 @@ import {
   NativeTouchEvent,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import turnButtonIMG from '@assets/images/ui/icons/buttonTurn.png'
-import attackButtonIMG from '@assets/images/ui/icons/buttonAttack.png'
-import inventoryButtonIMG from '@assets/images/ui/icons/buttonInventory.png'
-import zapButtonIMG from '@assets/images/ui/icons/buttonZap.png'
-import hideButtonIMG from '@assets/images/ui/icons/buttonHide.png'
+import turnButtonIMG from '@assets/images/ui/icons/buttonTurn.webp'
+import attackButtonIMG from '@assets/images/ui/icons/buttonAttack.webp'
+import inventoryButtonIMG from '@assets/images/ui/icons/buttonInventory.webp'
+import zapButtonIMG from '@assets/images/ui/icons/buttonZap.webp'
+import hideButtonIMG from '@assets/images/ui/icons/buttonHide.webp'
 
 interface PlayerHUDProps {
   hp: number
@@ -89,7 +89,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
           <Text style={styles.hpText}>HP: {hp}</Text>
 
           <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
-            <Image source={require('@assets/images/ui/icons/gear.png')} style={styles.gearIcon} />
+            <Image source={require('@assets/images/ui/icons/gear.webp')} style={styles.gearIcon} />
           </TouchableOpacity>
         </View>
 
