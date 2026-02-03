@@ -133,6 +133,145 @@ export interface LevelObjectInstance extends GameObject {
   rotation?: number // NEW: Instance-specific rotation override
 }
 
+// ===== NEW: Template vs Instance Architecture =====
+// These types introduce a clean separation between templates (definitions)
+// and instances (runtime entities). Existing types remain unchanged for compatibility.
+
+/**
+ * GameObjectTemplate - Static definition of a game object (building, decoration, etc.)
+ * Excludes runtime fields like position, active, lastTrigger
+ */
+export interface GameObjectTemplate {
+  shortName: string
+  category: string
+  name: string
+  description?: string
+  damage?: number
+  hitBonus?: number
+  type?: string
+  weaponType?: WeaponType
+  range?: number
+  width?: number
+  height?: number
+  image?: ImageSourcePropType
+  size?: { width: number; height: number }
+  effects?: Effect[]
+  collisionMask?: Array<{
+    row: number
+    col: number
+    width: number
+    height: number
+  }>
+  maxInstances?: number
+  zIndex?: number
+  rotation?: number // Default rotation for template
+  projectileColor?: string
+  projectileLengthPx?: number
+  projectileThicknessPx?: number
+  projectileGlow?: boolean
+  subGame?: SubGameLaunch
+  collectible?: boolean
+  usable?: boolean
+  consumeOnUse?: boolean
+}
+
+/**
+ * MonsterTemplate - Static definition of a monster type
+ * Excludes runtime fields like position, spawned, currentHP
+ */
+export interface MonsterTemplate {
+  shortName: string
+  category: string
+  name: string
+  description?: string
+  image?: ImageSourcePropType
+  hp: number
+  maxHP: number
+  attack: number
+  ac: number
+  initiative?: number
+  moveRate: number
+  spawnRate?: number
+  maxInstances?: number
+  soulKey: SoulKey
+  width?: number
+  height?: number
+  size?: { width: number; height: number }
+  effects?: Effect[]
+  damage?: number
+  hitBonus?: number
+  weaponType?: WeaponType
+  range?: number
+  zIndex?: number
+}
+
+/**
+ * ObjectInstance - Runtime instance of a game object with position and overrides
+ * Alternative name to avoid confusion with LevelObjectInstance
+ */
+export interface ObjectInstance {
+  id: string
+  templateId: string // Reference to the template shortName
+  position: Position
+  rotation?: number // Instance-specific rotation override
+  zIndex?: number // Instance-specific z-index override
+  interactable?: boolean
+  interactionType?: InteractionType
+  locked?: boolean
+  keyRequired?: string
+  // Additional instance-specific overrides can be added here
+}
+
+/**
+ * MonsterInstance - Runtime instance of a monster with position and state
+ */
+export interface MonsterInstance {
+  id: string
+  templateId: string // Reference to the monster template shortName
+  position: Position
+  currentHP: number
+  spawned?: boolean
+  spawnZoneId?: string
+  // Instance-specific overrides
+  zIndex?: number
+}
+
+/**
+ * HydratedObject - Merged shape of template + instance for runtime use
+ * Contains all template data plus instance-specific overrides
+ */
+export interface HydratedObject extends GameObjectTemplate {
+  id: string
+  templateId: string
+  position: Position
+  active: boolean
+  lastTrigger?: number
+  // Instance overrides take precedence
+  rotation?: number
+  zIndex?: number
+  interactable?: boolean
+  interactionType?: InteractionType
+  locked?: boolean
+  keyRequired?: string
+}
+
+/**
+ * HydratedMonster - Merged shape of monster template + instance for runtime use
+ * Contains all template data plus instance-specific state
+ */
+export interface HydratedMonster extends MonsterTemplate {
+  id: string
+  templateId: string
+  position: Position
+  currentHP: number
+  spawned?: boolean
+  spawnZoneId?: string
+  active?: boolean
+  lastTrigger?: number
+  uiSlot?: number
+  inCombatSlot?: boolean
+}
+
 export interface Player {
   name: string
   shortName: string
