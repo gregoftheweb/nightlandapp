@@ -1,21 +1,19 @@
 // config/monsters.ts
-import { Monster, GreatPower } from './types'
+import { MonsterTemplate, GreatPower } from './types'
 
 import abhumanIMG from '@assets/images/sprites/monsters/abhuman.webp'
 import night_houndIMG from '@assets/images/sprites/monsters/nighthound4.webp'
 import watcher_seIMG from '@assets/images/sprites/monsters/watcherse.webp'
 
 // -------------------- REGULAR MONSTERS --------------------
-// Base monster templates - NO spawn configuration here
-export const monsters: Monster[] = [
+// Base monster templates - Static definitions without runtime state
+export const monsterTemplates: MonsterTemplate[] = [
   {
     shortName: 'abhuman',
     category: 'regular',
     name: 'Abhuman',
     description: 'Mutated humanoid with brute strength.',
     image: abhumanIMG,
-    position: { row: 0, col: 0 }, // Default position, will be set during spawning
-    active: true,
     hp: 12,
     maxHP: 12,
     attack: 5,
@@ -29,8 +27,6 @@ export const monsters: Monster[] = [
     name: 'Night Hound',
     description: 'Swift, feral beast that hunts in packs.',
     image: night_houndIMG,
-    position: { row: 0, col: 0 }, // Default position, will be set during spawning
-    active: true,
     hp: 30,
     maxHP: 30,
     attack: 6,
@@ -72,8 +68,8 @@ export const greatPowers: GreatPower[] = [
 // -------------------- HELPER FUNCTIONS --------------------
 
 // Get monster template by shortName
-export const getMonsterTemplate = (shortName: string): Monster | undefined => {
-  return monsters.find((monster) => monster.shortName === shortName)
+export const getMonsterTemplate = (shortName: string): MonsterTemplate | undefined => {
+  return monsterTemplates.find((monster) => monster.shortName === shortName)
 }
 
 // Get great power template by shortName
@@ -83,10 +79,15 @@ export const getGreatPowerTemplate = (shortName: string): GreatPower | undefined
 
 // Get all monster shortNames for validation
 export const getAvailableMonsterTypes = (): string[] => {
-  return monsters.map((monster) => monster.shortName)
+  return monsterTemplates.map((monster) => monster.shortName)
 }
 
 // Get all great power shortNames for validation
 export const getAvailableGreatPowerTypes = (): string[] => {
   return greatPowers.map((power) => power.shortName)
+}
+
+// Get monster templates as a Map for hydration
+export const getMonsterTemplateMap = (): Map<string, MonsterTemplate> => {
+  return new Map(monsterTemplates.map((template) => [template.shortName, template]))
 }

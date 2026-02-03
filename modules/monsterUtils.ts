@@ -1,6 +1,7 @@
 // modules/monsterUtils.ts - Monster spawning and management logic
-import { GameState, Monster, Position } from '../config/types'
+import { GameState, Monster, Position, MonsterInstance } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
+import { hydrateMonster, hydratedMonsterToMonster } from './hydration'
 import { moveMonsters } from './movement'
 
 // ==================== CONSTANTS ====================
@@ -117,6 +118,7 @@ export const getSpawnPosition = (state: GameState): Position => {
 
 /**
  * Create a monster instance from a template for spawning
+ * Uses MonsterTemplate + MonsterInstance + hydrateMonster pattern
  */
 export const createMonsterFromTemplate = (
   shortName: string,
@@ -128,18 +130,19 @@ export const createMonsterFromTemplate = (
     return null
   }
 
-  return {
-    ...template,
+  // Create a MonsterInstance with runtime state
+  const instance: MonsterInstance = {
     id: `${shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`, // Unique ID for React keys
+    templateId: shortName,
     position,
-    active: true,
-    hp: template.hp,
-    maxHP: template.maxHP,
-    attack: template.attack,
-    ac: template.ac,
-    moveRate: template.moveRate,
-    soulKey: template.soulKey,
+    currentHP: template.hp, // Start at full HP
   }
+
+  // Hydrate the template with the instance
+  const hydrated = hydrateMonster(template, instance)
+
+  // Convert to Monster format for GameState compatibility
+  return hydratedMonsterToMonster(hydrated)
 }
 
 /**

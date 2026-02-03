@@ -12,6 +12,7 @@ import {
   MonsterInstance,
   HydratedObject,
   HydratedMonster,
+  Monster,
 } from '@/config/types'
 
 /**
@@ -111,4 +112,26 @@ export function hydrateMonsters(
     }
     return hydrateMonster(template, instance)
   })
+}
+
+/**
+ * Convert a HydratedMonster to Monster format for GameState compatibility
+ * Maps currentHP to hp for backward compatibility with existing code
+ * 
+ * @param hydrated - HydratedMonster from hydration
+ * @returns Monster in legacy format
+ */
+export function hydratedMonsterToMonster(hydrated: HydratedMonster): Monster {
+  return {
+    // Spread all template properties
+    ...hydrated,
+    // Map currentHP to hp for compatibility
+    hp: hydrated.currentHP,
+    // Ensure required Monster fields
+    id: hydrated.id,
+    position: hydrated.position,
+    active: hydrated.active ?? true,
+    uiSlot: hydrated.uiSlot,
+    inCombatSlot: hydrated.inCombatSlot,
+  }
 }
