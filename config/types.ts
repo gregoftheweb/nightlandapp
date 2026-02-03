@@ -194,14 +194,17 @@ export interface NonCollisionObject {
 
 /**
  * Base interface for all effects.
- * Contains optional properties that can be shared across effect types.
- * All properties are optional in the base to allow for backward compatibility
+ * Contains all properties from the original Effect interface.
+ * All properties are optional to maintain backward compatibility
  * with existing code that doesn't use type narrowing.
+ * 
+ * NOTE: In the future, when gameplay logic is updated, individual effect
+ * types can make their required properties non-optional for better type safety.
  */
 export interface EffectBase {
   description?: string
   
-  // Numeric values - optional in base, required in specific effect types as needed
+  // Numeric values
   value?: number
   amount?: number
   duration?: number
@@ -274,8 +277,10 @@ export interface EffectBase {
 
 /**
  * Heal Effect - Restores HP to the player
- * Required: type
- * Uses: value OR amount, cost (optional)
+ * Currently uses: value OR amount, cost (optional)
+ * 
+ * NOTE: Properties are optional for backward compatibility.
+ * Future work: make value/amount required when gameplay logic is updated.
  */
 export type HealEffect = EffectBase & {
   type: 'heal'
@@ -283,8 +288,10 @@ export type HealEffect = EffectBase & {
 
 /**
  * Recuperate Effect - Heals player only if below max HP
- * Required: type
- * Uses: value OR amount
+ * Currently uses: value OR amount
+ * 
+ * NOTE: Properties are optional for backward compatibility.
+ * Future work: make value/amount required when gameplay logic is updated.
  */
 export type RecuperateEffect = EffectBase & {
   type: 'recuperate'
@@ -292,7 +299,7 @@ export type RecuperateEffect = EffectBase & {
 
 /**
  * Hide Effect - Makes player invisible/hidden
- * Required: type
+ * Currently uses: description (optional)
  */
 export type HideEffect = EffectBase & {
   type: 'hide'
@@ -300,8 +307,10 @@ export type HideEffect = EffectBase & {
 
 /**
  * Swarm Effect - Spawns multiple monsters in a circular pattern
- * Required: type
- * Uses: monsterType, count, range
+ * Currently uses: monsterType, count, range
+ * 
+ * NOTE: Properties are optional for backward compatibility.
+ * Future work: make monsterType, count, range required when gameplay logic is updated.
  */
 export type SwarmEffect = EffectBase & {
   type: 'swarm'
@@ -309,7 +318,7 @@ export type SwarmEffect = EffectBase & {
 
 /**
  * Soulsuck Effect - Instant death effect used by Great Powers
- * Required: type
+ * Currently uses: description (optional)
  */
 export type SoulsuckEffect = EffectBase & {
   type: 'soulsuck'
@@ -317,8 +326,10 @@ export type SoulsuckEffect = EffectBase & {
 
 /**
  * Poison Effect - Deals damage to the player
- * Required: type
- * Uses: value OR amount
+ * Currently uses: value OR amount
+ * 
+ * NOTE: Properties are optional for backward compatibility.
+ * Future work: make value/amount required when gameplay logic is updated.
  */
 export type PoisonEffect = EffectBase & {
   type: 'poison'
@@ -326,8 +337,10 @@ export type PoisonEffect = EffectBase & {
 
 /**
  * ShowMessage Effect - Displays a message to the player
- * Required: type
- * Uses: message
+ * Currently uses: message
+ * 
+ * NOTE: Properties are optional for backward compatibility.
+ * Future work: make message required when gameplay logic is updated.
  */
 export type ShowMessageEffect = EffectBase & {
   type: 'showMessage'
@@ -335,7 +348,7 @@ export type ShowMessageEffect = EffectBase & {
 
 /**
  * UnlockHideAbility Effect - Unlocks the hide ability for the player
- * Required: type
+ * Currently uses: description (optional)
  */
 export type UnlockHideAbilityEffect = EffectBase & {
   type: 'unlock_hide_ability'
@@ -343,8 +356,7 @@ export type UnlockHideAbilityEffect = EffectBase & {
 
 /**
  * Stun Effect - Stuns target (not yet implemented)
- * Required: type
- * Uses: duration, target, targetId (all optional)
+ * Will use: duration, target, targetId
  */
 export type StunEffect = EffectBase & {
   type: 'stun'
@@ -352,8 +364,7 @@ export type StunEffect = EffectBase & {
 
 /**
  * Teleport Effect - Teleports target to a position (not yet implemented)
- * Required: type
- * Uses: position, target, targetId (all optional)
+ * Will use: position, target, targetId
  */
 export type TeleportEffect = EffectBase & {
   type: 'teleport'
@@ -361,8 +372,7 @@ export type TeleportEffect = EffectBase & {
 
 /**
  * Spawn Effect - Spawns a single entity (not yet implemented)
- * Required: type
- * Uses: monsterType, count, area, position (some optional)
+ * Will use: monsterType, count (optional), area (optional), position (optional)
  */
 export type SpawnEffect = EffectBase & {
   type: 'spawn'
