@@ -106,16 +106,8 @@ export interface EffectResult {
  * Restores HP to the player, capped at maxHP.
  * Used by: health potions, healing pools, recuperation zones
  */
-const executeHealEffect = (effect: Effect, context: EffectContext): EffectResult => {
+const executeHealEffect: EffectHandler<'heal'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
-  
-  if (effect.type !== 'heal') {
-    return {
-      success: false,
-      message: 'Invalid effect type for heal handler',
-      consumeItem: false,
-    }
-  }
   
   const healAmount = effect.value
 
@@ -187,16 +179,8 @@ const executeHealEffect = (effect: Effect, context: EffectContext): EffectResult
  * Similar to heal, but only heals if player is below max HP.
  * Used by: safe zones, rest areas like The Last Redoubt
  */
-const executeRecuperateEffect = (effect: Effect, context: EffectContext): EffectResult => {
+const executeRecuperateEffect: EffectHandler<'recuperate'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
-  
-  if (effect.type !== 'recuperate') {
-    return {
-      success: false,
-      message: 'Invalid effect type for recuperate handler',
-      consumeItem: false,
-    }
-  }
   
   const healAmount = effect.value
 
@@ -253,7 +237,7 @@ const executeRecuperateEffect = (effect: Effect, context: EffectContext): Effect
  *
  * Note: For timed invisibility, use 'cloaking' effect instead
  */
-const executeHideEffect = (effect: Effect, context: EffectContext): EffectResult => {
+const executeHideEffect: EffectHandler<'hide'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
 
   logIfDev('🥷 Executing hide effect')
@@ -299,16 +283,8 @@ const executeHideEffect = (effect: Effect, context: EffectContext): EffectResult
  * - Automatically expires when hideTurns reaches 0
  * - Stacking behavior: refreshes duration to maximum
  */
-const executeCloakingEffect = (effect: Effect, context: EffectContext): EffectResult => {
+const executeCloakingEffect: EffectHandler<'cloaking'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
-  
-  if (effect.type !== 'cloaking') {
-    return {
-      success: false,
-      message: 'Invalid effect type for cloaking handler',
-      consumeItem: false,
-    }
-  }
   
   const duration = effect.duration
 
@@ -349,19 +325,10 @@ const executeCloakingEffect = (effect: Effect, context: EffectContext): EffectRe
  *
  * Used by: cursed totems, monster nests, dark rituals
  */
-const executeSwarmEffect = (effect: Effect, context: EffectContext): EffectResult => {
+const executeSwarmEffect: EffectHandler<'swarm'> = (effect, context) => {
   const { state, dispatch, position } = context
 
   logIfDev('🐝 Executing swarm effect:', effect)
-
-  if (effect.type !== 'swarm') {
-    logIfDev('❌ Invalid effect type for swarm handler')
-    return {
-      success: false,
-      message: 'Swarm effect misconfigured.',
-      consumeItem: false,
-    }
-  }
 
   const spawnRange = effect.range
   const spawnPosition = position || state.player.position
@@ -435,7 +402,7 @@ const executeSwarmEffect = (effect: Effect, context: EffectContext): EffectResul
  *
  * Used by: Great Powers (Watchers, House of Silence, etc.)
  */
-const executeSoulsuckEffect = (effect: Effect, context: EffectContext): EffectResult => {
+const executeSoulsuckEffect: EffectHandler<'soulsuck'> = (effect, context) => {
   const { state, dispatch } = context
 
   logIfDev('💀 Executing soulsuck effect - player soul consumed!')
@@ -478,16 +445,8 @@ const executeSoulsuckEffect = (effect: Effect, context: EffectContext): EffectRe
  *
  * Used by: poison pools, toxic enemies, cursed items
  */
-const executePoisonEffect = (effect: Effect, context: EffectContext): EffectResult => {
+const executePoisonEffect: EffectHandler<'poison'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
-  
-  if (effect.type !== 'poison') {
-    return {
-      success: false,
-      message: 'Invalid effect type for poison handler',
-      consumeItem: false,
-    }
-  }
   
   const damage = effect.value
 
@@ -532,16 +491,8 @@ const executePoisonEffect = (effect: Effect, context: EffectContext): EffectResu
  * Displays a message to the player without consuming the item.
  * Used for: readable items like scrolls, notes, and letters.
  */
-const executeShowMessageEffect = (effect: Effect, context: EffectContext): EffectResult => {
+const executeShowMessageEffect: EffectHandler<'showMessage'> = (effect, context) => {
   const { showDialog, item } = context
-  
-  if (effect.type !== 'showMessage') {
-    return {
-      success: false,
-      message: 'Invalid effect type for showMessage handler',
-      consumeItem: false,
-    }
-  }
   
   const message = effect.message || effect.description || 'A message appears.'
 
@@ -567,7 +518,7 @@ const executeShowMessageEffect = (effect: Effect, context: EffectContext): Effec
  * - Grants full charge (10 turns)
  * - Does not activate the ability (player must toggle it)
  */
-const executeUnlockHideAbilityEffect = (effect: Effect, context: EffectContext): EffectResult => {
+const executeUnlockHideAbilityEffect: EffectHandler<'unlock_hide_ability'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
 
   logIfDev('🎁 Executing unlock_hide_ability effect')
@@ -610,12 +561,39 @@ const executeUnlockHideAbilityEffect = (effect: Effect, context: EffectContext):
 // ==================== EFFECT HANDLER REGISTRY ====================
 
 /**
- * Registry of all effect handlers.
- * Maps effect type to its handler function.
+ * Type mapping for effect discrimination.
+ * Maps each effect type string to its specific Effect subtype.
  */
-type EffectHandler = (effect: Effect, context: EffectContext) => EffectResult
+type EffectByType = {
+  heal: Extract<Effect, { type: 'heal' }>
+  stun: Extract<Effect, { type: 'stun' }>
+  poison: Extract<Effect, { type: 'poison' }>
+  teleport: Extract<Effect, { type: 'teleport' }>
+  spawn: Extract<Effect, { type: 'spawn' }>
+  swarm: Extract<Effect, { type: 'swarm' }>
+  hide: Extract<Effect, { type: 'hide' }>
+  recuperate: Extract<Effect, { type: 'recuperate' }>
+  soulsuck: Extract<Effect, { type: 'soulsuck' }>
+  showMessage: Extract<Effect, { type: 'showMessage' }>
+  unlock_hide_ability: Extract<Effect, { type: 'unlock_hide_ability' }>
+  cloaking: Extract<Effect, { type: 'cloaking' }>
+}
 
-const EFFECT_HANDLERS: Record<string, EffectHandler> = {
+/**
+ * Generic handler type that receives the correctly narrowed effect type.
+ */
+type EffectHandler<K extends keyof EffectByType> = (
+  effect: EffectByType[K],
+  context: EffectContext
+) => EffectResult
+
+/**
+ * Registry of all effect handlers.
+ * Maps effect type to its handler function with proper typing.
+ */
+const EFFECT_HANDLERS: {
+  [K in keyof EffectByType]?: EffectHandler<K>
+} = {
   heal: executeHealEffect,
   recuperate: executeRecuperateEffect,
   hide: executeHideEffect,
@@ -629,6 +607,76 @@ const EFFECT_HANDLERS: Record<string, EffectHandler> = {
 }
 
 // ==================== MAIN EFFECT EXECUTOR ====================
+
+/**
+ * Dispatches an effect to the correct handler with proper type narrowing.
+ * Uses a switch statement to ensure each handler receives the correctly typed effect.
+ *
+ * @param effect - The effect definition from config
+ * @param context - Full context including source, target, trigger, and game state
+ * @returns EffectResult with success status and message
+ */
+const dispatchEffect = (effect: Effect, context: EffectContext): EffectResult => {
+  switch (effect.type) {
+    case 'heal': {
+      const handler = EFFECT_HANDLERS.heal
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'recuperate': {
+      const handler = EFFECT_HANDLERS.recuperate
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'hide': {
+      const handler = EFFECT_HANDLERS.hide
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'cloaking': {
+      const handler = EFFECT_HANDLERS.cloaking
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'swarm': {
+      const handler = EFFECT_HANDLERS.swarm
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'soulsuck': {
+      const handler = EFFECT_HANDLERS.soulsuck
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'poison': {
+      const handler = EFFECT_HANDLERS.poison
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'showMessage': {
+      const handler = EFFECT_HANDLERS.showMessage
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'unlock_hide_ability': {
+      const handler = EFFECT_HANDLERS.unlock_hide_ability
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'stun':
+    case 'teleport':
+    case 'spawn':
+      // TODO: Implement these placeholder effect types
+      return unknownEffectResult(effect.type)
+    default:
+      // Exhaustiveness check - TypeScript will error if we miss a case
+      const _exhaustive: never = effect
+      return unknownEffectResult('unknown')
+  }
+}
+
+/**
+ * Helper to create a result for unknown/unimplemented effects.
+ */
+const unknownEffectResult = (effectType: string): EffectResult => {
+  console.warn(`❌ Unknown or unimplemented effect type: ${effectType}`)
+  return {
+    success: false,
+    message: `Unknown effect: ${effectType}`,
+    consumeItem: false,
+  }
+}
 
 /**
  * UNIFIED EFFECT APPLICATION
@@ -647,20 +695,8 @@ export const applyEffect = (effect: Effect, context: EffectContext): EffectResul
     position: context.position,
   })
 
-  // Get handler for this effect type
-  const handler = EFFECT_HANDLERS[effect.type]
-
-  if (!handler) {
-    console.warn(`❌ Unknown effect type: ${effect.type}`)
-    return {
-      success: false,
-      message: `Unknown effect: ${effect.type}`,
-      consumeItem: false,
-    }
-  }
-
-  // Execute the effect handler
-  const result = handler(effect, context)
+  // Dispatch to the correct handler with type narrowing
+  const result = dispatchEffect(effect, context)
 
   logIfDev(
     `${result.success ? '✅' : '❌'} Effect ${effect.type} ${result.success ? 'succeeded' : 'failed'}: ${result.message}`
