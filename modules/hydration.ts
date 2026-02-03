@@ -118,19 +118,41 @@ export function hydrateMonsters(
  * Convert a HydratedMonster to Monster format for GameState compatibility
  * Maps currentHP to hp for backward compatibility with existing code
  * 
+ * Note: The returned Monster has both 'hp' (current) and 'currentHP' (from hydrated)
+ * because of the spread. This redundancy maintains compatibility with code expecting
+ * monster.hp to be the current HP value.
+ * 
  * @param hydrated - HydratedMonster from hydration
  * @returns Monster in legacy format
  */
 export function hydratedMonsterToMonster(hydrated: HydratedMonster): Monster {
   return {
-    // Spread all template properties
-    ...hydrated,
-    // Map currentHP to hp for compatibility
-    hp: hydrated.currentHP,
-    // Ensure required Monster fields
+    // Core template properties
+    shortName: hydrated.shortName,
+    category: hydrated.category,
+    name: hydrated.name,
+    description: hydrated.description,
+    image: hydrated.image,
+    maxHP: hydrated.maxHP,
+    attack: hydrated.attack,
+    ac: hydrated.ac,
+    initiative: hydrated.initiative,
+    moveRate: hydrated.moveRate,
+    soulKey: hydrated.soulKey,
+    width: hydrated.width,
+    height: hydrated.height,
+    size: hydrated.size,
+    effects: hydrated.effects,
+    damage: hydrated.damage,
+    hitBonus: hydrated.hitBonus,
+    weaponType: hydrated.weaponType,
+    range: hydrated.range,
+    zIndex: hydrated.zIndex,
+    // Runtime instance properties
     id: hydrated.id,
     position: hydrated.position,
     active: hydrated.active ?? true,
+    hp: hydrated.currentHP, // Map currentHP to hp for compatibility
     uiSlot: hydrated.uiSlot,
     inCombatSlot: hydrated.inCombatSlot,
   }
