@@ -259,15 +259,6 @@ export type HideEffect = EffectBase & {
 }
 
 /**
- * Cloaking Effect - Timed invisibility with turn-based duration
- * Required: type
- * Uses: duration
- */
-export type CloakingEffect = EffectBase & {
-  type: 'cloaking'
-}
-
-/**
  * Swarm Effect - Spawns multiple monsters in a circular pattern
  * Required: type
  * Uses: monsterType, count, range
@@ -347,7 +338,6 @@ export type Effect =
   | HealEffect
   | RecuperateEffect
   | HideEffect
-  | CloakingEffect
   | SwarmEffect
   | SoulsuckEffect
   | PoisonEffect
