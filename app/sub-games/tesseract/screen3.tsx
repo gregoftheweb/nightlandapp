@@ -6,7 +6,7 @@ import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { subGameTheme } from '../_shared/subGameTheme'
 
-const bgScreen3 = require('@/assets/images/tesseract-screen3.png')
+const bgScreen3 = require('@assets/images/backgrounds/subgames/tesseract-screen3.png')
 
 export default function TesseractScreen3() {
   const router = useRouter()

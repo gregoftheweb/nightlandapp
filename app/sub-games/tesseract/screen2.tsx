@@ -24,7 +24,7 @@ import {
   type Tile,
 } from './tiles'
 
-const puzzleBoard = require('@/assets/images/tesseract-puzzle-board.png')
+const puzzleBoard = require('@assets/images/backgrounds/subgames/tesseract-puzzle-board.png')
 
 // Target word to spell
 const TARGET = ['T', 'E', 'S', 'S', 'E', 'R', 'A', 'C', 'T']
@@ -44,6 +44,11 @@ export default function TesseractScreen2() {
   const router = useRouter()
   const { width: screenWidth } = useWindowDimensions()
   const insets = useSafeAreaInsets()
+
+  const H_PADDING = 10
+  const IMAGE_AR = 1024 / 972 // ~1.053
+  const boardWidth = screenWidth - H_PADDING * 2
+const boardHeight = boardWidth / IMAGE_AR
 
   // Image and tile state
   const [imageLayout, setImageLayout] = useState<{ width: number; height: number } | null>(null)
@@ -327,10 +332,10 @@ export default function TesseractScreen2() {
         <View style={[styles.contentArea, { paddingTop: insets.top + 20 }]}>
           <View style={styles.boardContainer}>
             <Image
-              source={puzzleBoard}
-              style={[styles.puzzleBoard, { width: screenWidth * 0.95 }]}
-              resizeMode="contain"
-              onLayout={handleImageLayout}
+               source={puzzleBoard}
+    style={{ width: boardWidth, height: boardHeight }}
+    resizeMode="contain"
+    onLayout={handleImageLayout}
             />
 
             {/* Interactive overlay for tap handling */}
@@ -480,7 +485,6 @@ const styles = StyleSheet.create({
   },
   puzzleBoard: {
     maxWidth: '100%',
-    aspectRatio: 1, // This will be overridden by the actual image aspect ratio when using contain
   },
   pressableOverlay: {
     position: 'absolute',

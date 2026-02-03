@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { View, Image, StyleSheet, ImageSourcePropType, LayoutChangeEvent } from 'react-native'
 
-const puzzleBackground = require('@/assets/images/sub-game-background.png')
+const puzzleBackground = require('@assets/images/backgrounds/subgames/sub-game-background.png')
 
 interface BackgroundImageProps {
   source?: ImageSourcePropType

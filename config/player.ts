@@ -1,7 +1,7 @@
 // config/player.ts
 import { Player } from './types'
 import { weapons } from './objects'
-import christosIMG from '@assets/images/christos.png'
+import christosIMG from '@assets/images/sprites/characters/christos.png'
 
 export const playerConfig: Player = {
   name: 'Christos',

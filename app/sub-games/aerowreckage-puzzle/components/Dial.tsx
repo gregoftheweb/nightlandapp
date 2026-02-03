@@ -36,8 +36,8 @@ const numberToLogicalAngle = (n: number) => (n / PUZZLE_CONFIG.totalNumbers) * T
 const numberToDisplayAngle = (n: number) => -numberToLogicalAngle(n) + DIAL_ORIENTATION_OFFSET
 
 // Button images
-const clockwiseButtonImage = require('@/assets/images/safe-dial-Clockwise.png')
-const counterClockwiseButtonImage = require('@/assets/images/safe-dial-CC.png')
+const clockwiseButtonImage = require('@assets/images/ui/icons/safe-dial-Clockwise.png')
+const counterClockwiseButtonImage = require('@assets/images/ui/icons/safe-dial-CC.png')
 
 // Calculate responsive dial size based on screen dimensions
 const getDialSize = (width: number, height: number) => {
