@@ -190,92 +190,76 @@ export interface NonCollisionObject {
   active: boolean
 }
 
-export interface Effect {
-  type:
-    | 'heal'
-    | 'stun'
-    | 'poison'
-    | 'teleport'
-    | 'spawn'
-    | 'swarm'
-    | 'hide'
-    | 'recuperate'
-    | 'soulsuck'
-    | 'showMessage'
-    | 'unlock_hide_ability'
+// Strict discriminated union for effects
+// Each effect type defines only the fields it actually uses
 
-  description?: string
-
-  // Numeric values
-  value?: number
-  duration?: number
-  range?: number
-  count?: number
-  amount?: number
-
-  // Target specification
-  target?: EffectTarget
-  targetId?: string
-
-  // Spawn/summon properties
-  monsterType?: string
-  entityId?: string
-
-  // Position and area effects
-  position?: Position
-  area?: Area
-
-  // Conditional logic
-  condition?: {
-    type: 'hp_below' | 'hp_above' | 'has_item' | 'level_check' | 'random'
-    value?: number
-    probability?: number
-    itemId?: string
-  }
-
-  // Status effects
-  statusEffect?: {
-    id: string
-    name: string
-    icon?: string
-    stackable?: boolean
-    maxStacks?: number
-  }
-
-  // Resource costs
-  cost?: {
-    hp?: number
-    mp?: number
-    stamina?: number
-    item?: string
-    quantity?: number
-  }
-
-  // Success/failure messaging
-  successMessage?: string
-  failureMessage?: string
-  message?: string // For showMessage effect
-
-  // Cooldown and usage limits
-  cooldown?: number
-  maxUses?: number
-  currentUses?: number
-
-  // Animation and visual effects
-  animation?: {
-    type: string
-    duration: number
-    color?: string
-    particle?: string
-  }
-
-  // Sound effects
-  sound?: {
-    trigger: string
-    success?: string
-    failure?: string
-  }
-}
+export type Effect =
+  | {
+      type: 'heal'
+      value: number
+      cost?: {
+        hp?: number
+        mp?: number
+        stamina?: number
+        item?: string
+        quantity?: number
+      }
+      description?: string
+    }
+  | {
+      type: 'recuperate'
+      value: number
+      description?: string
+    }
+  | {
+      type: 'hide'
+      description?: string
+    }
+  | {
+      type: 'cloaking'
+      duration: number
+      description?: string
+    }
+  | {
+      type: 'swarm'
+      monsterType: string
+      count: number
+      range: number
+    }
+  | {
+      type: 'soulsuck'
+      description?: string
+    }
+  | {
+      type: 'poison'
+      value: number
+      description?: string
+    }
+  | {
+      type: 'showMessage'
+      message: string
+      description?: string
+    }
+  | {
+      type: 'unlock_hide_ability'
+      description?: string
+    }
+  | {
+      // Placeholder for unimplemented effect types
+      type: 'stun' | 'teleport' | 'spawn'
+      description?: string
+      // Generic properties for forward compatibility
+      value?: number
+      duration?: number
+      range?: number
+      count?: number
+      target?: EffectTarget
+      targetId?: string
+      monsterType?: string
+      entityId?: string
+      position?: Position
+      area?: Area
+    }
 
 export interface SpawnZone {
   id: string

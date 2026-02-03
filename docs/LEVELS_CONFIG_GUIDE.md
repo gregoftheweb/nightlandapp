@@ -294,7 +294,7 @@ nonCollisionObjects: [
     collisionEffects: [
       {
         type: 'heal',
-        amount: 5,
+        value: 5,
         description: 'The river heals you.',
       },
     ],
