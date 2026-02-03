@@ -1,21 +1,24 @@
 # Button Repositioning for Hide Button - Implementation Guide
 
 ## Overview
+
 When the hide button is unlocked, the PlayerHUD layout needs to be adjusted to accommodate the new button while maintaining good spacing and visual hierarchy.
 
 ## Requirements Implemented
 
 ### 1. ✅ Move Zap Button Right (Closer to Turn/Attack)
+
 **Requirement:** "move buttonZap.png to the right - closer to the Turn/Attack button"
 
 **Implementation:**
+
 - Created new style: `zapButtonExpanded`
 - Moved from `left: 80px` to `left: 130px` (50px right)
 - Applied conditionally when `hideUnlocked === true`
 
 ```typescript
 // PlayerHUD.tsx - JSX
-<TouchableOpacity 
+<TouchableOpacity
   style={hideUnlocked ? styles.zapButtonExpanded : styles.zapButton}
   onPress={handleZapPress}
 >
@@ -41,9 +44,11 @@ zapButtonExpanded: {
 ---
 
 ### 2. ✅ Move Hide Button Right (Away from HP)
+
 **Requirement:** "move the Hide button -buttonHide.png - to the right as well so that it does not sit on top of the HP"
 
 **Implementation:**
+
 - Changed `hideButtonContainer` position from `left: 40px` to `left: 80px`
 - Takes the original position of the Zap button
 - No longer overlaps with HP text
@@ -71,9 +76,11 @@ hideButtonContainer: {
 ---
 
 ### 3. ✅ Align Hide Button with Zap Button
+
 **Requirement:** "move the hide button down so it is in alignment with the Zap button"
 
 **Implementation:**
+
 - Both buttons already at `bottom: 15`
 - Maintained vertical alignment
 
@@ -92,9 +99,11 @@ hideButtonContainer: {
 ---
 
 ### 4. ✅ Charge Meter on Top with Higher zIndex
+
 **Requirement:** "keep the progress where it is - put its zIndex above the hide button and let it live on top of the hide button"
 
 **Implementation:**
+
 - Changed from `marginTop: 2` to absolute positioning
 - Set `zIndex: 25` (higher than hide button's 21)
 - Positioned at `bottom: -8, left: 0` relative to container
@@ -125,6 +134,7 @@ chargeMeter: {
 ## Visual Layout Comparison
 
 ### Before (Hide Locked)
+
 ```
 ┌──────────────────────────────────────────────┐
 │  HP: 100                    [GEAR]           │
@@ -135,6 +145,7 @@ chargeMeter: {
 ```
 
 ### After (Hide Unlocked)
+
 ```
 ┌──────────────────────────────────────────────┐
 │  HP: 100                    [GEAR]           │
@@ -146,6 +157,7 @@ chargeMeter: {
 ```
 
 ### Detailed Positioning
+
 ```
 Horizontal positions (from left):
 - HP Text: left edge
@@ -167,6 +179,7 @@ Vertical positions (from bottom):
 ## Layer Hierarchy (z-index)
 
 From bottom to top:
+
 ```
 z-index 15: Status Bar
 z-index 19: Hide Active Background
@@ -182,11 +195,13 @@ The charge meter has the highest z-index (25) ensuring it appears on top of all 
 ## Responsive Behavior
 
 ### When Hide is Locked
+
 - Zap button at original position (`left: 80`)
 - Hide button not rendered
 - Standard 350px HUD width
 
 ### When Hide is Unlocked
+
 - HUD expands to 420px width
 - Hide button appears at `left: 80`
 - Zap button shifts to `left: 130` (using `zapButtonExpanded` style)
@@ -199,12 +214,14 @@ The charge meter has the highest z-index (25) ensuring it appears on top of all 
 ### File: `components/PlayerHUD.tsx`
 
 **JSX Changes:**
+
 1. Zap button: Added conditional styling
    ```typescript
    style={hideUnlocked ? styles.zapButtonExpanded : styles.zapButton}
    ```
 
 **Style Changes:**
+
 1. Added `zapButtonExpanded` style (new)
 2. Modified `hideButtonContainer.left`: `40` → `80`
 3. Modified `chargeMeter`: relative → absolute positioning
@@ -215,6 +232,7 @@ The charge meter has the highest z-index (25) ensuring it appears on top of all 
 ## Testing Checklist
 
 ### Visual Tests
+
 - [ ] Hide locked: Zap at 80px, no hide button
 - [ ] Hide unlocked: Hide at 80px, Zap at 130px
 - [ ] Hide button clear of HP text
@@ -223,6 +241,7 @@ The charge meter has the highest z-index (25) ensuring it appears on top of all 
 - [ ] Charge meter doesn't shift when button state changes
 
 ### Functional Tests
+
 - [ ] All buttons remain clickable
 - [ ] No z-index fighting or visual glitches
 - [ ] Smooth transition when hide unlocks
@@ -230,6 +249,7 @@ The charge meter has the highest z-index (25) ensuring it appears on top of all 
 - [ ] Charge meter updates correctly
 
 ### Edge Cases
+
 - [ ] Hide button depleted state
 - [ ] Hide button active state (green background)
 - [ ] Various charge levels (0-10)
@@ -242,12 +262,14 @@ The charge meter has the highest z-index (25) ensuring it appears on top of all 
 The positioning system is now ready for the "one more button later" mentioned by the user:
 
 **Current spacing:**
+
 - Hide: 80px
 - Zap: 130px
 - Gap: 50px
 - Next button could be at: 180px (or adjust all spacing)
 
 **Recommendation for future button:**
+
 - Reduce gap between buttons from 50px to 40px
 - Hide: 80px
 - New button: 120px
@@ -281,6 +303,7 @@ HUD Widths:
 ## Conclusion
 
 All positioning requirements have been successfully implemented:
+
 1. ✅ Zap button moved right (closer to Turn/Attack)
 2. ✅ Hide button moved right (away from HP)
 3. ✅ Hide button aligned with Zap button

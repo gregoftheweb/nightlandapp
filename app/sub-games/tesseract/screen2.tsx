@@ -48,7 +48,7 @@ export default function TesseractScreen2() {
   const H_PADDING = 10
   const IMAGE_AR = 1024 / 972 // ~1.053
   const boardWidth = screenWidth - H_PADDING * 2
-const boardHeight = boardWidth / IMAGE_AR
+  const boardHeight = boardWidth / IMAGE_AR
 
   // Image and tile state
   const [imageLayout, setImageLayout] = useState<{ width: number; height: number } | null>(null)
@@ -332,10 +332,10 @@ const boardHeight = boardWidth / IMAGE_AR
         <View style={[styles.contentArea, { paddingTop: insets.top + 20 }]}>
           <View style={styles.boardContainer}>
             <Image
-               source={puzzleBoard}
-    style={{ width: boardWidth, height: boardHeight }}
-    resizeMode="contain"
-    onLayout={handleImageLayout}
+              source={puzzleBoard}
+              style={{ width: boardWidth, height: boardHeight }}
+              resizeMode="contain"
+              onLayout={handleImageLayout}
             />
 
             {/* Interactive overlay for tap handling */}

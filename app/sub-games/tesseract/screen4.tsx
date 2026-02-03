@@ -31,7 +31,7 @@ export default function TesseractScreen4() {
   const router = useRouter()
   const { state, dispatch, signalRpgResume } = useGameContext()
   const [showScrollModal, setShowScrollModal] = useState(false)
-  
+
   // Check if this is a return visit (tesseract already completed)
   const isReturnVisit = state.subGamesCompleted?.['tesseract'] === true
 
@@ -112,9 +112,9 @@ export default function TesseractScreen4() {
       <View style={styles.container}>
         <View style={styles.contentArea}>
           <Text style={styles.descriptionText}>
-            {isReturnVisit 
-              ? "The stone ruins are silent. The tesseract puzzle has already been solved.\n\nThe scroll from Persius is in your inventory."
-              : "Christos successfully spelled TESSERACT.\n\nA scroll appears at his feet. It is a message from Persius."}
+            {isReturnVisit
+              ? 'The stone ruins are silent. The tesseract puzzle has already been solved.\n\nThe scroll from Persius is in your inventory.'
+              : 'Christos successfully spelled TESSERACT.\n\nA scroll appears at his feet. It is a message from Persius.'}
           </Text>
         </View>
 

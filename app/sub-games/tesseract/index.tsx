@@ -13,7 +13,7 @@ export default function TesseractIndex() {
   useEffect(() => {
     // Check if tesseract is already completed
     const isCompleted = state.subGamesCompleted?.[SUB_GAME_NAME] === true
-    
+
     if (isCompleted) {
       if (__DEV__) {
         console.log('[Tesseract] Already completed - routing to success screen')

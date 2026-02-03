@@ -8,6 +8,7 @@ I've fixed both issues you reported:
 
 **What was wrong:**
 After dying and loading a hermit-hollow waypoint save, when you re-entered hermit-hollow:
+
 - ❌ "Waypoint Saved" dialog appeared
 - ❌ A new waypoint save was created
 - ❌ Console showed "Waypoint save created/updated"
@@ -16,6 +17,7 @@ After dying and loading a hermit-hollow waypoint save, when you re-entered hermi
 The component was re-applying all the effects when starting at the end node on return visits. I added a check to skip effect application entirely on return visits.
 
 **Now:**
+
 - ✅ No waypoint save on return visits
 - ✅ No toast notification
 - ✅ Console: "Return visit - skipping effects for end node (already applied)"
@@ -26,6 +28,7 @@ The component was re-applying all the effects when starting at the end node on r
 
 **What was wrong:**
 Console logs showed:
+
 ```
 LOG  [SaveGame] State subGamesCompleted: 12
 LOG  🎯🎯🎯 Initial state subGamesCompleted: 12
@@ -35,6 +38,7 @@ But you only completed 2 sub-games (tesseract and hermit-hollow).
 
 **Why it showed 12:**
 The code was counting ALL keys in the `subGamesCompleted` object:
+
 - 2 main sub-games: `tesseract`, `hermit-hollow`
 - 10 effect flags: `hermit-hollow:learned_great_power_exists`, etc.
 - Total: 12 keys
@@ -43,6 +47,7 @@ The code was counting ALL keys in the `subGamesCompleted` object:
 Updated logging to filter and count only main sub-games (keys without colons).
 
 **Now:**
+
 ```
 LOG  [SaveGame] State subGamesCompleted (main): 2 ["tesseract", "hermit-hollow"]
 LOG  🎯🎯🎯 Initial state subGamesCompleted (main): 2 ["tesseract", "hermit-hollow"]
@@ -53,17 +58,17 @@ LOG  🎯🎯🎯 Initial state subGamesCompleted (main): 2 ["tesseract", "hermi
 ## What Changed
 
 ### Files Modified:
+
 1. **app/sub-games/hermit-hollow/main.tsx**
    - Added check to skip effects on return visits to end node
-   
 2. **modules/saveGame.ts**
    - Fixed logging in save function
    - Fixed logging in load function
-   
 3. **app/game/index.tsx**
    - Fixed logging in game initialization
 
 ### The Fix (hermit-hollow/main.tsx):
+
 ```typescript
 // Apply effects when node changes
 useEffect(() => {
@@ -93,10 +98,10 @@ useEffect(() => {
 ### Test Issue 1 Fix (Most Important)
 
 **Steps:**
+
 1. Complete hermit-hollow conversation (first time)
    - Waypoint save is created
    - Toast notification appears
-   
 2. Die in the game (let a monster kill you)
 
 3. From death screen → load screen → Load "hermit-hollow waypoint"
@@ -106,6 +111,7 @@ useEffect(() => {
 5. Enter hermit-hollow sub-game
 
 **Expected Results:**
+
 - ✅ Shows hermit in trance state (unresponsive)
 - ✅ Console: `[HermitHollow] Returning visit - starting at trance state`
 - ✅ Console: `[HermitHollow] Return visit - skipping effects for end node (already applied)`
@@ -116,16 +122,19 @@ useEffect(() => {
 ### Test Issue 2 Fix
 
 **Steps:**
+
 1. Complete hermit-hollow and tesseract
 2. Watch console logs when game saves
 
 **Expected Results:**
+
 ```
 [SaveGame] State subGamesCompleted (main): 2 ["tesseract", "hermit-hollow"]
 🎯🎯🎯 Initial state subGamesCompleted (main): 2 ["tesseract", "hermit-hollow"]
 ```
 
 **NOT:**
+
 ```
 [SaveGame] State subGamesCompleted: 12
 🎯🎯🎯 Initial state subGamesCompleted: 12
@@ -136,6 +145,7 @@ useEffect(() => {
 ## Console Output Comparison
 
 ### BEFORE (Wrong):
+
 ```
 [HermitHollow] Routing to main screen
 [HermitHollow] Returning visit - starting at trance state
@@ -152,6 +162,7 @@ useEffect(() => {
 ```
 
 ### AFTER (Correct):
+
 ```
 [HermitHollow] Routing to main screen
 [HermitHollow] Returning visit - starting at trance state
@@ -166,6 +177,7 @@ useEffect(() => {
 ### Why Effect Flags Exist (Not a Bug)
 
 The 10 "extra" keys like `hermit-hollow:learned_great_power_exists` are intentional:
+
 - Track specific dialogue choices made
 - Track lore discovered
 - Enable future quest progression
@@ -178,6 +190,7 @@ They're namespaced with `hermit-hollow:` to avoid collisions.
 ### The Real Problem Was Counting
 
 The old logging counted them as if they were separate sub-games. Now we:
+
 - Still track all effect flags internally (needed for game logic)
 - Only count main sub-games in logs (clearer for debugging)
 
@@ -189,10 +202,8 @@ This PR fixed **three separate hermit-hollow bugs**:
 
 1. **Race Condition:** Waypoint saved before completion flag applied
    - Fixed by building updated state synchronously
-   
 2. **Save Every Time:** Waypoint saved on every completion
    - Fixed by checking `waypointSavesCreated` flag
-   
 3. **Return Visit Save:** Effects re-applied on return visits (this fix)
    - Fixed by skipping effects when returning to end node
 
@@ -212,12 +223,15 @@ This PR fixed **three separate hermit-hollow bugs**:
 ## Questions?
 
 ### Q: Will this affect my existing saves?
+
 **A:** No. Existing saves will work perfectly. The fix just prevents future duplicate saves.
 
 ### Q: What about the first time through hermit-hollow?
+
 **A:** First time works exactly as before - waypoint is created, toast appears, all good.
 
 ### Q: What if I haven't completed hermit-hollow yet?
+
 **A:** No changes - it will work normally when you do complete it.
 
 ---

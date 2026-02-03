@@ -84,8 +84,14 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
       style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
       pointerEvents="box-none"
     >
-      <View style={hideUnlocked ? styles.hudFrameExpanded : styles.hudFrame} pointerEvents="box-none">
-        <View style={hideUnlocked ? styles.statusBarExpanded : styles.statusBar} pointerEvents="box-none">
+      <View
+        style={hideUnlocked ? styles.hudFrameExpanded : styles.hudFrame}
+        pointerEvents="box-none"
+      >
+        <View
+          style={hideUnlocked ? styles.statusBarExpanded : styles.statusBar}
+          pointerEvents="box-none"
+        >
           <Text style={styles.hpText}>HP: {hp}</Text>
 
           <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
@@ -94,9 +100,9 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         </View>
 
         {/* Zap Button */}
-        <TouchableOpacity 
-          style={hideUnlocked ? styles.zapButtonExpanded : styles.zapButton} 
-          onPress={handleZapPress} 
+        <TouchableOpacity
+          style={hideUnlocked ? styles.zapButtonExpanded : styles.zapButton}
+          onPress={handleZapPress}
           activeOpacity={0.7}
         >
           <Image source={zapButtonIMG} style={styles.zapButtonImage} />
@@ -108,10 +114,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
             {/* Background indicator - shows through the H */}
             {hideActive && <View style={styles.hideActiveBackground} />}
             <TouchableOpacity
-              style={[
-                styles.hideButton,
-                hideChargeTurns === 0 && styles.hideButtonDepleted,
-              ]}
+              style={[styles.hideButton, hideChargeTurns === 0 && styles.hideButtonDepleted]}
               onPress={handleHidePress}
               activeOpacity={0.7}
               disabled={hideChargeTurns === 0 && !hideActive}
@@ -129,10 +132,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
               {Array.from({ length: 10 }).map((_, i) => (
                 <View
                   key={i}
-                  style={[
-                    styles.chargeTick,
-                    i < hideChargeTurns && styles.chargeTickFilled,
-                  ]}
+                  style={[styles.chargeTick, i < hideChargeTurns && styles.chargeTickFilled]}
                 />
               ))}
             </View>

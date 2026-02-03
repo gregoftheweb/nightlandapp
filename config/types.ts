@@ -133,7 +133,7 @@ export interface Player {
   id: string
   description: string
   lastComment: string
-  image: string
+  image: ImageSourcePropType
   position: Position
   hp: number
   maxHP: number

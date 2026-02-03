@@ -173,7 +173,7 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
   logIfDev(`💾 Snapshot player position: ${JSON.stringify(snapshot.player?.position)}`)
   logIfDev(`💾 Snapshot moveCount: ${snapshot.moveCount}`)
   logIfDev(`💾 Snapshot subGamesCompleted:`, snapshot.subGamesCompleted)
-  
+
   // Get fresh initial state as base
   const base = getInitialState(snapshot.currentLevelId || '1')
 
@@ -218,7 +218,7 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
   logIfDev(`💾 Result player position: ${JSON.stringify(result.player?.position)}`)
   logIfDev(`💾 Result moveCount: ${result.moveCount}`)
   logIfDev(`💾 Result subGamesCompleted:`, result.subGamesCompleted)
-  
+
   return result
 }
 

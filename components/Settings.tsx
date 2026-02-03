@@ -9,11 +9,15 @@ import {
   NativeSyntheticEvent,
   NativeTouchEvent,
   Animated,
+  ScrollView,
 } from 'react-native'
 import { audioManager } from '../modules/audioManager'
 import { settingsManager } from '../modules/settingsManager'
+import { useGameContext } from '../context/GameContext'
 
 const { width, height } = Dimensions.get('window')
+
+type TabType = 'settings' | 'status'
 
 interface SettingsProps {
   visible: boolean
@@ -74,12 +78,34 @@ function ModernToggle({ value, onToggle, label }: ToggleProps) {
 export default function Settings({ visible, onClose }: SettingsProps) {
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(audioManager.getIsEnabled())
   const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
+  const [activeTab, setActiveTab] = useState<TabType>('settings')
+  const { state } = useGameContext()
+
+  // Puzzle name mapping for friendly display
+  const PUZZLE_NAMES: Record<string, string> = {
+    'hermit-hollow': 'Hermit Hollow',
+    tesseract: 'The Tesseract',
+    'aerowreckage-puzzle': 'Aerowreckage Puzzle',
+    'dweller-between-flames': 'Dweller Between Flames',
+  }
+
+  // Get completed puzzles from state.subGamesCompleted
+  // Filter out effect flags (they contain ':' and have format "puzzle-name:effect-name")
+  const completedPuzzles = Object.keys(state.subGamesCompleted || {})
+    .filter((key) => {
+      // Main puzzle keys don't contain colons; effect flags do (e.g., "hermit-hollow:unlock_hide_ability")
+      // This approach is safe because all current puzzle IDs use hyphens, not colons
+      return !key.includes(':')
+    })
+    .filter((key) => state.subGamesCompleted?.[key] === true)
+    .map((key) => PUZZLE_NAMES[key] || key) // Map to friendly names, fallback to key if not found
 
   // Update local state when modal becomes visible
   useEffect(() => {
     if (visible) {
       setBackgroundMusicEnabled(audioManager.getIsEnabled())
       setShowCoordinates(settingsManager.getShowCoordinates())
+      setActiveTab('settings') // Reset to settings tab when opening
     }
   }, [visible])
 
@@ -103,7 +129,7 @@ export default function Settings({ visible, onClose }: SettingsProps) {
       <View style={styles.overlay} onTouchStart={(event) => event.stopPropagation()}>
         <View style={styles.settingsContainer}>
           <View style={styles.header}>
-            <Text style={styles.title}>Settings</Text>
+            <Text style={styles.title}>{activeTab === 'settings' ? 'Settings' : 'Status'}</Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={handleClosePress}
@@ -112,23 +138,69 @@ export default function Settings({ visible, onClose }: SettingsProps) {
               <Text style={styles.closeText}>×</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Tab Bar */}
+          <View style={styles.tabBar}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'settings' && styles.activeTab]}
+              onPress={() => setActiveTab('settings')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabText, activeTab === 'settings' && styles.activeTabText]}>
+                Settings
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'status' && styles.activeTab]}
+              onPress={() => setActiveTab('status')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabText, activeTab === 'status' && styles.activeTabText]}>
+                Status
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.content}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Audio</Text>
-              <ModernToggle
-                value={backgroundMusicEnabled}
-                onToggle={handleBackgroundMusicToggle}
-                label="Background Music"
-              />
-            </View>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Display</Text>
-              <ModernToggle
-                value={showCoordinates}
-                onToggle={handleShowCoordinatesToggle}
-                label="Show Coordinates"
-              />
-            </View>
+            {activeTab === 'settings' ? (
+              // Settings Tab Content
+              <>
+                <View style={styles.section}>
+                  <ModernToggle
+                    value={backgroundMusicEnabled}
+                    onToggle={handleBackgroundMusicToggle}
+                    label="Background Music"
+                  />
+
+                  <ModernToggle
+                    value={showCoordinates}
+                    onToggle={handleShowCoordinatesToggle}
+                    label="Show Coordinates"
+                  />
+                </View>
+              </>
+            ) : (
+              // Status Tab Content
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollViewContent}
+                showsVerticalScrollIndicator={true}
+              >
+                <Text style={styles.sectionTitle}>Quest Discoveries</Text>
+                {completedPuzzles.length === 0 ? (
+                  <Text style={styles.emptyText}>Nothing discovered yet.</Text>
+                ) : (
+                  <View style={styles.puzzleList}>
+                    {completedPuzzles.map((puzzleName, index) => (
+                      <Text key={index} style={styles.puzzleItem}>
+                        • {puzzleName}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+              </ScrollView>
+            )}
           </View>
         </View>
       </View>
@@ -191,6 +263,55 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  activeTab: {
+    backgroundColor: 'rgba(153, 0, 0, 0.3)',
+    borderBottomWidth: 2,
+    borderBottomColor: '#990000',
+  },
+  tabText: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+  },
+  puzzleList: {
+    marginTop: 5,
+  },
+  puzzleItem: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    lineHeight: 24,
+  },
+  emptyText: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 30,
+    fontStyle: 'italic',
+  },
   section: {
     marginBottom: 30,
   },
@@ -198,9 +319,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 15,
+    marginBottom: 2,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+    borderBottomColor: 'rgba(161, 26, 26, 0.3)',
     paddingBottom: 5,
   },
   toggleContainer: {

@@ -60,7 +60,9 @@ export default function Game() {
     console.log(`🎯🎯🎯 [${instanceId.current}] Initial state player HP:`, state.player?.hp)
     console.log(`🎯🎯🎯 [${instanceId.current}] Initial state moveCount:`, state.moveCount)
     // Count only actual sub-games (keys without colons are main sub-games)
-    const mainSubGames = Object.keys(state.subGamesCompleted || {}).filter(key => !key.includes(':'))
+    const mainSubGames = Object.keys(state.subGamesCompleted || {}).filter(
+      (key) => !key.includes(':')
+    )
     console.log(
       `🎯🎯🎯 [${instanceId.current}] Initial state subGamesCompleted (main):`,
       mainSubGames.length,
@@ -313,7 +315,8 @@ export default function Game() {
   const showGreatPowerInfo = useCallback((greatPower: GreatPower) => {
     if (!showInfoRef.current) return
     const statusInfo = greatPower.awakened ? 'AWAKENED' : 'Sleeping'
-    const greatPowerImage = greatPower.image || require('@assets/images/sprites/monsters/watcherse.webp')
+    const greatPowerImage =
+      greatPower.image || require('@assets/images/sprites/monsters/watcherse.webp')
     showInfoRef.current(
       greatPower.name || greatPower.shortName || 'Great Power',
       `${

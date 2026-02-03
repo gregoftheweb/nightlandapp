@@ -35,8 +35,8 @@ export default function AeroWreckageCockpitCloseup() {
           >
             <Text style={styles.flavorText}>
               Christos leans in closer. Among the intricate brass work, there is something unusual
-              there etched in the panel, as if left by a previous explorer or perhaps the craft&apos;s
-              final crew.
+              there etched in the panel, as if left by a previous explorer or perhaps the
+              craft&apos;s final crew.
             </Text>
           </View>
         </View>

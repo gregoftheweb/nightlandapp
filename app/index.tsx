@@ -64,13 +64,13 @@ export default function SplashScreen() {
     try {
       // Reset game state to initial state
       dispatch({ type: 'RESET_GAME' })
-      
+
       // Clear all sub-game puzzle saves (aerowreck, tesseract, etc.)
       await clearAllSubGameSaves()
-      
+
       // Delete current save
       await deleteCurrentGame()
-      
+
       // Navigate to princess intro (standard new game flow)
       router.replace('/princess')
     } catch (error) {

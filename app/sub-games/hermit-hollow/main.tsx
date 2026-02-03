@@ -97,7 +97,7 @@ export default function HermitHollowMain() {
         if (effect === 'hermit_enters_trance') {
           shouldCreateWaypoint = true
           updatedSubGamesCompleted[SUB_GAME_NAME] = true
-          
+
           // Mark sub-game as completed
           dispatch({
             type: 'SET_SUB_GAME_COMPLETED',
@@ -111,12 +111,12 @@ export default function HermitHollowMain() {
           if (__DEV__) {
             console.log(`[HermitHollow] Executing effect handler: ${effect}`)
           }
-          
+
           // Create an Effect object for the applyEffect function
           const effectObj: Effect = {
             type: effect,
           }
-          
+
           // Execute the effect
           applyEffect(effectObj, {
             state,
@@ -133,7 +133,7 @@ export default function HermitHollowMain() {
         // Example: `hermit-hollow:learned_great_power_exists`
         // These can be checked later by other systems for quest/lore progression
         updatedSubGamesCompleted[`${SUB_GAME_NAME}:${effect}`] = true
-        
+
         dispatch({
           type: 'SET_SUB_GAME_COMPLETED',
           payload: { subGameName: `${SUB_GAME_NAME}:${effect}`, completed: true },
@@ -147,7 +147,7 @@ export default function HermitHollowMain() {
       if (shouldCreateWaypoint) {
         // Check if waypoint has already been created
         const waypointAlreadyCreated = state.waypointSavesCreated?.[WAYPOINT_NAME] === true
-        
+
         if (waypointAlreadyCreated) {
           if (__DEV__) {
             console.log(`[HermitHollow] Waypoint already created - skipping save: ${WAYPOINT_NAME}`)
@@ -158,12 +158,15 @@ export default function HermitHollowMain() {
             ...state,
             subGamesCompleted: updatedSubGamesCompleted,
           }
-          
+
           saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
             .then(() => {
               if (__DEV__) {
                 console.log(`[HermitHollow] Waypoint save created (FIRST TIME): ${WAYPOINT_NAME}`)
-                console.log(`[HermitHollow] Saved with subGamesCompleted:`, updatedSubGamesCompleted)
+                console.log(
+                  `[HermitHollow] Saved with subGamesCompleted:`,
+                  updatedSubGamesCompleted
+                )
               }
 
               // Mark waypoint as created to prevent future saves

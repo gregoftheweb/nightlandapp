@@ -13,11 +13,13 @@
 **Changes Made:**
 
 1. ✅ **Import Added**
+
    ```typescript
    import hideButtonIMG from '@assets/images/buttonHide.png'
    ```
 
 2. ✅ **Props Interface Extended**
+
    ```typescript
    interface PlayerHUDProps {
      // ... existing props ...
@@ -29,6 +31,7 @@
    ```
 
 3. ✅ **Event Handler Added**
+
    ```typescript
    const handleHidePress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
      event.stopPropagation()
@@ -40,6 +43,7 @@
    - **Position:** Between Zap button and Turn/Attack button
    - **Conditional:** Only shown AFTER ability is unlocked
    - **Key Implementation:**
+
    ```tsx
    {/* Hide Button - only show if unlocked */}
    {hideUnlocked && (
@@ -86,6 +90,7 @@
 ### ✅ "AFTER the skill is bestowed" - VERIFIED
 
 The button implementation uses conditional rendering:
+
 ```tsx
 {hideUnlocked && ( ... )}
 ```
@@ -93,6 +98,7 @@ The button implementation uses conditional rendering:
 This ensures the button is **NOT SHOWN** until the Hermit bestows the ability.
 
 **Sequence:**
+
 1. Player starts game → `hideUnlocked = false` → **No button shown**
 2. Player completes Hermit Hollow dialogue → Reaches "hermit_gift_hide" node
 3. Effect `unlock_hide_ability` fires → Sets `hideUnlocked = true`
@@ -104,6 +110,7 @@ This ensures the button is **NOT SHOWN** until the Hermit bestows the ability.
 **File:** `app/game/index.tsx`
 
 Props passed to PlayerHUD:
+
 ```tsx
 <PlayerHUD
   hp={state.player.hp}
@@ -113,15 +120,16 @@ Props passed to PlayerHUD:
   onAttackPress={handleAttackPress}
   onInventoryPress={handleInventoryPress}
   onZapPress={handleZapPress}
-  onHidePress={handleHidePress}        // ← NEW
-  hideUnlocked={state.player.hideUnlocked}    // ← NEW
-  hideChargeTurns={state.player.hideChargeTurns}  // ← NEW
-  hideActive={state.player.hideActive}      // ← NEW
+  onHidePress={handleHidePress} // ← NEW
+  hideUnlocked={state.player.hideUnlocked} // ← NEW
+  hideChargeTurns={state.player.hideChargeTurns} // ← NEW
+  hideActive={state.player.hideActive} // ← NEW
   inCombat={state.inCombat}
 />
 ```
 
 Handler implementation:
+
 ```typescript
 const handleHidePress = useCallback(() => {
   if (!state.player.hideUnlocked) {
@@ -136,6 +144,7 @@ const handleHidePress = useCallback(() => {
 ✅ **User Request:** "Add a new button to playerHUD.tsx AFTER the skill is bestowed"
 
 ✅ **What Was Delivered:**
+
 - New Hide button added to PlayerHUD.tsx
 - Conditionally rendered based on `hideUnlocked` state
 - Only appears AFTER Hermit bestows the ability
@@ -146,12 +155,14 @@ const handleHidePress = useCallback(() => {
 ## Visual Confirmation
 
 Before ability is granted:
+
 ```
 [ZAP]  [TURN/ATTACK]  [INVENTORY]
   ⚡        ⚔️              🎒
 ```
 
 After Hermit bestows ability:
+
 ```
 [HIDE]  [ZAP]  [TURN/ATTACK]  [INVENTORY]
   🥷      ⚡        ⚔️              🎒

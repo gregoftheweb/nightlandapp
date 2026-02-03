@@ -23,7 +23,7 @@ currentNode.effects.forEach((effect) => {
     })
 
     // Step 2: Save waypoint (IMMEDIATE!)
-    saveWaypoint(state, WAYPOINT_NAME)  // ❌ BUG: uses OLD state!
+    saveWaypoint(state, WAYPOINT_NAME) // ❌ BUG: uses OLD state!
   }
 })
 ```
@@ -66,16 +66,16 @@ currentNode.effects.forEach((effect) => {
   if (effect === 'hermit_enters_trance') {
     shouldCreateWaypoint = true
     updatedSubGamesCompleted[SUB_GAME_NAME] = true
-    
+
     dispatch({
       type: 'SET_SUB_GAME_COMPLETED',
       payload: { subGameName: SUB_GAME_NAME, completed: true },
     })
   }
-  
+
   // Also include other effect flags
   updatedSubGamesCompleted[`${SUB_GAME_NAME}:${effect}`] = true
-  
+
   dispatch({
     type: 'SET_SUB_GAME_COMPLETED',
     payload: { subGameName: `${SUB_GAME_NAME}:${effect}`, completed: true },
@@ -88,7 +88,7 @@ if (shouldCreateWaypoint) {
     ...state,
     subGamesCompleted: updatedSubGamesCompleted,
   }
-  
+
   // Now save with the UPDATED state
   saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
 }
@@ -108,11 +108,13 @@ if (shouldCreateWaypoint) {
 **Lines 65-150:** Refactored effect application logic
 
 **Before:**
+
 - Dispatched each effect individually
 - Called `saveWaypoint` inside effect loop
 - Used current state (missing completion flags)
 
 **After:**
+
 - Collect all effects into `updatedSubGamesCompleted` object
 - Create `stateWithCompletion` with all flags set
 - Call `saveWaypoint` once with complete state
@@ -160,12 +162,14 @@ When hermit enters trance:
 ## Impact
 
 ### Before Fix
+
 - ❌ Waypoint saves missing completion state
 - ❌ Could replay hermit conversation after death
 - ❌ Could potentially get duplicate rewards
 - ❌ Broke game progression logic
 
 ### After Fix
+
 - ✅ Waypoint saves include ALL completion flags
 - ✅ Hermit conversation cannot be replayed
 - ✅ Completion state persists through death/load

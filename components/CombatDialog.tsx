@@ -11,6 +11,7 @@ interface CombatDialogProps {
 export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, onClose }) => {
   const [opacity] = useState(new Animated.Value(0))
   const [isVisible, setIsVisible] = useState(false)
+  const [displayedMessages, setDisplayedMessages] = useState<string[]>([]) // Track displayed messages to clear on hide
   const timerRef = useRef<number | null>(null)
 
   // Process messages to show one complete combat round
@@ -50,6 +51,8 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
       }
 
       setIsVisible(true)
+      // Update displayed messages when showing
+      setDisplayedMessages(displayMessages)
 
       // Fade in
       Animated.timing(opacity, {
@@ -58,7 +61,7 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
         useNativeDriver: true,
       }).start()
 
-      // Set auto-close timer (longer for combat messages)
+      // Set auto-close timer (2 seconds for combat messages)
       timerRef.current = setTimeout(() => {
         // Fade out
         Animated.timing(opacity, {
@@ -67,12 +70,13 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
           useNativeDriver: true,
         }).start(() => {
           setIsVisible(false)
+          setDisplayedMessages([]) // Clear messages when hiding
           timerRef.current = null
           if (onClose) {
             onClose()
           }
         })
-      }, 5000) // 5 seconds for one combat round
+      }, 2000) // 2 seconds for one combat round
     } else {
       // Clear timer and hide immediately when visible becomes false
       if (timerRef.current) {
@@ -86,6 +90,7 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
         useNativeDriver: true,
       }).start(() => {
         setIsVisible(false)
+        setDisplayedMessages([]) // Clear messages when hiding
       })
     }
 
@@ -96,7 +101,7 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
         timerRef.current = null
       }
     }
-  }, [visible, messages, opacity, onClose])
+  }, [visible, messages, opacity, onClose]) // Removed displayMessages from dependencies
 
   if (!isVisible || messages.length === 0) {
     return null
@@ -104,7 +109,7 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
 
   return (
     <Animated.View style={[styles.combatDialog, { opacity }]}>
-      {displayMessages.map((msg, index) => (
+      {displayedMessages.map((msg, index) => (
         <Text
           key={index}
           style={[styles.combatText, index === 0 ? styles.christosMessage : styles.monsterMessage]}
@@ -126,8 +131,8 @@ const styles = StyleSheet.create({
     borderColor: '#ff0000', // Red border
     padding: 12,
     borderRadius: 8,
-    maxWidth: '70%',
-    minWidth: 240,
+    maxWidth: '49%', // 30% reduction from 70%
+    minWidth: 200, // Reduced proportionally from 240
     zIndex: 1000, // High z-index to appear above other elements
   },
   combatText: {

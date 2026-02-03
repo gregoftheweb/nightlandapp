@@ -7,6 +7,7 @@ The hermit-hollow waypoint save functionality should happen **ONLY ONCE** - the 
 ## Previous Behavior
 
 **Before this fix:**
+
 - Every time the player reached the trance state (hermit enters trance), a waypoint save was created
 - This meant multiple waypoint saves could be created for the same location
 - While the save system replaced old waypoints with the same name, it was unnecessary to keep saving
@@ -14,6 +15,7 @@ The hermit-hollow waypoint save functionality should happen **ONLY ONCE** - the 
 ## New Behavior
 
 **After this fix:**
+
 - Waypoint save is created **ONLY on first completion**
 - Subsequent completions show the trance state but do NOT create a new save
 - No toast notification on subsequent completions
@@ -24,33 +26,34 @@ The hermit-hollow waypoint save functionality should happen **ONLY ONCE** - the 
 ### Key Components
 
 **Tracking System:**
+
 - Uses existing `waypointSavesCreated` in GameState
 - `waypointSavesCreated[WAYPOINT_NAME]` = boolean flag
 - Persists across saves/loads
 - Cleared on death/reset
 
 **Logic Flow:**
+
 ```typescript
 if (shouldCreateWaypoint) {
   // Check if waypoint has already been created
   const waypointAlreadyCreated = state.waypointSavesCreated?.[WAYPOINT_NAME] === true
-  
+
   if (waypointAlreadyCreated) {
     // Skip - already created
     console.log('[HermitHollow] Waypoint already created - skipping save')
   } else {
     // First time - create waypoint
-    saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
-      .then(() => {
-        // Mark as created to prevent future saves
-        dispatch({
-          type: 'SET_WAYPOINT_CREATED',
-          payload: { waypointName: WAYPOINT_NAME }
-        })
-        
-        // Show toast notification
-        setShowWaypointToast(true)
+    saveWaypoint(stateWithCompletion, WAYPOINT_NAME).then(() => {
+      // Mark as created to prevent future saves
+      dispatch({
+        type: 'SET_WAYPOINT_CREATED',
+        payload: { waypointName: WAYPOINT_NAME },
       })
+
+      // Show toast notification
+      setShowWaypointToast(true)
+    })
   }
 }
 ```
@@ -60,6 +63,7 @@ if (shouldCreateWaypoint) {
 **`app/sub-games/hermit-hollow/main.tsx`** (lines 108-164)
 
 **Changes:**
+
 1. Added check for `state.waypointSavesCreated[WAYPOINT_NAME]`
 2. Wrapped waypoint creation in `else` block (only if not already created)
 3. Added `SET_WAYPOINT_CREATED` dispatch after successful save
@@ -70,12 +74,14 @@ if (shouldCreateWaypoint) {
 ### Scenario 1: First Completion
 
 **Steps:**
+
 1. Start new game or load game where hermit-hollow not yet completed
 2. Navigate to hermit-hollow location
 3. Complete the entire conversation
 4. Reach the trance state (hermit enters trance)
 
 **Expected Results:**
+
 - ✅ Waypoint save created
 - ✅ Toast notification appears: "Waypoint saved"
 - ✅ Console log: `[HermitHollow] Waypoint save created (FIRST TIME): hermit-hollow waypoint`
@@ -85,12 +91,14 @@ if (shouldCreateWaypoint) {
 ### Scenario 2: Subsequent Completion
 
 **Steps:**
+
 1. Exit hermit-hollow (after first completion)
 2. Continue playing, move around, etc.
 3. Return to hermit-hollow location
 4. Enter hermit-hollow sub-game
 
 **Expected Results:**
+
 - ✅ Sub-game starts at trance state (end node)
 - ✅ Hermit is unresponsive (in meditation)
 - ✅ Can exit back to game
@@ -101,6 +109,7 @@ if (shouldCreateWaypoint) {
 ### Scenario 3: After Death and Reload
 
 **Steps:**
+
 1. Complete hermit-hollow (waypoint created)
 2. Die in game
 3. Load the hermit-hollow waypoint save
@@ -108,6 +117,7 @@ if (shouldCreateWaypoint) {
 5. Enter hermit-hollow sub-game
 
 **Expected Results:**
+
 - ✅ Sub-game starts at trance state (loaded from save)
 - ✅ Hermit is unresponsive
 - ✅ `state.waypointSavesCreated['hermit-hollow waypoint']` = true (restored from save)
@@ -117,12 +127,14 @@ if (shouldCreateWaypoint) {
 ### Scenario 4: New Game After Death
 
 **Steps:**
+
 1. Die in game
 2. Click "New" game from load screen
 3. Navigate to hermit-hollow (first time in new game)
 4. Complete conversation to trance state
 
 **Expected Results:**
+
 - ✅ Waypoint save created (fresh start, flag was reset)
 - ✅ Toast notification appears
 - ✅ Console log: `[HermitHollow] Waypoint save created (FIRST TIME)`
@@ -131,6 +143,7 @@ if (shouldCreateWaypoint) {
 ## Console Output Examples
 
 ### First Completion
+
 ```
 [HermitHollow] Applying effects for node end: ["hermit_enters_trance"]
 [HermitHollow] Waypoint save created (FIRST TIME): hermit-hollow waypoint
@@ -143,6 +156,7 @@ if (shouldCreateWaypoint) {
 ```
 
 ### Subsequent Completion (Skipped)
+
 ```
 [HermitHollow] Applying effects for node end: ["hermit_enters_trance"]
 [HermitHollow] Waypoint already created - skipping save: hermit-hollow waypoint
@@ -153,6 +167,7 @@ if (shouldCreateWaypoint) {
 ### State Persistence
 
 The `waypointSavesCreated` field is part of GameState and is:
+
 - ✅ Serialized by `toSnapshot()`
 - ✅ Restored by `fromSnapshot()`
 - ✅ Included in autosaves
@@ -162,6 +177,7 @@ The `waypointSavesCreated` field is part of GameState and is:
 ### Reducer Action
 
 The `SET_WAYPOINT_CREATED` action is already implemented in reducers.ts:
+
 ```typescript
 case 'SET_WAYPOINT_CREATED':
   logIfDev(`💾 SET_WAYPOINT_CREATED: ${action.payload.waypointName}`)
@@ -176,7 +192,7 @@ case 'SET_WAYPOINT_CREATED':
 
 ### Why This Works
 
-1. **First completion:** 
+1. **First completion:**
    - `waypointSavesCreated[WAYPOINT_NAME]` is undefined/false
    - Waypoint is created
    - `SET_WAYPOINT_CREATED` sets the flag to true
@@ -197,16 +213,19 @@ case 'SET_WAYPOINT_CREATED':
 ## Benefits
 
 ### Performance
+
 - ✅ Reduces unnecessary AsyncStorage writes
 - ✅ Prevents redundant waypoint replacements
 - ✅ Cleaner save management
 
 ### User Experience
+
 - ✅ Toast only on meaningful saves (first time)
 - ✅ Clearer feedback about what's happening
 - ✅ Consistent behavior across sessions
 
 ### Code Quality
+
 - ✅ Leverages existing `waypointSavesCreated` system
 - ✅ Clear logging for debugging
 - ✅ Minimal code changes
@@ -228,11 +247,12 @@ case 'SET_WAYPOINT_CREATED':
 ✅ Flag persists across saves/loads  
 ✅ Flag resets on new game  
 ✅ Leverages existing tracking system  
-✅ No breaking changes  
+✅ No breaking changes
 
 ## Future Considerations
 
 This pattern can be applied to other sub-games that should only create waypoints once:
+
 - Tesseract (if it creates waypoints)
 - Aerowreckage (if it creates waypoints)
 - Any future sub-game with one-time waypoint creation

@@ -530,10 +530,7 @@ const executeShowMessageEffect = (effect: Effect, context: EffectContext): Effec
  * - Grants full charge (10 turns)
  * - Does not activate the ability (player must toggle it)
  */
-const executeUnlockHideAbilityEffect = (
-  effect: Effect,
-  context: EffectContext
-): EffectResult => {
+const executeUnlockHideAbilityEffect = (effect: Effect, context: EffectContext): EffectResult => {
   const { state, dispatch, showDialog } = context
 
   logIfDev('🎁 Executing unlock_hide_ability effect')

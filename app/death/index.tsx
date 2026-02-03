@@ -38,14 +38,14 @@ export default function DeathScreen() {
 
     isRestarting.current = true
     console.log(`☠️☠️☠️ [${instanceId.current}] Navigating to load screen from death screen`)
-    
+
     try {
       // Clear all sub-game puzzle saves (aerowreck, tesseract, etc.)
       await clearAllSubGameSaves()
 
       // Delete current game autosave (death deletes autosave, but NOT waypoint saves)
       await deleteCurrentGame()
-      
+
       // Navigate to load screen (splash screen with New | Current | Saved options)
       // Use replace to prevent back navigation to death screen
       router.replace('/')

@@ -44,7 +44,7 @@ Hide Button States:
    │▓▓▓▓▓│
    └─────┘
    ██████░░░░  (6 of 10 ticks filled)
-   
+
    + Christos has GREEN border on gameboard
 
 4. DEPLETED (charge === 0)
