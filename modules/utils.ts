@@ -8,6 +8,7 @@ import {
   LevelObjectInstance,
   NonCollisionObject,
   Player,
+  SoulKey,
 } from '../config/types'
 import textContent from '../assets/copy/textcontent'
 
@@ -500,7 +501,7 @@ export function encodeSoulKey(attributes: {
     .toUpperCase()
 }
 
-export function decodeSoulKey(soulKey: string) {
+export function decodeSoulKey(soulKey: SoulKey) {
   const bytes = soulKey.match(/.{2}/g)!.map((hex) => parseInt(hex, 16))
   const key = [110, 105, 103, 104, 116]
   const plainBytes = bytes.map((byte, i) => byte ^ key[i % key.length])

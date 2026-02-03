@@ -12,6 +12,12 @@ export interface Area {
 
 export type WeaponType = 'melee' | 'ranged'
 
+export type InteractionType = 'door' | 'chest' | 'npc' | 'portal'
+
+export type EffectTarget = 'self' | 'enemy' | 'ally' | 'area' | 'all'
+
+export type SoulKey = string & {}
+
 export interface SubGameLaunch {
   subGameName: string // maps to /sub-games/<subGameName>
   ctaLabel: string // label for InfoBox button
@@ -74,7 +80,7 @@ export interface Monster extends GameObject {
   moveRate: number
   spawnRate?: number // Percentage chance (0.0 to 1.0) that monster spawns each turn
   maxInstances?: number
-  soulKey: string
+  soulKey: SoulKey
   uiSlot?: number
   inCombatSlot?: boolean
 }
@@ -89,7 +95,7 @@ export interface GreatPower extends GameObject {
   ac: number
   awakened: boolean
   awakenCondition: string
-  soulKey?: string
+  soulKey?: SoulKey
 }
 
 export interface LevelMonsterInstance extends Monster {
@@ -121,7 +127,7 @@ export interface LevelObjectInstance extends GameObject {
   id: string
   templateId?: string | number
   interactable?: boolean
-  interactionType?: 'door' | 'chest' | 'npc' | 'portal'
+  interactionType?: InteractionType
   locked?: boolean
   keyRequired?: string
   rotation?: number // NEW: Instance-specific rotation override
@@ -149,7 +155,7 @@ export interface Player {
   meleeWeaponId: string // Fixed melee weapon (always "weapon-discos-001")
   equippedRangedWeaponId: string | null // Currently equipped ranged weapon
   rangedWeaponInventoryIds: string[] // Available ranged weapons
-  soulKey: string
+  soulKey: SoulKey
   moveSpeed: number
   level?: number
   experience?: number
@@ -208,7 +214,7 @@ export interface Effect {
   amount?: number
 
   // Target specification
-  target?: 'self' | 'enemy' | 'ally' | 'area' | 'all'
+  target?: EffectTarget
   targetId?: string
 
   // Spawn/summon properties
