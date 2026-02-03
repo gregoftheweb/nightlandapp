@@ -310,7 +310,7 @@ export const levels: Record<LevelId, Level> = {
         collisionEffects: [
           {
             type: 'heal',
-            amount: 5,
+            value: 5,
             description: "The ancient river's waters restore your vitality.",
           },
           {
