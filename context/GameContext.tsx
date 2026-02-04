@@ -12,6 +12,7 @@ import { deserializeGameState, createInitialGameState } from '../modules/gameSta
 import { reducer } from '../modules/reducers'
 import { GameState } from '../config/types'
 import { requestAutoSave, getStateSaveFingerprint } from '../modules/autoSave'
+import { deleteCurrentGame } from '../modules/saveGame'
 
 interface GameContextType {
   state: GameState
@@ -60,6 +61,15 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
       requestAutoSave(state)
     }
   }, [state])
+
+  // Game over effect - deletes current save when player dies
+  useEffect(() => {
+    if (state.gameOver) {
+      deleteCurrentGame().catch((err) =>
+        console.error('Failed to delete current save on death:', err)
+      )
+    }
+  }, [state.gameOver])
 
   return (
     <GameContext.Provider value={{ state, dispatch, setOverlay, rpgResumeNonce, signalRpgResume }}>

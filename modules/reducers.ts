@@ -23,7 +23,6 @@ import { levels } from '../config/levels'
 import { getInitialState, validateGameState } from './gameState'
 import { createMonsterFromTemplate } from '../modules/monsterUtils'
 import { logIfDev } from './utils'
-import { deleteCurrentGame } from './saveGame'
 
 export const reducer = (state: GameState = getInitialState('1'), action: any): GameState => {
   let newState: GameState
@@ -308,11 +307,6 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
       // Full reset happens when RESET_GAME is dispatched from death screen
       logIfDev(`💀 GAME_OVER: ${action.payload?.message || 'Player died'}`)
       logIfDev(`   Killer: ${action.payload?.killerName || 'unknown'}`)
-
-      // Delete current save when player dies (async, but don't block state update)
-      deleteCurrentGame().catch((err) =>
-        console.error('Failed to delete current save on death:', err)
-      )
 
       return {
         ...state,
