@@ -9,6 +9,7 @@ import watcher_seIMG from '@assets/images/sprites/monsters/watcherse.webp'
 // Base monster templates - Static definitions without runtime state
 export const monsterTemplates: MonsterTemplateV2[] = [
   {
+    kind: 'monster',
     shortName: 'abhuman',
     category: 'regular',
     name: 'Abhuman',
@@ -20,6 +21,7 @@ export const monsterTemplates: MonsterTemplateV2[] = [
     moveRate: 2,
   },
   {
+    kind: 'monster',
     shortName: 'night_hound',
     category: 'regular',
     name: 'Night Hound',
@@ -36,6 +38,7 @@ export const monsterTemplates: MonsterTemplateV2[] = [
 // V2 Templates - Static definitions without runtime state
 export const greatPowerTemplates: GreatPowerTemplateV2[] = [
   {
+    kind: 'greatPower',
     shortName: 'watcher_se',
     category: 'greatPower',
     name: 'Watcher of the South East',

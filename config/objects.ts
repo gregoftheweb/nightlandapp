@@ -17,6 +17,7 @@ import hermitIMG from '@assets/images/backgrounds/subgames/hermit-save2.webp'
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
   discos: {
+    kind: 'object',
     shortName: 'discos',
     category: 'weapon',
     name: 'Discos',
@@ -30,6 +31,7 @@ export const weapons: Record<string, GameObject> = {
     active: true,
   },
   ironSword: {
+    kind: 'object',
     shortName: 'ironSword',
     category: 'weapon',
     name: 'Iron Sword',
@@ -43,6 +45,7 @@ export const weapons: Record<string, GameObject> = {
     active: true,
   },
   valkyries_bow: {
+    kind: 'object',
     shortName: 'valkyries_bow',
     category: 'weapon',
     name: "Valkyrie's Bow",
@@ -57,6 +60,7 @@ export const weapons: Record<string, GameObject> = {
     projectileColor: '#0ce9e9ff', // Bright cyan arrow
   },
   shurikens: {
+    kind: 'object',
     shortName: 'shurikens',
     category: 'weapon',
     name: 'Shurikens',
@@ -75,6 +79,7 @@ export const weapons: Record<string, GameObject> = {
 // CONSUMABLES TEMPLATES
 export const consumables: Record<string, GameObject> = {
   healthPotion: {
+    kind: 'object',
     shortName: 'healthPotion',
     category: 'consumable',
     name: 'Health Potion',
@@ -108,6 +113,7 @@ I must.
 
 export const collectible: Record<string, GameObject> = {
   persiusScroll: {
+    kind: 'object',
     shortName: 'persiusScroll',
     category: 'collectible',
     name: 'Persius Scroll',
@@ -125,6 +131,7 @@ export const collectible: Record<string, GameObject> = {
     ],
   },
   maguffinRock: {
+    kind: 'object',
     shortName: 'maguffinRock',
     category: 'collectible',
     name: 'Maguffin Rock',
@@ -141,6 +148,7 @@ export const nonCollisionTemplates: Record<
   Omit<NonCollisionObject, 'id' | 'position' | 'rotation'>
 > = {
   footsteps: {
+    kind: 'nonCollision',
     shortName: 'footsteps',
     name: 'Footsteps of Persius',
     description: 'Faint tracks of Persius lie before you, leading you onward in the gloomy dust.',
@@ -153,6 +161,7 @@ export const nonCollisionTemplates: Record<
     active: true,
   },
   river: {
+    kind: 'nonCollision',
     shortName: 'river',
     name: 'Ancient River',
     description: 'A dried riverbed from ages past.',
@@ -176,6 +185,7 @@ export const nonCollisionTemplates: Record<
 // BUILDINGS TEMPLATES - Pure templates without position data
 export const buildings: Record<string, GameObject> = {
   redoubt: {
+    kind: 'object',
     shortName: 'redoubt',
     category: 'building',
     name: 'The Last Redoubt',
@@ -196,6 +206,7 @@ export const buildings: Record<string, GameObject> = {
     ],
   },
   river: {
+    kind: 'object',
     shortName: 'river',
     category: 'building',
     name: 'Ancient River',
@@ -207,6 +218,7 @@ export const buildings: Record<string, GameObject> = {
     zIndex: 0,
   },
   cursedTotem: {
+    kind: 'object',
     shortName: 'cursedTotem',
     category: 'building',
     name: 'Cursed Totem',
@@ -226,6 +238,7 @@ export const buildings: Record<string, GameObject> = {
     ],
   },
   petrifiedWillow: {
+    kind: 'object',
     shortName: 'petrifiedWillow',
     category: 'building',
     name: 'Petrified Willow',
@@ -237,6 +250,7 @@ export const buildings: Record<string, GameObject> = {
     zIndex: 0,
   },
   healingPool: {
+    kind: 'object',
     shortName: 'healingPool',
     category: 'building',
     name: 'Healing Pool',
@@ -257,6 +271,7 @@ export const buildings: Record<string, GameObject> = {
     ],
   },
   poisonPool: {
+    kind: 'object',
     shortName: 'poisonPool',
     category: 'building',
     name: 'Poison Pool',
@@ -274,6 +289,7 @@ export const buildings: Record<string, GameObject> = {
     ],
   },
   aeroWreckage: {
+    kind: 'object',
     shortName: 'aeroWreckage',
     category: 'building',
     name: 'Aero-Wreckage',
@@ -296,6 +312,7 @@ export const buildings: Record<string, GameObject> = {
     },
   },
   tesseract: {
+    kind: 'object',
     shortName: 'tesseract',
     category: 'building',
     name: 'Tesseract',
@@ -318,6 +335,7 @@ export const buildings: Record<string, GameObject> = {
     },
   },
   hermit: {
+    kind: 'object',
     shortName: 'hermit',
     category: 'building',
     name: 'Hermit',
