@@ -71,7 +71,6 @@ describe('Monster Creation', () => {
       expect(monster).toHaveProperty('attack')
       expect(monster).toHaveProperty('ac')
       expect(monster).toHaveProperty('moveRate')
-      expect(monster).toHaveProperty('soulKey')
       expect(monster).toHaveProperty('shortName')
       expect(monster).toHaveProperty('name')
       expect(monster).toHaveProperty('category')

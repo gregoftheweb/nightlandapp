@@ -16,8 +16,6 @@ export type InteractionType = 'door' | 'chest' | 'npc' | 'portal'
 
 export type EffectTarget = 'self' | 'enemy' | 'ally' | 'area' | 'all'
 
-export type SoulKey = string & {}
-
 export interface SubGameLaunch {
   subGameName: string // maps to /sub-games/<subGameName>
   ctaLabel: string // label for InfoBox button
@@ -80,7 +78,6 @@ export interface Monster extends GameObject {
   moveRate: number
   spawnRate?: number // Percentage chance (0.0 to 1.0) that monster spawns each turn
   maxInstances?: number
-  soulKey: SoulKey
   uiSlot?: number
   inCombatSlot?: boolean
 }
@@ -95,7 +92,6 @@ export interface GreatPower extends GameObject {
   ac: number
   awakened: boolean
   awakenCondition: string
-  soulKey?: SoulKey
 }
 
 export interface LevelMonsterInstance extends Monster {
@@ -262,7 +258,6 @@ export interface MonsterTemplateV2 extends EntityTemplate {
   moveRate: number
   spawnRate?: number
   maxInstances?: number
-  soulKey: SoulKey
   width?: number
   height?: number
   effects?: Effect[]
@@ -314,7 +309,6 @@ export interface GreatPowerTemplateV2 extends EntityTemplate {
   attack: number
   ac: number
   awakenCondition: string
-  soulKey?: SoulKey
   width?: number
   height?: number
   effects?: Effect[]
@@ -372,7 +366,6 @@ export interface Player {
   meleeWeaponId: string // Fixed melee weapon (always "weapon-discos-001")
   equippedRangedWeaponId: string | null // Currently equipped ranged weapon
   rangedWeaponInventoryIds: string[] // Available ranged weapons
-  soulKey: SoulKey
   moveSpeed: number
   level?: number
   experience?: number

@@ -145,7 +145,6 @@ const createMonsterInstance = (
     attack: template.attack ?? 0,
     ac: template.ac ?? 0,
     moveRate: template.moveRate ?? 1,
-    soulKey: template.soulKey ?? '000000',
     initiative: template.initiative ?? 0,
     // SPAWN CONFIGURATION - SET PER LEVEL
     spawnRate, // Percentage chance (0.0 to 1.0) that monster spawns each turn

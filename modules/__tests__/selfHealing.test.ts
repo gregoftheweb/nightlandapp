@@ -55,7 +55,6 @@ describe('Self-Healing Mechanic', () => {
       equippedRangedWeaponId: '',
       rangedWeaponInventoryIds: [],
       maxWeaponsSize: 4,
-      soulKey: '000000',
       moveSpeed: 1,
       // Hide ability state
       hideUnlocked: false,

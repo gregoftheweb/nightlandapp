@@ -18,7 +18,6 @@ import {
   HydratedGreatPowerV2,
   GreatPower,
   Position,
-  SoulKey,
   Effect,
   WeaponType,
 } from '@/config/types'
@@ -201,7 +200,6 @@ export function hydratedMonsterV2ToMonster(hydrated: HydratedMonsterV2): Monster
     ac: hydrated.ac,
     initiative: hydrated.initiative,
     moveRate: hydrated.moveRate,
-    soulKey: hydrated.soulKey,
     width: hydrated.width,
     height: hydrated.height,
     size: hydrated.size,
@@ -246,7 +244,6 @@ export function hydratedGreatPowerV2ToGreatPower(hydrated: HydratedGreatPowerV2)
     attack: hydrated.attack,
     ac: hydrated.ac,
     awakenCondition: hydrated.awakenCondition,
-    soulKey: hydrated.soulKey,
     width: hydrated.width,
     height: hydrated.height,
     effects: hydrated.effects,

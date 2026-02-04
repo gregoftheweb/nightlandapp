@@ -8,7 +8,6 @@ import {
   LevelObjectInstance,
   NonCollisionObject,
   Player,
-  SoulKey,
 } from '../config/types'
 import textContent from '../assets/copy/textcontent'
 
@@ -481,38 +480,6 @@ export const isClickWithinBounds = (
   const objWidth = object.size?.width || 1
   const objHeight = object.size?.height || 1
   return relativeRow >= 0 && relativeRow < objHeight && relativeCol >= 0 && relativeCol < objWidth
-}
-
-export function encodeSoulKey(attributes: {
-  str: number
-  int: number
-  dex: number
-  wil: number
-  wis: number
-  cha: number
-}) {
-  const { str, int, dex, wil, wis, cha } = attributes
-  const plainBytes = [str, int, dex, wil, wis, cha]
-  const key = [110, 105, 103, 104, 116] // "night" ASCII values (n, i, g, h, t)
-  const obfuscatedBytes = plainBytes.map((byte, i) => byte ^ key[i % key.length])
-  return obfuscatedBytes
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
-    .toUpperCase()
-}
-
-export function decodeSoulKey(soulKey: SoulKey) {
-  const bytes = soulKey.match(/.{2}/g)!.map((hex) => parseInt(hex, 16))
-  const key = [110, 105, 103, 104, 116]
-  const plainBytes = bytes.map((byte, i) => byte ^ key[i % key.length])
-  return {
-    str: plainBytes[0],
-    int: plainBytes[1],
-    dex: plainBytes[2],
-    wil: plainBytes[3],
-    wis: plainBytes[4],
-    cha: plainBytes[5],
-  }
 }
 
 export function getAttributeModifier(value: number) {
