@@ -1,5 +1,26 @@
 import { ImageSourcePropType } from 'react-native'
 
+// ===== HP Type Aliases =====
+// Explicit type aliases for HP to standardize semantics across the codebase
+export type MaxHP = number // Maximum hit points (template/design-time value)
+export type CurrentHP = number // Current hit points at runtime (for V2 instances)
+export type HP = CurrentHP // Legacy runtime hp field (for backward compatibility)
+
+// ===== HP Helper Interfaces =====
+// Helper interfaces for composing HP-related fields
+export interface HasMaxHP {
+  maxHP: MaxHP
+}
+
+export interface HasCurrentHP {
+  currentHP: CurrentHP
+}
+
+export interface HasLegacyHP {
+  hp: HP
+  maxHP: MaxHP
+}
+
 export interface Position {
   row: number
   col: number
@@ -100,8 +121,8 @@ export interface GameObject extends EntityBase {
 export interface Monster extends EntityBase {
   id?: string
   position: Position
-  hp: number
-  maxHP: number
+  hp: HP
+  maxHP: MaxHP
   attack: number
   ac: number
   initiative?: number
@@ -127,8 +148,8 @@ export interface Monster extends EntityBase {
 export interface GreatPower extends EntityBase {
   id: string
   position: Position
-  hp: number
-  maxHP: number
+  hp: HP
+  maxHP: MaxHP
   attack: number
   ac: number
   awakened: boolean
@@ -146,7 +167,7 @@ export interface GreatPower extends EntityBase {
 export interface LevelMonsterInstance extends Monster {
   id: string
   templateId?: string
-  currentHP: number
+  currentHP: CurrentHP
   spawned?: boolean
   spawnZoneId?: string
 }
@@ -347,7 +368,7 @@ export interface HydratedObject extends GameObjectTemplate {
  * Contains only template/definition data, no runtime state or position
  */
 export interface MonsterTemplateV2 extends EntityTemplate<'monster', MonsterCategory> {
-  maxHP: number
+  maxHP: MaxHP
   attack: number
   ac: number
   initiative?: number
@@ -371,7 +392,7 @@ export interface MonsterInstanceV2 {
   id: string
   templateId: string // Reference to MonsterTemplateV2.shortName
   position: Position
-  currentHP: number
+  currentHP: CurrentHP
   spawned?: boolean
   spawnZoneId?: string
   uiSlot?: number
@@ -388,7 +409,7 @@ export interface HydratedMonsterV2 extends MonsterTemplateV2 {
   id: string
   templateId: string
   position: Position
-  currentHP: number
+  currentHP: CurrentHP
   spawned?: boolean
   spawnZoneId?: string
   uiSlot?: number
@@ -401,7 +422,7 @@ export interface HydratedMonsterV2 extends MonsterTemplateV2 {
  * Contains only template/definition data, no runtime state or position
  */
 export interface GreatPowerTemplateV2 extends EntityTemplate<'greatPower', GreatPowerCategory> {
-  maxHP: number
+  maxHP: MaxHP
   attack: number
   ac: number
   awakenCondition: string
@@ -422,7 +443,7 @@ export interface GreatPowerInstanceV2 {
   id: string
   templateId: string // Reference to GreatPowerTemplateV2.shortName
   position: Position
-  currentHP: number
+  currentHP: CurrentHP
   awakened: boolean
   // Instance-specific overrides
   zIndex?: number
@@ -436,7 +457,7 @@ export interface HydratedGreatPowerV2 extends GreatPowerTemplateV2 {
   id: string
   templateId: string
   position: Position
-  currentHP: number
+  currentHP: CurrentHP
   awakened: boolean
 }
 
@@ -448,8 +469,8 @@ export interface Player {
   lastComment: string
   image: ImageSourcePropType
   position: Position
-  hp: number
-  maxHP: number
+  hp: HP
+  maxHP: MaxHP
   ac?: number
   initiative: number
   attack: number
@@ -636,8 +657,8 @@ export interface CombatParticipant {
   type: 'player' | 'monster' | 'npc'
   position: Position
   initiative: number
-  hp: number
-  maxHP: number
+  hp: HP
+  maxHP: MaxHP
   ac: number
   attack: number
   actions: CombatAction[]
