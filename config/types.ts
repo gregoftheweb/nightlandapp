@@ -495,7 +495,6 @@ export interface NonCollisionObject extends EntityBase {
   }>
   collisionEffects?: Effect[]
   active: boolean
-  category: string // Required from EntityBase but redeclared for clarity
 }
 
 // Strict discriminated union for effects
