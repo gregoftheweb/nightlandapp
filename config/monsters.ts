@@ -1,5 +1,5 @@
 // config/monsters.ts
-import { MonsterTemplate, GreatPower } from './types'
+import { MonsterTemplateV2, GreatPower } from './types'
 
 import abhumanIMG from '@assets/images/sprites/monsters/abhuman.webp'
 import night_houndIMG from '@assets/images/sprites/monsters/nighthound4.webp'
@@ -7,14 +7,13 @@ import watcher_seIMG from '@assets/images/sprites/monsters/watcherse.webp'
 
 // -------------------- REGULAR MONSTERS --------------------
 // Base monster templates - Static definitions without runtime state
-export const monsterTemplates: MonsterTemplate[] = [
+export const monsterTemplates: MonsterTemplateV2[] = [
   {
     shortName: 'abhuman',
     category: 'regular',
     name: 'Abhuman',
     description: 'Mutated humanoid with brute strength.',
     image: abhumanIMG,
-    hp: 12,
     maxHP: 12,
     attack: 5,
     ac: 12,
@@ -27,7 +26,6 @@ export const monsterTemplates: MonsterTemplate[] = [
     name: 'Night Hound',
     description: 'Swift, feral beast that hunts in packs.',
     image: night_houndIMG,
-    hp: 30,
     maxHP: 30,
     attack: 6,
     ac: 14,
@@ -68,7 +66,7 @@ export const greatPowers: GreatPower[] = [
 // -------------------- HELPER FUNCTIONS --------------------
 
 // Get monster template by shortName
-export const getMonsterTemplate = (shortName: string): MonsterTemplate | undefined => {
+export const getMonsterTemplate = (shortName: string): MonsterTemplateV2 | undefined => {
   return monsterTemplates.find((monster) => monster.shortName === shortName)
 }
 
@@ -88,6 +86,6 @@ export const getAvailableGreatPowerTypes = (): string[] => {
 }
 
 // Get monster templates as a Map for hydration
-export const getMonsterTemplateMap = (): Map<string, MonsterTemplate> => {
+export const getMonsterTemplateMap = (): Map<string, MonsterTemplateV2> => {
   return new Map(monsterTemplates.map((template) => [template.shortName, template]))
 }

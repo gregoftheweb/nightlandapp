@@ -135,7 +135,7 @@ export const createMonsterFromTemplate = (
     id: `${shortName}-${Date.now()}-${Math.random().toString(36).slice(2)}`, // Unique ID for React keys
     templateId: shortName,
     position,
-    currentHP: template.hp, // Start at full HP
+    currentHP: template.maxHP, // Start at full HP
   }
 
   // Hydrate the template with the instance
