@@ -43,8 +43,55 @@ export const checkMonsterSpawn = (
 ) => {
   logIfDev('Checking monster spawning...')
 
-  // Process each monster configuration from the level
-  if (state.level.monsters && state.level.monsters.length > 0) {
+  // Use V2 spawn configs if available, otherwise fall back to legacy state.monsters
+  const spawnConfigs = state.level.monsterSpawnConfigsV2
+  
+  if (spawnConfigs && spawnConfigs.length > 0) {
+    // V2 path: Use MonsterSpawnConfigV2[]
+    logIfDev('Using V2 spawn configs')
+    
+    // Pre-compute counts by templateId for O(1) lookups (perf: avoids filter per config)
+    const typeCounts = new Map<string, number>()
+    state.activeMonsters.forEach((m) => {
+      const count = typeCounts.get(m.shortName) || 0
+      typeCounts.set(m.shortName, count + 1)
+    })
+
+    for (const spawnConfig of spawnConfigs) {
+      // Skip if no spawn configuration
+      if (!spawnConfig.spawnRate || !spawnConfig.maxInstances) {
+        continue
+      }
+
+      // O(1) count lookup by templateId (which maps to shortName)
+      const activeCount = typeCounts.get(spawnConfig.templateId) || 0
+
+      // Check against maxInstances for this monster type
+      if (activeCount >= spawnConfig.maxInstances) {
+        continue
+      }
+
+      // Use the spawn logic: Math.random() < spawnRate (percentage chance per turn)
+      if (Math.random() < spawnConfig.spawnRate) {
+        const newMonster = createMonsterFromTemplate(
+          spawnConfig.templateId,
+          getSpawnPosition(state)
+        )
+        if (!newMonster) {
+          continue
+        }
+
+        logIfDev(
+          `Spawning ${newMonster.name} at ${newMonster.position.row},${newMonster.position.col}`
+        )
+        dispatch({ type: 'SPAWN_MONSTER', payload: { monster: newMonster } })
+        showDialog?.(`${newMonster.name} has appeared!`, 2000)
+      }
+    }
+  } else if (state.level.monsters && state.level.monsters.length > 0) {
+    // Legacy path: Use LevelMonsterInstance[] for backward compatibility
+    logIfDev('Using legacy monster spawn configs (fallback)')
+    
     // Pre-compute counts by type for O(1) lookups (perf: avoids filter per config)
     const typeCounts = new Map<string, number>()
     state.activeMonsters.forEach((m) => {
