@@ -8,12 +8,54 @@ import { calculateNewPosition } from './movement'
 import { checkItemInteractions, checkObjectInteractions } from './interactions'
 import { SPAWN_CONSTANTS } from '../constants/Game'
 import { logIfDev } from './utils'
+import { reducer as gameReducer } from './reducers'
 
 // ==================== MODULE-LEVEL STATE (Preserved for combat/monster flow integrity) ====================
 let currentGameState: GameState
 let gameDispatch: (action: any) => void
 let inCombat: boolean = false
 let turnType: 'combat' | 'move' | 'non-move-turn' = 'non-move-turn'
+
+// ==================== STATE UPDATE HELPER ====================
+
+/**
+ * Applies an action to the snapshot state using the game reducer.
+ * For actions with side effects (e.g., GAME_OVER), returns a minimal pure state update.
+ */
+const applyActionToSnapshot = (state: GameState, action: any): GameState => {
+  // Handle actions with side effects separately
+  if (action.type === 'GAME_OVER') {
+    // Return minimal pure state update without calling deleteCurrentGame
+    return {
+      ...state,
+      gameOver: true,
+      gameOverMessage: action.payload?.message || 'You have been defeated.',
+      killerName: action.payload?.killerName || 'unknown horror',
+      suppressDeathDialog: action.payload?.suppressDeathDialog || false,
+      inCombat: false,
+      attackSlots: [],
+      waitingMonsters: [],
+      turnOrder: [],
+      combatTurn: null,
+      combatLog: [],
+      activeMonsters: [], // Clear all active monsters
+    }
+  }
+
+  // Default: use the game reducer for all other actions
+  return gameReducer(state, action)
+}
+
+/**
+ * Creates a wrapped dispatch function that updates currentGameState before dispatching.
+ * This ensures currentGameState stays in sync with the reducer's state transformations.
+ */
+const createWrappedDispatch = (dispatch: (action: any) => void): ((action: any) => void) => {
+  return (action) => {
+    currentGameState = applyActionToSnapshot(currentGameState, action)
+    dispatch(action)
+  }
+}
 
 // ==================== UTILITY FUNCTIONS ====================
 
@@ -75,13 +117,6 @@ const doMoveTurn = (direction: string, setOverlay?: (overlay: any) => void): voi
   })
 
   logIfDev(`Player moved to: (${newPosition.row}, ${newPosition.col}), Move: ${newMoveCount}`)
-
-  // Update game state for interactions AND monster movement (minimal clone for perf)
-  currentGameState = {
-    ...currentGameState,
-    player: { ...currentGameState.player, position: newPosition },
-    moveCount: newMoveCount,
-  }
 
   // Handle world interactions at new position
   checkItemInteractions(currentGameState, gameDispatch, setOverlay)
@@ -168,13 +203,6 @@ const doTurnCleanup = (): void => {
           payload: { counter: 0 },
         })
 
-        // Update local state for consistency
-        currentGameState = {
-          ...currentGameState,
-          player: { ...currentGameState.player, hp: newHP },
-          selfHealTurnCounter: 0,
-        }
-
         logIfDev(
           `💚 Self-healing: ${currentHP} -> ${newHP} (+1 HP) [after ${turnsPerHitPoint} turns]`
         )
@@ -184,12 +212,6 @@ const doTurnCleanup = (): void => {
           type: 'UPDATE_SELF_HEAL_COUNTER',
           payload: { counter: newCounter },
         })
-
-        // Update local state
-        currentGameState = {
-          ...currentGameState,
-          selfHealTurnCounter: newCounter,
-        }
 
         logIfDev(
           `💚 Self-healing: turn ${newCounter}/${turnsPerHitPoint} (${currentHP}/${maxHP} HP)`
@@ -256,7 +278,7 @@ export const handleMovePlayer = (
 ): void => {
   // Set current gamestate in module level variables
   currentGameState = state
-  gameDispatch = dispatch
+  gameDispatch = createWrappedDispatch(dispatch)
 
   // Set inCombat boolean
   inCombat = state.inCombat
@@ -283,7 +305,7 @@ export const handleCombatAction = (
 ): void => {
   // Set current gamestate in module level variables
   currentGameState = state
-  gameDispatch = dispatch
+  gameDispatch = createWrappedDispatch(dispatch)
 
   // Set inCombat boolean
   inCombat = state.inCombat
@@ -303,7 +325,7 @@ export const handleCombatAction = (
 export const handlePassTurn = (state: GameState, dispatch: (action: any) => void): void => {
   // Set current gamestate in module level variables
   currentGameState = state
-  gameDispatch = dispatch
+  gameDispatch = createWrappedDispatch(dispatch)
 
   // Set inCombat boolean
   inCombat = state.inCombat
