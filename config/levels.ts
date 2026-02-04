@@ -14,6 +14,7 @@ import {
   GreatPower,
   Item,
   NonCollisionObject,
+  GreatPowerInstanceV2,
 } from './types'
 import {
   getBuildingTemplate,
@@ -25,6 +26,7 @@ import {
 import { getMonsterTemplate, getGreatPowerTemplate } from './monsters'
 import { LevelId } from './levelTypes'
 import { loadSpawnTable, validateLevel } from './levelHelpers'
+import { hydrateGreatPowerV2, hydratedGreatPowerV2ToGreatPower } from '@/modules/hydration'
 
 // Helper function to create object instances from building templates
 const createObjectInstance = (
@@ -172,7 +174,7 @@ const createNonCollisionObject = (
   }
 }
 
-// Helper function to create GreatPower instances for levels
+// Helper function to create GreatPower instances for levels using V2 Template → Instance → Hydrated pipeline
 const createGreatPowerForLevel = (
   shortName: string,
   position: Position,
@@ -183,11 +185,37 @@ const createGreatPowerForLevel = (
     throw new Error(`GreatPower template ${shortName} not found`)
   }
 
-  return {
-    ...template,
+  // Determine initial HP (backward compatible with legacy 'hp' field in overrides)
+  const initialHP = overrides.hp ?? overrides.maxHP ?? template.maxHP
+
+  // Create V2 instance with defaults (mapping legacy hp to currentHP)
+  const instance: GreatPowerInstanceV2 = {
     id: `${shortName}_${position.row}_${position.col}`,
+    templateId: shortName,
     position,
-    ...overrides,
+    currentHP: initialHP,
+    awakened: overrides.awakened ?? false,
+  }
+
+  // Hydrate to merge template + instance
+  const hydrated = hydrateGreatPowerV2(template, instance)
+
+  // Convert to legacy GreatPower format
+  const greatPower = hydratedGreatPowerV2ToGreatPower(hydrated)
+
+  // Extract overrides that should not be reapplied (hp and awakened come from the pipeline)
+  const { hp, awakened, ...otherOverrides } = overrides
+  
+  // Return final GreatPower with template/instance values and remaining overrides
+  // Order matters: otherOverrides can customize attack, ac, maxHP, etc. but
+  // id, position, hp, and awakened are explicitly set from the pipeline to avoid confusion
+  return {
+    ...greatPower,
+    ...otherOverrides,
+    id: instance.id,
+    position: instance.position,
+    hp: greatPower.hp,
+    awakened: greatPower.awakened,
   }
 }
 
