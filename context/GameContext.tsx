@@ -39,6 +39,9 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
 
   // Autosave controller - tracks state fingerprint to trigger saves
   const lastSaveFingerprintRef = useRef<string>('')
+  
+  // Track if game over save deletion has been triggered to avoid multiple calls
+  const gameOverDeleteTriggeredRef = useRef<boolean>(false)
 
   const setOverlay = (overlay: any) => console.log('Overlay:', overlay)
 
@@ -64,10 +67,16 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
 
   // Game over effect - deletes current save when player dies
   useEffect(() => {
-    if (state.gameOver) {
+    if (state.gameOver && !gameOverDeleteTriggeredRef.current) {
+      gameOverDeleteTriggeredRef.current = true
       deleteCurrentGame().catch((err) =>
         console.error('Failed to delete current save on death:', err)
       )
+    }
+    
+    // Reset the flag when game is reset (gameOver becomes false)
+    if (!state.gameOver && gameOverDeleteTriggeredRef.current) {
+      gameOverDeleteTriggeredRef.current = false
     }
   }, [state.gameOver])
 
