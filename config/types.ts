@@ -461,6 +461,17 @@ export interface HydratedGreatPowerV2 extends GreatPowerTemplateV2 {
   awakened: boolean
 }
 
+// ===== Runtime Type Aliases =====
+// Aliases for the active runtime representations used in GameState
+// These define what types are actually used during gameplay
+
+/**
+ * RuntimeMonster - The ONLY runtime monster representation used in GameState
+ * Points to HydratedMonsterV2 (Template + Instance merged shape)
+ * All combat and monster management code should use this type
+ */
+export type RuntimeMonster = HydratedMonsterV2
+
 export interface Player {
   name: string
   shortName: string
@@ -756,9 +767,9 @@ export interface GameState {
   // ===== COMBAT DOMAIN =====
   inCombat: boolean // Whether player is currently in combat
   combatTurn: CombatParticipant | null // Current turn participant
-  activeMonsters: Monster[] // Active monster instances in the level
-  attackSlots: Monster[] // Monsters currently attacking the player
-  waitingMonsters: Monster[] // Monsters waiting to attack
+  activeMonsters: RuntimeMonster[] // Active monster instances in the level
+  attackSlots: RuntimeMonster[] // Monsters currently attacking the player
+  waitingMonsters: RuntimeMonster[] // Monsters waiting to attack
   turnOrder: CombatParticipant[] // Combat turn order
   combatLog: CombatLogEntry[] // Combat event log
   maxAttackers: number // Maximum simultaneous attackers

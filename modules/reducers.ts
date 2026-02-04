@@ -14,7 +14,7 @@
 import {
   GameState,
   CombatLogEntry,
-  Monster,
+  RuntimeMonster,
   LevelMonsterInstance,
   Position,
   NonCollisionObject,
@@ -179,7 +179,7 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
       // Check if there are any living monsters remaining
       const hasRemainingMonsters =
         action.payload.attackSlots.length > 0 ||
-        state.activeMonsters.some((m) => m.hp > 0 && m.active !== false)
+        state.activeMonsters.some((m) => m.currentHP > 0)
 
       // Determine if we should clear ranged mode
       // Clear when: entering combat OR exiting combat with no monsters left
@@ -286,13 +286,16 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
       }
 
     case 'UPDATE_MONSTER_HP':
+      // Support both hp and currentHP for backward compatibility
+      // Normalize to currentHP in state
+      const hpValue = action.payload.currentHP ?? action.payload.hp
       return {
         ...state,
         activeMonsters: state.activeMonsters.map((monster) =>
-          monster.id === action.payload.id ? { ...monster, hp: action.payload.hp } : monster
+          monster.id === action.payload.id ? { ...monster, currentHP: hpValue } : monster
         ),
         attackSlots: state.attackSlots.map((slot) =>
-          slot.id === action.payload.id ? { ...slot, hp: action.payload.hp } : slot
+          slot.id === action.payload.id ? { ...slot, currentHP: hpValue } : slot
         ),
       }
 
