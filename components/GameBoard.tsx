@@ -968,7 +968,7 @@ export default function GameBoard({
 // Utility functions
 const getCellBackgroundColor = (
   isPlayer: boolean,
-  hasMonster: Monster | undefined,
+  hasMonster: RuntimeMonster | undefined,
   _hasGreatPower: GreatPower | undefined,
   _inCombat: boolean
 ) => {
@@ -979,7 +979,7 @@ const getCellBackgroundColor = (
 
 const getCellBorderColor = (
   isPlayer: boolean,
-  hasMonster: Monster | undefined,
+  hasMonster: RuntimeMonster | undefined,
   _hasGreatPower: GreatPower | undefined,
   _inCombat: boolean,
   hideActive: boolean
@@ -990,7 +990,7 @@ const getCellBorderColor = (
   return 'rgba(17, 17, 17, 0.3)'
 }
 
-const getMonsterImage = (monster: Monster) => {
+const getMonsterImage = (monster: RuntimeMonster) => {
   return monster.image || require('@assets/images/sprites/monsters/abhuman.webp')
 }
 
