@@ -7,11 +7,8 @@
 
 import {
   GameObjectTemplate,
-  MonsterTemplate,
   ObjectInstance,
-  MonsterInstance,
   HydratedObject,
-  HydratedMonster,
   Monster,
   MonsterTemplateV2,
   MonsterInstanceV2,
@@ -19,7 +16,77 @@ import {
   GreatPowerTemplateV2,
   GreatPowerInstanceV2,
   HydratedGreatPowerV2,
+  Position,
+  SoulKey,
+  ImageSourcePropType,
+  Effect,
+  WeaponType,
 } from '@/config/types'
+
+// ===== V1 Compatibility Types (Legacy) =====
+// These types are kept for backward compatibility with the conversion bridge
+// They will be removed once GameState.activeMonsters migrates to V2
+
+/**
+ * @deprecated Use MonsterTemplateV2 instead
+ * MonsterTemplate - Legacy static definition of a monster type
+ */
+interface MonsterTemplate {
+  shortName: string
+  category: string
+  name: string
+  description?: string
+  image?: ImageSourcePropType
+  hp: number
+  maxHP: number
+  attack: number
+  ac: number
+  initiative?: number
+  moveRate: number
+  spawnRate?: number
+  maxInstances?: number
+  soulKey: SoulKey
+  width?: number
+  height?: number
+  size?: { width: number; height: number }
+  effects?: Effect[]
+  damage?: number
+  hitBonus?: number
+  weaponType?: WeaponType
+  range?: number
+  zIndex?: number
+}
+
+/**
+ * @deprecated Use MonsterInstanceV2 instead
+ * MonsterInstance - Legacy runtime instance of a monster
+ */
+interface MonsterInstance {
+  id: string
+  templateId: string
+  position: Position
+  currentHP: number
+  spawned?: boolean
+  spawnZoneId?: string
+  zIndex?: number
+}
+
+/**
+ * @deprecated Use HydratedMonsterV2 instead
+ * HydratedMonster - Legacy merged shape of monster template + instance
+ */
+interface HydratedMonster extends MonsterTemplate {
+  id: string
+  templateId: string
+  position: Position
+  currentHP: number
+  spawned?: boolean
+  spawnZoneId?: string
+  active?: boolean
+  lastTrigger?: number
+  uiSlot?: number
+  inCombatSlot?: boolean
+}
 
 /**
  * Hydrate an object by merging a template with an instance

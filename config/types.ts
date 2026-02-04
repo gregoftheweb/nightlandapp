@@ -133,19 +133,31 @@ export interface LevelObjectInstance extends GameObject {
   rotation?: number // NEW: Instance-specific rotation override
 }
 
-// ===== NEW: Template vs Instance Architecture =====
-// These types introduce a clean separation between templates (definitions)
-// and instances (runtime entities). Existing types remain unchanged for compatibility.
+// ===== Template vs Instance Architecture =====
+// Clean separation between templates (static definitions)
+// and instances (runtime entities with state)
+
+/**
+ * EntityTemplate - Base type for all static entity templates
+ * Contains shared fields common to all game entities (monsters, objects, great powers)
+ * Templates represent immutable design-time data only - no runtime state
+ */
+export interface EntityTemplate {
+  shortName: string // Unique identifier, acts as template ID
+  category: string // Entity category (e.g., 'regular', 'greatPower', 'building')
+  name: string // Display name
+  description?: string // Optional description
+  image?: ImageSourcePropType // Visual representation
+  size?: { width: number; height: number } // Size in grid units
+  zIndex?: number // Rendering layer priority
+}
 
 /**
  * GameObjectTemplate - Static definition of a game object (building, decoration, etc.)
+ * Extends EntityTemplate with object-specific fields
  * Excludes runtime fields like position, active, lastTrigger
  */
-export interface GameObjectTemplate {
-  shortName: string
-  category: string
-  name: string
-  description?: string
+export interface GameObjectTemplate extends EntityTemplate {
   damage?: number
   hitBonus?: number
   type?: string
@@ -153,8 +165,6 @@ export interface GameObjectTemplate {
   range?: number
   width?: number
   height?: number
-  image?: ImageSourcePropType
-  size?: { width: number; height: number }
   effects?: Effect[]
   collisionMask?: Array<{
     row: number
@@ -163,7 +173,6 @@ export interface GameObjectTemplate {
     height: number
   }>
   maxInstances?: number
-  zIndex?: number
   rotation?: number // Default rotation for template
   projectileColor?: string
   projectileLengthPx?: number
@@ -176,38 +185,7 @@ export interface GameObjectTemplate {
 }
 
 /**
- * MonsterTemplate - Static definition of a monster type
- * Excludes runtime fields like position, spawned, currentHP
- */
-export interface MonsterTemplate {
-  shortName: string
-  category: string
-  name: string
-  description?: string
-  image?: ImageSourcePropType
-  hp: number
-  maxHP: number
-  attack: number
-  ac: number
-  initiative?: number
-  moveRate: number
-  spawnRate?: number
-  maxInstances?: number
-  soulKey: SoulKey
-  width?: number
-  height?: number
-  size?: { width: number; height: number }
-  effects?: Effect[]
-  damage?: number
-  hitBonus?: number
-  weaponType?: WeaponType
-  range?: number
-  zIndex?: number
-}
-
-/**
  * ObjectInstance - Runtime instance of a game object with position and overrides
- * Alternative name to avoid confusion with LevelObjectInstance
  */
 export interface ObjectInstance {
   id: string
@@ -219,21 +197,6 @@ export interface ObjectInstance {
   interactionType?: InteractionType
   locked?: boolean
   keyRequired?: string
-  // Additional instance-specific overrides can be added here
-}
-
-/**
- * MonsterInstance - Runtime instance of a monster with position and state
- */
-export interface MonsterInstance {
-  id: string
-  templateId: string // Reference to the monster template shortName
-  position: Position
-  currentHP: number
-  spawned?: boolean
-  spawnZoneId?: string
-  // Instance-specific overrides
-  zIndex?: number
 }
 
 /**
@@ -255,38 +218,16 @@ export interface HydratedObject extends GameObjectTemplate {
   keyRequired?: string
 }
 
-/**
- * HydratedMonster - Merged shape of monster template + instance for runtime use
- * Contains all template data plus instance-specific state
- */
-export interface HydratedMonster extends MonsterTemplate {
-  id: string
-  templateId: string
-  position: Position
-  currentHP: number
-  spawned?: boolean
-  spawnZoneId?: string
-  active?: boolean
-  lastTrigger?: number
-  uiSlot?: number
-  inCombatSlot?: boolean
-}
-
 // ===== V2: Enhanced Template vs Instance Architecture for Monsters and Great Powers =====
-// V2 types provide cleaner separation and support for Great Powers
-// Existing types remain unchanged for compatibility
+// V2 types provide cleaner separation and are the preferred long-term architecture
+// Converging all types to V2 - no V3 types will be created
 
 /**
  * MonsterTemplateV2 - Static definition of a monster type
+ * Extends EntityTemplate with monster-specific combat and behavior fields
  * Contains only template/definition data, no runtime state or position
- * Uses shortName as the template ID
  */
-export interface MonsterTemplateV2 {
-  shortName: string // Acts as the template ID
-  category: string
-  name: string
-  description?: string
-  image?: ImageSourcePropType
+export interface MonsterTemplateV2 extends EntityTemplate {
   maxHP: number
   attack: number
   ac: number
@@ -297,13 +238,11 @@ export interface MonsterTemplateV2 {
   soulKey: SoulKey
   width?: number
   height?: number
-  size?: { width: number; height: number }
   effects?: Effect[]
   damage?: number
   hitBonus?: number
   weaponType?: WeaponType
   range?: number
-  zIndex?: number
 }
 
 /**
@@ -340,15 +279,10 @@ export interface HydratedMonsterV2 extends MonsterTemplateV2 {
 
 /**
  * GreatPowerTemplateV2 - Static definition of a Great Power
+ * Extends EntityTemplate with great power-specific fields
  * Contains only template/definition data, no runtime state or position
- * Uses shortName as the template ID
  */
-export interface GreatPowerTemplateV2 {
-  shortName: string // Acts as the template ID
-  category: string
-  name: string
-  description?: string
-  image?: ImageSourcePropType
+export interface GreatPowerTemplateV2 extends EntityTemplate {
   maxHP: number
   attack: number
   ac: number
@@ -356,13 +290,11 @@ export interface GreatPowerTemplateV2 {
   soulKey?: SoulKey
   width?: number
   height?: number
-  size?: { width: number; height: number }
   effects?: Effect[]
   damage?: number
   hitBonus?: number
   weaponType?: WeaponType
   range?: number
-  zIndex?: number
 }
 
 /**
