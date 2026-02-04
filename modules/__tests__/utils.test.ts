@@ -56,7 +56,6 @@ describe('getObjectAtPoint', () => {
       meleeWeaponId: 'weapon-discos-001',
       equippedRangedWeaponId: null,
       rangedWeaponInventoryIds: [],
-      soulKey: '000000',
       moveSpeed: 1,
       hideUnlocked: false,
       hideChargeTurns: 0,
@@ -120,7 +119,6 @@ describe('getObjectAtPoint', () => {
       attack: 5,
       ac: 12,
       moveRate: 1,
-      soulKey: '000001',
       active: true,
     }
     state.activeMonsters = [monster]
@@ -250,7 +248,6 @@ describe('getObjectAtPoint', () => {
       attack: 5,
       ac: 12,
       moveRate: 1,
-      soulKey: '000001',
     }
     state.activeMonsters = [monster]
 
@@ -272,7 +269,6 @@ describe('getObjectAtPoint', () => {
       attack: 5,
       ac: 12,
       moveRate: 1,
-      soulKey: '000001',
     }
     state.activeMonsters = [monster]
 
@@ -305,7 +301,6 @@ describe('getObjectAtPoint', () => {
       attack: 5,
       ac: 12,
       moveRate: 1,
-      soulKey: '000001',
       active: false,
     }
     state.activeMonsters = [monster]

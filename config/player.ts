@@ -33,7 +33,6 @@ export const playerConfig: Player = {
   rangedWeaponInventoryIds: ['weapon-valkyries-bow-001', 'weapon-shurikens-001'], // Starting ranged weapons
   isHidden: false,
   hideTurns: 0,
-  soulKey: '7C6368627E64',
   // Hide ability state (granted by Hermit in hermit-hollow)
   hideUnlocked: false,
   hideChargeTurns: 0,

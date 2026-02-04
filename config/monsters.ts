@@ -18,7 +18,6 @@ export const monsterTemplates: MonsterTemplateV2[] = [
     attack: 5,
     ac: 12,
     moveRate: 2,
-    soulKey: 'str:16,dex:10,con:14,int:8,wis:8,cha:6',
   },
   {
     shortName: 'night_hound',
@@ -30,7 +29,6 @@ export const monsterTemplates: MonsterTemplateV2[] = [
     attack: 6,
     ac: 14,
     moveRate: 2,
-    soulKey: 'str:12,dex:16,con:12,int:6,wis:10,cha:8',
   },
 ]
 
@@ -55,7 +53,6 @@ export const greatPowerTemplates: GreatPowerTemplateV2[] = [
       },
     ],
     awakenCondition: 'player_within_range',
-    soulKey: 'str:18,dex:12,con:16,int:14,wis:14,cha:12',
   },
 ]
 
@@ -84,7 +81,6 @@ export const greatPowers: GreatPower[] = [
       },
     ],
     awakenCondition: 'player_within_range',
-    soulKey: 'str:18,dex:12,con:16,int:14,wis:14,cha:12',
   },
 ]
 

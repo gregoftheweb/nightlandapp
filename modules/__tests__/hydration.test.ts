@@ -114,7 +114,6 @@ describe('hydration module', () => {
         attack: 10,
         ac: 12,
         moveRate: 1,
-        soulKey: '000001',
       }
 
       const instance: MonsterInstanceV2 = {
@@ -146,7 +145,6 @@ describe('hydration module', () => {
         attack: 8,
         ac: 10,
         moveRate: 2,
-        soulKey: '000002',
       }
 
       const instance: MonsterInstanceV2 = {
@@ -239,7 +237,6 @@ describe('hydration module', () => {
             attack: 5,
             ac: 8,
             moveRate: 1,
-            soulKey: '000003',
           },
         ],
         [
@@ -252,7 +249,6 @@ describe('hydration module', () => {
             attack: 10,
             ac: 12,
             moveRate: 2,
-            soulKey: '000004',
           },
         ],
       ])
@@ -310,7 +306,6 @@ describe('hydration module', () => {
         attack: 12,
         ac: 14,
         moveRate: 2,
-        soulKey: '000010',
       }
 
       const instance: MonsterInstanceV2 = {
@@ -342,7 +337,6 @@ describe('hydration module', () => {
         attack: 10,
         ac: 12,
         moveRate: 1,
-        soulKey: '000011',
       }
 
       const instance: MonsterInstanceV2 = {
@@ -369,7 +363,6 @@ describe('hydration module', () => {
         attack: 5,
         ac: 8,
         moveRate: 1,
-        soulKey: '000012',
         zIndex: 10,
       }
 
@@ -397,7 +390,6 @@ describe('hydration module', () => {
         attack: 20,
         ac: 18,
         awakenCondition: 'defeat_all_monsters',
-        soulKey: '999999',
       }
 
       const instance: GreatPowerInstanceV2 = {
@@ -461,7 +453,6 @@ describe('hydration module', () => {
             attack: 8,
             ac: 10,
             moveRate: 1,
-            soulKey: '000020',
           },
         ],
         [
@@ -474,7 +465,6 @@ describe('hydration module', () => {
             attack: 12,
             ac: 14,
             moveRate: 2,
-            soulKey: '000021',
           },
         ],
       ])
@@ -664,7 +654,6 @@ describe('hydration module', () => {
         attack: 20,
         ac: 19,
         awakenCondition: 'always',
-        soulKey: 'str:20,dex:15,con:18,int:12,wis:14,cha:10',
         width: 8,
         height: 8,
         effects: [{ type: 'soulsuck' }],
@@ -681,7 +670,6 @@ describe('hydration module', () => {
       const hydrated = hydrateGreatPowerV2(template, instance)
       const greatPower = hydratedGreatPowerV2ToGreatPower(hydrated)
 
-      expect(greatPower.soulKey).toBe('str:20,dex:15,con:18,int:12,wis:14,cha:10')
       expect(greatPower.width).toBe(8)
       expect(greatPower.height).toBe(8)
       expect(greatPower.effects).toEqual([{ type: 'soulsuck' }])

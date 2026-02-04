@@ -56,7 +56,6 @@ describe('Unified Effects System', () => {
       meleeWeaponId: 'fists',
       equippedRangedWeaponId: '',
       rangedWeaponInventoryIds: [],
-      soulKey: '000000',
       moveSpeed: 1,
       // Hide ability state
       hideUnlocked: false,
