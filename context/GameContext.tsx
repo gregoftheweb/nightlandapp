@@ -12,6 +12,7 @@ import { deserializeGameState, createInitialGameState } from '../modules/gameSta
 import { reducer } from '../modules/reducers'
 import { GameState } from '../config/types'
 import { requestAutoSave, getStateSaveFingerprint } from '../modules/autoSave'
+import { deleteCurrentGame } from '../modules/saveGame'
 
 interface GameContextType {
   state: GameState
@@ -38,6 +39,9 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
 
   // Autosave controller - tracks state fingerprint to trigger saves
   const lastSaveFingerprintRef = useRef<string>('')
+  
+  // Track if game over save deletion has been triggered to avoid multiple calls
+  const gameOverDeleteTriggeredRef = useRef<boolean>(false)
 
   const setOverlay = (overlay: any) => console.log('Overlay:', overlay)
 
@@ -60,6 +64,23 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
       requestAutoSave(state)
     }
   }, [state])
+
+  // Game over effect - deletes current save when player dies
+  useEffect(() => {
+    if (state.gameOver && !gameOverDeleteTriggeredRef.current) {
+      gameOverDeleteTriggeredRef.current = true
+      deleteCurrentGame().catch((err) => {
+        console.error('Failed to delete current save on death:', err)
+        // Reset flag on error to allow retry if needed
+        gameOverDeleteTriggeredRef.current = false
+      })
+    }
+    
+    // Reset the flag when game is reset (gameOver becomes false)
+    if (!state.gameOver && gameOverDeleteTriggeredRef.current) {
+      gameOverDeleteTriggeredRef.current = false
+    }
+  }, [state.gameOver])
 
   return (
     <GameContext.Provider value={{ state, dispatch, setOverlay, rpgResumeNonce, signalRpgResume }}>
