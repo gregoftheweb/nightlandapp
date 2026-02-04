@@ -136,6 +136,33 @@ export interface LevelObjectInstance extends GameObject {
 // ===== Template vs Instance Architecture =====
 // Clean separation between templates (static definitions)
 // and instances (runtime entities with state)
+//
+// PATTERN: Template → Instance → Hydrated
+//
+// 1. TEMPLATES (Static, Immutable Design-Time Data)
+//    - Define entity characteristics (stats, images, descriptions)
+//    - Contain NO runtime state (no position, id, currentHP, spawned, etc.)
+//    - Use maxHP (not hp), no active flag, no lastTrigger
+//    - Extend EntityTemplate for common fields
+//    - Examples: MonsterTemplateV2, GreatPowerTemplateV2, GameObjectTemplate
+//
+// 2. INSTANCES (Runtime State)
+//    - Contain ONLY runtime data: id, templateId, position, currentHP
+//    - Reference template via templateId (maps to template.shortName)
+//    - Hold instance-specific overrides (zIndex, rotation, etc.)
+//    - Examples: MonsterInstanceV2, GreatPowerInstanceV2, ObjectInstance
+//
+// 3. HYDRATED (Runtime Shape = Template + Instance)
+//    - Merge template data with instance state
+//    - Provide complete entity for gameplay logic
+//    - Created by hydration functions (e.g., hydrateMonsterV2)
+//    - Examples: HydratedMonsterV2, HydratedGreatPowerV2, HydratedObject
+//
+// MIGRATION STATUS:
+// - V2 types are the target architecture (use these going forward)
+// - V1 types removed from types.ts (kept in hydration.ts for compatibility)
+// - GameState.activeMonsters still uses legacy Monster type
+// - Once GameState migrates, V1 compatibility bridge can be removed
 
 /**
  * EntityTemplate - Base type for all static entity templates
