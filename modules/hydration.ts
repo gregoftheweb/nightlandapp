@@ -9,7 +9,6 @@ import {
   GameObjectTemplate,
   ObjectInstance,
   HydratedObject,
-  Monster,
   MonsterTemplateV2,
   MonsterInstanceV2,
   HydratedMonsterV2,
