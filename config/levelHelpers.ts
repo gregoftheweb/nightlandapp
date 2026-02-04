@@ -8,7 +8,7 @@
  * - Runtime validation for level configurations
  */
 
-import { Level, Position, LevelMonsterInstance } from './types'
+import { Level, Position, LevelMonsterInstance, MonsterSpawnConfigV2 } from './types'
 import { LevelId, BiomeId, SpawnTableId } from './levelTypes'
 import { BIOME_PRESETS, SPAWN_TABLES, LEVEL_DEFAULTS } from './levelPresets'
 
@@ -101,6 +101,29 @@ export function loadSpawnTable(
   return configs.map((cfg) =>
     createMonsterFn(cfg.monsterShortName, cfg.spawnRate, cfg.maxInstances)
   )
+}
+
+/**
+ * Load V2 monster spawn configurations from a predefined spawn table.
+ *
+ * This helper creates MonsterSpawnConfigV2 entries using the spawn configurations
+ * defined in SPAWN_TABLES, mapping monsterShortName to templateId.
+ *
+ * @param tableId Spawn table identifier
+ * @returns Array of MonsterSpawnConfigV2 configurations
+ *
+ * @example
+ * ```typescript
+ * monsterSpawnConfigsV2: loadSpawnTableV2("wasteland_common")
+ * ```
+ */
+export function loadSpawnTableV2(tableId: SpawnTableId): MonsterSpawnConfigV2[] {
+  const configs = SPAWN_TABLES[tableId]
+  return configs.map((cfg) => ({
+    templateId: cfg.monsterShortName,
+    spawnRate: cfg.spawnRate,
+    maxInstances: cfg.maxInstances,
+  }))
 }
 
 /**
