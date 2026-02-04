@@ -125,10 +125,9 @@ Is this data that changes during gameplay?
 
 ```typescript
 // config/monsters.ts - TEMPLATE
-export const monsters: Monster[] = [
+export const monsters: MonsterTemplateV2[] = [
   {
     shortName: 'abhuman',
-    hp: 12,
     maxHP: 12,
     attack: 5,
     // ... static template data
@@ -412,7 +411,7 @@ getMeleeWeapons(): Item[]
 getRangedWeapons(): Item[]
 
 // Monsters
-getMonsterTemplate(shortName: string): Monster | undefined
+getMonsterTemplate(shortName: string): MonsterTemplateV2 | undefined
 getGreatPowerTemplate(shortName: string): GreatPower | undefined
 
 // Objects

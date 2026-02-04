@@ -115,44 +115,6 @@ export interface GameObject extends EntityBase {
 }
 
 /**
- * Monster - Legacy runtime monster entity (DEPRECATED)
- * 
- * @deprecated This type is kept only for backward compatibility with LevelMonsterInstance.
- * For all runtime monster operations, use RuntimeMonster (which is HydratedMonsterV2).
- * 
- * Migration status:
- * - GameState.activeMonsters: Now uses RuntimeMonster ✅
- * - GameState.attackSlots: Now uses RuntimeMonster ✅
- * - GameState.waitingMonsters: Now uses RuntimeMonster ✅
- * - All combat/movement/spawning logic: Now uses RuntimeMonster ✅
- * 
- * This interface extends EntityBase with monster-specific combat fields.
- * It uses the legacy `hp` field instead of V2's `currentHP`.
- */
-export interface Monster extends EntityBase {
-  id?: string
-  position: Position
-  hp: HP
-  maxHP: MaxHP
-  attack: number
-  ac: number
-  initiative?: number
-  moveRate: number
-  spawnRate?: number // Percentage chance (0.0 to 1.0) that monster spawns each turn
-  maxInstances?: number
-  uiSlot?: number
-  inCombatSlot?: boolean
-  // Additional fields for compatibility
-  width?: number
-  height?: number
-  damage?: number
-  hitBonus?: number
-  weaponType?: WeaponType
-  range?: number
-  effects?: Effect[]
-}
-
-/**
  * GreatPower - Runtime great power entity
  * Extends EntityBase with great power-specific fields
  */
@@ -279,7 +241,7 @@ export interface LevelObjectInstance extends EntityBase {
 // - GameState.attackSlots NOW USES RuntimeMonster (HydratedMonsterV2) ✅
 // - GameState.waitingMonsters NOW USES RuntimeMonster (HydratedMonsterV2) ✅
 // - All runtime monster operations now use RuntimeMonster and currentHP ✅
-// - Legacy Monster type kept only for LevelMonsterInstance backward compatibility
+// - Legacy Monster type DELETED - no longer needed ✅
 // - V2 to V1 conversion bridge (hydratedMonsterV2ToMonster) removed ✅
 
 /**
