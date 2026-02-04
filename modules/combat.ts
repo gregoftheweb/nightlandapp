@@ -156,7 +156,7 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
 
   for (const entity of combatOrder) {
     // Use currentHP for monsters, hp for player
-    const currentHp = entity.id === 'christos' ? entity.hp : entity.currentHP
+    const currentHp = entity.id === 'christos' ? (entity as any).hp : (entity as any).currentHP
     if (currentHp <= 0) continue
 
     if (entity.id === 'christos') {

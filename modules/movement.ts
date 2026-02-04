@@ -1,5 +1,5 @@
 // modules/movement.ts - All movement-related logic
-import { GameState, Position, Monster } from '../config/types'
+import { GameState, Position, RuntimeMonster } from '../config/types'
 import { setupCombat, checkForCombatCollision } from './combat'
 import { logIfDev } from './utils'
 
@@ -41,7 +41,7 @@ export const calculateNewPosition = (
 // ==================== MONSTER MOVEMENT ====================
 
 export const moveAway = (
-  monster: Monster,
+  monster: RuntimeMonster,
   playerPos: Position,
   gridWidth: number,
   gridHeight: number
@@ -65,7 +65,7 @@ export const moveAway = (
 }
 
 export const calculateMonsterMovement = (
-  monster: Monster,
+  monster: RuntimeMonster,
   playerPos: Position,
   state: GameState
 ): Position => {
@@ -97,7 +97,7 @@ export const calculateMonsterMovement = (
   return newPos
 }
 
-export const isMonsterInCombat = (monster: Monster, state: GameState): boolean => {
+export const isMonsterInCombat = (monster: RuntimeMonster, state: GameState): boolean => {
   return (
     state.attackSlots?.some((slot: any) => slot.id === monster.id) ||
     state.waitingMonsters?.some((m: any) => m.id === monster.id)
@@ -142,6 +142,6 @@ export function calculateDistance(pos1: Position, pos2: Position): number {
   return Math.sqrt(Math.pow(pos2.row - pos1.row, 2) + Math.pow(pos2.col - pos1.col, 2))
 }
 
-export function isAdjacentToPlayer(monster: Monster, playerPosition: Position): boolean {
+export function isAdjacentToPlayer(monster: RuntimeMonster, playerPosition: Position): boolean {
   return calculateDistance(monster.position, playerPosition) <= 1.5
 }
