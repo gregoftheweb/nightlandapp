@@ -44,9 +44,9 @@ export const checkMonsterSpawn = (
   logIfDev('Checking monster spawning...')
 
   // Use V2 spawn configs if available, otherwise fall back to legacy state.monsters
-  const spawnConfigs = state.level.monsterSpawnConfigsV2
+  const v2SpawnConfigs = state.level.monsterSpawnConfigsV2
   
-  if (spawnConfigs && spawnConfigs.length > 0) {
+  if (v2SpawnConfigs && v2SpawnConfigs.length > 0) {
     // V2 path: Use MonsterSpawnConfigV2[]
     logIfDev('Using V2 spawn configs')
     
@@ -57,9 +57,10 @@ export const checkMonsterSpawn = (
       typeCounts.set(m.shortName, count + 1)
     })
 
-    for (const spawnConfig of spawnConfigs) {
-      // Skip if no spawn configuration
-      if (!spawnConfig.spawnRate || !spawnConfig.maxInstances) {
+    for (const spawnConfig of v2SpawnConfigs) {
+      // Skip if spawn configuration is incomplete
+      if (spawnConfig.spawnRate === undefined || spawnConfig.spawnRate === null ||
+          spawnConfig.maxInstances === undefined || spawnConfig.maxInstances === null) {
         continue
       }
 
@@ -100,8 +101,9 @@ export const checkMonsterSpawn = (
     })
 
     for (const monsterConfig of state.level.monsters) {
-      // Skip if no spawn configuration
-      if (!monsterConfig.spawnRate || !monsterConfig.maxInstances) {
+      // Skip if spawn configuration is incomplete
+      if (monsterConfig.spawnRate === undefined || monsterConfig.spawnRate === null ||
+          monsterConfig.maxInstances === undefined || monsterConfig.maxInstances === null) {
         continue
       }
 
