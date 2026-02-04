@@ -645,6 +645,11 @@ export interface Level {
   spawnZones?: SpawnZone[]
   version?: string
   lastModified?: Date
+  // V2 template/instance/hydration architecture support
+  schemaVersion?: 1 | 2 // Schema version marker (1 = legacy, 2 = template/instance)
+  objectInstancesV2?: ObjectInstance[] // V2 object instances (used when schemaVersion === 2)
+  monsterInstancesV2?: MonsterInstanceV2[] // V2 monster instances (used when schemaVersion === 2)
+  greatPowerInstancesV2?: GreatPowerInstanceV2[] // V2 great power instances (used when schemaVersion === 2)
 }
 
 // Removed: FootstepInstance, FootstepTemplate - now using buildings with rotation
