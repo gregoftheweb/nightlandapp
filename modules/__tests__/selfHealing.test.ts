@@ -28,7 +28,6 @@ describe('Self-Healing Mechanic', () => {
       playerSpawn: { row: 200, col: 200 },
       turnsPerHitPoint,
       items: [],
-      monsters: [],
       objects: [],
       greatPowers: [],
     }

@@ -4,11 +4,11 @@
  *
  * This module provides:
  * - Factory function for creating levels with smart defaults
- * - Spawn table loading utilities
+ * - Spawn table loading utilities (V2 only)
  * - Runtime validation for level configurations
  */
 
-import { Level, Position, LevelMonsterInstance, MonsterSpawnConfigV2 } from './types'
+import { Level, Position, MonsterSpawnConfigV2 } from './types'
 import { LevelId, BiomeId, SpawnTableId } from './levelTypes'
 import { BIOME_PRESETS, SPAWN_TABLES, LEVEL_DEFAULTS } from './levelPresets'
 
@@ -32,7 +32,7 @@ import { BIOME_PRESETS, SPAWN_TABLES, LEVEL_DEFAULTS } from './levelPresets'
  *   playerSpawn: { row: 200, col: 200 },
  *   biome: "dark_wastes",  // Auto-applies light, weather, music
  *   items: [...],
- *   monsters: loadSpawnTable("wasteland_common"),
+ *   monsterSpawnConfigsV2: loadSpawnTableV2("wasteland_common"),
  *   objects: [...],
  * });
  * ```
@@ -64,43 +64,12 @@ export function createLevel(
 
     // Ensure arrays exist (don't override if provided)
     items: config.items || [],
-    monsters: config.monsters || [],
     objects: config.objects || [],
     nonCollisionObjects: config.nonCollisionObjects,
     greatPowers: config.greatPowers || [],
     completionConditions: config.completionConditions,
     spawnZones: config.spawnZones,
   } as Level
-}
-
-/**
- * Load monster instances from a predefined spawn table.
- *
- * This helper creates monster instances using the spawn configurations
- * defined in SPAWN_TABLES, promoting reuse and easier balancing.
- *
- * @param tableId Spawn table identifier
- * @param createMonsterFn Factory function for creating monster instances
- * @returns Array of configured monster instances
- *
- * @example
- * ```typescript
- * monsters: loadSpawnTable("wasteland_common", createMonsterInstance)
- * ```
- */
-export function loadSpawnTable(
-  tableId: SpawnTableId,
-  createMonsterFn: (
-    monsterShortName: string,
-    spawnRate: number,
-    maxInstances: number,
-    position?: Position
-  ) => LevelMonsterInstance
-): LevelMonsterInstance[] {
-  const configs = SPAWN_TABLES[tableId]
-  return configs.map((cfg) =>
-    createMonsterFn(cfg.monsterShortName, cfg.spawnRate, cfg.maxInstances)
-  )
 }
 
 /**

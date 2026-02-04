@@ -2,8 +2,7 @@
  * Unit tests for monster spawning using V2 spawn configs
  *
  * Tests verify that:
- * - checkMonsterSpawn uses monsterSpawnConfigsV2 when available
- * - Fallback to legacy state.monsters works correctly
+ * - checkMonsterSpawn uses monsterSpawnConfigsV2
  * - maxInstances is enforced by templateId
  * - Spawn behavior is unchanged (rates, distance, slotting)
  */
@@ -157,71 +156,6 @@ describe('Monster Spawning V2', () => {
     })
   })
 
-  describe('checkMonsterSpawn legacy fallback', () => {
-    it('should fall back to state.monsters when monsterSpawnConfigsV2 is missing', () => {
-      const mockLevel: Level = {
-        ...getLevel('1'),
-        monsterSpawnConfigsV2: undefined, // No V2 configs
-        monsters: [
-          {
-            shortName: 'abhuman',
-            spawnRate: 1.0,
-            maxInstances: 5,
-          } as any,
-        ],
-      }
-
-      const state: GameState = {
-        level: mockLevel,
-        activeMonsters: [],
-        gridWidth: 400,
-        gridHeight: 400,
-        player: {
-          position: { row: 200, col: 200 },
-        } as any,
-      } as any
-
-      // Call checkMonsterSpawn
-      checkMonsterSpawn(state, mockDispatch, mockShowDialog)
-
-      // Verify a monster was spawned using legacy path
-      expect(dispatchedActions.length).toBe(1)
-      expect(dispatchedActions[0].type).toBe('SPAWN_MONSTER')
-      expect(dispatchedActions[0].payload.monster.shortName).toBe('abhuman')
-    })
-
-    it('should fall back when monsterSpawnConfigsV2 is empty array', () => {
-      const mockLevel: Level = {
-        ...getLevel('1'),
-        monsterSpawnConfigsV2: [], // Empty array
-        monsters: [
-          {
-            shortName: 'night_hound',
-            spawnRate: 1.0,
-            maxInstances: 3,
-          } as any,
-        ],
-      }
-
-      const state: GameState = {
-        level: mockLevel,
-        activeMonsters: [],
-        gridWidth: 400,
-        gridHeight: 400,
-        player: {
-          position: { row: 200, col: 200 },
-        } as any,
-      } as any
-
-      // Call checkMonsterSpawn
-      checkMonsterSpawn(state, mockDispatch, mockShowDialog)
-
-      // Verify a monster was spawned using legacy path
-      expect(dispatchedActions.length).toBe(1)
-      expect(dispatchedActions[0].payload.monster.shortName).toBe('night_hound')
-    })
-  })
-
   describe('getSpawnPosition', () => {
     it('should spawn monsters within min/max distance from player', () => {
       const state: GameState = {
@@ -288,17 +222,6 @@ describe('Monster Spawning V2', () => {
       const level = getLevel('2')
       expect(level.monsterSpawnConfigsV2).toBeDefined()
       expect(level.monsterSpawnConfigsV2!.length).toBeGreaterThan(0)
-    })
-
-    it('should have matching spawn configs between legacy and V2', () => {
-      const level = getLevel('1')
-      
-      // Both should exist for compatibility
-      expect(level.monsters).toBeDefined()
-      expect(level.monsterSpawnConfigsV2).toBeDefined()
-      
-      // Should have same number of configs
-      expect(level.monsters.length).toBe(level.monsterSpawnConfigsV2!.length)
     })
   })
 })

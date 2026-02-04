@@ -15,7 +15,6 @@ import {
   GameState,
   CombatLogEntry,
   RuntimeMonster,
-  LevelMonsterInstance,
   Position,
   NonCollisionObject,
 } from '../config/types'
@@ -44,7 +43,6 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
         ...state,
         level: newLevelConfig,
         levels: { ...state.levels, [action.levelId]: newLevelConfig },
-        monsters: newLevelConfig.monsters || [],
         greatPowers: newLevelConfig.greatPowers || [],
         objects: newLevelConfig.objects || [],
         nonCollisionObjects: newLevelConfig.nonCollisionObjects || [],

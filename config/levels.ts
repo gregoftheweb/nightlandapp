@@ -10,7 +10,6 @@ import {
   Level,
   Position,
   LevelObjectInstance,
-  LevelMonsterInstance,
   GreatPower,
   Item,
   NonCollisionObject,
@@ -23,9 +22,9 @@ import {
   getCollectibleTemplate,
   getNonCollisionTemplate,
 } from './objects'
-import { getMonsterTemplate, getGreatPowerTemplate } from './monsters'
+import { getGreatPowerTemplate } from './monsters'
 import { LevelId } from './levelTypes'
-import { loadSpawnTable, loadSpawnTableV2, validateLevel } from './levelHelpers'
+import { loadSpawnTableV2, validateLevel } from './levelHelpers'
 import { hydrateGreatPowerV2, hydratedGreatPowerV2ToGreatPower } from '@/modules/hydration'
 
 // Helper function to create object instances from building templates
@@ -114,42 +113,6 @@ export const createItemInstance = (
   return {
     ...baseItem,
     ...overrides,
-  }
-}
-
-// Helper function to create monster spawn configs - WITH SPAWN SETTINGS
-const createMonsterInstance = (
-  monsterShortName: string,
-  spawnRate: number,
-  maxInstances: number,
-  position: Position = { row: 0, col: 0 }
-): LevelMonsterInstance => {
-  const template = getMonsterTemplate(monsterShortName)
-  if (!template) {
-    throw new Error(`Monster template ${monsterShortName} not found`)
-  }
-
-  return {
-    id: `${monsterShortName}_spawn_config`,
-    templateId: monsterShortName,
-    position,
-    active: true,
-    currentHP: template.maxHP ?? 10,
-    hp: template.maxHP ?? 10,
-    maxHP: template.maxHP ?? 10,
-    shortName: template.shortName,
-    category: template.category,
-    name: template.name,
-    description: template.description,
-    image: template.image,
-    attack: template.attack ?? 0,
-    ac: template.ac ?? 0,
-    moveRate: template.moveRate ?? 1,
-    initiative: template.initiative ?? 0,
-    // SPAWN CONFIGURATION - SET PER LEVEL
-    spawnRate, // Percentage chance (0.0 to 1.0) that monster spawns each turn
-    maxInstances,
-    spawned: false,
   }
 }
 
@@ -242,8 +205,7 @@ export const levels: Record<LevelId, Level> = {
       createItemInstance('maguffinRock', { row: 390, col: 210 }),
     ],
 
-    // MONSTERS - Use spawn table for normalized configurations
-    monsters: loadSpawnTable('wasteland_common', createMonsterInstance),
+    // MONSTERS - Use V2 spawn table for spawn configurations
     monsterSpawnConfigsV2: loadSpawnTableV2('wasteland_common'),
 
     // OBJECTS - Buildings and structures (including pools)
@@ -392,8 +354,7 @@ export const levels: Record<LevelId, Level> = {
 
     items: [],
 
-    // MONSTERS - Use spawn table for normalized configurations
-    monsters: loadSpawnTable('grounds_common', createMonsterInstance),
+    // MONSTERS - Use V2 spawn table for spawn configurations
     monsterSpawnConfigsV2: loadSpawnTableV2('grounds_common'),
 
     // OBJECTS - Buildings including pools

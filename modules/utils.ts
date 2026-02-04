@@ -92,7 +92,6 @@ export function getObjectAtPoint(
     if (
       monster.position &&
       !monster.inCombatSlot &&
-      monster.active !== false &&
       monster.position.row === worldRow &&
       monster.position.col === worldCol
     ) {

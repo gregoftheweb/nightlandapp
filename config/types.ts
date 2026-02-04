@@ -175,13 +175,7 @@ export interface GreatPower extends EntityBase {
   range?: number
 }
 
-export interface LevelMonsterInstance extends Monster {
-  id: string
-  templateId?: string
-  currentHP: CurrentHP
-  spawned?: boolean
-  spawnZoneId?: string
-}
+
 
 /**
  * Item - Runtime item entity
@@ -668,7 +662,6 @@ export interface Level {
   backgroundMusic?: string
   turnsPerHitPoint?: number // Number of turns needed to heal 1 HP (e.g., 5 = heal 1 HP every 5 turns)
   items: Item[]
-  monsters: LevelMonsterInstance[]
   objects: LevelObjectInstance[]
   nonCollisionObjects?: NonCollisionObject[]
   greatPowers?: GreatPower[]
@@ -769,7 +762,6 @@ export interface GameState {
   objects: LevelObjectInstance[] // Interactive objects in current level
   nonCollisionObjects?: NonCollisionObject[] // Decorative/non-collision objects
   greatPowers: GreatPower[] // Great powers available in current level
-  monsters: LevelMonsterInstance[] // Monster spawn configurations for current level
   gridWidth: number // Game grid width
   gridHeight: number // Game grid height
 
