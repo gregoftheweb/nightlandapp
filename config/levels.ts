@@ -25,7 +25,7 @@ import {
 } from './objects'
 import { getMonsterTemplate, getGreatPowerTemplate } from './monsters'
 import { LevelId } from './levelTypes'
-import { loadSpawnTable, validateLevel } from './levelHelpers'
+import { loadSpawnTable, loadSpawnTableV2, validateLevel } from './levelHelpers'
 import { hydrateGreatPowerV2, hydratedGreatPowerV2ToGreatPower } from '@/modules/hydration'
 
 // Helper function to create object instances from building templates
@@ -244,6 +244,7 @@ export const levels: Record<LevelId, Level> = {
 
     // MONSTERS - Use spawn table for normalized configurations
     monsters: loadSpawnTable('wasteland_common', createMonsterInstance),
+    monsterSpawnConfigsV2: loadSpawnTableV2('wasteland_common'),
 
     // OBJECTS - Buildings and structures (including pools)
     objects: [
@@ -393,6 +394,7 @@ export const levels: Record<LevelId, Level> = {
 
     // MONSTERS - Use spawn table for normalized configurations
     monsters: loadSpawnTable('grounds_common', createMonsterInstance),
+    monsterSpawnConfigsV2: loadSpawnTableV2('grounds_common'),
 
     // OBJECTS - Buildings including pools
     objects: [createObjectInstance('poisonPool', { row: 150, col: 150 })],
