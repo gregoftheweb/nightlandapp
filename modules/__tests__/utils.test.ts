@@ -206,6 +206,7 @@ describe('getObjectAtPoint', () => {
     const nco: NonCollisionObject = {
       id: 'nco-1',
       shortName: 'river',
+      category: 'decoration',
       name: 'River',
       description: 'A flowing river',
       type: 'river',
@@ -332,6 +333,7 @@ describe('getObjectAtPoint', () => {
     const nco: NonCollisionObject = {
       id: 'nco-1',
       shortName: 'footstep',
+      category: 'decoration',
       name: 'Footstep',
       description: 'A footstep mark',
       type: 'footstep',
@@ -355,6 +357,7 @@ describe('getObjectAtPoint', () => {
     const nco: NonCollisionObject = {
       id: 'nco-1',
       shortName: 'decoration',
+      category: 'decoration',
       name: 'Decoration',
       description: 'A decorative object',
       type: 'decoration',

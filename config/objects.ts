@@ -150,6 +150,7 @@ export const nonCollisionTemplates: Record<
   footsteps: {
     kind: 'nonCollision',
     shortName: 'footsteps',
+    category: 'decoration',
     name: 'Footsteps of Persius',
     description: 'Faint tracks of Persius lie before you, leading you onward in the gloomy dust.',
     width: 2,
@@ -163,6 +164,7 @@ export const nonCollisionTemplates: Record<
   river: {
     kind: 'nonCollision',
     shortName: 'river',
+    category: 'decoration',
     name: 'Ancient River',
     description: 'A dried riverbed from ages past.',
     width: 2,
