@@ -258,7 +258,7 @@ export function hydratedGreatPowerV2ToGreatPower(hydrated: HydratedGreatPowerV2)
     // Runtime instance properties
     id: hydrated.id,
     position: hydrated.position,
-    active: true, // Default runtime state
+    active: true, // Default runtime state (not part of V2 types, always true for spawned entities)
     hp: currentHP, // Normalized currentHP -> hp for compatibility
     awakened: hydrated.awakened,
   }
