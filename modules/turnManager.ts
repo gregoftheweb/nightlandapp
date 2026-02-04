@@ -46,6 +46,17 @@ const applyActionToSnapshot = (state: GameState, action: any): GameState => {
   return gameReducer(state, action)
 }
 
+/**
+ * Creates a wrapped dispatch function that updates currentGameState before dispatching.
+ * This ensures currentGameState stays in sync with the reducer's state transformations.
+ */
+const createWrappedDispatch = (dispatch: (action: any) => void): ((action: any) => void) => {
+  return (action) => {
+    currentGameState = applyActionToSnapshot(currentGameState, action)
+    dispatch(action)
+  }
+}
+
 // ==================== UTILITY FUNCTIONS ====================
 
 const determineTurnType = (direction?: string): 'combat' | 'move' | 'non-move-turn' => {
@@ -267,12 +278,7 @@ export const handleMovePlayer = (
 ): void => {
   // Set current gamestate in module level variables
   currentGameState = state
-  
-  // Wrap dispatch to update currentGameState via reducer
-  gameDispatch = (action) => {
-    currentGameState = applyActionToSnapshot(currentGameState, action)
-    dispatch(action)
-  }
+  gameDispatch = createWrappedDispatch(dispatch)
 
   // Set inCombat boolean
   inCombat = state.inCombat
@@ -299,12 +305,7 @@ export const handleCombatAction = (
 ): void => {
   // Set current gamestate in module level variables
   currentGameState = state
-  
-  // Wrap dispatch to update currentGameState via reducer
-  gameDispatch = (action) => {
-    currentGameState = applyActionToSnapshot(currentGameState, action)
-    dispatch(action)
-  }
+  gameDispatch = createWrappedDispatch(dispatch)
 
   // Set inCombat boolean
   inCombat = state.inCombat
@@ -324,12 +325,7 @@ export const handleCombatAction = (
 export const handlePassTurn = (state: GameState, dispatch: (action: any) => void): void => {
   // Set current gamestate in module level variables
   currentGameState = state
-  
-  // Wrap dispatch to update currentGameState via reducer
-  gameDispatch = (action) => {
-    currentGameState = applyActionToSnapshot(currentGameState, action)
-    dispatch(action)
-  }
+  gameDispatch = createWrappedDispatch(dispatch)
 
   // Set inCombat boolean
   inCombat = state.inCombat
