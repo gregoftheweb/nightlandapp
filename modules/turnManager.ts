@@ -1,7 +1,7 @@
 // modules/turnManager.ts - Clean turn-based game flow orchestration
-import { GameState, Position, Monster, MonsterInstance } from '../config/types'
+import { GameState, Position, Monster, MonsterInstanceV2 } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
-import { hydrateMonster, hydratedMonsterToMonster } from './hydration'
+import { hydrateMonsterV2, hydratedMonsterV2ToMonster } from './hydration'
 import { handleMoveMonsters } from './monsterUtils'
 import { handleCombatTurn } from './combat'
 import { calculateNewPosition } from './movement'
@@ -350,8 +350,8 @@ export const initializeStartingMonsters = (
       // Unique ID to prevent React key duplicates during restarts
       const uniqueId = `abhuman-init-${timestamp}-${i}`
 
-      // Create MonsterInstance with runtime state
-      const instance: MonsterInstance = {
+      // Create MonsterInstanceV2 with runtime state
+      const instance: MonsterInstanceV2 = {
         id: uniqueId,
         templateId: 'abhuman',
         position: { row: spawnRow, col: spawnCol },
@@ -359,10 +359,10 @@ export const initializeStartingMonsters = (
       }
 
       // Hydrate template with instance
-      const hydrated = hydrateMonster(abhumanTemplate, instance)
+      const hydrated = hydrateMonsterV2(abhumanTemplate, instance)
 
       // Convert to Monster format for GameState compatibility
-      const newMonster: Monster = hydratedMonsterToMonster(hydrated)
+      const newMonster: Monster = hydratedMonsterV2ToMonster(hydrated)
 
       dispatch({
         type: 'SPAWN_MONSTER',

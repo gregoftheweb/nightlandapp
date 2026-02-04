@@ -23,70 +23,6 @@ import {
 } from '@/config/types'
 
 import type { ImageSourcePropType } from 'react-native'
-// ===== V1 Compatibility Types (Legacy) =====
-// These types are kept for backward compatibility with the conversion bridge
-// They will be removed once GameState.activeMonsters migrates to V2
-
-/**
- * @deprecated Use MonsterTemplateV2 instead
- * MonsterTemplate - Legacy static definition of a monster type
- */
-interface MonsterTemplate {
-  shortName: string
-  category: string
-  name: string
-  description?: string
-  image?: ImageSourcePropType
-  hp: number
-  maxHP: number
-  attack: number
-  ac: number
-  initiative?: number
-  moveRate: number
-  spawnRate?: number
-  maxInstances?: number
-  soulKey: SoulKey
-  width?: number
-  height?: number
-  size?: { width: number; height: number }
-  effects?: Effect[]
-  damage?: number
-  hitBonus?: number
-  weaponType?: WeaponType
-  range?: number
-  zIndex?: number
-}
-
-/**
- * @deprecated Use MonsterInstanceV2 instead
- * MonsterInstance - Legacy runtime instance of a monster
- */
-interface MonsterInstance {
-  id: string
-  templateId: string
-  position: Position
-  currentHP: number
-  spawned?: boolean
-  spawnZoneId?: string
-  zIndex?: number
-}
-
-/**
- * @deprecated Use HydratedMonsterV2 instead
- * HydratedMonster - Legacy merged shape of monster template + instance
- */
-interface HydratedMonster extends MonsterTemplate {
-  id: string
-  templateId: string
-  position: Position
-  currentHP: number
-  spawned?: boolean
-  spawnZoneId?: string
-  active?: boolean
-  lastTrigger?: number
-  uiSlot?: number
-  inCombatSlot?: boolean
-}
 
 /**
  * Hydrate an object by merging a template with an instance
@@ -119,33 +55,6 @@ export function hydrateObject(
 }
 
 /**
- * Hydrate a monster by merging a template with an instance
- * Instance-specific properties (position, currentHP, spawned, etc.) override template defaults
- * 
- * @param template - Static monster template definition
- * @param instance - Runtime instance data with position and state
- * @returns HydratedMonster ready for runtime use
- */
-export function hydrateMonster(
-  template: MonsterTemplate,
-  instance: MonsterInstance
-): HydratedMonster {
-  return {
-    // Spread template first (base definition)
-    ...template,
-    // Then instance properties (state and overrides)
-    id: instance.id,
-    templateId: instance.templateId,
-    position: instance.position,
-    currentHP: instance.currentHP,
-    spawned: instance.spawned,
-    spawnZoneId: instance.spawnZoneId,
-    // Instance overrides take precedence
-    zIndex: instance.zIndex ?? template.zIndex,
-  }
-}
-
-/**
  * Batch hydrate multiple objects
  * Useful for hydrating all objects in a level
  * 
@@ -164,73 +73,6 @@ export function hydrateObjects(
     }
     return hydrateObject(template, instance)
   })
-}
-
-/**
- * Batch hydrate multiple monsters
- * Useful for hydrating all monsters in a level
- * 
- * @param templates - Map of template shortName -> template
- * @param instances - Array of monster instances
- * @returns Array of hydrated monsters
- */
-export function hydrateMonsters(
-  templates: Map<string, MonsterTemplate>,
-  instances: MonsterInstance[]
-): HydratedMonster[] {
-  return instances.map((instance) => {
-    const template = templates.get(instance.templateId)
-    if (!template) {
-      throw new Error(`Template not found: ${instance.templateId}`)
-    }
-    return hydrateMonster(template, instance)
-  })
-}
-
-/**
- * Convert a HydratedMonster to Monster format for GameState compatibility
- * Maps currentHP to hp for backward compatibility with existing code
- * 
- * Normalization Guard: If currentHP is null/undefined, defaults to maxHP
- * This ensures runtime monsters always have valid hp values for combat.
- * 
- * @param hydrated - HydratedMonster from hydration
- * @returns Monster in legacy format with guaranteed hp value
- */
-export function hydratedMonsterToMonster(hydrated: HydratedMonster): Monster {
-  // Normalization: ensure hp is never null/undefined
-  const currentHP = hydrated.currentHP ?? hydrated.maxHP
-  
-  return {
-    // Core template properties
-    shortName: hydrated.shortName,
-    category: hydrated.category,
-    name: hydrated.name,
-    description: hydrated.description,
-    image: hydrated.image,
-    maxHP: hydrated.maxHP,
-    attack: hydrated.attack,
-    ac: hydrated.ac,
-    initiative: hydrated.initiative,
-    moveRate: hydrated.moveRate,
-    soulKey: hydrated.soulKey,
-    width: hydrated.width,
-    height: hydrated.height,
-    size: hydrated.size,
-    effects: hydrated.effects,
-    damage: hydrated.damage,
-    hitBonus: hydrated.hitBonus,
-    weaponType: hydrated.weaponType,
-    range: hydrated.range,
-    zIndex: hydrated.zIndex,
-    // Runtime instance properties
-    id: hydrated.id,
-    position: hydrated.position,
-    active: hydrated.active ?? true,
-    hp: currentHP, // Normalized currentHP -> hp for compatibility
-    uiSlot: hydrated.uiSlot,
-    inCombatSlot: hydrated.inCombatSlot,
-  }
 }
 
 // ===== V2 Hydration Functions =====
@@ -330,4 +172,50 @@ export function hydrateGreatPowersV2(
     }
     return hydrateGreatPowerV2(template, instance)
   })
+}
+
+/**
+ * Convert a HydratedMonsterV2 to Monster format for GameState compatibility
+ * Maps currentHP to hp for backward compatibility with existing code
+ * 
+ * Normalization Guard: If currentHP is null/undefined, defaults to maxHP
+ * This ensures runtime monsters always have valid hp values for combat.
+ * 
+ * @param hydrated - HydratedMonsterV2 from V2 hydration
+ * @returns Monster in legacy format with guaranteed hp value
+ */
+export function hydratedMonsterV2ToMonster(hydrated: HydratedMonsterV2): Monster {
+  // Normalization: ensure hp is never null/undefined
+  const currentHP = hydrated.currentHP ?? hydrated.maxHP
+  
+  return {
+    // Core template properties
+    shortName: hydrated.shortName,
+    category: hydrated.category,
+    name: hydrated.name,
+    description: hydrated.description,
+    image: hydrated.image,
+    maxHP: hydrated.maxHP,
+    attack: hydrated.attack,
+    ac: hydrated.ac,
+    initiative: hydrated.initiative,
+    moveRate: hydrated.moveRate,
+    soulKey: hydrated.soulKey,
+    width: hydrated.width,
+    height: hydrated.height,
+    size: hydrated.size,
+    effects: hydrated.effects,
+    damage: hydrated.damage,
+    hitBonus: hydrated.hitBonus,
+    weaponType: hydrated.weaponType,
+    range: hydrated.range,
+    zIndex: hydrated.zIndex,
+    // Runtime instance properties
+    id: hydrated.id,
+    position: hydrated.position,
+    active: true, // Default runtime state
+    hp: currentHP, // Normalized currentHP -> hp for compatibility
+    uiSlot: hydrated.uiSlot,
+    inCombatSlot: hydrated.inCombatSlot,
+  }
 }

@@ -7,9 +7,9 @@
  * - Ranged targeting and combat can find valid HP values
  */
 import { createMonsterFromTemplate } from '../monsterUtils'
-import { hydrateMonster, hydratedMonsterToMonster } from '../hydration'
+import { hydrateMonsterV2, hydratedMonsterV2ToMonster } from '../hydration'
 import { getMonsterTemplate } from '../../config/monsters'
-import { MonsterInstance } from '../../config/types'
+import { MonsterInstanceV2 } from '../../config/types'
 
 describe('Monster HP Regression Tests', () => {
   describe('createMonsterFromTemplate', () => {
@@ -53,21 +53,21 @@ describe('Monster HP Regression Tests', () => {
     })
   })
 
-  describe('hydratedMonsterToMonster normalization', () => {
+  describe('hydratedMonsterV2ToMonster normalization', () => {
     it('should set hp to maxHP when currentHP is undefined', () => {
       const template = getMonsterTemplate('abhuman')
       expect(template).toBeDefined()
 
       // Create instance with undefined currentHP (simulating old data)
-      const instance: MonsterInstance = {
+      const instance: MonsterInstanceV2 = {
         id: 'test-monster-1',
         templateId: 'abhuman',
         position: { row: 10, col: 10 },
         currentHP: undefined as any, // Simulate missing currentHP
       }
 
-      const hydrated = hydrateMonster(template!, instance)
-      const monster = hydratedMonsterToMonster(hydrated)
+      const hydrated = hydrateMonsterV2(template!, instance)
+      const monster = hydratedMonsterV2ToMonster(hydrated)
 
       // Should normalize to maxHP
       expect(monster.hp).toBe(template!.maxHP)
@@ -78,15 +78,15 @@ describe('Monster HP Regression Tests', () => {
       const template = getMonsterTemplate('abhuman')
       expect(template).toBeDefined()
 
-      const instance: MonsterInstance = {
+      const instance: MonsterInstanceV2 = {
         id: 'test-monster-2',
         templateId: 'abhuman',
         position: { row: 10, col: 10 },
         currentHP: 5, // Damaged monster
       }
 
-      const hydrated = hydrateMonster(template!, instance)
-      const monster = hydratedMonsterToMonster(hydrated)
+      const hydrated = hydrateMonsterV2(template!, instance)
+      const monster = hydratedMonsterV2ToMonster(hydrated)
 
       expect(monster.hp).toBe(5)
       expect(monster.maxHP).toBe(template!.maxHP)
@@ -96,15 +96,15 @@ describe('Monster HP Regression Tests', () => {
       const template = getMonsterTemplate('abhuman')
       expect(template).toBeDefined()
 
-      const instance: MonsterInstance = {
+      const instance: MonsterInstanceV2 = {
         id: 'test-monster-3',
         templateId: 'abhuman',
         position: { row: 10, col: 10 },
         currentHP: 0, // Dead monster
       }
 
-      const hydrated = hydrateMonster(template!, instance)
-      const monster = hydratedMonsterToMonster(hydrated)
+      const hydrated = hydrateMonsterV2(template!, instance)
+      const monster = hydratedMonsterV2ToMonster(hydrated)
 
       expect(monster.hp).toBe(0)
       expect(monster.maxHP).toBe(template!.maxHP)

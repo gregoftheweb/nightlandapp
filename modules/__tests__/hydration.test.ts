@@ -9,9 +9,7 @@
  */
 import {
   hydrateObject,
-  hydrateMonster,
   hydrateObjects,
-  hydrateMonsters,
   hydrateMonsterV2,
   hydrateGreatPowerV2,
   hydrateMonstersV2,
@@ -19,9 +17,7 @@ import {
 } from '../hydration'
 import {
   GameObjectTemplate,
-  MonsterTemplate,
   ObjectInstance,
-  MonsterInstance,
   MonsterTemplateV2,
   MonsterInstanceV2,
   GreatPowerTemplateV2,
@@ -107,13 +103,12 @@ describe('hydration module', () => {
     })
   })
 
-  describe('hydrateMonster', () => {
+  describe('hydrateMonsterV2 (legacy compatibility)', () => {
     it('should merge monster template and instance correctly', () => {
-      const template: MonsterTemplate = {
+      const template: MonsterTemplateV2 = {
         shortName: 'test-monster',
         category: 'monster',
         name: 'Test Monster',
-        hp: 50,
         maxHP: 50,
         attack: 10,
         ac: 12,
@@ -121,21 +116,20 @@ describe('hydration module', () => {
         soulKey: '000001',
       }
 
-      const instance: MonsterInstance = {
+      const instance: MonsterInstanceV2 = {
         id: 'test-monster-1',
         templateId: 'test-monster',
         position: { row: 15, col: 20 },
         currentHP: 30, // Damaged
       }
 
-      const hydrated = hydrateMonster(template, instance)
+      const hydrated = hydrateMonsterV2(template, instance)
 
       expect(hydrated.id).toBe('test-monster-1')
       expect(hydrated.templateId).toBe('test-monster')
       expect(hydrated.position).toEqual({ row: 15, col: 20 })
       expect(hydrated.shortName).toBe('test-monster')
       expect(hydrated.name).toBe('Test Monster')
-      expect(hydrated.hp).toBe(50) // Template max HP
       expect(hydrated.maxHP).toBe(50)
       expect(hydrated.currentHP).toBe(30) // Instance current HP
       expect(hydrated.attack).toBe(10)
@@ -143,11 +137,10 @@ describe('hydration module', () => {
     })
 
     it('should include spawn state from instance', () => {
-      const template: MonsterTemplate = {
+      const template: MonsterTemplateV2 = {
         shortName: 'spawnable-monster',
         category: 'monster',
         name: 'Spawnable Monster',
-        hp: 40,
         maxHP: 40,
         attack: 8,
         ac: 10,
@@ -155,7 +148,7 @@ describe('hydration module', () => {
         soulKey: '000002',
       }
 
-      const instance: MonsterInstance = {
+      const instance: MonsterInstanceV2 = {
         id: 'spawnable-monster-1',
         templateId: 'spawnable-monster',
         position: { row: 8, col: 12 },
@@ -164,7 +157,7 @@ describe('hydration module', () => {
         spawnZoneId: 'zone-1',
       }
 
-      const hydrated = hydrateMonster(template, instance)
+      const hydrated = hydrateMonsterV2(template, instance)
 
       expect(hydrated.spawned).toBe(true)
       expect(hydrated.spawnZoneId).toBe('zone-1')
@@ -232,16 +225,15 @@ describe('hydration module', () => {
     })
   })
 
-  describe('hydrateMonsters', () => {
+  describe('hydrateMonstersV2 (legacy compatibility)', () => {
     it('should batch hydrate multiple monsters', () => {
-      const templates = new Map<string, MonsterTemplate>([
+      const templates = new Map<string, MonsterTemplateV2>([
         [
           'monster-a',
           {
             shortName: 'monster-a',
             category: 'monster',
             name: 'Monster A',
-            hp: 30,
             maxHP: 30,
             attack: 5,
             ac: 8,
@@ -255,7 +247,6 @@ describe('hydration module', () => {
             shortName: 'monster-b',
             category: 'monster',
             name: 'Monster B',
-            hp: 50,
             maxHP: 50,
             attack: 10,
             ac: 12,
@@ -265,7 +256,7 @@ describe('hydration module', () => {
         ],
       ])
 
-      const instances: MonsterInstance[] = [
+      const instances: MonsterInstanceV2[] = [
         {
           id: 'monster-a-1',
           templateId: 'monster-a',
@@ -280,7 +271,7 @@ describe('hydration module', () => {
         },
       ]
 
-      const hydrated = hydrateMonsters(templates, instances)
+      const hydrated = hydrateMonstersV2(templates, instances)
 
       expect(hydrated).toHaveLength(2)
       expect(hydrated[0].name).toBe('Monster A')
@@ -290,8 +281,8 @@ describe('hydration module', () => {
     })
 
     it('should throw error if monster template not found', () => {
-      const templates = new Map<string, MonsterTemplate>()
-      const instances: MonsterInstance[] = [
+      const templates = new Map<string, MonsterTemplateV2>()
+      const instances: MonsterInstanceV2[] = [
         {
           id: 'missing-1',
           templateId: 'missing-monster',
@@ -300,7 +291,7 @@ describe('hydration module', () => {
         },
       ]
 
-      expect(() => hydrateMonsters(templates, instances)).toThrow(
+      expect(() => hydrateMonstersV2(templates, instances)).toThrow(
         'Template not found: missing-monster'
       )
     })
