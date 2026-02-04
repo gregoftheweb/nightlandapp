@@ -573,20 +573,27 @@ export type Effect =
       description?: string
     }
   | {
-      // Placeholder for unimplemented effect types
-      type: 'stun' | 'teleport' | 'spawn'
-      description?: string
-      // Generic properties for forward compatibility
-      value?: number
-      duration?: number
-      range?: number
-      count?: number
+      type: 'stun'
+      duration: number
       target?: EffectTarget
-      targetId?: string
-      monsterType?: string
-      entityId?: string
+      description?: string
+    }
+  | {
+      type: 'teleport'
+      target?: EffectTarget
       position?: Position
       area?: Area
+      range?: number
+      description?: string
+    }
+  | {
+      type: 'spawn'
+      monsterType: string
+      count?: number
+      range?: number
+      position?: Position
+      area?: Area
+      description?: string
     }
 
 export interface SpawnZone {
