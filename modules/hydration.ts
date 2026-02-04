@@ -18,11 +18,11 @@ import {
   HydratedGreatPowerV2,
   Position,
   SoulKey,
-  ImageSourcePropType,
   Effect,
   WeaponType,
 } from '@/config/types'
 
+import type { ImageSourcePropType } from 'react-native'
 // ===== V1 Compatibility Types (Legacy) =====
 // These types are kept for backward compatibility with the conversion bridge
 // They will be removed once GameState.activeMonsters migrates to V2
