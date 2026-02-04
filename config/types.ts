@@ -115,8 +115,19 @@ export interface GameObject extends EntityBase {
 }
 
 /**
- * Monster - Runtime monster entity
- * Extends EntityBase with monster-specific combat and behavior fields
+ * Monster - Legacy runtime monster entity (DEPRECATED)
+ * 
+ * @deprecated This type is kept only for backward compatibility with LevelMonsterInstance.
+ * For all runtime monster operations, use RuntimeMonster (which is HydratedMonsterV2).
+ * 
+ * Migration status:
+ * - GameState.activeMonsters: Now uses RuntimeMonster ✅
+ * - GameState.attackSlots: Now uses RuntimeMonster ✅
+ * - GameState.waitingMonsters: Now uses RuntimeMonster ✅
+ * - All combat/movement/spawning logic: Now uses RuntimeMonster ✅
+ * 
+ * This interface extends EntityBase with monster-specific combat fields.
+ * It uses the legacy `hp` field instead of V2's `currentHP`.
  */
 export interface Monster extends EntityBase {
   id?: string
@@ -268,10 +279,14 @@ export interface LevelObjectInstance extends EntityBase {
 //    - Examples: HydratedMonsterV2, HydratedGreatPowerV2, HydratedObject
 //
 // MIGRATION STATUS:
-// - V2 types are the target architecture (use these going forward)
-// - V1 types removed from types.ts (kept in hydration.ts for compatibility)
-// - GameState.activeMonsters still uses legacy Monster type
-// - Once GameState migrates, V1 compatibility bridge can be removed
+// - V2 types are the target architecture (use these going forward) ✅
+// - V1 types removed from types.ts (kept in hydration.ts for compatibility) ✅
+// - GameState.activeMonsters NOW USES RuntimeMonster (HydratedMonsterV2) ✅
+// - GameState.attackSlots NOW USES RuntimeMonster (HydratedMonsterV2) ✅
+// - GameState.waitingMonsters NOW USES RuntimeMonster (HydratedMonsterV2) ✅
+// - All runtime monster operations now use RuntimeMonster and currentHP ✅
+// - Legacy Monster type kept only for LevelMonsterInstance backward compatibility
+// - V2 to V1 conversion bridge (hydratedMonsterV2ToMonster) removed ✅
 
 /**
  * EntityTemplate - Base type for all static entity templates

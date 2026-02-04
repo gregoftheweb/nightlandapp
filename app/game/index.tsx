@@ -290,7 +290,7 @@ export default function Game() {
   }, [state.player, state.level])
 
   const showMonsterInfo = useCallback(
-    (monster: Monster) => {
+    (monster: RuntimeMonster) => {
       if (!showInfoRef.current) return
       // Don't show info dialog if in ranged attack mode (player is targeting/retargeting)
       if (state.rangedAttackMode) {
@@ -481,7 +481,7 @@ export default function Game() {
   }, [])
 
   const handleMonsterTap = useCallback(
-    (monster: Monster) => {
+    (monster: RuntimeMonster) => {
       // If in ranged attack mode, retarget to the tapped monster
       if (state.rangedAttackMode) {
         if (__DEV__) {

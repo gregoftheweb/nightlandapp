@@ -2,7 +2,7 @@
 import {
   Position,
   GameState,
-  Monster,
+  RuntimeMonster,
   Item,
   GreatPower,
   LevelObjectInstance,
@@ -48,7 +48,7 @@ export function isPlayerOnObject(
  */
 export type ObjectAtPoint =
   | { type: 'player'; data: Player }
-  | { type: 'monster'; data: Monster }
+  | { type: 'monster'; data: RuntimeMonster }
   | { type: 'greatPower'; data: GreatPower }
   | { type: 'item'; data: Item }
   | { type: 'building'; data: LevelObjectInstance }
@@ -429,7 +429,7 @@ export function updateCombatDialogs(
     player: { name: player.name, hp: player.hp, comment: playerComment },
     enemies: monsters.map((m, i) =>
       m
-        ? { name: m.name, hp: Math.max(0, m.hp), comment: enemyComments[i] || '', dead: m.hp <= 0 }
+        ? { name: m.name, hp: Math.max(0, m.currentHP), comment: enemyComments[i] || '', dead: m.currentHP <= 0 }
         : null
     ),
   }
