@@ -185,7 +185,7 @@ const createGreatPowerForLevel = (
     throw new Error(`GreatPower template ${shortName} not found`)
   }
 
-  // Create instance with defaults
+  // Create instance with defaults (mapping legacy hp to currentHP)
   const instance: GreatPowerInstanceV2 = {
     id: `${shortName}_${position.row}_${position.col}`,
     templateId: shortName,
@@ -200,13 +200,18 @@ const createGreatPowerForLevel = (
   // Convert to legacy GreatPower format
   const greatPower = hydratedGreatPowerV2ToGreatPower(hydrated)
 
-  // Apply any remaining overrides (for attack, ac, etc.)
+  // Apply legacy overrides (attack, ac, maxHP, etc.)
+  // Note: hp is already set from instance.currentHP via conversion
+  const { hp, awakened, ...otherOverrides } = overrides
+  
   return {
     ...greatPower,
-    ...overrides,
-    // Ensure id and position are not overridden
+    ...otherOverrides,
+    // Ensure id, position, hp, and awakened come from the hydrated/converted values
     id: instance.id,
     position: instance.position,
+    hp: greatPower.hp,
+    awakened: greatPower.awakened,
   }
 }
 
