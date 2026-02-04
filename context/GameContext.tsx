@@ -69,9 +69,11 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
   useEffect(() => {
     if (state.gameOver && !gameOverDeleteTriggeredRef.current) {
       gameOverDeleteTriggeredRef.current = true
-      deleteCurrentGame().catch((err) =>
+      deleteCurrentGame().catch((err) => {
         console.error('Failed to delete current save on death:', err)
-      )
+        // Reset flag on error to allow retry if needed
+        gameOverDeleteTriggeredRef.current = false
+      })
     }
     
     // Reset the flag when game is reset (gameOver becomes false)
