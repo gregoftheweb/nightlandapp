@@ -42,12 +42,31 @@ export interface SubGameResult<TData = unknown> {
   data?: TData // Optional result data from sub-game
 }
 
-export interface GameObject {
+/**
+ * EntityBase - Common runtime base for all game entities
+ * Shared fields across Monster, GreatPower, Item, LevelObjectInstance, etc.
+ */
+export interface EntityBase {
+  id?: string // Optional for legacy compatibility
   kind?: EntityKind // Optional for backward compatibility
   shortName: string
   category: string
   name: string
   description?: string
+  image?: ImageSourcePropType
+  position?: Position
+  active?: boolean
+  size?: { width: number; height: number }
+  zIndex?: number
+  rotation?: number
+}
+
+/**
+ * GameObject - Object/item-ish interface for interactive objects
+ * Extends EntityBase with object-specific fields
+ * No longer a "god interface" - scoped to objects/items only
+ */
+export interface GameObject extends EntityBase {
   damage?: number
   hitBonus?: number
   type?: string
@@ -55,10 +74,6 @@ export interface GameObject {
   range?: number
   width?: number
   height?: number
-  image?: ImageSourcePropType
-  position?: Position
-  active?: boolean
-  size?: { width: number; height: number }
   effects?: Effect[]
   collisionMask?: Array<{
     row: number
@@ -68,23 +83,21 @@ export interface GameObject {
   }>
   lastTrigger?: number
   maxInstances?: number
-  zIndex?: number
-  rotation?: number // NEW: Rotation in degrees (0-360)
   projectileColor?: string // Hex color for ranged weapon projectile
   projectileLengthPx?: number // Optional length of projectile in pixels
   projectileThicknessPx?: number // Optional thickness of projectile in pixels
   projectileGlow?: boolean // Optional glow effect for projectile
   subGame?: SubGameLaunch // Optional sub-game launch config
-
-  //  preventing breakage
-
   collectible?: boolean
   usable?: boolean
   consumeOnUse?: boolean
 }
 
-export interface Monster extends GameObject {
-  kind?: EntityKind // Optional for backward compatibility
+/**
+ * Monster - Runtime monster entity
+ * Extends EntityBase with monster-specific combat and behavior fields
+ */
+export interface Monster extends EntityBase {
   id?: string
   position: Position
   hp: number
@@ -97,12 +110,22 @@ export interface Monster extends GameObject {
   maxInstances?: number
   uiSlot?: number
   inCombatSlot?: boolean
+  // Additional fields for compatibility
+  width?: number
+  height?: number
+  damage?: number
+  hitBonus?: number
+  weaponType?: WeaponType
+  range?: number
+  effects?: Effect[]
 }
 
-export interface GreatPower extends GameObject {
-  kind?: EntityKind // Optional for backward compatibility
+/**
+ * GreatPower - Runtime great power entity
+ * Extends EntityBase with great power-specific fields
+ */
+export interface GreatPower extends EntityBase {
   id: string
-  name: string
   position: Position
   hp: number
   maxHP: number
@@ -110,6 +133,14 @@ export interface GreatPower extends GameObject {
   ac: number
   awakened: boolean
   awakenCondition: string
+  // Additional fields for compatibility
+  width?: number
+  height?: number
+  effects?: Effect[]
+  damage?: number
+  hitBonus?: number
+  weaponType?: WeaponType
+  range?: number
 }
 
 export interface LevelMonsterInstance extends Monster {
@@ -120,8 +151,11 @@ export interface LevelMonsterInstance extends Monster {
   spawnZoneId?: string
 }
 
-export interface Item extends GameObject {
-  kind?: EntityKind // Optional for backward compatibility
+/**
+ * Item - Runtime item entity
+ * Extends EntityBase with item-specific fields
+ */
+export interface Item extends EntityBase {
   type: 'weapon' | 'consumable' | 'key' | 'collectible' | 'building'
   collectible: boolean
   id?: string
@@ -136,16 +170,55 @@ export interface Item extends GameObject {
   consumeOnUse?: boolean
   maxUses?: number
   currentUses?: number
+  // Additional fields for compatibility
+  effects?: Effect[]
+  weaponType?: WeaponType
+  range?: number
+  hitBonus?: number
+  width?: number
+  height?: number
+  projectileColor?: string
+  projectileLengthPx?: number
+  projectileThicknessPx?: number
+  projectileGlow?: boolean
 }
 
-export interface LevelObjectInstance extends GameObject {
+/**
+ * LevelObjectInstance - Runtime object instance
+ * Extends EntityBase with object instance-specific fields
+ */
+export interface LevelObjectInstance extends EntityBase {
   id: string
   templateId?: string | number
   interactable?: boolean
   interactionType?: InteractionType
   locked?: boolean
   keyRequired?: string
-  rotation?: number // NEW: Instance-specific rotation override
+  // Additional fields for compatibility from GameObject
+  effects?: Effect[]
+  collisionMask?: Array<{
+    row: number
+    col: number
+    width: number
+    height: number
+  }>
+  lastTrigger?: number
+  width?: number
+  height?: number
+  damage?: number
+  hitBonus?: number
+  weaponType?: WeaponType
+  range?: number
+  projectileColor?: string
+  projectileLengthPx?: number
+  projectileThicknessPx?: number
+  projectileGlow?: boolean
+  subGame?: SubGameLaunch
+  collectible?: boolean
+  usable?: boolean
+  consumeOnUse?: boolean
+  maxInstances?: number
+  type?: string
 }
 
 // ===== Template vs Instance Architecture =====
@@ -400,12 +473,12 @@ export interface Player {
   hideRechargeProgressTurns: number // Progress toward next charge (0-2)
 }
 
-export interface NonCollisionObject {
-  kind?: EntityKind // Optional for backward compatibility
+/**
+ * NonCollisionObject - Runtime non-collision object entity
+ * Extends EntityBase with non-collision object-specific fields
+ */
+export interface NonCollisionObject extends EntityBase {
   id: string
-  shortName: string
-  name: string
-  description: string
   position: Position
   rotation: number // 0-360 degrees
   width: number
