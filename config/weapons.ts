@@ -14,6 +14,7 @@ import { Item } from './types'
  */
 export const weaponsCatalog: Item[] = [
   {
+    kind: 'item',
     id: 'weapon-discos-001',
     category: 'weapon',
     shortName: 'discos',
@@ -28,6 +29,7 @@ export const weaponsCatalog: Item[] = [
     collectible: true,
   },
   {
+    kind: 'item',
     id: 'weapon-shortsword-002',
     category: 'weapon',
     shortName: 'shortsword',
@@ -42,6 +44,7 @@ export const weaponsCatalog: Item[] = [
     collectible: true,
   },
   {
+    kind: 'item',
     id: 'weapon-valkyries-bow-001',
     category: 'weapon',
     shortName: 'valkyries_bow',
@@ -57,6 +60,7 @@ export const weaponsCatalog: Item[] = [
     projectileColor: '#0ce9e9ff', // Bright cyan arrow
   },
   {
+    kind: 'item',
     id: 'weapon-shurikens-001',
     category: 'weapon',
     shortName: 'shurikens',
@@ -72,6 +76,7 @@ export const weaponsCatalog: Item[] = [
     projectileColor: '#C0C0C0', // Silvery steel
   },
   {
+    kind: 'item',
     id: 'weapon-lazer-pistol-001',
     category: 'weapon',
     shortName: 'lazer_pistol',

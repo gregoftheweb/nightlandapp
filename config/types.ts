@@ -16,6 +16,21 @@ export type InteractionType = 'door' | 'chest' | 'npc' | 'portal'
 
 export type EffectTarget = 'self' | 'enemy' | 'ally' | 'area' | 'all'
 
+/**
+ * EntityKind - Discriminant for different entity types in the game
+ * Used to identify what kind of thing an entity is at the type level
+ */
+export type EntityKind = 'object' | 'monster' | 'greatPower' | 'item' | 'nonCollision'
+
+/**
+ * Category union types - Provide type safety for known categories while allowing unknown values
+ * Using union with string to avoid breaking existing code that may use custom categories
+ */
+export type ObjectCategory = 'building' | 'pool' | 'npc' | 'decoration' | 'portal' | 'door' | 'chest' | 'weapon' | 'consumable' | 'collectible' | string
+export type MonsterCategory = 'regular' | 'elite' | 'boss' | string
+export type GreatPowerCategory = 'greatPower' | 'boss' | string
+export type ItemCategory = 'weapon' | 'consumable' | 'key' | 'collectible' | 'building' | string
+
 export interface SubGameLaunch {
   subGameName: string // maps to /sub-games/<subGameName>
   ctaLabel: string // label for InfoBox button
@@ -28,6 +43,7 @@ export interface SubGameResult<TData = unknown> {
 }
 
 export interface GameObject {
+  kind?: EntityKind // Optional for backward compatibility
   shortName: string
   category: string
   name: string
@@ -68,6 +84,7 @@ export interface GameObject {
 }
 
 export interface Monster extends GameObject {
+  kind?: EntityKind // Optional for backward compatibility
   id?: string
   position: Position
   hp: number
@@ -83,6 +100,7 @@ export interface Monster extends GameObject {
 }
 
 export interface GreatPower extends GameObject {
+  kind?: EntityKind // Optional for backward compatibility
   id: string
   name: string
   position: Position
@@ -103,6 +121,7 @@ export interface LevelMonsterInstance extends Monster {
 }
 
 export interface Item extends GameObject {
+  kind?: EntityKind // Optional for backward compatibility
   type: 'weapon' | 'consumable' | 'key' | 'collectible' | 'building'
   collectible: boolean
   id?: string
@@ -164,10 +183,14 @@ export interface LevelObjectInstance extends GameObject {
  * EntityTemplate - Base type for all static entity templates
  * Contains shared fields common to all game entities (monsters, objects, great powers)
  * Templates represent immutable design-time data only - no runtime state
+ * 
+ * @template TKind - The entity kind discriminant
+ * @template TCategory - The category type (string or specific union)
  */
-export interface EntityTemplate {
+export interface EntityTemplate<TKind extends EntityKind = EntityKind, TCategory extends string = string> {
+  kind: TKind // Entity kind discriminant
   shortName: string // Unique identifier, acts as template ID
-  category: string // Entity category (e.g., 'regular', 'greatPower', 'building')
+  category: TCategory // Entity category (e.g., 'regular', 'greatPower', 'building')
   name: string // Display name
   description?: string // Optional description
   image?: ImageSourcePropType // Visual representation
@@ -180,7 +203,7 @@ export interface EntityTemplate {
  * Extends EntityTemplate with object-specific fields
  * Excludes runtime fields like position, active, lastTrigger
  */
-export interface GameObjectTemplate extends EntityTemplate {
+export interface GameObjectTemplate extends EntityTemplate<'object', ObjectCategory> {
   damage?: number
   hitBonus?: number
   type?: string
@@ -250,7 +273,7 @@ export interface HydratedObject extends GameObjectTemplate {
  * Extends EntityTemplate with monster-specific combat and behavior fields
  * Contains only template/definition data, no runtime state or position
  */
-export interface MonsterTemplateV2 extends EntityTemplate {
+export interface MonsterTemplateV2 extends EntityTemplate<'monster', MonsterCategory> {
   maxHP: number
   attack: number
   ac: number
@@ -304,7 +327,7 @@ export interface HydratedMonsterV2 extends MonsterTemplateV2 {
  * Extends EntityTemplate with great power-specific fields
  * Contains only template/definition data, no runtime state or position
  */
-export interface GreatPowerTemplateV2 extends EntityTemplate {
+export interface GreatPowerTemplateV2 extends EntityTemplate<'greatPower', GreatPowerCategory> {
   maxHP: number
   attack: number
   ac: number
@@ -378,6 +401,7 @@ export interface Player {
 }
 
 export interface NonCollisionObject {
+  kind?: EntityKind // Optional for backward compatibility
   id: string
   shortName: string
   name: string

@@ -29,6 +29,7 @@ describe('hydration module', () => {
   describe('hydrateObject', () => {
     it('should merge template and instance correctly', () => {
       const template: GameObjectTemplate = {
+        kind: 'object',
         shortName: 'test-building',
         category: 'building',
         name: 'Test Building',
@@ -57,6 +58,7 @@ describe('hydration module', () => {
 
     it('should allow instance to override template properties', () => {
       const template: GameObjectTemplate = {
+        kind: 'object',
         shortName: 'rotatable-building',
         category: 'building',
         name: 'Rotatable Building',
@@ -80,6 +82,7 @@ describe('hydration module', () => {
 
     it('should include instance-specific properties', () => {
       const template: GameObjectTemplate = {
+        kind: 'object',
         shortName: 'chest',
         category: 'building',
         name: 'Chest',
@@ -107,6 +110,7 @@ describe('hydration module', () => {
   describe('hydrateMonsterV2 (legacy compatibility)', () => {
     it('should merge monster template and instance correctly', () => {
       const template: MonsterTemplateV2 = {
+        kind: 'monster',
         shortName: 'test-monster',
         category: 'monster',
         name: 'Test Monster',
@@ -138,6 +142,7 @@ describe('hydration module', () => {
 
     it('should include spawn state from instance', () => {
       const template: MonsterTemplateV2 = {
+        kind: 'monster',
         shortName: 'spawnable-monster',
         category: 'monster',
         name: 'Spawnable Monster',
@@ -169,6 +174,7 @@ describe('hydration module', () => {
         [
           'building-a',
           {
+            kind: 'object',
             shortName: 'building-a',
             category: 'building',
             name: 'Building A',
@@ -178,6 +184,7 @@ describe('hydration module', () => {
         [
           'building-b',
           {
+            kind: 'object',
             shortName: 'building-b',
             category: 'building',
             name: 'Building B',
@@ -230,6 +237,7 @@ describe('hydration module', () => {
         [
           'monster-a',
           {
+            kind: 'monster',
             shortName: 'monster-a',
             category: 'monster',
             name: 'Monster A',
@@ -242,6 +250,7 @@ describe('hydration module', () => {
         [
           'monster-b',
           {
+            kind: 'monster',
             shortName: 'monster-b',
             category: 'monster',
             name: 'Monster B',
@@ -299,6 +308,7 @@ describe('hydration module', () => {
   describe('hydrateMonsterV2', () => {
     it('should merge monster template V2 and instance V2 correctly', () => {
       const template: MonsterTemplateV2 = {
+        kind: 'monster',
         shortName: 'test-monster-v2',
         category: 'monster',
         name: 'Test Monster V2',
@@ -330,6 +340,7 @@ describe('hydration module', () => {
 
     it('should include UI and combat slots from instance V2', () => {
       const template: MonsterTemplateV2 = {
+        kind: 'monster',
         shortName: 'combat-monster-v2',
         category: 'monster',
         name: 'Combat Monster V2',
@@ -356,6 +367,7 @@ describe('hydration module', () => {
 
     it('should allow instance V2 to override template zIndex', () => {
       const template: MonsterTemplateV2 = {
+        kind: 'monster',
         shortName: 'z-monster-v2',
         category: 'monster',
         name: 'Z Monster V2',
@@ -383,6 +395,7 @@ describe('hydration module', () => {
   describe('hydrateGreatPowerV2', () => {
     it('should merge great power template V2 and instance V2 correctly', () => {
       const template: GreatPowerTemplateV2 = {
+        kind: 'greatPower',
         shortName: 'great-power-v2',
         category: 'greatpower',
         name: 'Great Power V2',
@@ -417,6 +430,7 @@ describe('hydration module', () => {
 
     it('should handle awakened state in instance V2', () => {
       const template: GreatPowerTemplateV2 = {
+        kind: 'greatPower',
         shortName: 'awakened-power-v2',
         category: 'greatpower',
         name: 'Awakened Power V2',
@@ -446,6 +460,7 @@ describe('hydration module', () => {
         [
           'monster-v2-a',
           {
+            kind: 'monster',
             shortName: 'monster-v2-a',
             category: 'monster',
             name: 'Monster V2 A',
@@ -458,6 +473,7 @@ describe('hydration module', () => {
         [
           'monster-v2-b',
           {
+            kind: 'monster',
             shortName: 'monster-v2-b',
             category: 'monster',
             name: 'Monster V2 B',
@@ -516,6 +532,7 @@ describe('hydration module', () => {
         [
           'power-v2-a',
           {
+            kind: 'greatPower',
             shortName: 'power-v2-a',
             category: 'greatpower',
             name: 'Power V2 A',
@@ -528,6 +545,7 @@ describe('hydration module', () => {
         [
           'power-v2-b',
           {
+            kind: 'greatPower',
             shortName: 'power-v2-b',
             category: 'greatpower',
             name: 'Power V2 B',
@@ -588,6 +606,7 @@ describe('hydration module', () => {
   describe('hydratedGreatPowerV2ToGreatPower', () => {
     it('should convert HydratedGreatPowerV2 to GreatPower format', () => {
       const template: GreatPowerTemplateV2 = {
+        kind: 'greatPower',
         shortName: 'test-power',
         category: 'greatPower',
         name: 'Test Power',
@@ -622,6 +641,7 @@ describe('hydration module', () => {
 
     it('should normalize null/undefined currentHP to maxHP', () => {
       const template: GreatPowerTemplateV2 = {
+        kind: 'greatPower',
         shortName: 'power-with-null-hp',
         category: 'greatPower',
         name: 'Power with Null HP',
@@ -647,6 +667,7 @@ describe('hydration module', () => {
 
     it('should preserve optional fields from template', () => {
       const template: GreatPowerTemplateV2 = {
+        kind: 'greatPower',
         shortName: 'power-with-extras',
         category: 'greatPower',
         name: 'Power with Extras',
