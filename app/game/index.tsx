@@ -305,7 +305,7 @@ export default function Game() {
       const monsterImage = monster.image || require('@assets/images/sprites/monsters/abhuman.webp')
       showInfoRef.current(
         monster.name || monster.shortName || 'Monster',
-        monster.description || `A dangerous creature. HP: ${monster.hp || 'Unknown'}`,
+        monster.description || `A dangerous creature. HP: ${monster.currentHP || 'Unknown'}`,
         monsterImage
       )
     },

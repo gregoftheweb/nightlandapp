@@ -29,7 +29,6 @@ describe('Unified Effects System', () => {
       playerSpawn: { row: 200, col: 200 },
       turnsPerHitPoint: 5,
       items: [],
-      monsters: [],
       objects: [],
       greatPowers: [],
     }
@@ -314,7 +313,6 @@ describe('Unified Effects System', () => {
 
       const hideEffect: Effect = {
         type: 'hide',
-        duration: 5,
       }
 
       const context: EffectContext = {

@@ -109,7 +109,6 @@ export default function GameBoard({
   // ---- Defensive fallbacks (NO early returns before hooks) ----
   const level = state.level
   const levelObjects = level?.objects ?? []
-  const levelMonsters = level?.monsters ?? []
   const activeMonsters = state.activeMonsters ?? []
   const levelGreatPowers = level?.greatPowers ?? []
   const items = state.items ?? []
@@ -121,13 +120,13 @@ export default function GameBoard({
   // Memoized entity position maps for O(1) lookups (perf: replaces linear scans)
   const monsterPositionMap = useMemo(() => {
     const map = new Map<string, RuntimeMonster>()
-    ;[...activeMonsters, ...levelMonsters].forEach((m) => {
+    activeMonsters.forEach((m) => {
       if (m.position && !m.inCombatSlot) {
         map.set(`${m.position.row}-${m.position.col}`, m)
       }
     })
     return map
-  }, [activeMonsters, levelMonsters])
+  }, [activeMonsters])
 
   const greatPowerPositionMap = useMemo(() => {
     const map = new Map<string, GreatPower>()

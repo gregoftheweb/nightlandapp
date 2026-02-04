@@ -13,7 +13,7 @@ import {
   GameState,
   Level,
   Player,
-  Monster,
+  RuntimeMonster,
   Item,
   GreatPower,
   LevelObjectInstance,
@@ -29,7 +29,6 @@ describe('getObjectAtPoint', () => {
       boardSize: { width: 50, height: 50 },
       playerSpawn: { row: 25, col: 25 },
       items: [],
-      monsters: [],
       objects: [],
       greatPowers: [],
     }
@@ -108,18 +107,19 @@ describe('getObjectAtPoint', () => {
 
   test('should detect monster at position', () => {
     const state = createMockGameState()
-    const monster: Monster = {
+    const monster: RuntimeMonster = {
       id: 'monster-1',
+      templateId: 'abhuman',
       shortName: 'abhuman',
       category: 'monster',
+      kind: 'monster',
       name: 'Abhuman',
       position: { row: 15, col: 15 },
-      hp: 10,
+      currentHP: 10,
       maxHP: 10,
       attack: 5,
       ac: 12,
       moveRate: 1,
-      active: true,
     }
     state.activeMonsters = [monster]
 
@@ -238,13 +238,15 @@ describe('getObjectAtPoint', () => {
 
     // Place both player and monster at same position
     state.player.position = { row: 10, col: 10 }
-    const monster: Monster = {
+    const monster: RuntimeMonster = {
       id: 'monster-1',
+      templateId: 'abhuman',
       shortName: 'abhuman',
       category: 'monster',
+      kind: 'monster',
       name: 'Abhuman',
       position: { row: 10, col: 10 },
-      hp: 10,
+      currentHP: 10,
       maxHP: 10,
       attack: 5,
       ac: 12,
@@ -259,13 +261,15 @@ describe('getObjectAtPoint', () => {
   test('should respect priority order: Monster > Item', () => {
     const state = createMockGameState()
 
-    const monster: Monster = {
+    const monster: RuntimeMonster = {
       id: 'monster-1',
+      templateId: 'abhuman',
       shortName: 'abhuman',
       category: 'monster',
+      kind: 'monster',
       name: 'Abhuman',
       position: { row: 15, col: 15 },
-      hp: 10,
+      currentHP: 10,
       maxHP: 10,
       attack: 5,
       ac: 12,
@@ -287,27 +291,6 @@ describe('getObjectAtPoint', () => {
 
     const result = getObjectAtPoint(15, 15, state)
     expect(result?.type).toBe('monster') // Monster has higher priority than item
-  })
-
-  test('should ignore inactive monsters', () => {
-    const state = createMockGameState()
-    const monster: Monster = {
-      id: 'monster-1',
-      shortName: 'abhuman',
-      category: 'monster',
-      name: 'Abhuman',
-      position: { row: 15, col: 15 },
-      hp: 0,
-      maxHP: 10,
-      attack: 5,
-      ac: 12,
-      moveRate: 1,
-      active: false,
-    }
-    state.activeMonsters = [monster]
-
-    const result = getObjectAtPoint(15, 15, state)
-    expect(result).toBeNull()
   })
 
   test('should ignore inactive items', () => {

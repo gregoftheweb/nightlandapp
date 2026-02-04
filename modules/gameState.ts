@@ -70,7 +70,6 @@ function buildInitialState(
     objects: levelConfig.objects || [],
     greatPowers: levelConfig.greatPowers || [],
     nonCollisionObjects: levelConfig.nonCollisionObjects || [],
-    monsters: levelConfig.monsters || [],
     gridWidth: gameConfig.grid.width,
     gridHeight: gameConfig.grid.height,
 
