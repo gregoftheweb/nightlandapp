@@ -124,14 +124,16 @@ export function hydrateMonsters(
  * Convert a HydratedMonster to Monster format for GameState compatibility
  * Maps currentHP to hp for backward compatibility with existing code
  * 
- * Note: The returned Monster has both 'hp' (current) and 'currentHP' (from hydrated)
- * because of the spread. This redundancy maintains compatibility with code expecting
- * monster.hp to be the current HP value.
+ * Normalization Guard: If currentHP is null/undefined, defaults to maxHP
+ * This ensures runtime monsters always have valid hp values for combat.
  * 
  * @param hydrated - HydratedMonster from hydration
- * @returns Monster in legacy format
+ * @returns Monster in legacy format with guaranteed hp value
  */
 export function hydratedMonsterToMonster(hydrated: HydratedMonster): Monster {
+  // Normalization: ensure hp is never null/undefined
+  const currentHP = hydrated.currentHP ?? hydrated.maxHP
+  
   return {
     // Core template properties
     shortName: hydrated.shortName,
@@ -158,7 +160,7 @@ export function hydratedMonsterToMonster(hydrated: HydratedMonster): Monster {
     id: hydrated.id,
     position: hydrated.position,
     active: hydrated.active ?? true,
-    hp: hydrated.currentHP, // Map currentHP to hp for compatibility
+    hp: currentHP, // Normalized currentHP -> hp for compatibility
     uiSlot: hydrated.uiSlot,
     inCombatSlot: hydrated.inCombatSlot,
   }

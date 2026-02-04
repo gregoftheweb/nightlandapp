@@ -355,7 +355,7 @@ export const initializeStartingMonsters = (
         id: uniqueId,
         templateId: 'abhuman',
         position: { row: spawnRow, col: spawnCol },
-        currentHP: abhumanTemplate.hp, // Start at full HP
+        currentHP: abhumanTemplate.maxHP, // Start at full HP
       }
 
       // Hydrate template with instance
