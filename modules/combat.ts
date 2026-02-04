@@ -1,5 +1,5 @@
 // modules/combat.ts - Enhanced d20 combat system with all combat logic
-import { GameState, Position, Monster } from '../config/types'
+import { GameState, Position, RuntimeMonster } from '../config/types'
 import { getTextContent, logIfDev } from './utils'
 import { COMBAT_STRINGS } from '@/assets/copy/combat'
 
@@ -34,12 +34,15 @@ export const executeAttack = (attacker: any, defender: any, dispatch: any): bool
   if (hit) {
     const damageRoll = Math.floor(Math.random() * 6) + 1
     const totalDamage = damageRoll + Math.floor(attacker.attack / 2)
-    const newHp = Math.max(0, defender.hp - totalDamage)
+    
+    // Use currentHP for monsters, hp for player
+    const currentHp = defender.id === 'christos' ? defender.hp : defender.currentHP
+    const newHp = Math.max(0, currentHp - totalDamage)
 
     logIfDev(
       `   💥 HIT! Damage: ${damageRoll} + ${Math.floor(attacker.attack / 2)} = ${totalDamage}`
     )
-    logIfDev(`   ${defender.name} HP: ${defender.hp} → ${newHp}`)
+    logIfDev(`   ${defender.name} HP: ${currentHp} → ${newHp}`)
 
     // Create different messages for Christos vs monsters
     let combatMessage = ''
@@ -59,7 +62,7 @@ export const executeAttack = (attacker: any, defender: any, dispatch: any): bool
       payload: { message: combatMessage },
     })
 
-    // Update HP
+    // Update HP - use hp field for player, currentHP for monsters
     if (defender.id === 'christos') {
       dispatch({
         type: 'UPDATE_PLAYER',
@@ -68,7 +71,7 @@ export const executeAttack = (attacker: any, defender: any, dispatch: any): bool
     } else {
       dispatch({
         type: 'UPDATE_MONSTER',
-        payload: { id: defender.id, updates: { hp: newHp } },
+        payload: { id: defender.id, updates: { currentHP: newHp } },
       })
     }
 
@@ -152,16 +155,18 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
   const combatOrder = [state.player, ...state.attackSlots]
 
   for (const entity of combatOrder) {
-    if (entity.hp <= 0) continue
+    // Use currentHP for monsters, hp for player
+    const currentHp = entity.id === 'christos' ? (entity as any).hp : (entity as any).currentHP
+    if (currentHp <= 0) continue
 
     if (entity.id === 'christos') {
       logIfDev(`\n👤 ${entity.name}'s turn:`)
       let targetMonster = null
       if (targetId) {
-        targetMonster = state.attackSlots.find((m: any) => m.id === targetId && m.hp > 0)
+        targetMonster = state.attackSlots.find((m: any) => m.id === targetId && m.currentHP > 0)
       }
       if (!targetMonster) {
-        targetMonster = state.attackSlots.find((m: any) => m.hp > 0)
+        targetMonster = state.attackSlots.find((m: any) => m.currentHP > 0)
       }
 
       if (targetMonster) {
@@ -200,8 +205,8 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
   logIfDev(`\n📊 COMBAT ROUND COMPLETE`)
   logIfDev(`   Player HP: ${state.player.hp}/${state.player.maxHP}`)
   state.attackSlots.forEach((monster: any) => {
-    if (monster.hp > 0) {
-      logIfDev(`   ${monster.name} HP: ${monster.hp}/${monster.maxHP}`)
+    if (monster.currentHP > 0) {
+      logIfDev(`   ${monster.name} HP: ${monster.currentHP}/${monster.maxHP}`)
     }
   })
 }
@@ -209,7 +214,7 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
 // ==================== COMBAT MANAGEMENT ====================
 
 const moveWaitingMonstersToAttackSlots = (state: GameState, dispatch: any): void => {
-  const aliveMonsters = state.attackSlots.filter((m: any) => m.hp > 0)
+  const aliveMonsters = state.attackSlots.filter((m: any) => m.currentHP > 0)
   const availableSlots = (state.maxAttackers || 4) - aliveMonsters.length
 
   if (availableSlots > 0 && state.waitingMonsters.length > 0) {
@@ -278,7 +283,7 @@ const moveWaitingMonstersToAttackSlots = (state: GameState, dispatch: any): void
 }
 
 export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
-  const aliveMonsters = state.attackSlots?.filter((m: any) => m.hp > 0) || []
+  const aliveMonsters = state.attackSlots?.filter((m: any) => m.currentHP > 0) || []
 
   if (aliveMonsters.length === 0) {
     logIfDev('🏆 Combat won - all monsters defeated!')
@@ -321,7 +326,7 @@ export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
 export const setupCombat = (
   state: GameState,
   dispatch: (action: any) => void,
-  monster: Monster,
+  monster: RuntimeMonster,
   playerPosOverride?: Position
 ): void => {
   logIfDev(`\n⚔️ SETTING UP COMBAT with ${monster.name}`)
@@ -448,7 +453,7 @@ export const handleCombatTurn = (
 
 export const checkForCombatCollision = (
   state: GameState,
-  monster: Monster,
+  monster: RuntimeMonster,
   newPosition: Position,
   playerPos: Position
 ): boolean => {
@@ -541,10 +546,10 @@ export const executeRangedAttack = (
   monsterScreenY: number
 ): string | null => {
   // Find the target monster in either activeMonsters or attackSlots
-  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0)
+  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.currentHP > 0)
 
   if (!targetMonster) {
-    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.hp > 0)
+    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.currentHP > 0)
   }
 
   if (!targetMonster) {
@@ -639,10 +644,10 @@ export const processRangedAttackImpact = (
   targetMonsterId: string
 ): boolean => {
   // Find the target monster in either activeMonsters or attackSlots
-  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.hp > 0)
+  let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.currentHP > 0)
 
   if (!targetMonster) {
-    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.hp > 0)
+    targetMonster = state.attackSlots.find((m) => m.id === targetMonsterId && m.currentHP > 0)
   }
 
   if (!targetMonster) {
@@ -666,10 +671,10 @@ export const processRangedAttackImpact = (
     // Calculate damage using d6 dice roll
     const damageRoll = rollD6()
     const totalDamage = damageRoll + Math.floor(player.attack / 2)
-    const newHp = Math.max(0, targetMonster.hp - totalDamage)
+    const newHp = Math.max(0, targetMonster.currentHP - totalDamage)
 
     logIfDev(`   💥 HIT! Damage: ${damageRoll} + ${Math.floor(player.attack / 2)} = ${totalDamage}`)
-    logIfDev(`   ${monsterName} HP: ${targetMonster.hp} → ${newHp}`)
+    logIfDev(`   ${monsterName} HP: ${targetMonster.currentHP} → ${newHp}`)
 
     // Log hit and damage
     dispatch({
@@ -681,10 +686,10 @@ export const processRangedAttackImpact = (
       payload: { message: `${monsterName} takes ${totalDamage} damage.` },
     })
 
-    // Update monster HP
+    // Update monster HP using currentHP
     dispatch({
       type: 'UPDATE_MONSTER',
-      payload: { id: targetMonster.id, updates: { hp: newHp } },
+      payload: { id: targetMonster.id, updates: { currentHP: newHp } },
     })
 
     // Check if monster dies

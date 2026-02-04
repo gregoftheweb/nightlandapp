@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { View, Image, StyleSheet, Dimensions, ImageSourcePropType } from 'react-native'
 import type {
-  Monster,
+  RuntimeMonster,
   LevelObjectInstance,
   GameState,
   Item,
@@ -34,7 +34,7 @@ interface GameBoardProps {
   state: GameState
   cameraOffset: { offsetX: number; offsetY: number }
   onPlayerTap?: () => void
-  onMonsterTap?: (monster: Monster) => void
+  onMonsterTap?: (monster: RuntimeMonster) => void
   onBuildingTap?: (building: LevelObjectInstance) => void
   onItemTap?: (item: Item) => void
   onGreatPowerTap?: (greatPower: GreatPower) => void
@@ -120,9 +120,9 @@ export default function GameBoard({
 
   // Memoized entity position maps for O(1) lookups (perf: replaces linear scans)
   const monsterPositionMap = useMemo(() => {
-    const map = new Map<string, Monster>()
+    const map = new Map<string, RuntimeMonster>()
     ;[...activeMonsters, ...levelMonsters].forEach((m) => {
-      if (m.position && !m.inCombatSlot && m.active !== false) {
+      if (m.position && !m.inCombatSlot) {
         map.set(`${m.position.row}-${m.position.col}`, m)
       }
     })
@@ -151,7 +151,7 @@ export default function GameBoard({
 
   // Fast position finders using maps (perf: O(1) vs O(n))
   const findMonsterAtPosition = useCallback(
-    (worldRow: number, worldCol: number): Monster | undefined =>
+    (worldRow: number, worldCol: number): RuntimeMonster | undefined =>
       monsterPositionMap.get(`${worldRow}-${worldCol}`),
     [monsterPositionMap]
   )
@@ -305,13 +305,13 @@ export default function GameBoard({
   }, [state.player, level?.name, level?.description, onPlayerTap, showInfo])
 
   const handleMonsterTap = useCallback(
-    (monster: Monster) => {
+    (monster: RuntimeMonster) => {
       if (__DEV__) console.log('handleMonsterTap called, monster:', monster)
 
       if (!state.rangedAttackMode) {
         showInfo(
           monster.name || monster.shortName || 'Monster',
-          monster.description || `A dangerous creature. HP: ${monster.hp ?? 'Unknown'}`,
+          monster.description || `A dangerous creature. HP: ${monster.currentHP ?? 'Unknown'}`,
           getMonsterImage(monster)
         )
       }
@@ -469,7 +469,7 @@ export default function GameBoard({
     if (!state.inCombat || attackSlots.length === 0) return []
 
     return attackSlots
-      .map((monster: Monster, index) => {
+      .map((monster: RuntimeMonster, index) => {
         if (!monster.position || !monster.uiSlot) return null
 
         const screenRow = monster.position.row - cameraOffset.offsetY
@@ -968,7 +968,7 @@ export default function GameBoard({
 // Utility functions
 const getCellBackgroundColor = (
   isPlayer: boolean,
-  hasMonster: Monster | undefined,
+  hasMonster: RuntimeMonster | undefined,
   _hasGreatPower: GreatPower | undefined,
   _inCombat: boolean
 ) => {
@@ -979,7 +979,7 @@ const getCellBackgroundColor = (
 
 const getCellBorderColor = (
   isPlayer: boolean,
-  hasMonster: Monster | undefined,
+  hasMonster: RuntimeMonster | undefined,
   _hasGreatPower: GreatPower | undefined,
   _inCombat: boolean,
   hideActive: boolean
@@ -990,7 +990,7 @@ const getCellBorderColor = (
   return 'rgba(17, 17, 17, 0.3)'
 }
 
-const getMonsterImage = (monster: Monster) => {
+const getMonsterImage = (monster: RuntimeMonster) => {
   return monster.image || require('@assets/images/sprites/monsters/abhuman.webp')
 }
 

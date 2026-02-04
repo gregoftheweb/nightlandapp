@@ -3,11 +3,11 @@
  *
  * Tests verify that:
  * - createMonsterFromTemplate uses the MonsterTemplate + MonsterInstance pattern
- * - Hydrated monsters are converted to Monster format correctly
- * - Monster instances have proper IDs, positions, and HP
+ * - Hydrated monsters (RuntimeMonster) are returned correctly
+ * - Monster instances have proper IDs, positions, and currentHP
  */
 import { createMonsterFromTemplate } from '../monsterUtils'
-import { Monster } from '../../config/types'
+import { RuntimeMonster } from '../../config/types'
 
 describe('Monster Creation', () => {
   describe('createMonsterFromTemplate', () => {
@@ -19,12 +19,11 @@ describe('Monster Creation', () => {
       expect(monster?.shortName).toBe('abhuman')
       expect(monster?.name).toBe('Abhuman')
       expect(monster?.position).toEqual(position)
-      expect(monster?.hp).toBe(12) // Abhuman starts with 12 HP
+      expect(monster?.currentHP).toBe(12) // Abhuman starts with 12 HP
       expect(monster?.maxHP).toBe(12)
       expect(monster?.attack).toBe(5)
       expect(monster?.ac).toBe(12)
       expect(monster?.moveRate).toBe(2)
-      expect(monster?.active).toBe(true)
       expect(monster?.id).toContain('abhuman-') // Should have unique ID
     })
 
@@ -36,12 +35,11 @@ describe('Monster Creation', () => {
       expect(monster?.shortName).toBe('night_hound')
       expect(monster?.name).toBe('Night Hound')
       expect(monster?.position).toEqual(position)
-      expect(monster?.hp).toBe(30) // Night Hound starts with 30 HP
+      expect(monster?.currentHP).toBe(30) // Night Hound starts with 30 HP
       expect(monster?.maxHP).toBe(30)
       expect(monster?.attack).toBe(6)
       expect(monster?.ac).toBe(14)
       expect(monster?.moveRate).toBe(2)
-      expect(monster?.active).toBe(true)
     })
 
     it('should return null for unknown template', () => {
@@ -59,14 +57,14 @@ describe('Monster Creation', () => {
       expect(monster1?.id).not.toBe(monster2?.id)
     })
 
-    it('should create monsters that are compatible with Monster type', () => {
+    it('should create monsters that are compatible with RuntimeMonster type', () => {
       const position = { row: 10, col: 10 }
       const monster = createMonsterFromTemplate('abhuman', position)
 
-      // Should have all required Monster properties
+      // Should have all required RuntimeMonster properties
       expect(monster).toHaveProperty('id')
       expect(monster).toHaveProperty('position')
-      expect(monster).toHaveProperty('hp')
+      expect(monster).toHaveProperty('currentHP')
       expect(monster).toHaveProperty('maxHP')
       expect(monster).toHaveProperty('attack')
       expect(monster).toHaveProperty('ac')
@@ -75,19 +73,19 @@ describe('Monster Creation', () => {
       expect(monster).toHaveProperty('name')
       expect(monster).toHaveProperty('category')
 
-      // Type check - should be assignable to Monster
-      const monsterVar: Monster | null = monster
+      // Type check - should be assignable to RuntimeMonster
+      const monsterVar: RuntimeMonster | null = monster
       expect(monsterVar).not.toBeNull()
     })
 
-    it('should set hp to template max HP on creation', () => {
+    it('should set currentHP to template max HP on creation', () => {
       const position = { row: 10, col: 10 }
       const abhuman = createMonsterFromTemplate('abhuman', position)
       const nightHound = createMonsterFromTemplate('night_hound', position)
 
       // Both should start at full HP
-      expect(abhuman?.hp).toBe(abhuman?.maxHP)
-      expect(nightHound?.hp).toBe(nightHound?.maxHP)
+      expect(abhuman?.currentHP).toBe(abhuman?.maxHP)
+      expect(nightHound?.currentHP).toBe(nightHound?.maxHP)
     })
   })
 })

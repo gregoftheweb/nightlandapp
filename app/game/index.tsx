@@ -15,7 +15,7 @@ import {
   handlePassTurn,
   initializeStartingMonsters,
 } from '../../modules/turnManager'
-import { Monster, LevelObjectInstance, Item, GreatPower, NonCollisionObject } from '@/config/types'
+import { RuntimeMonster, LevelObjectInstance, Item, GreatPower, NonCollisionObject } from '@/config/types'
 import { audioManager } from '../../modules/audioManager'
 import { settingsManager } from '../../modules/settingsManager'
 import { UI_CONSTANTS, TIMING_CONSTANTS, COMBAT_CONSTANTS } from '../../constants/Game'
@@ -811,10 +811,10 @@ export default function Game() {
 
       // Find the target monster to get its position
       let targetMonster = state.activeMonsters.find(
-        (m) => m.id === state.targetedMonsterId && m.hp > 0
+        (m) => m.id === state.targetedMonsterId && m.currentHP > 0
       )
       if (!targetMonster) {
-        targetMonster = state.attackSlots.find((m) => m.id === state.targetedMonsterId && m.hp > 0)
+        targetMonster = state.attackSlots.find((m) => m.id === state.targetedMonsterId && m.currentHP > 0)
       }
 
       if (!targetMonster) {

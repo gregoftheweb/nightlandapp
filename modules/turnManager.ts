@@ -1,7 +1,7 @@
 // modules/turnManager.ts - Clean turn-based game flow orchestration
-import { GameState, Position, Monster, MonsterInstanceV2 } from '../config/types'
+import { GameState, Position, RuntimeMonster, MonsterInstanceV2 } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
-import { hydrateMonsterV2, hydratedMonsterV2ToMonster } from './hydration'
+import { hydrateMonsterV2 } from './hydration'
 import { handleMoveMonsters } from './monsterUtils'
 import { handleCombatTurn } from './combat'
 import { calculateNewPosition } from './movement'
@@ -380,11 +380,8 @@ export const initializeStartingMonsters = (
         currentHP: abhumanTemplate.maxHP, // Start at full HP
       }
 
-      // Hydrate template with instance
-      const hydrated = hydrateMonsterV2(abhumanTemplate, instance)
-
-      // Convert to Monster format for GameState compatibility
-      const newMonster: Monster = hydratedMonsterV2ToMonster(hydrated)
+      // Hydrate template with instance to get RuntimeMonster
+      const newMonster: RuntimeMonster = hydrateMonsterV2(abhumanTemplate, instance)
 
       dispatch({
         type: 'SPAWN_MONSTER',
@@ -396,7 +393,7 @@ export const initializeStartingMonsters = (
           i + 1
         } at (${spawnRow}, ${spawnCol}), distance: ${Math.round(distance)}`
       )
-      logIfDev(`   Stats: HP:${newMonster.hp}, Attack:${newMonster.attack}, AC:${newMonster.ac}`)
+      logIfDev(`   Stats: HP:${newMonster.currentHP}, Attack:${newMonster.attack}, AC:${newMonster.ac}`)
     }
   }
 }

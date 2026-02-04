@@ -2,37 +2,37 @@
  * Regression tests for monster HP field consistency
  * 
  * Ensures that after migrating to MonsterTemplateV2:
- * - Runtime monsters always have both hp and maxHP
- * - hp is never null/undefined
+ * - Runtime monsters always have both currentHP and maxHP
+ * - currentHP is never null/undefined
  * - Ranged targeting and combat can find valid HP values
  */
 import { createMonsterFromTemplate } from '../monsterUtils'
-import { hydrateMonsterV2, hydratedMonsterV2ToMonster } from '../hydration'
+import { hydrateMonsterV2 } from '../hydration'
 import { getMonsterTemplate } from '../../config/monsters'
 import { MonsterInstanceV2 } from '../../config/types'
 
 describe('Monster HP Regression Tests', () => {
   describe('createMonsterFromTemplate', () => {
-    it('should create monsters with valid hp and maxHP', () => {
+    it('should create monsters with valid currentHP and maxHP', () => {
       const position = { row: 10, col: 15 }
       const monster = createMonsterFromTemplate('abhuman', position)
 
       expect(monster).not.toBeNull()
-      expect(monster?.hp).toBeDefined()
-      expect(monster?.hp).not.toBeNull()
+      expect(monster?.currentHP).toBeDefined()
+      expect(monster?.currentHP).not.toBeNull()
       expect(monster?.maxHP).toBeDefined()
       expect(monster?.maxHP).not.toBeNull()
-      expect(typeof monster?.hp).toBe('number')
+      expect(typeof monster?.currentHP).toBe('number')
       expect(typeof monster?.maxHP).toBe('number')
-      expect(monster?.hp).toBeGreaterThan(0)
+      expect(monster?.currentHP).toBeGreaterThan(0)
       expect(monster?.maxHP).toBeGreaterThan(0)
     })
 
-    it('should set hp equal to maxHP for new monsters', () => {
+    it('should set currentHP equal to maxHP for new monsters', () => {
       const position = { row: 10, col: 15 }
       const monster = createMonsterFromTemplate('abhuman', position)
 
-      expect(monster?.hp).toBe(monster?.maxHP)
+      expect(monster?.currentHP).toBe(monster?.maxHP)
     })
 
     it('should handle all monster types correctly', () => {
@@ -43,37 +43,17 @@ describe('Monster HP Regression Tests', () => {
         const monster = createMonsterFromTemplate(type, position)
 
         expect(monster).not.toBeNull()
-        expect(monster?.hp).toBeDefined()
-        expect(monster?.hp).not.toBeNull()
+        expect(monster?.currentHP).toBeDefined()
+        expect(monster?.currentHP).not.toBeNull()
         expect(monster?.maxHP).toBeDefined()
         expect(monster?.maxHP).not.toBeNull()
-        expect(typeof monster?.hp).toBe('number')
+        expect(typeof monster?.currentHP).toBe('number')
         expect(typeof monster?.maxHP).toBe('number')
       }
     })
   })
 
-  describe('hydratedMonsterV2ToMonster normalization', () => {
-    it('should set hp to maxHP when currentHP is undefined', () => {
-      const template = getMonsterTemplate('abhuman')
-      expect(template).toBeDefined()
-
-      // Create instance with undefined currentHP (simulating old data)
-      const instance: MonsterInstanceV2 = {
-        id: 'test-monster-1',
-        templateId: 'abhuman',
-        position: { row: 10, col: 10 },
-        currentHP: undefined as any, // Simulate missing currentHP
-      }
-
-      const hydrated = hydrateMonsterV2(template!, instance)
-      const monster = hydratedMonsterV2ToMonster(hydrated)
-
-      // Should normalize to maxHP
-      expect(monster.hp).toBe(template!.maxHP)
-      expect(monster.maxHP).toBe(template!.maxHP)
-    })
-
+  describe('hydrateMonsterV2 with currentHP', () => {
     it('should preserve currentHP when it is defined', () => {
       const template = getMonsterTemplate('abhuman')
       expect(template).toBeDefined()
@@ -86,10 +66,9 @@ describe('Monster HP Regression Tests', () => {
       }
 
       const hydrated = hydrateMonsterV2(template!, instance)
-      const monster = hydratedMonsterV2ToMonster(hydrated)
 
-      expect(monster.hp).toBe(5)
-      expect(monster.maxHP).toBe(template!.maxHP)
+      expect(hydrated.currentHP).toBe(5)
+      expect(hydrated.maxHP).toBe(template!.maxHP)
     })
 
     it('should handle zero HP correctly', () => {
@@ -104,15 +83,14 @@ describe('Monster HP Regression Tests', () => {
       }
 
       const hydrated = hydrateMonsterV2(template!, instance)
-      const monster = hydratedMonsterV2ToMonster(hydrated)
 
-      expect(monster.hp).toBe(0)
-      expect(monster.maxHP).toBe(template!.maxHP)
+      expect(hydrated.currentHP).toBe(0)
+      expect(hydrated.maxHP).toBe(template!.maxHP)
     })
   })
 
   describe('combat and targeting compatibility', () => {
-    it('should allow filtering living monsters by hp > 0', () => {
+    it('should allow filtering living monsters by currentHP > 0', () => {
       const position = { row: 10, col: 15 }
       const monster1 = createMonsterFromTemplate('abhuman', position)
       const monster2 = createMonsterFromTemplate('night_hound', position)
@@ -121,11 +99,11 @@ describe('Monster HP Regression Tests', () => {
       expect(monster2).not.toBeNull()
 
       const monsters = [monster1!, monster2!]
-      const livingMonsters = monsters.filter((m) => m.hp > 0)
+      const livingMonsters = monsters.filter((m) => m.currentHP > 0)
 
       expect(livingMonsters).toHaveLength(2)
-      expect(livingMonsters[0].hp).toBeGreaterThan(0)
-      expect(livingMonsters[1].hp).toBeGreaterThan(0)
+      expect(livingMonsters[0].currentHP).toBeGreaterThan(0)
+      expect(livingMonsters[1].currentHP).toBeGreaterThan(0)
     })
 
     it('should support common combat checks', () => {
@@ -133,13 +111,13 @@ describe('Monster HP Regression Tests', () => {
       const monster = createMonsterFromTemplate('abhuman', position)
 
       expect(monster).not.toBeNull()
-      expect(monster?.hp).toBeDefined()
+      expect(monster?.currentHP).toBeDefined()
       expect(monster?.maxHP).toBeDefined()
 
       // Common combat checks that should work
-      expect(monster!.hp > 0).toBe(true) // Is alive
-      expect(monster!.hp <= monster!.maxHP).toBe(true) // HP within bounds
-      expect(monster!.active !== false && monster!.position).toBeTruthy() // Has position
+      expect(monster!.currentHP > 0).toBe(true) // Is alive
+      expect(monster!.currentHP <= monster!.maxHP).toBe(true) // HP within bounds
+      expect(monster!.position).toBeTruthy() // Has position
     })
   })
 })

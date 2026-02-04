@@ -1,7 +1,7 @@
 // modules/monsterUtils.ts - Monster spawning and management logic
-import { GameState, Monster, Position, MonsterInstanceV2 } from '../config/types'
+import { GameState, RuntimeMonster, Position, MonsterInstanceV2 } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
-import { hydrateMonsterV2, hydratedMonsterV2ToMonster } from './hydration'
+import { hydrateMonsterV2 } from './hydration'
 import { moveMonsters } from './movement'
 
 // ==================== CONSTANTS ====================
@@ -172,7 +172,7 @@ export const getSpawnPosition = (state: GameState): Position => {
 export const createMonsterFromTemplate = (
   shortName: string,
   position: Position
-): Monster | null => {
+): RuntimeMonster | null => {
   const template = getMonsterTemplate(shortName)
   if (!template) {
     logIfDev(`Monster template not found: ${shortName}`)
@@ -187,11 +187,8 @@ export const createMonsterFromTemplate = (
     currentHP: template.maxHP, // Start at full HP
   }
 
-  // Hydrate the template with the instance
-  const hydrated = hydrateMonsterV2(template, instance)
-
-  // Convert to Monster format for GameState compatibility
-  return hydratedMonsterV2ToMonster(hydrated)
+  // Hydrate the template with the instance to create RuntimeMonster (HydratedMonsterV2)
+  return hydrateMonsterV2(template, instance)
 }
 
 /**
@@ -200,16 +197,16 @@ export const createMonsterFromTemplate = (
  * @param monsters - Array of monsters to search
  * @returns The nearest monster, or null if no living monsters exist
  */
-export const findNearestMonster = (position: Position, monsters: Monster[]): Monster | null => {
+export const findNearestMonster = (position: Position, monsters: RuntimeMonster[]): RuntimeMonster | null => {
   if (!monsters || monsters.length === 0) return null
 
-  // Filter for living monsters (hp > 0 and active)
-  const livingMonsters = monsters.filter((m) => m.hp > 0 && m.active !== false && m.position)
+  // Filter for living monsters (currentHP > 0)
+  const livingMonsters = monsters.filter((m) => m.currentHP > 0 && m.position)
 
   if (livingMonsters.length === 0) return null
 
   // Find the monster with the smallest Euclidean distance
-  let nearestMonster: Monster | null = null
+  let nearestMonster: RuntimeMonster | null = null
   let minDistance = Infinity
 
   for (const monster of livingMonsters) {
