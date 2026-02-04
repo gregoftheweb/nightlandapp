@@ -272,6 +272,125 @@ export interface HydratedMonster extends MonsterTemplate {
   inCombatSlot?: boolean
 }
 
+// ===== V2: Enhanced Template vs Instance Architecture for Monsters and Great Powers =====
+// V2 types provide cleaner separation and support for Great Powers
+// Existing types remain unchanged for compatibility
+
+/**
+ * MonsterTemplateV2 - Static definition of a monster type
+ * Contains only template/definition data, no runtime state or position
+ * Uses shortName as the template ID
+ */
+export interface MonsterTemplateV2 {
+  shortName: string // Acts as the template ID
+  category: string
+  name: string
+  description?: string
+  image?: ImageSourcePropType
+  maxHP: number
+  attack: number
+  ac: number
+  initiative?: number
+  moveRate: number
+  spawnRate?: number
+  maxInstances?: number
+  soulKey: SoulKey
+  width?: number
+  height?: number
+  size?: { width: number; height: number }
+  effects?: Effect[]
+  damage?: number
+  hitBonus?: number
+  weaponType?: WeaponType
+  range?: number
+  zIndex?: number
+}
+
+/**
+ * MonsterInstanceV2 - Runtime instance of a monster with position and state
+ * Contains only runtime data and instance-specific overrides
+ */
+export interface MonsterInstanceV2 {
+  id: string
+  templateId: string // Reference to MonsterTemplateV2.shortName
+  position: Position
+  currentHP: number
+  spawned?: boolean
+  spawnZoneId?: string
+  uiSlot?: number
+  inCombatSlot?: boolean
+  // Instance-specific overrides
+  zIndex?: number
+}
+
+/**
+ * HydratedMonsterV2 - Merged shape of monster template + instance for runtime use
+ * Contains all template data plus instance-specific state
+ */
+export interface HydratedMonsterV2 extends MonsterTemplateV2 {
+  id: string
+  templateId: string
+  position: Position
+  currentHP: number
+  spawned?: boolean
+  spawnZoneId?: string
+  uiSlot?: number
+  inCombatSlot?: boolean
+}
+
+/**
+ * GreatPowerTemplateV2 - Static definition of a Great Power
+ * Contains only template/definition data, no runtime state or position
+ * Uses shortName as the template ID
+ */
+export interface GreatPowerTemplateV2 {
+  shortName: string // Acts as the template ID
+  category: string
+  name: string
+  description?: string
+  image?: ImageSourcePropType
+  maxHP: number
+  attack: number
+  ac: number
+  awakenCondition: string
+  soulKey?: SoulKey
+  width?: number
+  height?: number
+  size?: { width: number; height: number }
+  effects?: Effect[]
+  damage?: number
+  hitBonus?: number
+  weaponType?: WeaponType
+  range?: number
+  zIndex?: number
+}
+
+/**
+ * GreatPowerInstanceV2 - Runtime instance of a Great Power with position and state
+ * Contains only runtime data and instance-specific overrides
+ */
+export interface GreatPowerInstanceV2 {
+  id: string
+  templateId: string // Reference to GreatPowerTemplateV2.shortName
+  position: Position
+  currentHP: number
+  awakened: boolean
+  // Instance-specific overrides
+  zIndex?: number
+}
+
+/**
+ * HydratedGreatPowerV2 - Merged shape of great power template + instance for runtime use
+ * Contains all template data plus instance-specific state
+ */
+export interface HydratedGreatPowerV2 extends GreatPowerTemplateV2 {
+  id: string
+  templateId: string
+  position: Position
+  currentHP: number
+  awakened: boolean
+}
+
 export interface Player {
   name: string
   shortName: string

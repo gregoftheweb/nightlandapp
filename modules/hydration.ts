@@ -13,6 +13,12 @@ import {
   HydratedObject,
   HydratedMonster,
   Monster,
+  MonsterTemplateV2,
+  MonsterInstanceV2,
+  HydratedMonsterV2,
+  GreatPowerTemplateV2,
+  GreatPowerInstanceV2,
+  HydratedGreatPowerV2,
 } from '@/config/types'
 
 /**
@@ -156,4 +162,103 @@ export function hydratedMonsterToMonster(hydrated: HydratedMonster): Monster {
     uiSlot: hydrated.uiSlot,
     inCombatSlot: hydrated.inCombatSlot,
   }
+}
+
+// ===== V2 Hydration Functions =====
+
+/**
+ * Hydrate a monster using V2 types by merging a template with an instance
+ * Instance-specific properties (position, currentHP, spawned, etc.) override template defaults
+ * 
+ * @param template - Static monster template definition (V2)
+ * @param instance - Runtime instance data with position and state (V2)
+ * @returns HydratedMonsterV2 ready for runtime use
+ */
+export function hydrateMonsterV2(
+  template: MonsterTemplateV2,
+  instance: MonsterInstanceV2
+): HydratedMonsterV2 {
+  return {
+    // Spread template first (base definition)
+    ...template,
+    // Then instance properties (state and overrides)
+    id: instance.id,
+    templateId: instance.templateId,
+    position: instance.position,
+    currentHP: instance.currentHP,
+    spawned: instance.spawned,
+    spawnZoneId: instance.spawnZoneId,
+    uiSlot: instance.uiSlot,
+    inCombatSlot: instance.inCombatSlot,
+    // Instance overrides take precedence
+    zIndex: instance.zIndex ?? template.zIndex,
+  }
+}
+
+/**
+ * Hydrate a great power using V2 types by merging a template with an instance
+ * Instance-specific properties (position, currentHP, awakened) override template defaults
+ * 
+ * @param template - Static great power template definition (V2)
+ * @param instance - Runtime instance data with position and state (V2)
+ * @returns HydratedGreatPowerV2 ready for runtime use
+ */
+export function hydrateGreatPowerV2(
+  template: GreatPowerTemplateV2,
+  instance: GreatPowerInstanceV2
+): HydratedGreatPowerV2 {
+  return {
+    // Spread template first (base definition)
+    ...template,
+    // Then instance properties (state and overrides)
+    id: instance.id,
+    templateId: instance.templateId,
+    position: instance.position,
+    currentHP: instance.currentHP,
+    awakened: instance.awakened,
+    // Instance overrides take precedence
+    zIndex: instance.zIndex ?? template.zIndex,
+  }
+}
+
+/**
+ * Batch hydrate multiple monsters using V2 types
+ * Useful for hydrating all monsters in a level
+ * 
+ * @param templates - Map of template shortName -> template (V2)
+ * @param instances - Array of monster instances (V2)
+ * @returns Array of hydrated monsters (V2)
+ */
+export function hydrateMonstersV2(
+  templates: Map<string, MonsterTemplateV2>,
+  instances: MonsterInstanceV2[]
+): HydratedMonsterV2[] {
+  return instances.map((instance) => {
+    const template = templates.get(instance.templateId)
+    if (!template) {
+      throw new Error(`Template not found: ${instance.templateId}`)
+    }
+    return hydrateMonsterV2(template, instance)
+  })
+}
+
+/**
+ * Batch hydrate multiple great powers using V2 types
+ * Useful for hydrating all great powers in a level
+ * 
+ * @param templates - Map of template shortName -> template (V2)
+ * @param instances - Array of great power instances (V2)
+ * @returns Array of hydrated great powers (V2)
+ */
+export function hydrateGreatPowersV2(
+  templates: Map<string, GreatPowerTemplateV2>,
+  instances: GreatPowerInstanceV2[]
+): HydratedGreatPowerV2[] {
+  return instances.map((instance) => {
+    const template = templates.get(instance.templateId)
+    if (!template) {
+      throw new Error(`Template not found: ${instance.templateId}`)
+    }
+    return hydrateGreatPowerV2(template, instance)
+  })
 }
