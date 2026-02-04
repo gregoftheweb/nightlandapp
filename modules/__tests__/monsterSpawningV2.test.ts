@@ -8,7 +8,7 @@
  * - Spawn behavior is unchanged (rates, distance, slotting)
  */
 import { checkMonsterSpawn, getSpawnPosition } from '../monsterUtils'
-import { GameState, Monster, MonsterSpawnConfigV2, Level } from '../../config/types'
+import { GameState, RuntimeMonster, MonsterSpawnConfigV2, Level } from '../../config/types'
 import { getLevel } from '../../config/levels'
 
 // Mock dispatch for capturing spawned monsters
@@ -75,8 +75,8 @@ describe('Monster Spawning V2', () => {
       const state: GameState = {
         level: mockLevel,
         activeMonsters: [
-          { shortName: 'abhuman', id: 'abhuman-1' } as Monster,
-          { shortName: 'abhuman', id: 'abhuman-2' } as Monster,
+          { shortName: 'abhuman', id: 'abhuman-1' } as RuntimeMonster,
+          { shortName: 'abhuman', id: 'abhuman-2' } as RuntimeMonster,
         ],
         gridWidth: 400,
         gridHeight: 400,
@@ -108,7 +108,7 @@ describe('Monster Spawning V2', () => {
       const state: GameState = {
         level: mockLevel,
         activeMonsters: [
-          { shortName: 'abhuman', id: 'abhuman-1', position: { row: 100, col: 100 } } as Monster,
+          { shortName: 'abhuman', id: 'abhuman-1', position: { row: 100, col: 100 } } as RuntimeMonster,
         ],
         gridWidth: 400,
         gridHeight: 400,
@@ -262,8 +262,8 @@ describe('Monster Spawning V2', () => {
           position: { row: 200, col: 200 },
         } as any,
         activeMonsters: [
-          { position: { row: 205, col: 205 } } as Monster,
-          { position: { row: 206, col: 206 } } as Monster,
+          { position: { row: 205, col: 205 } } as RuntimeMonster,
+          { position: { row: 206, col: 206 } } as RuntimeMonster,
         ],
       } as any
 
