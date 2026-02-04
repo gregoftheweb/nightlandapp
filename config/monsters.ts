@@ -1,5 +1,5 @@
 // config/monsters.ts
-import { MonsterTemplateV2, GreatPower } from './types'
+import { MonsterTemplateV2, GreatPower, GreatPowerTemplateV2 } from './types'
 
 import abhumanIMG from '@assets/images/sprites/monsters/abhuman.webp'
 import night_houndIMG from '@assets/images/sprites/monsters/nighthound4.webp'
@@ -35,6 +35,31 @@ export const monsterTemplates: MonsterTemplateV2[] = [
 ]
 
 // -------------------- GREAT POWERS --------------------
+// V2 Templates - Static definitions without runtime state
+export const greatPowerTemplates: GreatPowerTemplateV2[] = [
+  {
+    shortName: 'watcher_se',
+    category: 'greatPower',
+    name: 'Watcher of the South East',
+    description:
+      'An ancient guardian with mystical powers that watches over the southeastern wastes.',
+    image: watcher_seIMG,
+    width: 6,
+    height: 6,
+    maxHP: 150,
+    attack: 15,
+    ac: 16,
+    effects: [
+      {
+        type: 'soulsuck',
+      },
+    ],
+    awakenCondition: 'player_within_range',
+    soulKey: 'str:18,dex:12,con:16,int:14,wis:14,cha:12',
+  },
+]
+
+// Legacy V1 Great Powers - Kept for backward compatibility
 export const greatPowers: GreatPower[] = [
   {
     id: 'watcher_se',
@@ -70,9 +95,9 @@ export const getMonsterTemplate = (shortName: string): MonsterTemplateV2 | undef
   return monsterTemplates.find((monster) => monster.shortName === shortName)
 }
 
-// Get great power template by shortName
-export const getGreatPowerTemplate = (shortName: string): GreatPower | undefined => {
-  return greatPowers.find((power) => power.shortName === shortName)
+// Get great power template by shortName (V2)
+export const getGreatPowerTemplate = (shortName: string): GreatPowerTemplateV2 | undefined => {
+  return greatPowerTemplates.find((power) => power.shortName === shortName)
 }
 
 // Get all monster shortNames for validation

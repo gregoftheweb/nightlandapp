@@ -14,6 +14,7 @@ import {
   GreatPower,
   Item,
   NonCollisionObject,
+  GreatPowerInstanceV2,
 } from './types'
 import {
   getBuildingTemplate,
@@ -25,6 +26,7 @@ import {
 import { getMonsterTemplate, getGreatPowerTemplate } from './monsters'
 import { LevelId } from './levelTypes'
 import { loadSpawnTable, validateLevel } from './levelHelpers'
+import { hydrateGreatPowerV2, hydratedGreatPowerV2ToGreatPower } from '@/modules/hydration'
 
 // Helper function to create object instances from building templates
 const createObjectInstance = (
@@ -172,7 +174,7 @@ const createNonCollisionObject = (
   }
 }
 
-// Helper function to create GreatPower instances for levels
+// Helper function to create GreatPower instances for levels using V2 Template → Instance → Hydrated pipeline
 const createGreatPowerForLevel = (
   shortName: string,
   position: Position,
@@ -183,11 +185,28 @@ const createGreatPowerForLevel = (
     throw new Error(`GreatPower template ${shortName} not found`)
   }
 
-  return {
-    ...template,
+  // Create instance with defaults
+  const instance: GreatPowerInstanceV2 = {
     id: `${shortName}_${position.row}_${position.col}`,
+    templateId: shortName,
     position,
+    currentHP: overrides.hp ?? overrides.maxHP ?? template.maxHP,
+    awakened: overrides.awakened ?? false,
+  }
+
+  // Hydrate to merge template + instance
+  const hydrated = hydrateGreatPowerV2(template, instance)
+
+  // Convert to legacy GreatPower format
+  const greatPower = hydratedGreatPowerV2ToGreatPower(hydrated)
+
+  // Apply any remaining overrides (for attack, ac, etc.)
+  return {
+    ...greatPower,
     ...overrides,
+    // Ensure id and position are not overridden
+    id: instance.id,
+    position: instance.position,
   }
 }
 

@@ -16,6 +16,7 @@ import {
   GreatPowerTemplateV2,
   GreatPowerInstanceV2,
   HydratedGreatPowerV2,
+  GreatPower,
   Position,
   SoulKey,
   Effect,
@@ -217,5 +218,48 @@ export function hydratedMonsterV2ToMonster(hydrated: HydratedMonsterV2): Monster
     hp: currentHP, // Normalized currentHP -> hp for compatibility
     uiSlot: hydrated.uiSlot,
     inCombatSlot: hydrated.inCombatSlot,
+  }
+}
+
+/**
+ * Convert a HydratedGreatPowerV2 to GreatPower format for GameState compatibility
+ * Maps currentHP to hp for backward compatibility with existing code
+ * 
+ * Normalization Guard: If currentHP is null/undefined, defaults to maxHP
+ * This ensures runtime great powers always have valid hp values for combat.
+ * 
+ * @param hydrated - HydratedGreatPowerV2 from V2 hydration
+ * @returns GreatPower in legacy format with guaranteed hp value
+ */
+export function hydratedGreatPowerV2ToGreatPower(hydrated: HydratedGreatPowerV2): GreatPower {
+  // Normalization: ensure hp is never null/undefined
+  const currentHP = hydrated.currentHP ?? hydrated.maxHP
+  
+  return {
+    // Core template properties
+    shortName: hydrated.shortName,
+    category: hydrated.category,
+    name: hydrated.name,
+    description: hydrated.description,
+    image: hydrated.image,
+    maxHP: hydrated.maxHP,
+    attack: hydrated.attack,
+    ac: hydrated.ac,
+    awakenCondition: hydrated.awakenCondition,
+    soulKey: hydrated.soulKey,
+    width: hydrated.width,
+    height: hydrated.height,
+    effects: hydrated.effects,
+    damage: hydrated.damage,
+    hitBonus: hydrated.hitBonus,
+    weaponType: hydrated.weaponType,
+    range: hydrated.range,
+    zIndex: hydrated.zIndex,
+    // Runtime instance properties
+    id: hydrated.id,
+    position: hydrated.position,
+    active: true, // Default runtime state
+    hp: currentHP, // Normalized currentHP -> hp for compatibility
+    awakened: hydrated.awakened,
   }
 }
