@@ -1,5 +1,5 @@
 // modules/combat.ts - Enhanced d20 combat system with all combat logic
-import { GameState, Position, RuntimeMonster } from '../config/types'
+import { GameState, Position, Monster } from '../config/types'
 import { getTextContent, logIfDev } from './utils'
 import { COMBAT_STRINGS } from '@/assets/copy/combat'
 
@@ -326,7 +326,7 @@ export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
 export const setupCombat = (
   state: GameState,
   dispatch: (action: any) => void,
-  monster: RuntimeMonster,
+  monster: Monster,
   playerPosOverride?: Position
 ): void => {
   logIfDev(`\n⚔️ SETTING UP COMBAT with ${monster.name}`)
@@ -453,7 +453,7 @@ export const handleCombatTurn = (
 
 export const checkForCombatCollision = (
   state: GameState,
-  monster: RuntimeMonster,
+  monster: Monster,
   newPosition: Position,
   playerPos: Position
 ): boolean => {

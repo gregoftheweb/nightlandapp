@@ -14,7 +14,7 @@
 import {
   GameState,
   CombatLogEntry,
-  RuntimeMonster,
+  Monster,
   Position,
   NonCollisionObject,
 } from '../config/types'

@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { View, Image, StyleSheet, Dimensions, ImageSourcePropType } from 'react-native'
 import type {
-  RuntimeMonster,
+  Monster,
   LevelObjectInstance,
   GameState,
   Item,
-  RuntimeGreatPower,
+  GreatPower,
   NonCollisionObject,
 } from '@/config/types'
 import { InfoBox } from './InfoBox'
@@ -34,10 +34,10 @@ interface GameBoardProps {
   state: GameState
   cameraOffset: { offsetX: number; offsetY: number }
   onPlayerTap?: () => void
-  onMonsterTap?: (monster: RuntimeMonster) => void
+  onMonsterTap?: (monster: Monster) => void
   onBuildingTap?: (building: LevelObjectInstance) => void
   onItemTap?: (item: Item) => void
-  onGreatPowerTap?: (greatPower: RuntimeGreatPower) => void
+  onGreatPowerTap?: (greatPower: GreatPower) => void
   onNonCollisionObjectTap?: (obj: NonCollisionObject) => void
   onDeathInfoBoxClose?: () => void
   onProjectileComplete?: (projectileId: string) => void
@@ -119,7 +119,7 @@ export default function GameBoard({
 
   // Memoized entity position maps for O(1) lookups (perf: replaces linear scans)
   const monsterPositionMap = useMemo(() => {
-    const map = new Map<string, RuntimeMonster>()
+    const map = new Map<string, Monster>()
     activeMonsters.forEach((m) => {
       if (m.position && !m.inCombatSlot) {
         map.set(`${m.position.row}-${m.position.col}`, m)
@@ -129,7 +129,7 @@ export default function GameBoard({
   }, [activeMonsters])
 
   const greatPowerPositionMap = useMemo(() => {
-    const map = new Map<string, RuntimeGreatPower>()
+    const map = new Map<string, GreatPower>()
     levelGreatPowers.forEach((gp) => {
       if (gp.position) {
         map.set(`${gp.position.row}-${gp.position.col}`, gp)
@@ -150,13 +150,13 @@ export default function GameBoard({
 
   // Fast position finders using maps (perf: O(1) vs O(n))
   const findMonsterAtPosition = useCallback(
-    (worldRow: number, worldCol: number): RuntimeMonster | undefined =>
+    (worldRow: number, worldCol: number): Monster | undefined =>
       monsterPositionMap.get(`${worldRow}-${worldCol}`),
     [monsterPositionMap]
   )
 
   const findGreatPowerAtPosition = useCallback(
-    (worldRow: number, worldCol: number): RuntimeGreatPower | undefined =>
+    (worldRow: number, worldCol: number): GreatPower | undefined =>
       greatPowerPositionMap.get(`${worldRow}-${worldCol}`),
     [greatPowerPositionMap]
   )
@@ -304,7 +304,7 @@ export default function GameBoard({
   }, [state.player, level?.name, level?.description, onPlayerTap, showInfo])
 
   const handleMonsterTap = useCallback(
-    (monster: RuntimeMonster) => {
+    (monster: Monster) => {
       if (__DEV__) console.log('handleMonsterTap called, monster:', monster)
 
       if (!state.rangedAttackMode) {
@@ -320,7 +320,7 @@ export default function GameBoard({
   )
 
   const handleGreatPowerTap = useCallback(
-    (greatPower: RuntimeGreatPower) => {
+    (greatPower: GreatPower) => {
       if (__DEV__) console.log('handleGreatPowerTap called, greatPower:', greatPower)
       const statusInfo = greatPower.awakened ? 'AWAKENED' : 'Sleeping'
       showInfo(
@@ -468,7 +468,7 @@ export default function GameBoard({
     if (!state.inCombat || attackSlots.length === 0) return []
 
     return attackSlots
-      .map((monster: RuntimeMonster, index) => {
+      .map((monster: Monster, index) => {
         if (!monster.position || !monster.uiSlot) return null
 
         const screenRow = monster.position.row - cameraOffset.offsetY
@@ -967,8 +967,8 @@ export default function GameBoard({
 // Utility functions
 const getCellBackgroundColor = (
   isPlayer: boolean,
-  hasMonster: RuntimeMonster | undefined,
-  _hasGreatPower: RuntimeGreatPower | undefined,
+  hasMonster: Monster | undefined,
+  _hasGreatPower: GreatPower | undefined,
   _inCombat: boolean
 ) => {
   if (isPlayer) return 'rgba(45, 81, 105, 0.4)'
@@ -978,8 +978,8 @@ const getCellBackgroundColor = (
 
 const getCellBorderColor = (
   isPlayer: boolean,
-  hasMonster: RuntimeMonster | undefined,
-  _hasGreatPower: RuntimeGreatPower | undefined,
+  hasMonster: Monster | undefined,
+  _hasGreatPower: GreatPower | undefined,
   _inCombat: boolean,
   hideActive: boolean
 ) => {
@@ -989,11 +989,11 @@ const getCellBorderColor = (
   return 'rgba(17, 17, 17, 0.3)'
 }
 
-const getMonsterImage = (monster: RuntimeMonster) => {
+const getMonsterImage = (monster: Monster) => {
   return monster.image || require('@assets/images/sprites/monsters/abhuman.webp')
 }
 
-const getGreatPowerImage = (greatPower: RuntimeGreatPower) => {
+const getGreatPowerImage = (greatPower: GreatPower) => {
   return greatPower.image || require('@assets/images/sprites/monsters/watcherse.webp')
 }
 

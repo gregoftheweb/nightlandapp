@@ -2,9 +2,9 @@
 import {
   Position,
   GameState,
-  RuntimeMonster,
+  Monster,
   Item,
-  RuntimeGreatPower,
+  GreatPower,
   LevelObjectInstance,
   NonCollisionObject,
   Player,
@@ -48,8 +48,8 @@ export function isPlayerOnObject(
  */
 export type ObjectAtPoint =
   | { type: 'player'; data: Player }
-  | { type: 'monster'; data: RuntimeMonster }
-  | { type: 'greatPower'; data: RuntimeGreatPower }
+  | { type: 'monster'; data: Monster }
+  | { type: 'greatPower'; data: GreatPower }
   | { type: 'item'; data: Item }
   | { type: 'building'; data: LevelObjectInstance }
   | { type: 'nonCollisionObject'; data: NonCollisionObject }

@@ -49,7 +49,7 @@
  * ============================================================================
  */
 
-import { GameState, Item, Effect, RuntimeMonster, Position } from '../config/types'
+import { GameState, Item, Effect, Monster, Position } from '../config/types'
 import { createMonsterFromTemplate } from './monsterUtils'
 import { logIfDev } from './utils'
 
@@ -332,7 +332,7 @@ const executeSwarmEffect: EffectHandler<'swarm'> = (effect, context) => {
 
   const spawnRange = effect.range
   const spawnPosition = position || state.player.position
-  const newMonsters: RuntimeMonster[] = []
+  const newMonsters: Monster[] = []
 
   // Create the specified number of monsters
   for (let i = 0; i < effect.count; i++) {

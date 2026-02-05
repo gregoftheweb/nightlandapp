@@ -3,11 +3,11 @@
  *
  * Tests verify that:
  * - createMonsterFromTemplate uses the MonsterTemplate + MonsterInstance pattern
- * - Hydrated monsters (RuntimeMonster) are returned correctly
+ * - Hydrated monsters (Monster) are returned correctly
  * - Monster instances have proper IDs, positions, and currentHP
  */
 import { createMonsterFromTemplate } from '../monsterUtils'
-import { RuntimeMonster } from '../../config/types'
+import { Monster } from '../../config/types'
 
 describe('Monster Creation', () => {
   describe('createMonsterFromTemplate', () => {
@@ -57,11 +57,11 @@ describe('Monster Creation', () => {
       expect(monster1?.id).not.toBe(monster2?.id)
     })
 
-    it('should create monsters that are compatible with RuntimeMonster type', () => {
+    it('should create monsters that are compatible with Monster type', () => {
       const position = { row: 10, col: 10 }
       const monster = createMonsterFromTemplate('abhuman', position)
 
-      // Should have all required RuntimeMonster properties
+      // Should have all required Monster properties
       expect(monster).toHaveProperty('id')
       expect(monster).toHaveProperty('position')
       expect(monster).toHaveProperty('currentHP')
@@ -73,8 +73,8 @@ describe('Monster Creation', () => {
       expect(monster).toHaveProperty('name')
       expect(monster).toHaveProperty('category')
 
-      // Type check - should be assignable to RuntimeMonster
-      const monsterVar: RuntimeMonster | null = monster
+      // Type check - should be assignable to Monster
+      const monsterVar: Monster | null = monster
       expect(monsterVar).not.toBeNull()
     })
 
