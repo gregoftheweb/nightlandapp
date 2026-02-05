@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native'
 import { exitSubGame } from '@modules/subGames'
-import { useGameContext } from '@/context/GameContext'
+import { useGameContext } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'

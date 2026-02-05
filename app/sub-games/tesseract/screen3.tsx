@@ -2,7 +2,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
-import { useGameContext } from '@/context/GameContext'
+import { useGameContext } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { subGameTheme } from '../_shared/subGameTheme'
 

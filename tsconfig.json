@@ -9,7 +9,9 @@
       "@assets/*": ["assets/*"],
       "@modules/*": ["modules/*"],
       "@components/*": ["components/*"],
-      "@config/*": ["config/*"]
+      "@config/*": ["config/*"],
+      "@context/*": ["context/*"],
+      "@hooks/*": ["hooks/*"]
     }
   },
   "include": [

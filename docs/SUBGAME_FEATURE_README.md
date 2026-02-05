@@ -119,7 +119,7 @@ Create `app/sub-games/my-new-puzzle/index.tsx`:
 ```typescript
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useGameContext } from '@/context/GameContext';
+import { useGameContext } from '@context/GameContext';
 import { exitSubGame } from '@/lib/subGames';
 
 export default function MyNewPuzzle() {
