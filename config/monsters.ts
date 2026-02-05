@@ -1,5 +1,5 @@
 // config/monsters.ts
-import { MonsterTemplateV2, GreatPowerTemplateV2 } from './types'
+import { MonsterTemplate, GreatPowerTemplate } from './types'
 
 import abhumanIMG from '@assets/images/sprites/monsters/abhuman.webp'
 import night_houndIMG from '@assets/images/sprites/monsters/nighthound4.webp'
@@ -7,7 +7,7 @@ import watcher_seIMG from '@assets/images/sprites/monsters/watcherse.webp'
 
 // -------------------- REGULAR MONSTERS --------------------
 // Base monster templates - Static definitions without runtime state
-export const monsterTemplates: MonsterTemplateV2[] = [
+export const monsterTemplates: MonsterTemplate[] = [
   {
     kind: 'monster',
     shortName: 'abhuman',
@@ -35,8 +35,8 @@ export const monsterTemplates: MonsterTemplateV2[] = [
 ]
 
 // -------------------- GREAT POWERS --------------------
-// V2 Templates - Static definitions without runtime state
-export const greatPowerTemplates: GreatPowerTemplateV2[] = [
+// Templates - Static definitions without runtime state
+export const greatPowerTemplates: GreatPowerTemplate[] = [
   {
     kind: 'greatPower',
     shortName: 'watcher_se',
@@ -62,12 +62,12 @@ export const greatPowerTemplates: GreatPowerTemplateV2[] = [
 // -------------------- HELPER FUNCTIONS --------------------
 
 // Get monster template by shortName
-export const getMonsterTemplate = (shortName: string): MonsterTemplateV2 | undefined => {
+export const getMonsterTemplate = (shortName: string): MonsterTemplate | undefined => {
   return monsterTemplates.find((monster) => monster.shortName === shortName)
 }
 
-// Get great power template by shortName (V2)
-export const getGreatPowerTemplate = (shortName: string): GreatPowerTemplateV2 | undefined => {
+// Get great power template by shortName
+export const getGreatPowerTemplate = (shortName: string): GreatPowerTemplate | undefined => {
   return greatPowerTemplates.find((power) => power.shortName === shortName)
 }
 
@@ -82,6 +82,6 @@ export const getAvailableGreatPowerTypes = (): string[] => {
 }
 
 // Get monster templates as a Map for hydration
-export const getMonsterTemplateMap = (): Map<string, MonsterTemplateV2> => {
+export const getMonsterTemplateMap = (): Map<string, MonsterTemplate> => {
   return new Map(monsterTemplates.map((template) => [template.shortName, template]))
 }

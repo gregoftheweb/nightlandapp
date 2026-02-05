@@ -1,5 +1,5 @@
 // modules/turnManager.ts - Clean turn-based game flow orchestration
-import { GameState, Position, RuntimeMonster, MonsterInstanceV2 } from '../config/types'
+import { GameState, Position, RuntimeMonster, MonsterInstance } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
 import { hydrateMonsterV2 } from './hydration'
 import { handleMoveMonsters } from './monsterUtils'
@@ -372,8 +372,8 @@ export const initializeStartingMonsters = (
       // Unique ID to prevent React key duplicates during restarts
       const uniqueId = `abhuman-init-${timestamp}-${i}`
 
-      // Create MonsterInstanceV2 with runtime state
-      const instance: MonsterInstanceV2 = {
+      // Create MonsterInstance with runtime state
+      const instance: MonsterInstance = {
         id: uniqueId,
         templateId: 'abhuman',
         position: { row: spawnRow, col: spawnCol },

@@ -195,27 +195,27 @@ export interface LevelObjectInstance extends EntityBase {
 //    - Contain NO runtime state (no position, id, currentHP, spawned, etc.)
 //    - Use maxHP (not hp), no active flag, no lastTrigger
 //    - Extend EntityTemplate for common fields
-//    - Examples: MonsterTemplateV2, GreatPowerTemplateV2, GameObjectTemplate
+//    - Examples: MonsterTemplate, GreatPowerTemplate, GameObjectTemplate
 //
 // 2. INSTANCES (Runtime State)
 //    - Contain ONLY runtime data: id, templateId, position, currentHP
 //    - Reference template via templateId (maps to template.shortName)
 //    - Hold instance-specific overrides (zIndex, rotation, etc.)
-//    - Examples: MonsterInstanceV2, GreatPowerInstanceV2, ObjectInstance
+//    - Examples: MonsterInstance, GreatPowerInstance, ObjectInstance
 //
 // 3. HYDRATED (Runtime Shape = Template + Instance)
 //    - Merge template data with instance state
 //    - Provide complete entity for gameplay logic
 //    - Created by hydration functions (e.g., hydrateMonsterV2)
-//    - Examples: HydratedMonsterV2, HydratedGreatPowerV2, HydratedObject
+//    - Examples: Monster, GreatPower, HydratedObject
 //
 // MIGRATION STATUS:
-// - V2 types are the target architecture (use these going forward) ✅
-// - V1 types removed from types.ts (kept in hydration.ts for compatibility) ✅
-// - GameState.activeMonsters NOW USES RuntimeMonster (HydratedMonsterV2) ✅
-// - GameState.attackSlots NOW USES RuntimeMonster (HydratedMonsterV2) ✅
-// - GameState.waitingMonsters NOW USES RuntimeMonster (HydratedMonsterV2) ✅
-// - All runtime monster operations now use RuntimeMonster and currentHP ✅
+// - V2 types are now the canonical types (MonsterTemplate, MonsterInstance, Monster, etc.) ✅
+// - Legacy V1 types removed from types.ts (kept in hydration.ts for compatibility) ✅
+// - GameState.activeMonsters NOW USES Monster (RuntimeMonster) ✅
+// - GameState.attackSlots NOW USES Monster (RuntimeMonster) ✅
+// - GameState.waitingMonsters NOW USES Monster (RuntimeMonster) ✅
+// - All runtime monster operations now use RuntimeMonster/Monster and currentHP ✅
 // - Legacy Monster type DELETED - no longer needed ✅
 // - V2 to V1 conversion bridge (hydratedMonsterV2ToMonster) removed ✅
 
@@ -305,15 +305,15 @@ export interface HydratedObject extends GameObjectTemplate {
 }
 
 // ===== V2: Enhanced Template vs Instance Architecture for Monsters and Great Powers =====
-// V2 types provide cleaner separation and are the preferred long-term architecture
-// Converging all types to V2 - no V3 types will be created
+// These types provide cleaner separation and are the canonical long-term architecture
+// No V3 types will be created - these are the final types
 
 /**
- * MonsterTemplateV2 - Static definition of a monster type
+ * MonsterTemplate - Static definition of a monster type
  * Extends EntityTemplate with monster-specific combat and behavior fields
  * Contains only template/definition data, no runtime state or position
  */
-export interface MonsterTemplateV2 extends EntityTemplate<'monster', MonsterCategory> {
+export interface MonsterTemplate extends EntityTemplate<'monster', MonsterCategory> {
   maxHP: MaxHP
   attack: number
   ac: number
@@ -331,12 +331,12 @@ export interface MonsterTemplateV2 extends EntityTemplate<'monster', MonsterCate
 }
 
 /**
- * MonsterInstanceV2 - Runtime instance of a monster with position and state
+ * MonsterInstance - Runtime instance of a monster with position and state
  * Contains only runtime data and instance-specific overrides
  */
-export interface MonsterInstanceV2 {
+export interface MonsterInstance {
   id: string
-  templateId: string // Reference to MonsterTemplateV2.shortName
+  templateId: string // Reference to MonsterTemplate.shortName
   position: Position
   currentHP: CurrentHP
   spawned?: boolean
@@ -348,10 +348,10 @@ export interface MonsterInstanceV2 {
 }
 
 /**
- * HydratedMonsterV2 - Merged shape of monster template + instance for runtime use
+ * Monster - Merged shape of monster template + instance for runtime use (hydrated monster)
  * Contains all template data plus instance-specific state
  */
-export interface HydratedMonsterV2 extends MonsterTemplateV2 {
+export interface Monster extends MonsterTemplate {
   id: string
   templateId: string
   position: Position
@@ -363,11 +363,11 @@ export interface HydratedMonsterV2 extends MonsterTemplateV2 {
 }
 
 /**
- * GreatPowerTemplateV2 - Static definition of a Great Power
+ * GreatPowerTemplate - Static definition of a Great Power
  * Extends EntityTemplate with great power-specific fields
  * Contains only template/definition data, no runtime state or position
  */
-export interface GreatPowerTemplateV2 extends EntityTemplate<'greatPower', GreatPowerCategory> {
+export interface GreatPowerTemplate extends EntityTemplate<'greatPower', GreatPowerCategory> {
   maxHP: MaxHP
   attack: number
   ac: number
@@ -382,12 +382,12 @@ export interface GreatPowerTemplateV2 extends EntityTemplate<'greatPower', Great
 }
 
 /**
- * GreatPowerInstanceV2 - Runtime instance of a Great Power with position and state
+ * GreatPowerInstance - Runtime instance of a Great Power with position and state
  * Contains only runtime data and instance-specific overrides
  */
-export interface GreatPowerInstanceV2 {
+export interface GreatPowerInstance {
   id: string
-  templateId: string // Reference to GreatPowerTemplateV2.shortName
+  templateId: string // Reference to GreatPowerTemplate.shortName
   position: Position
   currentHP: CurrentHP
   awakened: boolean
@@ -396,10 +396,10 @@ export interface GreatPowerInstanceV2 {
 }
 
 /**
- * HydratedGreatPowerV2 - Merged shape of great power template + instance for runtime use
+ * GreatPower - Merged shape of great power template + instance for runtime use (hydrated great power)
  * Contains all template data plus instance-specific state
  */
-export interface HydratedGreatPowerV2 extends GreatPowerTemplateV2 {
+export interface GreatPower extends GreatPowerTemplate {
   id: string
   templateId: string
   position: Position
@@ -412,18 +412,18 @@ export interface HydratedGreatPowerV2 extends GreatPowerTemplateV2 {
 // These define what types are actually used during gameplay
 
 /**
- * RuntimeMonster - The ONLY runtime monster representation used in GameState
- * Points to HydratedMonsterV2 (Template + Instance merged shape)
- * All combat and monster management code should use this type
+ * RuntimeMonster - Compatibility alias for Monster (hydrated runtime monster)
+ * Points to Monster (Template + Instance merged shape)
+ * All combat and monster management code should use this type or Monster directly
  */
-export type RuntimeMonster = HydratedMonsterV2
+export type RuntimeMonster = Monster
 
 /**
- * RuntimeGreatPower - The ONLY runtime great power representation used in GameState
- * Points to HydratedGreatPowerV2 (Template + Instance merged shape)
- * All great power logic should use this type
+ * RuntimeGreatPower - Compatibility alias for GreatPower (hydrated runtime great power)
+ * Points to GreatPower (Template + Instance merged shape)
+ * All great power logic should use this type or GreatPower directly
  */
-export type RuntimeGreatPower = HydratedGreatPowerV2
+export type RuntimeGreatPower = GreatPower
 
 export interface Player {
   name: string
@@ -587,7 +587,7 @@ export interface BossEncounter {
 }
 
 export interface MonsterSpawnConfigV2 {
-  templateId: string // maps to MonsterTemplateV2.shortName
+  templateId: string // maps to MonsterTemplate.shortName
   spawnRate: number
   maxInstances: number
 }
@@ -617,8 +617,8 @@ export interface Level {
   // V2 template/instance/hydration architecture support
   schemaVersion?: 1 | 2 // Schema version marker (1 = legacy, 2 = template/instance)
   objectInstancesV2?: ObjectInstance[] // V2 object instances (used when schemaVersion === 2)
-  monsterInstancesV2?: MonsterInstanceV2[] // V2 monster instances (used when schemaVersion === 2)
-  greatPowerInstancesV2?: GreatPowerInstanceV2[] // V2 great power instances (used when schemaVersion === 2)
+  monsterInstancesV2?: MonsterInstance[] // V2 monster instances (used when schemaVersion === 2)
+  greatPowerInstancesV2?: GreatPowerInstance[] // V2 great power instances (used when schemaVersion === 2)
   monsterSpawnConfigsV2?: MonsterSpawnConfigV2[] // V2 monster spawn configurations
 }
 
