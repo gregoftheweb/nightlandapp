@@ -138,8 +138,8 @@ Modified `getCellBorderColor()`:
 ```typescript
 const getCellBorderColor = (
   isPlayer: boolean,
-  hasMonster: Monster | undefined,
-  _hasGreatPower: GreatPower | undefined,
+  hasMonster: RuntimeMonster | undefined,
+  _hasGreatPower: RuntimeGreatPower | undefined,
   _inCombat: boolean,
   hideActive: boolean
 ) => {

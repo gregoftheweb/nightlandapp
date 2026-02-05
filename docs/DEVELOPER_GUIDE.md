@@ -412,7 +412,7 @@ getRangedWeapons(): Item[]
 
 // Monsters
 getMonsterTemplate(shortName: string): MonsterTemplateV2 | undefined
-getGreatPowerTemplate(shortName: string): GreatPower | undefined
+getGreatPowerTemplate(shortName: string): GreatPowerTemplateV2 | undefined
 
 // Objects
 getBuildingTemplate(shortName: string): GameObject | undefined
