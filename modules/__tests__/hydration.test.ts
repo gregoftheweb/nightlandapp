@@ -14,7 +14,6 @@ import {
   hydrateGreatPowerV2,
   hydrateMonstersV2,
   hydrateGreatPowersV2,
-  hydratedGreatPowerV2ToGreatPower,
 } from '../hydration'
 import {
   GameObjectTemplate,
@@ -600,100 +599,6 @@ describe('hydration module', () => {
       expect(() => hydrateGreatPowersV2(templates, instances)).toThrow(
         'Template not found: missing-power-v2'
       )
-    })
-  })
-
-  describe('hydratedGreatPowerV2ToGreatPower', () => {
-    it('should convert HydratedGreatPowerV2 to GreatPower format', () => {
-      const template: GreatPowerTemplateV2 = {
-        kind: 'greatPower',
-        shortName: 'test-power',
-        category: 'greatPower',
-        name: 'Test Power',
-        description: 'A test great power',
-        maxHP: 500,
-        attack: 25,
-        ac: 20,
-        awakenCondition: 'player_nearby',
-      }
-
-      const instance: GreatPowerInstanceV2 = {
-        id: 'test-power-1',
-        templateId: 'test-power',
-        position: { row: 100, col: 100 },
-        currentHP: 450,
-        awakened: true,
-      }
-
-      const hydrated = hydrateGreatPowerV2(template, instance)
-      const greatPower = hydratedGreatPowerV2ToGreatPower(hydrated)
-
-      expect(greatPower.id).toBe('test-power-1')
-      expect(greatPower.position).toEqual({ row: 100, col: 100 })
-      expect(greatPower.hp).toBe(450) // currentHP mapped to hp
-      expect(greatPower.maxHP).toBe(500)
-      expect(greatPower.attack).toBe(25)
-      expect(greatPower.ac).toBe(20)
-      expect(greatPower.awakened).toBe(true)
-      expect(greatPower.awakenCondition).toBe('player_nearby')
-      expect(greatPower.active).toBe(true) // Default runtime state
-    })
-
-    it('should normalize null/undefined currentHP to maxHP', () => {
-      const template: GreatPowerTemplateV2 = {
-        kind: 'greatPower',
-        shortName: 'power-with-null-hp',
-        category: 'greatPower',
-        name: 'Power with Null HP',
-        maxHP: 300,
-        attack: 15,
-        ac: 18,
-        awakenCondition: 'player_in_range',
-      }
-
-      const instance: GreatPowerInstanceV2 = {
-        id: 'power-1',
-        templateId: 'power-with-null-hp',
-        position: { row: 50, col: 50 },
-        currentHP: null as any, // Simulate null currentHP
-        awakened: false,
-      }
-
-      const hydrated = hydrateGreatPowerV2(template, instance)
-      const greatPower = hydratedGreatPowerV2ToGreatPower(hydrated)
-
-      expect(greatPower.hp).toBe(300) // Should default to maxHP
-    })
-
-    it('should preserve optional fields from template', () => {
-      const template: GreatPowerTemplateV2 = {
-        kind: 'greatPower',
-        shortName: 'power-with-extras',
-        category: 'greatPower',
-        name: 'Power with Extras',
-        maxHP: 400,
-        attack: 20,
-        ac: 19,
-        awakenCondition: 'always',
-        width: 8,
-        height: 8,
-        effects: [{ type: 'soulsuck' }],
-      }
-
-      const instance: GreatPowerInstanceV2 = {
-        id: 'power-extras-1',
-        templateId: 'power-with-extras',
-        position: { row: 75, col: 75 },
-        currentHP: 400,
-        awakened: false,
-      }
-
-      const hydrated = hydrateGreatPowerV2(template, instance)
-      const greatPower = hydratedGreatPowerV2ToGreatPower(hydrated)
-
-      expect(greatPower.width).toBe(8)
-      expect(greatPower.height).toBe(8)
-      expect(greatPower.effects).toEqual([{ type: 'soulsuck' }])
     })
   })
 })

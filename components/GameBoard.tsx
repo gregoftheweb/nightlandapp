@@ -6,7 +6,7 @@ import type {
   LevelObjectInstance,
   GameState,
   Item,
-  GreatPower,
+  RuntimeGreatPower,
   NonCollisionObject,
 } from '@/config/types'
 import { InfoBox } from './InfoBox'
@@ -37,7 +37,7 @@ interface GameBoardProps {
   onMonsterTap?: (monster: RuntimeMonster) => void
   onBuildingTap?: (building: LevelObjectInstance) => void
   onItemTap?: (item: Item) => void
-  onGreatPowerTap?: (greatPower: GreatPower) => void
+  onGreatPowerTap?: (greatPower: RuntimeGreatPower) => void
   onNonCollisionObjectTap?: (obj: NonCollisionObject) => void
   onDeathInfoBoxClose?: () => void
   onProjectileComplete?: (projectileId: string) => void
@@ -129,9 +129,9 @@ export default function GameBoard({
   }, [activeMonsters])
 
   const greatPowerPositionMap = useMemo(() => {
-    const map = new Map<string, GreatPower>()
+    const map = new Map<string, RuntimeGreatPower>()
     levelGreatPowers.forEach((gp) => {
-      if (gp.position && gp.active !== false) {
+      if (gp.position) {
         map.set(`${gp.position.row}-${gp.position.col}`, gp)
       }
     })
@@ -156,7 +156,7 @@ export default function GameBoard({
   )
 
   const findGreatPowerAtPosition = useCallback(
-    (worldRow: number, worldCol: number): GreatPower | undefined =>
+    (worldRow: number, worldCol: number): RuntimeGreatPower | undefined =>
       greatPowerPositionMap.get(`${worldRow}-${worldCol}`),
     [greatPowerPositionMap]
   )
@@ -320,14 +320,14 @@ export default function GameBoard({
   )
 
   const handleGreatPowerTap = useCallback(
-    (greatPower: GreatPower) => {
+    (greatPower: RuntimeGreatPower) => {
       if (__DEV__) console.log('handleGreatPowerTap called, greatPower:', greatPower)
       const statusInfo = greatPower.awakened ? 'AWAKENED' : 'Sleeping'
       showInfo(
         greatPower.name || greatPower.shortName || 'Great Power',
         `${
           greatPower.description || 'An ancient entity of immense power.'
-        }\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${greatPower.maxHP}\nAC: ${
+        }\n\nStatus: ${statusInfo}\nHP: ${greatPower.currentHP}/${greatPower.maxHP}\nAC: ${
           greatPower.ac
         }\nAttack: ${greatPower.attack}`,
         getGreatPowerImage(greatPower)
@@ -600,7 +600,7 @@ export default function GameBoard({
 
     return levelGreatPowers
       .map((greatPower, index) => {
-        if (!greatPower.position || greatPower.active === false) return null
+        if (!greatPower.position) return null
 
         const screenRow = greatPower.position.row - cameraOffset.offsetY
         const screenCol = greatPower.position.col - cameraOffset.offsetX
@@ -968,7 +968,7 @@ export default function GameBoard({
 const getCellBackgroundColor = (
   isPlayer: boolean,
   hasMonster: RuntimeMonster | undefined,
-  _hasGreatPower: GreatPower | undefined,
+  _hasGreatPower: RuntimeGreatPower | undefined,
   _inCombat: boolean
 ) => {
   if (isPlayer) return 'rgba(45, 81, 105, 0.4)'
@@ -979,7 +979,7 @@ const getCellBackgroundColor = (
 const getCellBorderColor = (
   isPlayer: boolean,
   hasMonster: RuntimeMonster | undefined,
-  _hasGreatPower: GreatPower | undefined,
+  _hasGreatPower: RuntimeGreatPower | undefined,
   _inCombat: boolean,
   hideActive: boolean
 ) => {
@@ -993,7 +993,7 @@ const getMonsterImage = (monster: RuntimeMonster) => {
   return monster.image || require('@assets/images/sprites/monsters/abhuman.webp')
 }
 
-const getGreatPowerImage = (greatPower: GreatPower) => {
+const getGreatPowerImage = (greatPower: RuntimeGreatPower) => {
   return greatPower.image || require('@assets/images/sprites/monsters/watcherse.webp')
 }
 

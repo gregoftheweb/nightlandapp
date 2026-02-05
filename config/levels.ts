@@ -10,7 +10,7 @@ import {
   Level,
   Position,
   LevelObjectInstance,
-  GreatPower,
+  RuntimeGreatPower,
   Item,
   NonCollisionObject,
   GreatPowerInstanceV2,
@@ -25,7 +25,7 @@ import {
 import { getGreatPowerTemplate } from './monsters'
 import { LevelId } from './levelTypes'
 import { loadSpawnTableV2, validateLevel } from './levelHelpers'
-import { hydrateGreatPowerV2, hydratedGreatPowerV2ToGreatPower } from '@/modules/hydration'
+import { hydrateGreatPowerV2 } from '@/modules/hydration'
 
 // Helper function to create object instances from building templates
 const createObjectInstance = (
@@ -140,17 +140,17 @@ const createNonCollisionObject = (
 const createGreatPowerForLevel = (
   shortName: string,
   position: Position,
-  overrides: Partial<GreatPower> = {}
-): GreatPower => {
+  overrides: Partial<RuntimeGreatPower> = {}
+): RuntimeGreatPower => {
   const template = getGreatPowerTemplate(shortName)
   if (!template) {
     throw new Error(`GreatPower template ${shortName} not found`)
   }
 
-  // Determine initial HP (backward compatible with legacy 'hp' field in overrides)
-  const initialHP = overrides.hp ?? overrides.maxHP ?? template.maxHP
+  // Determine initial HP - support both legacy hp and currentHP in overrides
+  const initialHP = overrides.currentHP ?? (overrides as any).hp ?? template.maxHP
 
-  // Create V2 instance with defaults (mapping legacy hp to currentHP)
+  // Create V2 instance with defaults
   const instance: GreatPowerInstanceV2 = {
     id: `${shortName}_${position.row}_${position.col}`,
     templateId: shortName,
@@ -162,22 +162,19 @@ const createGreatPowerForLevel = (
   // Hydrate to merge template + instance
   const hydrated = hydrateGreatPowerV2(template, instance)
 
-  // Convert to legacy GreatPower format
-  const greatPower = hydratedGreatPowerV2ToGreatPower(hydrated)
-
-  // Extract overrides that should not be reapplied (hp and awakened come from the pipeline)
-  const { hp, awakened, ...otherOverrides } = overrides
+  // Extract overrides that should not be reapplied (currentHP and awakened come from the pipeline)
+  const { currentHP, awakened, ...otherOverrides } = overrides
   
-  // Return final GreatPower with template/instance values and remaining overrides
+  // Return final RuntimeGreatPower with template/instance values and remaining overrides
   // Order matters: otherOverrides can customize attack, ac, maxHP, etc. but
-  // id, position, hp, and awakened are explicitly set from the pipeline to avoid confusion
+  // id, position, currentHP, and awakened are explicitly set from the pipeline
   return {
-    ...greatPower,
+    ...hydrated,
     ...otherOverrides,
     id: instance.id,
     position: instance.position,
-    hp: greatPower.hp,
-    awakened: greatPower.awakened,
+    currentHP: hydrated.currentHP,
+    awakened: hydrated.awakened,
   }
 }
 
@@ -316,7 +313,7 @@ export const levels: Record<LevelId, Level> = {
         'watcher_se',
         { row: 380, col: 180 },
         {
-          hp: 1000,
+          currentHP: 1000,
           maxHP: 1000,
           attack: 50,
           ac: 25,

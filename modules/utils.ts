@@ -4,7 +4,7 @@ import {
   GameState,
   RuntimeMonster,
   Item,
-  GreatPower,
+  RuntimeGreatPower,
   LevelObjectInstance,
   NonCollisionObject,
   Player,
@@ -49,7 +49,7 @@ export function isPlayerOnObject(
 export type ObjectAtPoint =
   | { type: 'player'; data: Player }
   | { type: 'monster'; data: RuntimeMonster }
-  | { type: 'greatPower'; data: GreatPower }
+  | { type: 'greatPower'; data: RuntimeGreatPower }
   | { type: 'item'; data: Item }
   | { type: 'building'; data: LevelObjectInstance }
   | { type: 'nonCollisionObject'; data: NonCollisionObject }
@@ -102,7 +102,7 @@ export function getObjectAtPoint(
   // Priority 3: Great Powers
   if (state.level?.greatPowers) {
     for (const gp of state.level.greatPowers) {
-      if (gp.position && gp.active !== false) {
+      if (gp.position) {
         const gpWidth = gp.width || 1
         const gpHeight = gp.height || 1
         if (

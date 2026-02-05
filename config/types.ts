@@ -443,6 +443,13 @@ export interface HydratedGreatPowerV2 extends GreatPowerTemplateV2 {
  */
 export type RuntimeMonster = HydratedMonsterV2
 
+/**
+ * RuntimeGreatPower - The ONLY runtime great power representation used in GameState
+ * Points to HydratedGreatPowerV2 (Template + Instance merged shape)
+ * All great power logic should use this type
+ */
+export type RuntimeGreatPower = HydratedGreatPowerV2
+
 export interface Player {
   name: string
   shortName: string
@@ -626,7 +633,7 @@ export interface Level {
   items: Item[]
   objects: LevelObjectInstance[]
   nonCollisionObjects?: NonCollisionObject[]
-  greatPowers?: GreatPower[]
+  greatPowers?: RuntimeGreatPower[]
   bossEncounter?: BossEncounter
   completionConditions?: CompletionCondition[]
   spawnZones?: SpawnZone[]
@@ -723,7 +730,7 @@ export interface GameState {
   items: Item[] // Items available in current level
   objects: LevelObjectInstance[] // Interactive objects in current level
   nonCollisionObjects?: NonCollisionObject[] // Decorative/non-collision objects
-  greatPowers: GreatPower[] // Great powers available in current level
+  greatPowers: RuntimeGreatPower[] // Great powers available in current level
   gridWidth: number // Game grid width
   gridHeight: number // Game grid height
 

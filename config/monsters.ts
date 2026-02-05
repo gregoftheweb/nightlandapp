@@ -1,5 +1,5 @@
 // config/monsters.ts
-import { MonsterTemplateV2, GreatPower, GreatPowerTemplateV2 } from './types'
+import { MonsterTemplateV2, GreatPowerTemplateV2 } from './types'
 
 import abhumanIMG from '@assets/images/sprites/monsters/abhuman.webp'
 import night_houndIMG from '@assets/images/sprites/monsters/nighthound4.webp'
@@ -59,34 +59,6 @@ export const greatPowerTemplates: GreatPowerTemplateV2[] = [
   },
 ]
 
-// Legacy V1 Great Powers - Kept for backward compatibility
-export const greatPowers: GreatPower[] = [
-  {
-    id: 'watcher_se',
-    shortName: 'watcher_se',
-    category: 'greatPower',
-    name: 'Watcher of the South East',
-    description:
-      'An ancient guardian with mystical powers that watches over the southeastern wastes.',
-    image: watcher_seIMG,
-    width: 6,
-    height: 6,
-    position: { row: 0, col: 0 }, // Will be set per level
-    active: true,
-    hp: 150,
-    maxHP: 150,
-    attack: 15,
-    ac: 16,
-    awakened: false,
-    effects: [
-      {
-        type: 'soulsuck',
-      },
-    ],
-    awakenCondition: 'player_within_range',
-  },
-]
-
 // -------------------- HELPER FUNCTIONS --------------------
 
 // Get monster template by shortName
@@ -106,7 +78,7 @@ export const getAvailableMonsterTypes = (): string[] => {
 
 // Get all great power shortNames for validation
 export const getAvailableGreatPowerTypes = (): string[] => {
-  return greatPowers.map((power) => power.shortName)
+  return greatPowerTemplates.map((power) => power.shortName)
 }
 
 // Get monster templates as a Map for hydration
