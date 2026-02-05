@@ -41,7 +41,7 @@ describe('getObjectAtPoint', () => {
       lastComment: '',
       image: 0 as unknown as import('react-native').ImageSourcePropType,
       position: { row: 10, col: 10 },
-      hp: 100,
+      currentHP: 100,
       maxHP: 100,
       ac: 14,
       initiative: 10,

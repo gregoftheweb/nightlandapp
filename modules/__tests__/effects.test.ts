@@ -124,7 +124,7 @@ describe('Unified Effects System', () => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'UPDATE_PLAYER',
         payload: {
-          updates: { hp: 75 },
+          updates: { currentHP: 75 },
         },
       })
     })
@@ -152,7 +152,7 @@ describe('Unified Effects System', () => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'UPDATE_PLAYER',
         payload: {
-          updates: { hp: 75 },
+          updates: { currentHP: 75 },
         },
       })
     })
@@ -177,7 +177,7 @@ describe('Unified Effects System', () => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'UPDATE_PLAYER',
         payload: {
-          updates: { hp: 100 }, // Capped at maxHP
+          updates: { currentHP: 100 }, // Capped at maxHP
         },
       })
     })
@@ -229,7 +229,7 @@ describe('Unified Effects System', () => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'UPDATE_PLAYER',
         payload: {
-          updates: { hp: 60 },
+          updates: { currentHP: 60 },
         },
       })
     })
@@ -391,7 +391,7 @@ describe('Unified Effects System', () => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'UPDATE_PLAYER',
         payload: {
-          updates: { hp: 40 },
+          updates: { currentHP: 40 },
         },
       })
     })
@@ -416,7 +416,7 @@ describe('Unified Effects System', () => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'UPDATE_PLAYER',
         payload: {
-          updates: { hp: 0 },
+          updates: { currentHP: 0 },
         },
       })
       expect(mockDispatch).toHaveBeenCalledWith({

@@ -62,7 +62,7 @@ export async function saveCurrentGame(state: GameState): Promise<void> {
       console.log('[SaveGame] === SAVING CURRENT GAME ===')
       console.log('[SaveGame] State currentLevelId:', state.currentLevelId)
       console.log('[SaveGame] State player position:', state.player?.position)
-      console.log('[SaveGame] State player HP:', state.player?.hp)
+      console.log('[SaveGame] State player HP:', state.player?.currentHP)
       console.log('[SaveGame] State moveCount:', state.moveCount)
       // Count only actual sub-games (keys without colons are main sub-games)
       const mainSubGames = Object.keys(state.subGamesCompleted || {}).filter(
@@ -111,7 +111,7 @@ export async function loadCurrentGame(): Promise<GameSnapshot | null> {
       console.log('[SaveGame] Saved at:', savedGame.savedAt)
       console.log('[SaveGame] Snapshot currentLevelId:', savedGame.snapshot.currentLevelId)
       console.log('[SaveGame] Snapshot player position:', savedGame.snapshot.player?.position)
-      console.log('[SaveGame] Snapshot player HP:', savedGame.snapshot.player?.hp)
+      console.log('[SaveGame] Snapshot player HP:', savedGame.snapshot.player?.currentHP)
       console.log('[SaveGame] Snapshot moveCount:', savedGame.snapshot.moveCount)
       // Count only actual sub-games (keys without colons are main sub-games)
       const mainSubGames = Object.keys(savedGame.snapshot.subGamesCompleted || {}).filter(

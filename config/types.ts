@@ -4,7 +4,6 @@ import { ImageSourcePropType } from 'react-native'
 // Explicit type aliases for HP to standardize semantics across the codebase
 export type MaxHP = number // Maximum hit points (template/design-time value)
 export type CurrentHP = number // Current hit points at runtime (for V2 instances)
-export type HP = CurrentHP // Legacy runtime hp field (for backward compatibility)
 
 // ===== HP Helper Interfaces =====
 // Helper interfaces for composing HP-related fields
@@ -14,11 +13,6 @@ export interface HasMaxHP {
 
 export interface HasCurrentHP {
   currentHP: CurrentHP
-}
-
-export interface HasLegacyHP {
-  hp: HP
-  maxHP: MaxHP
 }
 
 export interface Position {
@@ -626,7 +620,7 @@ export interface CombatParticipant {
   type: 'player' | 'monster' | 'npc'
   position: Position
   initiative: number
-  hp: HP
+  currentHP: CurrentHP
   maxHP: MaxHP
   ac: number
   attack: number

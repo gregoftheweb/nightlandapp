@@ -271,11 +271,7 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
           state.targetedMonsterId === action.payload.id ? null : state.targetedMonsterId,
       }
 
-    case 'UPDATE_PLAYER_HP':
-      return {
-        ...state,
-        player: { ...state.player, currentHP: action.payload.hp },
-      }
+
 
     case 'UPDATE_SELF_HEAL_COUNTER':
       return {
@@ -283,25 +279,9 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
         selfHealTurnCounter: action.payload.counter,
       }
 
-    case 'UPDATE_MONSTER_HP':
-      // Support both hp and currentHP for backward compatibility
-      // Normalize to currentHP in state
-      const hpValue = action.payload.currentHP ?? action.payload.hp
-      return {
-        ...state,
-        activeMonsters: state.activeMonsters.map((monster) =>
-          monster.id === action.payload.id ? { ...monster, currentHP: hpValue } : monster
-        ),
-        attackSlots: state.attackSlots.map((slot) =>
-          slot.id === action.payload.id ? { ...slot, currentHP: hpValue } : slot
-        ),
-      }
 
-    case 'RESET_HP':
-      return {
-        ...state,
-        player: { ...state.player, currentHP: state.player.maxHP },
-      }
+
+
 
     case 'GAME_OVER': {
       // Mark the player as dead and clear combat state

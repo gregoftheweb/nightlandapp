@@ -90,7 +90,7 @@ export default function SplashScreen() {
       console.log('[SplashScreen] Snapshot loaded successfully')
       console.log('[SplashScreen] Snapshot currentLevelId:', snapshot.currentLevelId)
       console.log('[SplashScreen] Snapshot player position:', snapshot.player?.position)
-      console.log('[SplashScreen] Snapshot player HP:', snapshot.player?.hp)
+      console.log('[SplashScreen] Snapshot player HP:', snapshot.player?.currentHP)
       console.log('[SplashScreen] Snapshot moveCount:', snapshot.moveCount)
       console.log(
         '[SplashScreen] Snapshot subGamesCompleted:',
@@ -102,7 +102,7 @@ export default function SplashScreen() {
       console.log('[SplashScreen] State hydrated from snapshot')
       console.log('[SplashScreen] Loaded state currentLevelId:', loadedState.currentLevelId)
       console.log('[SplashScreen] Loaded state player position:', loadedState.player?.position)
-      console.log('[SplashScreen] Loaded state player HP:', loadedState.player?.hp)
+      console.log('[SplashScreen] Loaded state player HP:', loadedState.player?.currentHP)
       console.log('[SplashScreen] Loaded state moveCount:', loadedState.moveCount)
 
       dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: loadedState } })
