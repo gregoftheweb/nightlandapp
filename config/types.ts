@@ -65,7 +65,7 @@ export interface SubGameResult<TData = unknown> {
 
 /**
  * EntityBase - Common runtime base for all game entities
- * Shared fields across Monster, GreatPower, Item, LevelObjectInstance, etc.
+ * Shared fields across Item, LevelObjectInstance, etc.
  */
 export interface EntityBase {
   id?: string // Optional for legacy compatibility
@@ -113,31 +113,6 @@ export interface GameObject extends EntityBase {
   usable?: boolean
   consumeOnUse?: boolean
 }
-
-/**
- * GreatPower - Runtime great power entity
- * Extends EntityBase with great power-specific fields
- */
-export interface GreatPower extends EntityBase {
-  id: string
-  position: Position
-  hp: HP
-  maxHP: MaxHP
-  attack: number
-  ac: number
-  awakened: boolean
-  awakenCondition: string
-  // Additional fields for compatibility
-  width?: number
-  height?: number
-  effects?: Effect[]
-  damage?: number
-  hitBonus?: number
-  weaponType?: WeaponType
-  range?: number
-}
-
-
 
 /**
  * Item - Runtime item entity
