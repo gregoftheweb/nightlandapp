@@ -1,7 +1,7 @@
 /**
  * Regression tests for monster HP field consistency
  * 
- * Ensures that after migrating to MonsterTemplateV2:
+ * Ensures that after migrating to MonsterTemplate:
  * - Runtime monsters always have both currentHP and maxHP
  * - currentHP is never null/undefined
  * - Ranged targeting and combat can find valid HP values
@@ -9,7 +9,7 @@
 import { createMonsterFromTemplate } from '../monsterUtils'
 import { hydrateMonsterV2 } from '../hydration'
 import { getMonsterTemplate } from '../../config/monsters'
-import { MonsterInstanceV2 } from '../../config/types'
+import { MonsterInstance } from '../../config/types'
 
 describe('Monster HP Regression Tests', () => {
   describe('createMonsterFromTemplate', () => {
@@ -58,7 +58,7 @@ describe('Monster HP Regression Tests', () => {
       const template = getMonsterTemplate('abhuman')
       expect(template).toBeDefined()
 
-      const instance: MonsterInstanceV2 = {
+      const instance: MonsterInstance = {
         id: 'test-monster-2',
         templateId: 'abhuman',
         position: { row: 10, col: 10 },
@@ -75,7 +75,7 @@ describe('Monster HP Regression Tests', () => {
       const template = getMonsterTemplate('abhuman')
       expect(template).toBeDefined()
 
-      const instance: MonsterInstanceV2 = {
+      const instance: MonsterInstance = {
         id: 'test-monster-3',
         templateId: 'abhuman',
         position: { row: 10, col: 10 },

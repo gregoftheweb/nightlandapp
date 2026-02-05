@@ -18,10 +18,10 @@ import {
 import {
   GameObjectTemplate,
   ObjectInstance,
-  MonsterTemplateV2,
-  MonsterInstanceV2,
-  GreatPowerTemplateV2,
-  GreatPowerInstanceV2,
+  MonsterTemplate,
+  MonsterInstance,
+  GreatPowerTemplate,
+  GreatPowerInstance,
 } from '../../config/types'
 
 describe('hydration module', () => {
@@ -108,7 +108,7 @@ describe('hydration module', () => {
 
   describe('hydrateMonsterV2 (legacy compatibility)', () => {
     it('should merge monster template and instance correctly', () => {
-      const template: MonsterTemplateV2 = {
+      const template: MonsterTemplate = {
         kind: 'monster',
         shortName: 'test-monster',
         category: 'monster',
@@ -119,7 +119,7 @@ describe('hydration module', () => {
         moveRate: 1,
       }
 
-      const instance: MonsterInstanceV2 = {
+      const instance: MonsterInstance = {
         id: 'test-monster-1',
         templateId: 'test-monster',
         position: { row: 15, col: 20 },
@@ -140,7 +140,7 @@ describe('hydration module', () => {
     })
 
     it('should include spawn state from instance', () => {
-      const template: MonsterTemplateV2 = {
+      const template: MonsterTemplate = {
         kind: 'monster',
         shortName: 'spawnable-monster',
         category: 'monster',
@@ -151,7 +151,7 @@ describe('hydration module', () => {
         moveRate: 2,
       }
 
-      const instance: MonsterInstanceV2 = {
+      const instance: MonsterInstance = {
         id: 'spawnable-monster-1',
         templateId: 'spawnable-monster',
         position: { row: 8, col: 12 },
@@ -232,7 +232,7 @@ describe('hydration module', () => {
 
   describe('hydrateMonstersV2 (legacy compatibility)', () => {
     it('should batch hydrate multiple monsters', () => {
-      const templates = new Map<string, MonsterTemplateV2>([
+      const templates = new Map<string, MonsterTemplate>([
         [
           'monster-a',
           {
@@ -261,7 +261,7 @@ describe('hydration module', () => {
         ],
       ])
 
-      const instances: MonsterInstanceV2[] = [
+      const instances: MonsterInstance[] = [
         {
           id: 'monster-a-1',
           templateId: 'monster-a',
@@ -286,8 +286,8 @@ describe('hydration module', () => {
     })
 
     it('should throw error if monster template not found', () => {
-      const templates = new Map<string, MonsterTemplateV2>()
-      const instances: MonsterInstanceV2[] = [
+      const templates = new Map<string, MonsterTemplate>()
+      const instances: MonsterInstance[] = [
         {
           id: 'missing-1',
           templateId: 'missing-monster',
@@ -305,8 +305,8 @@ describe('hydration module', () => {
   // ===== V2 Hydration Tests =====
 
   describe('hydrateMonsterV2', () => {
-    it('should merge monster template V2 and instance V2 correctly', () => {
-      const template: MonsterTemplateV2 = {
+    it('should merge monster template and instance correctly', () => {
+      const template: MonsterTemplate = {
         kind: 'monster',
         shortName: 'test-monster-v2',
         category: 'monster',
@@ -317,7 +317,7 @@ describe('hydration module', () => {
         moveRate: 2,
       }
 
-      const instance: MonsterInstanceV2 = {
+      const instance: MonsterInstance = {
         id: 'test-monster-v2-1',
         templateId: 'test-monster-v2',
         position: { row: 20, col: 25 },
@@ -337,8 +337,8 @@ describe('hydration module', () => {
       expect(hydrated.ac).toBe(14)
     })
 
-    it('should include UI and combat slots from instance V2', () => {
-      const template: MonsterTemplateV2 = {
+    it('should include UI and combat slots from instance', () => {
+      const template: MonsterTemplate = {
         kind: 'monster',
         shortName: 'combat-monster-v2',
         category: 'monster',
@@ -349,7 +349,7 @@ describe('hydration module', () => {
         moveRate: 1,
       }
 
-      const instance: MonsterInstanceV2 = {
+      const instance: MonsterInstance = {
         id: 'combat-monster-v2-1',
         templateId: 'combat-monster-v2',
         position: { row: 10, col: 15 },
@@ -364,8 +364,8 @@ describe('hydration module', () => {
       expect(hydrated.inCombatSlot).toBe(true)
     })
 
-    it('should allow instance V2 to override template zIndex', () => {
-      const template: MonsterTemplateV2 = {
+    it('should allow instance to override template zIndex', () => {
+      const template: MonsterTemplate = {
         kind: 'monster',
         shortName: 'z-monster-v2',
         category: 'monster',
@@ -377,7 +377,7 @@ describe('hydration module', () => {
         zIndex: 10,
       }
 
-      const instance: MonsterInstanceV2 = {
+      const instance: MonsterInstance = {
         id: 'z-monster-v2-1',
         templateId: 'z-monster-v2',
         position: { row: 5, col: 5 },
@@ -392,8 +392,8 @@ describe('hydration module', () => {
   })
 
   describe('hydrateGreatPowerV2', () => {
-    it('should merge great power template V2 and instance V2 correctly', () => {
-      const template: GreatPowerTemplateV2 = {
+    it('should merge great power template and instance correctly', () => {
+      const template: GreatPowerTemplate = {
         kind: 'greatPower',
         shortName: 'great-power-v2',
         category: 'greatpower',
@@ -404,7 +404,7 @@ describe('hydration module', () => {
         awakenCondition: 'defeat_all_monsters',
       }
 
-      const instance: GreatPowerInstanceV2 = {
+      const instance: GreatPowerInstance = {
         id: 'great-power-v2-1',
         templateId: 'great-power-v2',
         position: { row: 30, col: 30 },
@@ -427,8 +427,8 @@ describe('hydration module', () => {
       expect(hydrated.awakenCondition).toBe('defeat_all_monsters')
     })
 
-    it('should handle awakened state in instance V2', () => {
-      const template: GreatPowerTemplateV2 = {
+    it('should handle awakened state in instance', () => {
+      const template: GreatPowerTemplate = {
         kind: 'greatPower',
         shortName: 'awakened-power-v2',
         category: 'greatpower',
@@ -439,7 +439,7 @@ describe('hydration module', () => {
         awakenCondition: 'player_reaches_position',
       }
 
-      const instance: GreatPowerInstanceV2 = {
+      const instance: GreatPowerInstance = {
         id: 'awakened-power-v2-1',
         templateId: 'awakened-power-v2',
         position: { row: 40, col: 40 },
@@ -454,8 +454,8 @@ describe('hydration module', () => {
   })
 
   describe('hydrateMonstersV2', () => {
-    it('should batch hydrate multiple monsters V2', () => {
-      const templates = new Map<string, MonsterTemplateV2>([
+    it('should batch hydrate multiple monsters', () => {
+      const templates = new Map<string, MonsterTemplate>([
         [
           'monster-v2-a',
           {
@@ -484,7 +484,7 @@ describe('hydration module', () => {
         ],
       ])
 
-      const instances: MonsterInstanceV2[] = [
+      const instances: MonsterInstance[] = [
         {
           id: 'monster-v2-a-1',
           templateId: 'monster-v2-a',
@@ -508,9 +508,9 @@ describe('hydration module', () => {
       expect(hydrated[1].currentHP).toBe(60)
     })
 
-    it('should throw error if monster template V2 not found', () => {
-      const templates = new Map<string, MonsterTemplateV2>()
-      const instances: MonsterInstanceV2[] = [
+    it('should throw error if monster template not found', () => {
+      const templates = new Map<string, MonsterTemplate>()
+      const instances: MonsterInstance[] = [
         {
           id: 'missing-v2-1',
           templateId: 'missing-monster-v2',
@@ -526,8 +526,8 @@ describe('hydration module', () => {
   })
 
   describe('hydrateGreatPowersV2', () => {
-    it('should batch hydrate multiple great powers V2', () => {
-      const templates = new Map<string, GreatPowerTemplateV2>([
+    it('should batch hydrate multiple great powers', () => {
+      const templates = new Map<string, GreatPowerTemplate>([
         [
           'power-v2-a',
           {
@@ -556,7 +556,7 @@ describe('hydration module', () => {
         ],
       ])
 
-      const instances: GreatPowerInstanceV2[] = [
+      const instances: GreatPowerInstance[] = [
         {
           id: 'power-v2-a-1',
           templateId: 'power-v2-a',
@@ -584,9 +584,9 @@ describe('hydration module', () => {
       expect(hydrated[1].awakened).toBe(true)
     })
 
-    it('should throw error if great power template V2 not found', () => {
-      const templates = new Map<string, GreatPowerTemplateV2>()
-      const instances: GreatPowerInstanceV2[] = [
+    it('should throw error if great power template not found', () => {
+      const templates = new Map<string, GreatPowerTemplate>()
+      const instances: GreatPowerInstance[] = [
         {
           id: 'missing-power-v2-1',
           templateId: 'missing-power-v2',

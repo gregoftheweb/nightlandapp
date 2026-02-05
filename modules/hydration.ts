@@ -9,12 +9,12 @@ import {
   GameObjectTemplate,
   ObjectInstance,
   HydratedObject,
-  MonsterTemplateV2,
-  MonsterInstanceV2,
-  HydratedMonsterV2,
-  GreatPowerTemplateV2,
-  GreatPowerInstanceV2,
-  HydratedGreatPowerV2,
+  MonsterTemplate,
+  MonsterInstance,
+  Monster,
+  GreatPowerTemplate,
+  GreatPowerInstance,
+  GreatPower,
   Position,
   Effect,
   WeaponType,
@@ -76,17 +76,17 @@ export function hydrateObjects(
 // ===== V2 Hydration Functions =====
 
 /**
- * Hydrate a monster using V2 types by merging a template with an instance
+ * Hydrate a monster by merging a template with an instance
  * Instance-specific properties (position, currentHP, spawned, etc.) override template defaults
  * 
- * @param template - Static monster template definition (V2)
- * @param instance - Runtime instance data with position and state (V2)
- * @returns HydratedMonsterV2 ready for runtime use
+ * @param template - Static monster template definition
+ * @param instance - Runtime instance data with position and state
+ * @returns Monster ready for runtime use
  */
 export function hydrateMonsterV2(
-  template: MonsterTemplateV2,
-  instance: MonsterInstanceV2
-): HydratedMonsterV2 {
+  template: MonsterTemplate,
+  instance: MonsterInstance
+): Monster {
   return {
     // Spread template first (base definition)
     ...template,
@@ -105,17 +105,17 @@ export function hydrateMonsterV2(
 }
 
 /**
- * Hydrate a great power using V2 types by merging a template with an instance
+ * Hydrate a great power by merging a template with an instance
  * Instance-specific properties (position, currentHP, awakened) override template defaults
  * 
- * @param template - Static great power template definition (V2)
- * @param instance - Runtime instance data with position and state (V2)
- * @returns HydratedGreatPowerV2 ready for runtime use
+ * @param template - Static great power template definition
+ * @param instance - Runtime instance data with position and state
+ * @returns GreatPower ready for runtime use
  */
 export function hydrateGreatPowerV2(
-  template: GreatPowerTemplateV2,
-  instance: GreatPowerInstanceV2
-): HydratedGreatPowerV2 {
+  template: GreatPowerTemplate,
+  instance: GreatPowerInstance
+): GreatPower {
   return {
     // Spread template first (base definition)
     ...template,
@@ -131,17 +131,17 @@ export function hydrateGreatPowerV2(
 }
 
 /**
- * Batch hydrate multiple monsters using V2 types
+ * Batch hydrate multiple monsters
  * Useful for hydrating all monsters in a level
  * 
- * @param templates - Map of template shortName -> template (V2)
- * @param instances - Array of monster instances (V2)
- * @returns Array of hydrated monsters (V2)
+ * @param templates - Map of template shortName -> template
+ * @param instances - Array of monster instances
+ * @returns Array of hydrated monsters
  */
 export function hydrateMonstersV2(
-  templates: Map<string, MonsterTemplateV2>,
-  instances: MonsterInstanceV2[]
-): HydratedMonsterV2[] {
+  templates: Map<string, MonsterTemplate>,
+  instances: MonsterInstance[]
+): Monster[] {
   return instances.map((instance) => {
     const template = templates.get(instance.templateId)
     if (!template) {
@@ -152,17 +152,17 @@ export function hydrateMonstersV2(
 }
 
 /**
- * Batch hydrate multiple great powers using V2 types
+ * Batch hydrate multiple great powers
  * Useful for hydrating all great powers in a level
  * 
- * @param templates - Map of template shortName -> template (V2)
- * @param instances - Array of great power instances (V2)
- * @returns Array of hydrated great powers (V2)
+ * @param templates - Map of template shortName -> template
+ * @param instances - Array of great power instances
+ * @returns Array of hydrated great powers
  */
 export function hydrateGreatPowersV2(
-  templates: Map<string, GreatPowerTemplateV2>,
-  instances: GreatPowerInstanceV2[]
-): HydratedGreatPowerV2[] {
+  templates: Map<string, GreatPowerTemplate>,
+  instances: GreatPowerInstance[]
+): GreatPower[] {
   return instances.map((instance) => {
     const template = templates.get(instance.templateId)
     if (!template) {

@@ -13,7 +13,7 @@ import {
   RuntimeGreatPower,
   Item,
   NonCollisionObject,
-  GreatPowerInstanceV2,
+  GreatPowerInstance,
 } from './types'
 import {
   getBuildingTemplate,
@@ -150,8 +150,8 @@ const createGreatPowerForLevel = (
   // Determine initial HP - support both legacy hp and currentHP in overrides
   const initialHP = overrides.currentHP ?? (overrides as any).hp ?? template.maxHP
 
-  // Create V2 instance with defaults
-  const instance: GreatPowerInstanceV2 = {
+  // Create instance with defaults
+  const instance: GreatPowerInstance = {
     id: `${shortName}_${position.row}_${position.col}`,
     templateId: shortName,
     position,
