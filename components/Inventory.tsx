@@ -10,9 +10,9 @@ import {
   NativeTouchEvent,
   ScrollView,
 } from 'react-native'
-import { Item } from '@/config/types'
+import { Item } from '@config/types'
 import { useGameContext } from '../context/GameContext'
-import { applyItem, canUseItem } from '@/modules/effects' // <-- renamed from useItem
+import { applyItem, canUseItem } from '@modules/effects' // <-- renamed from useItem
 
 const { width, height } = Dimensions.get('window')
 

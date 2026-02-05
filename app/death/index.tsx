@@ -2,10 +2,10 @@
 import React from 'react'
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native'
 import { useRouter } from 'expo-router'
-import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
+import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
 import { useGameContext } from '@/context/GameContext'
 import { clearAllSubGameSaves } from '../sub-games/_shared/persistence'
-import { deleteCurrentGame } from '@/modules/saveGame'
+import { deleteCurrentGame } from '@modules/saveGame'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 

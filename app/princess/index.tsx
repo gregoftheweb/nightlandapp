@@ -2,7 +2,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native'
 import { useRouter } from 'expo-router'
-import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
+import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 

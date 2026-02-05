@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import { useRouter } from 'expo-router'
-import { exitSubGame } from '@/modules/subGames'
+import { exitSubGame } from '@modules/subGames'
 import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'

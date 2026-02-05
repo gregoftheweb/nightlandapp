@@ -25,7 +25,7 @@ import {
 import { getGreatPowerTemplate } from './monsters'
 import { LevelId } from './levelTypes'
 import { loadSpawnTableV2, validateLevel } from './levelHelpers'
-import { hydrateGreatPowerV2 } from '@/modules/hydration'
+import { hydrateGreatPowerV2 } from '@modules/hydration'
 
 // Helper function to create object instances from building templates
 const createObjectInstance = (

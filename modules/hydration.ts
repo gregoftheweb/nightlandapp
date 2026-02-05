@@ -18,7 +18,7 @@ import {
   Position,
   Effect,
   WeaponType,
-} from '@/config/types'
+} from '@config/types'
 
 import type { ImageSourcePropType } from 'react-native'
 

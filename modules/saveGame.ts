@@ -12,7 +12,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { GameState, GameSnapshot } from '@/config/types'
+import { GameState, GameSnapshot } from '@config/types'
 import { toSnapshot } from './gameState'
 
 // ===== STORAGE KEYS =====

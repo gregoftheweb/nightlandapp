@@ -15,7 +15,7 @@ import {
   handlePassTurn,
   initializeStartingMonsters,
 } from '../../modules/turnManager'
-import { Monster, LevelObjectInstance, Item, GreatPower, NonCollisionObject } from '@/config/types'
+import { Monster, LevelObjectInstance, Item, GreatPower, NonCollisionObject } from '@config/types'
 import { audioManager } from '../../modules/audioManager'
 import { settingsManager } from '../../modules/settingsManager'
 import { UI_CONSTANTS, TIMING_CONSTANTS, COMBAT_CONSTANTS } from '../../constants/Game'
