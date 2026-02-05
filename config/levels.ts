@@ -313,7 +313,7 @@ export const levels: Record<LevelId, Level> = {
         'watcher_se',
         { row: 380, col: 180 },
         {
-          hp: 1000,
+          currentHP: 1000,
           maxHP: 1000,
           attack: 50,
           ac: 25,

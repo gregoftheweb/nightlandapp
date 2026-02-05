@@ -15,7 +15,7 @@ import {
   Player,
   RuntimeMonster,
   Item,
-  GreatPower,
+  RuntimeGreatPower,
   LevelObjectInstance,
   NonCollisionObject,
 } from '../../config/types'
@@ -131,21 +131,22 @@ describe('getObjectAtPoint', () => {
 
   test('should detect great power (multi-tile)', () => {
     const state = createMockGameState()
-    const greatPower: GreatPower = {
+    const greatPower: RuntimeGreatPower = {
       id: 'gp-1',
+      templateId: 'watcher',
       shortName: 'watcher',
       category: 'greatpower',
+      kind: 'greatPower',
       name: 'The Watcher',
       position: { row: 20, col: 20 },
       width: 3,
       height: 3,
-      hp: 100,
+      currentHP: 100,
       maxHP: 100,
       attack: 15,
       ac: 18,
       awakened: false,
       awakenCondition: 'player_within_range',
-      active: true,
     }
     state.level.greatPowers = [greatPower]
 
