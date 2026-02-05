@@ -85,7 +85,7 @@ Registered in `EFFECT_HANDLERS`:
 unlock_hide_ability: executeUnlockHideAbilityEffect,
 ```
 
-### 5. Reducers (`modules/reducers.ts`)
+### 5. Reducers (`state/reducer.ts`)
 
 #### TOGGLE_HIDE Action
 
@@ -322,7 +322,7 @@ The following logs help track hide ability behavior in development:
 2. `config/player.ts` - Default values
 3. `app/sub-games/hermit-hollow/dialogue.ts` - Gift dialogue
 4. `modules/effects.ts` - Unlock effect handler
-5. `modules/reducers.ts` - TOGGLE_HIDE and UPDATE_HIDE_STATE actions
+5. `state/reducer.ts` - TOGGLE_HIDE and UPDATE_HIDE_STATE actions
 6. `modules/turnManager.ts` - Turn cleanup integration
 7. `modules/movement.ts` - Monster movement logic
 8. `components/GameBoard.tsx` - Border color indicator

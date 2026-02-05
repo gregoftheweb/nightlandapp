@@ -152,7 +152,7 @@ Updated the recharge logic in the reducer to require 5 turns per charge point in
 **Implementation:**
 
 ```typescript
-// modules/reducers.ts - UPDATE_HIDE_STATE case
+// state/reducer.ts - UPDATE_HIDE_STATE case
 
 // Before
 if (newProgress >= 3) {
@@ -195,7 +195,7 @@ if (newProgress >= 5) {
 - Updated JSX to conditionally use expanded styles
 - Added background indicator div in hide button container
 
-### 2. `modules/reducers.ts`
+### 2. `state/reducer.ts`
 
 - Modified `UPDATE_HIDE_STATE` case
 - Changed recharge threshold from `>= 3` to `>= 5`

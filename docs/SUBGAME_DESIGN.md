@@ -149,7 +149,7 @@ export default function DoorPuzzle() {
 - `components/GameBoard.tsx`: Position checking, CTA gating, sub-game navigation
 - `context/GameContext.tsx`: Added `rpgResumeNonce` and `signalRpgResume()`
 - `modules/utils.ts`: Added `isPlayerOnObject()` utility
-- `modules/reducers.ts`: Added `SET_SUB_GAME_COMPLETED` action
+- `state/reducer.ts`: Added `SET_SUB_GAME_COMPLETED` action
 - `modules/gameState.ts`: Initialized `subGamesCompleted`
 - `lib/subGames.ts`: Navigation helpers
 - `app/sub-games/aerowreckage-puzzle/index.tsx`: First sub-game screen

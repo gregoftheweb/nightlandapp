@@ -399,7 +399,7 @@ state.player.hp = newHP // Direct mutation!
 | `config/gameConfig.ts` | Tuning values     | Balance changes     |
 | `config/levels.ts`     | Level definitions | New levels          |
 | `modules/gameState.ts` | State init        | Runtime state shape |
-| `modules/reducers.ts`  | State mutations   | New actions         |
+| `state/reducer.ts`     | State mutations   | New actions         |
 
 ### Helper Functions
 

@@ -8,7 +8,7 @@ import { calculateNewPosition } from './movement'
 import { checkItemInteractions, checkObjectInteractions } from './interactions'
 import { SPAWN_CONSTANTS } from '../constants/Game'
 import { logIfDev } from './utils'
-import { reducer as gameReducer } from './reducers'
+import { reducer as gameReducer } from '../state/reducer'
 
 // ==================== MODULE-LEVEL STATE (Preserved for combat/monster flow integrity) ====================
 let currentGameState: GameState

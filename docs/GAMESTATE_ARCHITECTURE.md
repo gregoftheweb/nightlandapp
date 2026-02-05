@@ -281,7 +281,7 @@ Key files in the GameState system:
 
 - `/config/types.ts`: GameState and GameSnapshot type definitions
 - `/modules/gameState.ts`: Initial state creation, serialization, validation
-- `/modules/reducers.ts`: State transitions and action handlers
+- `/state/reducer.ts`: State transitions and action handlers
 - `/modules/subGames.ts`: Sub-game navigation and coordination
 - `/modules/__tests__/deathReset.test.ts`: Death reset test suite
 - `/app/game/index.tsx`: Main gameboard screen

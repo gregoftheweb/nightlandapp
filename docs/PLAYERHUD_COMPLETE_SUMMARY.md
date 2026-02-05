@@ -261,7 +261,7 @@ Option 3 (asymmetric):
    - Modified 4 JSX elements for conditional styling
    - Total lines changed: ~40
 
-2. **modules/reducers.ts**
+2. **state/reducer.ts**
    - Modified recharge rate: 3 → 5 turns
    - Total lines changed: 1
 
