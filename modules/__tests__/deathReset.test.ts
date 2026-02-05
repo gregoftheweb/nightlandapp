@@ -15,7 +15,7 @@ describe('Death Reset System', () => {
 
       expect(state.currentLevelId).toBe('1')
       expect(state.gameOver).toBe(false)
-      expect(state.player.hp).toBeGreaterThan(0)
+      expect(state.player.currentHP).toBeGreaterThan(0)
       expect(state.inCombat).toBe(false)
       expect(state.activeMonsters).toEqual([])
       expect(state.combatLog).toEqual([])
@@ -151,7 +151,7 @@ describe('Death Reset System', () => {
       expect(resetState.killerName).toBeUndefined()
 
       // Player should be restored
-      expect(resetState.player.hp).toBeGreaterThan(0)
+      expect(resetState.player.currentHP).toBeGreaterThan(0)
       expect(resetState.player.inventory).toEqual([])
 
       // Stats should be reset
@@ -279,7 +279,7 @@ describe('Death Reset System', () => {
       // 2. Simulate some gameplay
       state = {
         ...state,
-        player: { ...state.player, hp: 10 },
+        player: { ...state.player, currentHP: 10 },
         monstersKilled: 3,
         distanceTraveled: 50,
         moveCount: 25,
@@ -301,7 +301,7 @@ describe('Death Reset System', () => {
       expect(state.gameOver).toBe(false)
       expect(state.gameOverMessage).toBeUndefined()
       expect(state.monstersKilled).toBe(0) // Reset
-      expect(state.player.hp).toBeGreaterThan(0)
+      expect(state.player.currentHP).toBeGreaterThan(0)
       expect(state.moveCount).toBe(0)
 
       // 5. State should be fresh and ready for new game

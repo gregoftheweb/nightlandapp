@@ -40,7 +40,7 @@ describe('Self-Healing Mechanic', () => {
       lastComment: '',
       image: 0 as unknown as import('react-native').ImageSourcePropType,
       position: { row: 200, col: 200 },
-      hp: playerHP,
+      currentHP: playerHP,
       maxHP: playerMaxHP,
       ac: 14,
       initiative: 10,
@@ -96,7 +96,7 @@ describe('Self-Healing Mechanic', () => {
   const simulateSelfHealing = (state: GameState, dispatch: jest.Mock) => {
     const turnsPerHitPoint = state.level.turnsPerHitPoint
     if (turnsPerHitPoint && turnsPerHitPoint > 0) {
-      const currentHP = state.player.hp
+      const currentHP = state.player.currentHP
       const maxHP = state.player.maxHP
 
       if (currentHP < maxHP) {
@@ -109,7 +109,7 @@ describe('Self-Healing Mechanic', () => {
           dispatch({
             type: 'UPDATE_PLAYER',
             payload: {
-              updates: { hp: newHP },
+              updates: { currentHP: newHP },
             },
           })
 
@@ -153,7 +153,7 @@ describe('Self-Healing Mechanic', () => {
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
       payload: {
-        updates: { hp: 51 },
+        updates: { currentHP: 51 },
       },
     })
     expect(mockDispatch).toHaveBeenCalledWith({
@@ -178,7 +178,7 @@ describe('Self-Healing Mechanic', () => {
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
       payload: {
-        updates: { hp: 100 },
+        updates: { currentHP: 100 },
       },
     })
   })
@@ -208,7 +208,7 @@ describe('Self-Healing Mechanic', () => {
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
       payload: {
-        updates: { hp: 51 },
+        updates: { currentHP: 51 },
       },
     })
   })

@@ -41,7 +41,7 @@ describe('Unified Effects System', () => {
       lastComment: '',
       image: 0 as unknown as import('react-native').ImageSourcePropType,
       position: { row: 200, col: 200 },
-      hp: playerHP,
+      currentHP: playerHP,
       maxHP: playerMaxHP,
       ac: 14,
       initiative: 10,

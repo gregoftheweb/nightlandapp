@@ -35,8 +35,8 @@ export const executeAttack = (attacker: any, defender: any, dispatch: any): bool
     const damageRoll = Math.floor(Math.random() * 6) + 1
     const totalDamage = damageRoll + Math.floor(attacker.attack / 2)
     
-    // Use currentHP for monsters, hp for player
-    const currentHp = defender.id === 'christos' ? defender.hp : defender.currentHP
+    // Use currentHP consistently for both player and monsters
+    const currentHp = defender.currentHP
     const newHp = Math.max(0, currentHp - totalDamage)
 
     logIfDev(
@@ -62,11 +62,11 @@ export const executeAttack = (attacker: any, defender: any, dispatch: any): bool
       payload: { message: combatMessage },
     })
 
-    // Update HP - use hp field for player, currentHP for monsters
+    // Update HP - use currentHP for both player and monsters
     if (defender.id === 'christos') {
       dispatch({
         type: 'UPDATE_PLAYER',
-        payload: { updates: { hp: newHp } },
+        payload: { updates: { currentHP: newHp } },
       })
     } else {
       dispatch({
@@ -149,14 +149,14 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
   }
 
   logIfDev(`\n⚔️ COMBAT ROUND STARTING (Turn ${state.moveCount + 1})`)
-  logIfDev(`   Player HP: ${state.player.hp}/${state.player.maxHP}`)
+  logIfDev(`   Player HP: ${state.player.currentHP}/${state.player.maxHP}`)
   logIfDev(`   Monsters in combat: ${state.attackSlots.length}`)
 
   const combatOrder = [state.player, ...state.attackSlots]
 
   for (const entity of combatOrder) {
-    // Use currentHP for monsters, hp for player
-    const currentHp = entity.id === 'christos' ? (entity as any).hp : (entity as any).currentHP
+    // Use currentHP consistently for both player and monsters
+    const currentHp = (entity as any).currentHP
     if (currentHp <= 0) continue
 
     if (entity.id === 'christos') {
@@ -203,7 +203,7 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
   moveWaitingMonstersToAttackSlots(state, dispatch)
 
   logIfDev(`\n📊 COMBAT ROUND COMPLETE`)
-  logIfDev(`   Player HP: ${state.player.hp}/${state.player.maxHP}`)
+  logIfDev(`   Player HP: ${state.player.currentHP}/${state.player.maxHP}`)
   state.attackSlots.forEach((monster: any) => {
     if (monster.currentHP > 0) {
       logIfDev(`   ${monster.name} HP: ${monster.currentHP}/${monster.maxHP}`)
@@ -305,7 +305,7 @@ export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
     return true
   }
 
-  if (state.player.hp <= 0) {
+  if (state.player.currentHP <= 0) {
     logIfDev('💀 Combat lost - player defeated!')
 
     const killer = aliveMonsters[0]?.name || 'unknown horror'

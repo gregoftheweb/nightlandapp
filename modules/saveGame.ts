@@ -216,7 +216,7 @@ export async function saveWaypoint(state: GameState, waypointName: string): Prom
       createdAt: new Date().toISOString(),
       levelId: state.currentLevelId,
       playerPosition: state.player.position,
-      playerHP: state.player.hp,
+      playerHP: state.player.currentHP,
       playerMaxHP: state.player.maxHP,
     }
 

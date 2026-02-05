@@ -56,7 +56,7 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
         combatLog: [],
         player: {
           ...state.player,
-          hp: state.player.maxHP,
+          currentHP: state.player.maxHP,
           position: { row: 395, col: 200 },
         },
       }
@@ -274,7 +274,7 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
     case 'UPDATE_PLAYER_HP':
       return {
         ...state,
-        player: { ...state.player, hp: action.payload.hp },
+        player: { ...state.player, currentHP: action.payload.hp },
       }
 
     case 'UPDATE_SELF_HEAL_COUNTER':
@@ -300,7 +300,7 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
     case 'RESET_HP':
       return {
         ...state,
-        player: { ...state.player, hp: state.player.maxHP },
+        player: { ...state.player, currentHP: state.player.maxHP },
       }
 
     case 'GAME_OVER': {
