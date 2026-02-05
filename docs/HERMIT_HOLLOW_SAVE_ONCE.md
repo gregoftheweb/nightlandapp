@@ -234,7 +234,7 @@ case 'SET_WAYPOINT_CREATED':
 ## Related Files
 
 - ✅ `app/sub-games/hermit-hollow/main.tsx` - Modified (waypoint creation logic)
-- ✅ `modules/reducers.ts` - No changes (already has SET_WAYPOINT_CREATED)
+- ✅ `state/reducer.ts` - No changes (already has SET_WAYPOINT_CREATED)
 - ✅ `modules/gameState.ts` - No changes (already tracks waypointSavesCreated)
 - ✅ `config/types.ts` - No changes (already defines waypointSavesCreated)
 

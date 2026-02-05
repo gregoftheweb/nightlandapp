@@ -21,7 +21,7 @@
 │                           ↓                                  │
 │                 dispatch(TRIGGER_EFFECT)                     │
 │                           ↓                                  │
-│                  /modules/reducers.ts                        │
+│                  /state/reducer.ts                        │
 │                  - Massive switch statement                  │
 │                  - All effect logic inline                   │
 │                  - heal/hide/swarm/recuperate/soulsuck      │
@@ -34,7 +34,7 @@
 │                           ↓                                  │
 │                 dispatch(TRIGGER_EFFECT)                     │
 │                           ↓                                  │
-│                  /modules/reducers.ts                        │
+│                  /state/reducer.ts                        │
 │                  - soulsuck effect handler                   │
 └─────────────────────────────────────────────────────────────┘
 
@@ -196,7 +196,7 @@ applyEffect(effect, {
 ### Files Modified
 
 1. `modules/effects.ts` - New unified system
-2. `modules/reducers.ts` - Removed TRIGGER_EFFECT
+2. `state/reducer.ts` - Removed TRIGGER_EFFECT
 3. `modules/playerUtils.ts` - Use applyEffect()
 4. `modules/interactions.ts` - Use applyEffect()
 5. `components/Inventory.tsx` - Updated signature
