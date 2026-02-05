@@ -7,17 +7,22 @@ import React, {
   useState,
   useEffect,
   useRef,
+  useCallback,
+  useMemo,
 } from 'react'
-import { deserializeGameState, createInitialGameState } from '../modules/gameState'
-import { reducer } from '../state/reducer'
-import { GameState } from '../config/types'
-import { requestAutoSave, getStateSaveFingerprint } from '../modules/autoSave'
-import { deleteCurrentGame } from '../modules/saveGame'
+import { deserializeGameState, createInitialGameState } from '@modules/gameState'
+import { reducer } from '@state/reducer'
+import { GameState } from '@config/types'
+import { requestAutoSave, getStateSaveFingerprint } from '@modules/autoSave'
+import { deleteCurrentGame } from '@modules/saveGame'
+
+type GameAction = Parameters<typeof reducer>[1]
+type GameDispatch = React.Dispatch<GameAction>
 
 interface GameContextType {
   state: GameState
-  dispatch: (action: any) => void
-  setOverlay: (overlay: any) => void
+  dispatch: GameDispatch
+  setOverlay: (overlay: unknown) => void
   rpgResumeNonce: number
   signalRpgResume: () => void
 }
@@ -30,11 +35,11 @@ interface GameProviderProps {
 }
 
 export const GameProvider = ({ children, initialGameState }: GameProviderProps) => {
-  const initialState = initialGameState
-    ? deserializeGameState(initialGameState)
-    : createInitialGameState()
-
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const [state, dispatch] = useReducer(
+    reducer,
+    undefined as any,
+    () => initialGameState ? deserializeGameState(initialGameState) : createInitialGameState()
+  )
   const [rpgResumeNonce, setRpgResumeNonce] = useState(0)
 
   // Autosave controller - tracks state fingerprint to trigger saves
@@ -43,14 +48,19 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
   // Track if game over save deletion has been triggered to avoid multiple calls
   const gameOverDeleteTriggeredRef = useRef<boolean>(false)
 
-  const setOverlay = (overlay: any) => console.log('Overlay:', overlay)
+  const setOverlay = useCallback((overlay: unknown) => {
+    console.log('Overlay:', overlay)
+  }, [])
 
-  const signalRpgResume = () => {
-    setRpgResumeNonce((prev) => prev + 1)
-    if (__DEV__) {
-      console.log('[GameContext] RPG resume signaled, nonce:', rpgResumeNonce + 1)
-    }
-  }
+  const signalRpgResume = useCallback(() => {
+    setRpgResumeNonce((prev) => {
+      const next = prev + 1
+      if (__DEV__) {
+        console.log('[GameContext] RPG resume signaled, nonce:', next)
+      }
+      return next
+    })
+  }, [])
 
   // Autosave effect - triggers save when important state changes
   useEffect(() => {
@@ -82,8 +92,13 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
     }
   }, [state.gameOver])
 
+  const value = useMemo(
+    () => ({ state, dispatch, setOverlay, rpgResumeNonce, signalRpgResume }),
+    [state, dispatch, setOverlay, rpgResumeNonce, signalRpgResume]
+  )
+
   return (
-    <GameContext.Provider value={{ state, dispatch, setOverlay, rpgResumeNonce, signalRpgResume }}>
+    <GameContext.Provider value={value}>
       {children}
     </GameContext.Provider>
   )

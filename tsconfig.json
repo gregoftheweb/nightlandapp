@@ -11,7 +11,8 @@
       "@components/*": ["components/*"],
       "@config/*": ["config/*"],
       "@context/*": ["context/*"],
-      "@hooks/*": ["hooks/*"]
+      "@hooks/*": ["hooks/*"],
+      "@state/*": ["state/*"]
     }
   },
   "include": [
