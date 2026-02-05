@@ -2,7 +2,7 @@
 // Sub-game navigation and coordination helper
 
 import { router } from 'expo-router'
-import { SubGameResult } from '@/config/types'
+import { SubGameResult } from '@config/types'
 import { logIfDev } from './utils'
 
 /**

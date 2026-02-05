@@ -8,14 +8,14 @@ import type {
   Item,
   GreatPower,
   NonCollisionObject,
-} from '@/config/types'
+} from '@config/types'
 import { InfoBox } from './InfoBox'
 import { CombatDialog } from './CombatDialog'
 import { getTextContent, isPlayerOnObject } from '../modules/utils'
-import { getItemTemplate } from '@/config/objects'
+import { getItemTemplate } from '@config/objects'
 import deadChristosIMG from '@assets/images/ui/dialogs/deadChristos.webp'
 import Projectile from './Projectile'
-import { enterSubGame } from '@/modules/subGames'
+import { enterSubGame } from '@modules/subGames'
 
 const { width, height } = Dimensions.get('window')
 

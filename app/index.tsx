@@ -12,7 +12,7 @@ import {
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { STRINGS } from '../assets/copy/strings'
-import { SPLASH_STRINGS } from '@/assets/copy/splashscreen'
+import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
 import { useGameContext } from '@/context/GameContext'
 import {
   hasCurrentGame,
@@ -22,8 +22,8 @@ import {
   loadWaypoint,
   WaypointSaveMetadata,
   debugInspectCurrentSave,
-} from '@/modules/saveGame'
-import { fromSnapshot } from '@/modules/gameState'
+} from '@modules/saveGame'
+import { fromSnapshot } from '@modules/gameState'
 import { clearAllSubGameSaves } from './sub-games/_shared/persistence'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')

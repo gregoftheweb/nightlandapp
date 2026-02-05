@@ -2,15 +2,15 @@
 // Main dialogue screen for the hermit-hollow sub-game
 import React, { useState, useMemo, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native'
-import { exitSubGame } from '@/modules/subGames'
+import { exitSubGame } from '@modules/subGames'
 import { useGameContext } from '@/context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { HERMIT_DIALOGUE, DialogueNode } from './dialogue'
-import { saveWaypoint } from '@/modules/saveGame'
-import { applyEffect } from '@/modules/effects'
-import { Effect } from '@/config/types'
+import { saveWaypoint } from '@modules/saveGame'
+import { applyEffect } from '@modules/effects'
+import { Effect } from '@config/types'
 
 const bgHermit = require('@assets/images/backgrounds/subgames/hermit-screen1.webp')
 const SUB_GAME_NAME = 'hermit-hollow'

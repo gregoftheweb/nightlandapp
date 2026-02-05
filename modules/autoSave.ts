@@ -12,7 +12,7 @@
  * - Mutex to prevent overlapping writes
  */
 
-import { GameState } from '@/config/types'
+import { GameState } from '@config/types'
 import { saveCurrentGame } from './saveGame'
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null

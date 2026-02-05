@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { Level } from '@/config/types' // import your Level type
+import { Level } from '@config/types' // import your Level type
 
 interface PositionDisplayProps {
   position?: { row: number; col: number }

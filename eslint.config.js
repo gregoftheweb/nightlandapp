@@ -7,4 +7,31 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/config/*'],
+              message: 'Use @config/* instead of @/config/*',
+            },
+            {
+              group: ['@/modules/*'],
+              message: 'Use @modules/* instead of @/modules/*',
+            },
+            {
+              group: ['@/components/*'],
+              message: 'Use @components/* instead of @/components/*',
+            },
+            {
+              group: ['@/assets/*'],
+              message: 'Use @assets/* instead of @/assets/*',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ])
