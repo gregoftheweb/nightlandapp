@@ -17,7 +17,7 @@ import { GameState, GameSnapshot } from '../config/types'
 import { playerConfig } from '../config/player'
 import { weaponsCatalog } from '../config/weapons'
 import { gameConfig } from '../config/gameConfig'
-import { reducer } from './reducers'
+import { reducer } from '../state/reducer'
 import { logIfDev } from './utils'
 
 /**

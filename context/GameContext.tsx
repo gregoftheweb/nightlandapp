@@ -9,7 +9,7 @@ import React, {
   useRef,
 } from 'react'
 import { deserializeGameState, createInitialGameState } from '../modules/gameState'
-import { reducer } from '../modules/reducers'
+import { reducer } from '../state/reducer'
 import { GameState } from '../config/types'
 import { requestAutoSave, getStateSaveFingerprint } from '../modules/autoSave'
 import { deleteCurrentGame } from '../modules/saveGame'

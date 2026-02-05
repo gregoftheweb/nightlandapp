@@ -6,7 +6,7 @@
  */
 import { GameState } from '../../config/types'
 import { getInitialState, validateGameState, toSnapshot, fromSnapshot } from '../gameState'
-import { reducer } from '../reducers'
+import { reducer } from '../../state/reducer'
 
 describe('Death Reset System', () => {
   describe('getInitialState', () => {
