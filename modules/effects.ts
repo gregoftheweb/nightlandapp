@@ -209,7 +209,7 @@ const executeRecuperateEffect: EffectHandler<'recuperate'> = (effect, context) =
   dispatch({
     type: 'UPDATE_PLAYER',
     payload: {
-      updates: { hp: newHp },
+      updates: { currentHP: newHp },
     },
   })
 
@@ -413,7 +413,7 @@ const executeSoulsuckEffect: EffectHandler<'soulsuck'> = (effect, context) => {
   dispatch({
     type: 'UPDATE_PLAYER',
     payload: {
-      updates: { hp: 0 },
+      updates: { currentHP: 0 },
     },
   })
 
