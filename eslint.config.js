@@ -29,6 +29,14 @@ module.exports = defineConfig([
               group: ['@/assets/*'],
               message: 'Use @assets/* instead of @/assets/*',
             },
+            {
+              group: ['@/context/*'],
+              message: 'Use @context/* instead of @/context/*',
+            },
+            {
+              group: ['@/hooks/*'],
+              message: 'Use @hooks/* instead of @/hooks/*',
+            },
           ],
         },
       ],

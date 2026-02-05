@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router'
 import { STRINGS } from '../assets/copy/strings'
 import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
-import { useGameContext } from '@/context/GameContext'
+import { useGameContext } from '@context/GameContext'
 import {
   hasCurrentGame,
   loadCurrentGame,
