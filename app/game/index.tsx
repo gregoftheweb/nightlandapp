@@ -15,7 +15,7 @@ import {
   handlePassTurn,
   initializeStartingMonsters,
 } from '../../modules/turnManager'
-import { RuntimeMonster, LevelObjectInstance, Item, GreatPower, NonCollisionObject } from '@/config/types'
+import { RuntimeMonster, LevelObjectInstance, Item, RuntimeGreatPower, NonCollisionObject } from '@/config/types'
 import { audioManager } from '../../modules/audioManager'
 import { settingsManager } from '../../modules/settingsManager'
 import { UI_CONSTANTS, TIMING_CONSTANTS, COMBAT_CONSTANTS } from '../../constants/Game'
@@ -312,7 +312,7 @@ export default function Game() {
     [state.rangedAttackMode, dispatch]
   )
 
-  const showGreatPowerInfo = useCallback((greatPower: GreatPower) => {
+  const showGreatPowerInfo = useCallback((greatPower: RuntimeGreatPower) => {
     if (!showInfoRef.current) return
     const statusInfo = greatPower.awakened ? 'AWAKENED' : 'Sleeping'
     const greatPowerImage =
@@ -321,7 +321,7 @@ export default function Game() {
       greatPower.name || greatPower.shortName || 'Great Power',
       `${
         greatPower.description || 'An ancient entity of immense power.'
-      }\n\nStatus: ${statusInfo}\nHP: ${greatPower.hp}/${
+      }\n\nStatus: ${statusInfo}\nHP: ${greatPower.currentHP}/${
         greatPower.maxHP
       }\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`,
       greatPowerImage
@@ -506,7 +506,7 @@ export default function Game() {
   )
 
   const handleGreatPowerTap = useCallback(
-    (greatPower: GreatPower) => {
+    (greatPower: RuntimeGreatPower) => {
       if (__DEV__) {
         console.log('Great Power tapped:', greatPower.name, 'awakened:', greatPower.awakened)
       }

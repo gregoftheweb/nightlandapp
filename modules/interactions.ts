@@ -172,7 +172,6 @@ export const checkObjectInteractions = (
 
   // Check Great Powers
   const collidingGreatPower = state.level.greatPowers?.find((gp: any) => {
-    if (!gp.active) return false
     return checkOverlap(playerPos, 1, 1, gp.position, gp.width || 1, gp.height || 1)
   })
 
