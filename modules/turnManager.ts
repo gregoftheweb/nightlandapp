@@ -91,7 +91,7 @@ const doCombatTurn = (
   checkObjectInteractions(currentGameState, gameDispatch, currentGameState.player.position)
 
   // Early exit if player died (check after dispatch updates)
-  if (currentGameState.player.hp <= 0) {
+  if (currentGameState.player.currentHP <= 0) {
     logIfDev('💀 Player died in combat - early exit')
     return
   }
@@ -177,7 +177,7 @@ const doTurnCleanup = (): void => {
   // Apply self-healing if configured for the current level
   const turnsPerHitPoint = currentGameState.level.turnsPerHitPoint
   if (turnsPerHitPoint && turnsPerHitPoint > 0) {
-    const currentHP = currentGameState.player.hp
+    const currentHP = currentGameState.player.currentHP
     const maxHP = currentGameState.player.maxHP
 
     // Only heal if below max HP
@@ -193,7 +193,7 @@ const doTurnCleanup = (): void => {
         gameDispatch({
           type: 'UPDATE_PLAYER',
           payload: {
-            updates: { hp: newHP },
+            updates: { currentHP: newHP },
           },
         })
 
@@ -246,7 +246,7 @@ const executeTurn = (
     doCombatTurn(action, targetId, setDeathMessage)
 
     // Early exit if player died
-    if (currentGameState.player.hp <= 0) {
+    if (currentGameState.player.currentHP <= 0) {
       return
     }
   } else {

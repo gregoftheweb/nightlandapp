@@ -11,7 +11,7 @@ export const playerConfig: Player = {
     'A brave hero from the Last Redoubt. He ventures on a hopeless quest to rescue is brother - Persius.',
   lastComment: '',
   image: christosIMG,
-  hp: 100,
+  currentHP: 100,
   maxHP: 100,
   position: { row: 395, col: 200 },
   zIndex: 500,

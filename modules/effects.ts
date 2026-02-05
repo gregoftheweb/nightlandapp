@@ -113,12 +113,12 @@ const executeHealEffect: EffectHandler<'heal'> = (effect, context) => {
 
   logIfDev('🩹 Executing heal effect:', {
     healAmount,
-    currentHP: state.player.hp,
+    currentHP: state.player.currentHP,
     maxHP: state.player.maxHP,
   })
 
   // Check if player needs healing
-  if (state.player.hp >= state.player.maxHP) {
+  if (state.player.currentHP >= state.player.maxHP) {
     return {
       success: false,
       message: 'You are already at full health!',
@@ -128,7 +128,7 @@ const executeHealEffect: EffectHandler<'heal'> = (effect, context) => {
 
   // Check resource costs if any
   if (effect.cost) {
-    if (effect.cost.hp && state.player.hp < effect.cost.hp) {
+    if (effect.cost.hp && state.player.currentHP < effect.cost.hp) {
       return {
         success: false,
         message: 'Not enough HP to use this item!',
@@ -138,7 +138,7 @@ const executeHealEffect: EffectHandler<'heal'> = (effect, context) => {
   }
 
   // Calculate actual heal amount (don't exceed max HP)
-  const currentHp = state.player.hp
+  const currentHp = state.player.currentHP
   const maxHp = state.player.maxHP
   const actualHealAmount = Math.min(healAmount, maxHp - currentHp)
   const newHp = currentHp + actualHealAmount
@@ -147,7 +147,7 @@ const executeHealEffect: EffectHandler<'heal'> = (effect, context) => {
   dispatch({
     type: 'UPDATE_PLAYER',
     payload: {
-      updates: { hp: newHp },
+      updates: { currentHP: newHp },
     },
   })
 
@@ -156,7 +156,7 @@ const executeHealEffect: EffectHandler<'heal'> = (effect, context) => {
     dispatch({
       type: 'UPDATE_PLAYER',
       payload: {
-        updates: { hp: newHp - effect.cost.hp },
+        updates: { currentHP: newHp - effect.cost.hp },
       },
     })
   }
@@ -186,12 +186,12 @@ const executeRecuperateEffect: EffectHandler<'recuperate'> = (effect, context) =
 
   logIfDev('💤 Executing recuperate effect:', {
     healAmount,
-    currentHP: state.player.hp,
+    currentHP: state.player.currentHP,
     maxHP: state.player.maxHP,
   })
 
   // Only heal if player is below max HP
-  if (state.player.hp >= state.player.maxHP) {
+  if (state.player.currentHP >= state.player.maxHP) {
     logIfDev('Player at max HP, recuperate has no effect')
     return {
       success: false,
@@ -200,7 +200,7 @@ const executeRecuperateEffect: EffectHandler<'recuperate'> = (effect, context) =
     }
   }
 
-  const currentHp = state.player.hp
+  const currentHp = state.player.currentHP
   const maxHp = state.player.maxHP
   const actualHealAmount = Math.min(healAmount, maxHp - currentHp)
   const newHp = currentHp + actualHealAmount
@@ -450,16 +450,16 @@ const executePoisonEffect: EffectHandler<'poison'> = (effect, context) => {
   
   const damage = effect.value
 
-  logIfDev('☠️ Executing poison effect:', { damage, currentHP: state.player.hp })
+  logIfDev('☠️ Executing poison effect:', { damage, currentHP: state.player.currentHP })
 
-  const currentHp = state.player.hp
+  const currentHp = state.player.currentHP
   const newHp = Math.max(0, currentHp - damage)
 
   // Apply poison damage
   dispatch({
     type: 'UPDATE_PLAYER',
     payload: {
-      updates: { hp: newHp },
+      updates: { currentHP: newHp },
     },
   })
 

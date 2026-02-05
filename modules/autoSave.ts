@@ -141,7 +141,7 @@ export function getStateSaveFingerprint(state: GameState): string {
   return JSON.stringify({
     level: state.currentLevelId,
     pos: state.player.position,
-    hp: state.player.hp,
+    hp: state.player.currentHP,
     inv: state.player.inventory.length,
     wpn: state.player.weapons.length,
     moves: state.moveCount,

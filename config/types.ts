@@ -420,7 +420,7 @@ export interface Player {
   lastComment: string
   image: ImageSourcePropType
   position: Position
-  hp: HP
+  currentHP: CurrentHP
   maxHP: MaxHP
   ac?: number
   initiative: number

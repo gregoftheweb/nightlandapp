@@ -213,6 +213,18 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
     }
   }
 
+  // MIGRATION: Support legacy player.hp -> player.currentHP
+  // Old saves have player.hp, new saves have player.currentHP
+  const legacyHp = (snapshot.player as any)?.hp
+  const hasCurrent = typeof (snapshot.player as any)?.currentHP === 'number'
+  if (!hasCurrent && typeof legacyHp === 'number') {
+    logIfDev('🔧 MIGRATION: Converting legacy player.hp to player.currentHP')
+    result.player = {
+      ...result.player,
+      currentHP: legacyHp,
+    }
+  }
+
   logIfDev(`💾 Result currentLevelId: ${result.currentLevelId}`)
   logIfDev(`💾 Result player position: ${JSON.stringify(result.player?.position)}`)
   logIfDev(`💾 Result moveCount: ${result.moveCount}`)
@@ -266,7 +278,7 @@ export const validateGameState = (state: GameState, actionType?: string): void =
   // Validate player structure
   if (state.player) {
     if (!state.player.position) errors.push('player.position is missing')
-    if (typeof state.player.hp !== 'number') errors.push('player.hp must be number')
+    if (typeof state.player.currentHP !== 'number') errors.push('player.currentHP must be number')
     if (typeof state.player.maxHP !== 'number') errors.push('player.maxHP must be number')
   }
 

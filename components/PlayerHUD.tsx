@@ -18,7 +18,7 @@ import zapButtonIMG from '@assets/images/ui/icons/buttonZap.webp'
 import hideButtonIMG from '@assets/images/ui/icons/buttonHide.webp'
 
 interface PlayerHUDProps {
-  hp: number
+  currentHP: number
   maxHP: number
   inCombat: boolean
   onGearPress?: () => void
@@ -34,7 +34,7 @@ interface PlayerHUDProps {
 }
 
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
-  hp,
+  currentHP,
   maxHP,
   inCombat,
   onGearPress,
@@ -92,7 +92,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
           style={hideUnlocked ? styles.statusBarExpanded : styles.statusBar}
           pointerEvents="box-none"
         >
-          <Text style={styles.hpText}>HP: {hp}</Text>
+          <Text style={styles.hpText}>HP: {currentHP}</Text>
 
           <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
             <Image source={require('@assets/images/ui/icons/gear.webp')} style={styles.gearIcon} />

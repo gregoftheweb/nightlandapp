@@ -425,7 +425,7 @@ export function updateCombatDialogs(
   monsters: any[]
 ) {
   const result = {
-    player: { name: player.name, hp: player.hp, comment: playerComment },
+    player: { name: player.name, hp: player.currentHP, comment: playerComment },
     enemies: monsters.map((m, i) =>
       m
         ? { name: m.name, hp: Math.max(0, m.currentHP), comment: enemyComments[i] || '', dead: m.currentHP <= 0 }
@@ -437,7 +437,7 @@ export function updateCombatDialogs(
 }
 
 export function updateStatusBar(player: any) {
-  return { hp: player.hp }
+  return { hp: player.currentHP }
 }
 
 export const isClickWithinBounds = (

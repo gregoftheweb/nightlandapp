@@ -957,7 +957,7 @@ export default function Game() {
           <PositionDisplay position={state.player.position} level={state.level} />
         )}
         <PlayerHUD
-          hp={state.player.hp}
+          currentHP={state.player.currentHP}
           maxHP={state.player.maxHP}
           onGearPress={handleGearPress}
           onTurnPress={handleTurnPress}
