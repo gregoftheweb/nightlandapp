@@ -1,5 +1,5 @@
 // modules/monsterUtils.ts - Monster spawning and management logic
-import { GameState, RuntimeMonster, Position, MonsterInstance } from '../config/types'
+import { GameState, Monster, Position, MonsterInstance } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
 import { hydrateMonsterV2 } from './hydration'
 import { moveMonsters } from './movement'
@@ -132,7 +132,7 @@ export const getSpawnPosition = (state: GameState): Position => {
 export const createMonsterFromTemplate = (
   shortName: string,
   position: Position
-): RuntimeMonster | null => {
+): Monster | null => {
   const template = getMonsterTemplate(shortName)
   if (!template) {
     logIfDev(`Monster template not found: ${shortName}`)
@@ -147,7 +147,7 @@ export const createMonsterFromTemplate = (
     currentHP: template.maxHP, // Start at full HP
   }
 
-  // Hydrate the template with the instance to create RuntimeMonster (Monster)
+  // Hydrate the template with the instance to create Monster
   return hydrateMonsterV2(template, instance)
 }
 
@@ -157,7 +157,7 @@ export const createMonsterFromTemplate = (
  * @param monsters - Array of monsters to search
  * @returns The nearest monster, or null if no living monsters exist
  */
-export const findNearestMonster = (position: Position, monsters: RuntimeMonster[]): RuntimeMonster | null => {
+export const findNearestMonster = (position: Position, monsters: Monster[]): Monster | null => {
   if (!monsters || monsters.length === 0) return null
 
   // Filter for living monsters (currentHP > 0)
@@ -166,7 +166,7 @@ export const findNearestMonster = (position: Position, monsters: RuntimeMonster[
   if (livingMonsters.length === 0) return null
 
   // Find the monster with the smallest Euclidean distance
-  let nearestMonster: RuntimeMonster | null = null
+  let nearestMonster: Monster | null = null
   let minDistance = Infinity
 
   for (const monster of livingMonsters) {

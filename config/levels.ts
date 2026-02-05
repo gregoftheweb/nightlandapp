@@ -10,7 +10,7 @@ import {
   Level,
   Position,
   LevelObjectInstance,
-  RuntimeGreatPower,
+  GreatPower,
   Item,
   NonCollisionObject,
   GreatPowerInstance,
@@ -140,8 +140,8 @@ const createNonCollisionObject = (
 const createGreatPowerForLevel = (
   shortName: string,
   position: Position,
-  overrides: Partial<RuntimeGreatPower> = {}
-): RuntimeGreatPower => {
+  overrides: Partial<GreatPower> = {}
+): GreatPower => {
   const template = getGreatPowerTemplate(shortName)
   if (!template) {
     throw new Error(`GreatPower template ${shortName} not found`)
@@ -165,7 +165,7 @@ const createGreatPowerForLevel = (
   // Extract overrides that should not be reapplied (currentHP and awakened come from the pipeline)
   const { currentHP, awakened, ...otherOverrides } = overrides
   
-  // Return final RuntimeGreatPower with template/instance values and remaining overrides
+  // Return final GreatPower with template/instance values and remaining overrides
   // Order matters: otherOverrides can customize attack, ac, maxHP, etc. but
   // id, position, currentHP, and awakened are explicitly set from the pipeline
   return {

@@ -13,9 +13,9 @@ import {
   GameState,
   Level,
   Player,
-  RuntimeMonster,
+  Monster,
   Item,
-  RuntimeGreatPower,
+  GreatPower,
   LevelObjectInstance,
   NonCollisionObject,
 } from '../../config/types'
@@ -107,7 +107,7 @@ describe('getObjectAtPoint', () => {
 
   test('should detect monster at position', () => {
     const state = createMockGameState()
-    const monster: RuntimeMonster = {
+    const monster: Monster = {
       id: 'monster-1',
       templateId: 'abhuman',
       shortName: 'abhuman',
@@ -131,7 +131,7 @@ describe('getObjectAtPoint', () => {
 
   test('should detect great power (multi-tile)', () => {
     const state = createMockGameState()
-    const greatPower: RuntimeGreatPower = {
+    const greatPower: GreatPower = {
       id: 'gp-1',
       templateId: 'watcher',
       shortName: 'watcher',
@@ -239,7 +239,7 @@ describe('getObjectAtPoint', () => {
 
     // Place both player and monster at same position
     state.player.position = { row: 10, col: 10 }
-    const monster: RuntimeMonster = {
+    const monster: Monster = {
       id: 'monster-1',
       templateId: 'abhuman',
       shortName: 'abhuman',
@@ -262,7 +262,7 @@ describe('getObjectAtPoint', () => {
   test('should respect priority order: Monster > Item', () => {
     const state = createMockGameState()
 
-    const monster: RuntimeMonster = {
+    const monster: Monster = {
       id: 'monster-1',
       templateId: 'abhuman',
       shortName: 'abhuman',

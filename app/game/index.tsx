@@ -15,7 +15,7 @@ import {
   handlePassTurn,
   initializeStartingMonsters,
 } from '../../modules/turnManager'
-import { RuntimeMonster, LevelObjectInstance, Item, RuntimeGreatPower, NonCollisionObject } from '@/config/types'
+import { Monster, LevelObjectInstance, Item, GreatPower, NonCollisionObject } from '@/config/types'
 import { audioManager } from '../../modules/audioManager'
 import { settingsManager } from '../../modules/settingsManager'
 import { UI_CONSTANTS, TIMING_CONSTANTS, COMBAT_CONSTANTS } from '../../constants/Game'
@@ -290,7 +290,7 @@ export default function Game() {
   }, [state.player, state.level])
 
   const showMonsterInfo = useCallback(
-    (monster: RuntimeMonster) => {
+    (monster: Monster) => {
       if (!showInfoRef.current) return
       // Don't show info dialog if in ranged attack mode (player is targeting/retargeting)
       if (state.rangedAttackMode) {
@@ -312,7 +312,7 @@ export default function Game() {
     [state.rangedAttackMode, dispatch]
   )
 
-  const showGreatPowerInfo = useCallback((greatPower: RuntimeGreatPower) => {
+  const showGreatPowerInfo = useCallback((greatPower: GreatPower) => {
     if (!showInfoRef.current) return
     const statusInfo = greatPower.awakened ? 'AWAKENED' : 'Sleeping'
     const greatPowerImage =
@@ -481,7 +481,7 @@ export default function Game() {
   }, [])
 
   const handleMonsterTap = useCallback(
-    (monster: RuntimeMonster) => {
+    (monster: Monster) => {
       // If in ranged attack mode, retarget to the tapped monster
       if (state.rangedAttackMode) {
         if (__DEV__) {
@@ -506,7 +506,7 @@ export default function Game() {
   )
 
   const handleGreatPowerTap = useCallback(
-    (greatPower: RuntimeGreatPower) => {
+    (greatPower: GreatPower) => {
       if (__DEV__) {
         console.log('Great Power tapped:', greatPower.name, 'awakened:', greatPower.awakened)
       }

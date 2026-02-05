@@ -2,7 +2,7 @@
 import {
   Position,
   GameObject,
-  RuntimeMonster,
+  Monster,
   Item,
   LevelObjectInstance,
   NonCollisionObject,
@@ -14,7 +14,7 @@ export interface GridEntity {
   width: number
   height: number
   type: 'monster' | 'item' | 'object' | 'nonCollisionObject'
-  data: RuntimeMonster | Item | LevelObjectInstance | NonCollisionObject
+  data: Monster | Item | LevelObjectInstance | NonCollisionObject
 }
 
 export class SpatialGrid {
@@ -124,7 +124,7 @@ export function buildSpatialGrid(gameState: any, cellSize: number = 10): Spatial
   const grid = new SpatialGrid(cellSize, gameState.gridWidth, gameState.gridHeight)
 
   // Add active monsters
-  gameState.activeMonsters?.forEach((monster: RuntimeMonster) => {
+  gameState.activeMonsters?.forEach((monster: Monster) => {
     if (monster.position) {
       grid.insert({
         id: monster.id!,

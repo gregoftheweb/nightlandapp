@@ -212,12 +212,13 @@ export interface LevelObjectInstance extends EntityBase {
 // MIGRATION STATUS:
 // - V2 types are now the canonical types (MonsterTemplate, MonsterInstance, Monster, etc.) ✅
 // - Legacy V1 types removed from types.ts (kept in hydration.ts for compatibility) ✅
-// - GameState.activeMonsters NOW USES Monster (RuntimeMonster) ✅
-// - GameState.attackSlots NOW USES Monster (RuntimeMonster) ✅
-// - GameState.waitingMonsters NOW USES Monster (RuntimeMonster) ✅
-// - All runtime monster operations now use RuntimeMonster/Monster and currentHP ✅
+// - GameState.activeMonsters NOW USES Monster ✅
+// - GameState.attackSlots NOW USES Monster ✅
+// - GameState.waitingMonsters NOW USES Monster ✅
+// - All runtime monster operations now use Monster and currentHP ✅
 // - Legacy Monster type DELETED - no longer needed ✅
 // - V2 to V1 conversion bridge (hydratedMonsterV2ToMonster) removed ✅
+// - RuntimeMonster and RuntimeGreatPower compatibility aliases removed ✅
 
 /**
  * EntityTemplate - Base type for all static entity templates
@@ -408,22 +409,8 @@ export interface GreatPower extends GreatPowerTemplate {
 }
 
 // ===== Runtime Type Aliases =====
-// Aliases for the active runtime representations used in GameState
-// These define what types are actually used during gameplay
-
-/**
- * RuntimeMonster - Compatibility alias for Monster (hydrated runtime monster)
- * Points to Monster (Template + Instance merged shape)
- * All combat and monster management code should use this type or Monster directly
- */
-export type RuntimeMonster = Monster
-
-/**
- * RuntimeGreatPower - Compatibility alias for GreatPower (hydrated runtime great power)
- * Points to GreatPower (Template + Instance merged shape)
- * All great power logic should use this type or GreatPower directly
- */
-export type RuntimeGreatPower = GreatPower
+// Migration complete: RuntimeMonster and RuntimeGreatPower aliases removed.
+// All code now uses Monster and GreatPower directly as the canonical runtime types.
 
 export interface Player {
   name: string
@@ -608,7 +595,7 @@ export interface Level {
   items: Item[]
   objects: LevelObjectInstance[]
   nonCollisionObjects?: NonCollisionObject[]
-  greatPowers?: RuntimeGreatPower[]
+  greatPowers?: GreatPower[]
   bossEncounter?: BossEncounter
   completionConditions?: CompletionCondition[]
   spawnZones?: SpawnZone[]
@@ -705,7 +692,7 @@ export interface GameState {
   items: Item[] // Items available in current level
   objects: LevelObjectInstance[] // Interactive objects in current level
   nonCollisionObjects?: NonCollisionObject[] // Decorative/non-collision objects
-  greatPowers: RuntimeGreatPower[] // Great powers available in current level
+  greatPowers: GreatPower[] // Great powers available in current level
   gridWidth: number // Game grid width
   gridHeight: number // Game grid height
 
@@ -718,9 +705,9 @@ export interface GameState {
   // ===== COMBAT DOMAIN =====
   inCombat: boolean // Whether player is currently in combat
   combatTurn: CombatParticipant | null // Current turn participant
-  activeMonsters: RuntimeMonster[] // Active monster instances in the level
-  attackSlots: RuntimeMonster[] // Monsters currently attacking the player
-  waitingMonsters: RuntimeMonster[] // Monsters waiting to attack
+  activeMonsters: Monster[] // Active monster instances in the level
+  attackSlots: Monster[] // Monsters currently attacking the player
+  waitingMonsters: Monster[] // Monsters waiting to attack
   turnOrder: CombatParticipant[] // Combat turn order
   combatLog: CombatLogEntry[] // Combat event log
   maxAttackers: number // Maximum simultaneous attackers
