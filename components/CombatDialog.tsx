@@ -12,7 +12,7 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
   const [opacity] = useState(new Animated.Value(0))
   const [isVisible, setIsVisible] = useState(false)
   const [displayedMessages, setDisplayedMessages] = useState<string[]>([]) // Track displayed messages to clear on hide
-  const timerRef = useRef<number | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Process messages to show one complete combat round
   // Christos's action should be at the top, followed by monster responses

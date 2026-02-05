@@ -134,7 +134,7 @@ describe('Death Reset System', () => {
         killerName: 'Monster',
         player: {
           ...dirtyState.player,
-          hp: 0,
+          currentHP: 0,
           inventory: ['item1', 'item2', 'item3'] as any,
         },
         monstersKilled: 10,
