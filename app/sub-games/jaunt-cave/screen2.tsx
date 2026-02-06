@@ -372,6 +372,12 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     router.push('/sub-games/jaunt-cave/main' as any);
   }, [router]);
 
+  // Memoized attack overlay style
+  const attackOverlayStyle = useMemo(() => {
+    if (!arenaSize) return styles.attackOverlay;
+    return [styles.attackOverlay, { width: arenaSize.width, height: arenaSize.height }];
+  }, [arenaSize]);
+
   // Position for daemon
   const position = POSITIONS[currentPosition];
   const daemonX = daemonPosition.x;
@@ -394,7 +400,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
           {isAttacking && arenaSize && (
             <Image
               source={getCurrentSprite()}
-              style={[styles.attackOverlay, { width: arenaSize.width, height: arenaSize.height }]}
+              style={attackOverlayStyle}
               resizeMode="contain"
             />
           )}
