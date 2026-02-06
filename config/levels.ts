@@ -30,7 +30,7 @@ import {
  * All levels are validated on module load to catch configuration errors early.
  */
 export const levels: Record<LevelId, Level> = {
-  '1': {
+  '1': validateLevel({
     // 1. id / name / description
     id: '1',
     name: 'The Dark Outer Wastes',
@@ -192,9 +192,9 @@ export const levels: Record<LevelId, Level> = {
         description: 'Find the iron sword',
       },
     ],
-  },
+  }),
 
-  '2': {
+  '2': validateLevel({
     // 1. id / name / description
     id: '2',
     name: 'The Watching Grounds',
@@ -240,12 +240,8 @@ export const levels: Record<LevelId, Level> = {
         description: 'Reach the eastern exit',
       },
     ],
-  },
+  }),
 }
-
-// Validate all levels at module load to catch configuration errors early
-// Using forEach with array spread to avoid ES2017 Object.values requirement
-;[levels['1'], levels['2']].forEach(validateLevel)
 
 /**
  * Type-safe level retrieval function.

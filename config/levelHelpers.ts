@@ -122,11 +122,21 @@ export function loadSpawnTableV2(tableId: SpawnTableId): MonsterSpawnConfigV2[] 
  * - (Future) Validate template IDs exist
  *
  * Throws error if validation fails.
+ * Returns the level to allow chaining/inline use.
  *
  * @param level Level configuration to validate
+ * @returns The validated level (passthrough)
  * @throws Error if validation fails
+ *
+ * @example
+ * ```typescript
+ * export const level1: Level = validateLevel({
+ *   id: "1",
+ *   // ... level config
+ * });
+ * ```
  */
-export function validateLevel(level: Level): void {
+export function validateLevel(level: Level): Level {
   const { boardSize, playerSpawn, id } = level
 
   // Validate player spawn position
@@ -157,6 +167,8 @@ export function validateLevel(level: Level): void {
   // - Validate that all template IDs reference existing templates
   // - Ensure completion conditions are achievable
   // - Verify spawn zones don't overlap with impassable objects
+
+  return level
 }
 
 /**
