@@ -15,168 +15,15 @@ import {
   NonCollisionObject,
   GreatPowerInstance,
 } from './types'
-import {
-  getBuildingTemplate,
-  getWeaponTemplate,
-  getConsumableTemplate,
-  getCollectibleTemplate,
-  getNonCollisionTemplate,
-} from './objects'
-import { getGreatPowerTemplate } from './monsters'
 import { LevelId } from './levelTypes'
-import { loadSpawnTableV2, validateLevel } from './levelHelpers'
-import { hydrateGreatPowerV2 } from '@modules/hydration'
-
-// Helper function to create object instances from building templates
-const createObjectInstance = (
-  templateShortName: string,
-  position: Position,
-  overrides: Partial<LevelObjectInstance> = {}
-): LevelObjectInstance => {
-  const template = getBuildingTemplate(templateShortName)
-  if (!template) {
-    throw new Error(`Building template ${templateShortName} not found`)
-  }
-
-  return {
-    id: `${template.shortName}_${position.row}_${position.col}`,
-    templateId: templateShortName,
-    position,
-    active: true,
-    shortName: template.shortName,
-    category: template.category,
-    name: template.name,
-    description: template.description,
-    image: template.image,
-    size: template.size || {
-      width: template.width || 1,
-      height: template.height || 1,
-    },
-    zIndex: template.zIndex,
-    effects: template.effects,
-    subGame: template.subGame,
-    ...overrides,
-  }
-}
-
-// Helper function to create item instances from templates
-export const createItemInstance = (
-  templateShortName: string,
-  position: Position,
-  overrides: Partial<Item> = {}
-): Item => {
-  // Try weapon first, then consumable
-  let template = getWeaponTemplate(templateShortName)
-  let itemType: 'weapon' | 'consumable' | 'collectible' = 'weapon'
-
-  if (!template) {
-    template = getConsumableTemplate(templateShortName)
-    itemType = 'consumable'
-  }
-
-  if (!template) {
-    template = getCollectibleTemplate(templateShortName)
-    itemType = 'collectible'
-  }
-
-  if (!template) {
-    throw new Error(`Item template ${templateShortName} not found`)
-  }
-
-  const baseItem: Item = {
-    shortName: template.shortName,
-    category: template.category,
-    name: template.name,
-    description: template.description,
-    image: template.image,
-    position,
-    size: template.size || { width: 1, height: 1 },
-    active: true,
-    type: itemType,
-    collectible: true,
-    id: `${template.shortName}_${position.row}_${position.col}`,
-    effects: template.effects,
-  }
-
-  // Add specific properties based on type
-  if (itemType === 'weapon') {
-    baseItem.weaponId = template.shortName
-    baseItem.damage = template.damage
-    baseItem.hitBonus = template.hitBonus
-  } else if (itemType === 'consumable' && template.effects) {
-    const healEffect = template.effects.find((e) => e.type === 'heal')
-    if (healEffect) {
-      baseItem.healAmount = healEffect.value
-    }
-  }
-  console.log('adding images:', baseItem.image)
-  return {
-    ...baseItem,
-    ...overrides,
-  }
-}
-
-const createNonCollisionObject = (
-  templateName: string,
-  position: Position,
-  rotation: number,
-  overrides: Partial<NonCollisionObject> = {}
-): NonCollisionObject => {
-  const template = getNonCollisionTemplate(templateName)
-  if (!template) {
-    throw new Error(`NonCollisionObject template ${templateName} not found`)
-  }
-
-  return {
-    id: `${template.shortName}_${position.row}_${position.col}_${rotation}`,
-    position,
-    rotation,
-    ...template,
-    ...overrides,
-  }
-}
-
-// Helper function to create GreatPower instances for levels using V2 Template → Instance → Hydrated pipeline
-const createGreatPowerForLevel = (
-  shortName: string,
-  position: Position,
-  overrides: Partial<GreatPower> = {}
-): GreatPower => {
-  const template = getGreatPowerTemplate(shortName)
-  if (!template) {
-    throw new Error(`GreatPower template ${shortName} not found`)
-  }
-
-  // Determine initial HP - support both legacy hp and currentHP in overrides
-  const initialHP = overrides.currentHP ?? (overrides as any).hp ?? template.maxHP
-
-  // Create instance with defaults
-  const instance: GreatPowerInstance = {
-    id: `${shortName}_${position.row}_${position.col}`,
-    templateId: shortName,
-    position,
-    currentHP: initialHP,
-    awakened: overrides.awakened ?? false,
-  }
-
-  // Hydrate to merge template + instance
-  const hydrated = hydrateGreatPowerV2(template, instance)
-
-  // Extract overrides that should not be reapplied (currentHP and awakened come from the pipeline)
-  const { currentHP, awakened, ...otherOverrides } = overrides
-  
-  // Return final GreatPower with template/instance values and remaining overrides
-  // Order matters: otherOverrides can customize attack, ac, maxHP, etc. but
-  // id, position, currentHP, and awakened are explicitly set from the pipeline
-  return {
-    ...hydrated,
-    ...otherOverrides,
-    id: instance.id,
-    position: instance.position,
-    currentHP: hydrated.currentHP,
-    awakened: hydrated.awakened,
-  }
-}
+import {
+  loadSpawnTableV2,
+  validateLevel,
+  createObjectInstance,
+  createItemInstance,
+  createNonCollisionObject,
+  createGreatPowerInstance,
+} from './levelHelpers'
 
 /**
  * Level registry with type-safe IDs.
@@ -309,7 +156,7 @@ export const levels: Record<LevelId, Level> = {
 
     // GREAT POWERS - Boss-level entities
     greatPowers: [
-      createGreatPowerForLevel(
+      createGreatPowerInstance(
         'watcher_se',
         { row: 380, col: 180 },
         {
