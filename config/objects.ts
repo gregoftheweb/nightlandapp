@@ -10,9 +10,6 @@ import shortSwordIMG from '@assets/images/items/equipment/shortSword.webp'
 import potionIMG from '@assets/images/items/consumables/potion.webp'
 import sanctuaryPoolImg from '@assets/images/sprites/buildings/poolofpeace.webp'
 import footprintsIMG from '@assets/images/items/quest/footprints-blue.webp'
-import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
-import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.webp'
-import jauntCaveIMG from '@assets/images/sprites/buildings/jaunt-cave.png'
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
@@ -289,78 +286,6 @@ export const buildings: Record<string, GameObject> = {
         value: 10,
       },
     ],
-  },
-  aeroWreckage: {
-    kind: 'object',
-    shortName: 'aeroWreckage',
-    category: 'building',
-    name: 'Aero-Wreckage',
-    description:
-      'The twisted remnants of a long-lost crashed aerocraft from a forgotten age of the Redoubt. Ancient metal and strange devices lie scattered among the wreckage, relics of a time when humanity soared above the Night Land.',
-    width: 4,
-    height: 4,
-    image: aeroWreckageIMG,
-    active: true,
-    zIndex: 0,
-    effects: [
-      {
-        type: 'hide',
-      },
-    ],
-    subGame: {
-      subGameName: 'aerowreckage-puzzle',
-      ctaLabel: 'Investigate',
-      requiresPlayerOnObject: true,
-      subGameId: 'aerowreckage-puzzle',
-    },
-  },
-  tesseract: {
-    kind: 'object',
-    shortName: 'tesseract',
-    category: 'building',
-    name: 'Tesseract',
-    description:
-      'An ancient circle of black stone, steeped in a will that is not its own. Those who seek to command its power gain forbidden knowledge… or vanish without even the mercy of death.',
-    width: 6,
-    height: 6,
-    image: tesseractIMG,
-    active: true,
-    zIndex: 0,
-    effects: [
-      {
-        type: 'hide',
-      },
-    ],
-    subGame: {
-      subGameName: 'tesseract',
-      ctaLabel: 'Investigate',
-      requiresPlayerOnObject: true,
-      subGameId: 'tesseract',
-    },
-  },
-  jauntCave: {
-    kind: 'object',
-    shortName: 'jauntCave',
-    category: 'building',
-    name: 'Cave of the daemon of the walking shadows',
-    description:
-      'A sulfur smelling wallow in the Night Lands plains lead to a cave shining with the light from lava. Christos is drawn to it, an aegis of foreboding and necessity upon him. He knows he MUST confront what is inside. Doom and Destiny collide within.',
-    width: 4,
-    height: 4,
-    image: jauntCaveIMG,
-    active: true,
-    zIndex: 0,
-    effects: [
-      {
-        type: 'hide',
-      },
-    ],
-    subGame: {
-      subGameName: 'jaunt-cave',
-      ctaLabel: 'Enter the cave',
-      requiresPlayerOnObject: true,
-      subGameId: 'jaunt-cave',
-    },
   },
 }
 
