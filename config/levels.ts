@@ -31,26 +31,33 @@ import {
  */
 export const levels: Record<LevelId, Level> = {
   '1': {
+    // 1. id / name / description
     id: '1',
     name: 'The Dark Outer Wastes',
     description:
       'The only lands known by the Monstruwacans, all else is beyond they skill and ken.',
+
+    // 2. boardSize
     boardSize: { width: 400, height: 400 },
+
+    // 3. playerSpawn
     playerSpawn: { row: 395, col: 200 },
+
+    // 4. environment (music, lighting, weather)
     ambientLight: 0.2,
     weatherEffect: null,
     backgroundMusic: 'nightland_ambient',
+
+    // 5. progression (requiredLevel, rewards, etc.)
     turnsPerHitPoint: 5, // Christos heals 1 HP every 5 turns
 
+    // 6. objects / items / nonCollisionObjects
     // ITEMS - Created from templates with specific positions
     items: [
       createItemInstance('healthPotion', { row: 395, col: 195 }),
       createItemInstance('ironSword', { row: 380, col: 200 }),
       createItemInstance('maguffinRock', { row: 390, col: 210 }),
     ],
-
-    // MONSTERS - Use V2 spawn table for spawn configurations
-    monsterSpawnConfigsV2: loadSpawnTableV2('wasteland_common'),
 
     // OBJECTS - Buildings and structures (including pools)
     objects: [
@@ -62,6 +69,7 @@ export const levels: Record<LevelId, Level> = {
       createObjectInstance('aeroWreckage', { row: 383, col: 192 }), //{ row: 364, col: 60 }),
       createObjectInstance('tesseract', { row: 391, col: 186 }), //{ row: 345, col: 20 })
     ],
+
     nonCollisionObjects: [
       // Start
       // Existing footsteps (moving west)
@@ -154,7 +162,7 @@ export const levels: Record<LevelId, Level> = {
       }),
     ],
 
-    // GREAT POWERS - Boss-level entities
+    // 7. greatPowers
     greatPowers: [
       createGreatPowerInstance(
         'watcher_se',
@@ -168,6 +176,10 @@ export const levels: Record<LevelId, Level> = {
       ),
     ],
 
+    // 8. spawn configs (monsterSpawnConfigsV2)
+    monsterSpawnConfigsV2: loadSpawnTableV2('wasteland_common'),
+
+    // 9. completionConditions
     completionConditions: [
       {
         type: 'reach_position',
@@ -183,29 +195,40 @@ export const levels: Record<LevelId, Level> = {
   },
 
   '2': {
+    // 1. id / name / description
     id: '2',
     name: 'The Watching Grounds',
     description: 'Venture deeper into the Nightland where ancient eyes follow your every move.',
+
+    // 2. boardSize
     boardSize: { width: 600, height: 500 },
+
+    // 3. playerSpawn
     playerSpawn: { row: 490, col: 50 }, // Fixed: was 590, out of bounds for height 500
-    requiredLevel: 2,
-    recommendedLevel: 3,
-    experienceReward: 250,
+
+    // 4. environment (music, lighting, weather)
     ambientLight: 0.15,
     weatherEffect: 'mist',
     backgroundMusic: 'watching_grounds',
+
+    // 5. progression (requiredLevel, rewards, etc.)
+    requiredLevel: 2,
+    recommendedLevel: 3,
+    experienceReward: 250,
     turnsPerHitPoint: 5, // Christos heals 1 HP every 5 turns
 
+    // 6. objects / items / nonCollisionObjects
     items: [],
 
-    // MONSTERS - Use V2 spawn table for spawn configurations
-    monsterSpawnConfigsV2: loadSpawnTableV2('grounds_common'),
-
-    // OBJECTS - Buildings including pools
     objects: [createObjectInstance('poisonPool', { row: 150, col: 150 })],
 
+    // 7. greatPowers
     greatPowers: [],
 
+    // 8. spawn configs (monsterSpawnConfigsV2)
+    monsterSpawnConfigsV2: loadSpawnTableV2('grounds_common'),
+
+    // 9. completionConditions
     completionConditions: [
       {
         type: 'defeat_all_monsters',
