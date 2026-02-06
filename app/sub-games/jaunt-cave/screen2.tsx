@@ -24,9 +24,9 @@ enum DaemonState {
 
 // Landing positions (configurable percentages)
 const POSITIONS = {
-  left: { x: 0.2, y: 0.25 },
-  center: { x: 0.5, y: 0.25 },
-  right: { x: 0.8, y: 0.25 },
+  left: { x: 0.2, y: 0.37 },
+  center: { x: 0.5, y: 0.38 },
+  right: { x: 0.8, y: 0.38 },
 } as const;
 
 type PositionKey = keyof typeof POSITIONS;
@@ -105,7 +105,9 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     const containerH = arenaSize.height;
 
     // Compute scale for resizeMode="cover" (fills container, may crop)
-    const scale = Math.max(containerW / imageW, containerH / imageH);
+    // Scale to ALWAYS match screen width
+    const scale = containerW / imageW;
+
     const drawW = imageW * scale;
     const drawH = imageH * scale;
     const offsetX = (containerW - drawW) / 2;
