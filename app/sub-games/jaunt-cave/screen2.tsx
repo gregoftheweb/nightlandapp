@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { BackgroundImage } from '../_shared/BackgroundImage';
 import { BottomActionBar } from '../_shared/BottomActionBar';
 import { subGameTheme } from '../_shared/subGameTheme';
+import { useGameContext } from '@context/GameContext';
 
 // Daemon sprite states
 enum DaemonState {
@@ -43,6 +44,15 @@ const SPRITES = {
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
 
+// Combat helpers
+const rollToHit = (): boolean => {
+  return Math.random() < 0.8; // 80% hit chance
+};
+
+const rollDamage = (): number => {
+  return Math.floor(Math.random() * 16) + 10; // 10-25 inclusive
+};
+
 // Timing constants (in milliseconds)
 const TIMINGS = {
   RESTING_MIN: 3000,
@@ -55,8 +65,6 @@ const TIMINGS = {
 };
 
 interface JauntCaveScreen2Props {
-  christosHP?: number;
-  maxChristosHP?: number;
   daemonHP?: number;
   maxDaemonHP?: number;
   onDaemonHit?: () => void;
@@ -64,14 +72,17 @@ interface JauntCaveScreen2Props {
 }
 
 const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
-  christosHP = 100,
-  maxChristosHP = 100,
   daemonHP = 100,
   maxDaemonHP = 100,
   onDaemonHit,
   onDaemonMiss,
 }) => {
   const router = useRouter();
+  const { state, dispatch } = useGameContext();
+  
+  // Get real Christos HP from game state
+  const christosHP = state.player.currentHP;
+  const maxChristosHP = state.player.maxHP;
   const [daemonState, setDaemonState] = useState<DaemonState>(DaemonState.RESTING);
   const [currentPosition, setCurrentPosition] = useState<PositionKey>('center');
   const [attackDirection, setAttackDirection] = useState<'left' | 'right'>('left');
@@ -224,6 +235,38 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     });
   }, [crossfadeAnim]);
 
+  // Apply damage and handle death
+  const applyDaemonDamage = useCallback(() => {
+    const hit = rollToHit();
+    
+    if (hit) {
+      const damage = rollDamage();
+      const newHP = Math.max(0, christosHP - damage);
+      
+      // Apply damage to Christos
+      dispatch({
+        type: 'UPDATE_PLAYER',
+        payload: { updates: { currentHP: newHP } },
+      });
+
+      // Check for death
+      if (newHP <= 0) {
+        // Dispatch GAME_OVER action
+        dispatch({
+          type: 'GAME_OVER',
+          payload: {
+            message: 'Christos was killed by the Jaunt Deamon.',
+            killerName: 'Jaunt Deamon',
+            suppressDeathDialog: true,
+          },
+        });
+
+        // Navigate to death screen
+        router.replace('/death' as any);
+      }
+    }
+  }, [christosHP, dispatch, router]);
+
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
     // Prevent multiple simultaneous loops
@@ -268,6 +311,9 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
               setDaemonState(DaemonState.ATTACKING);
               brightnessAnim.setValue(0); // Reset brightness before attack
               triggerShake();
+              
+              // Apply damage at start of attack
+              applyDaemonDamage();
 
               animationTimerRef.current = setTimeout(() => {
                 // STATE 4: LANDED (after attack, already at new position)
@@ -307,7 +353,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     };
 
     executeSequence();
-  }, [clearTimer, getNextPosition, startGlowEffect, stopGlowEffect, triggerShake, triggerFizzle, triggerBrightness, triggerCrossfade]);
+  }, [clearTimer, getNextPosition, startGlowEffect, stopGlowEffect, triggerShake, triggerFizzle, triggerBrightness, triggerCrossfade, applyDaemonDamage]);
 
   // Handle tap on daemon
   const handleDaemonTap = useCallback(() => {
