@@ -4,13 +4,15 @@ import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
+import { getSubGameDefinition } from '@config/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { usePuzzleState } from './hooks/usePuzzleState'
 import { THEME } from './theme'
 
-const bgFuselage = require('@assets/images/backgrounds/subgames/aerowreck-safe4.webp')
+const SUB_GAME_ID = 'aerowreckage-puzzle'
+const definition = getSubGameDefinition(SUB_GAME_ID)
 
 export default function AeroWreckageEntry() {
   const router = useRouter()
@@ -46,7 +48,7 @@ export default function AeroWreckageEntry() {
   }
 
   return (
-    <BackgroundImage source={bgFuselage}>
+    <BackgroundImage source={definition.introBackgroundImage}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
           <View

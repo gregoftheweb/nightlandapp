@@ -312,6 +312,7 @@ export const buildings: Record<string, GameObject> = {
       subGameName: 'aerowreckage-puzzle',
       ctaLabel: 'Investigate',
       requiresPlayerOnObject: true,
+      subGameId: 'aerowreckage-puzzle',
     },
   },
   tesseract: {
@@ -335,6 +336,7 @@ export const buildings: Record<string, GameObject> = {
       subGameName: 'tesseract',
       ctaLabel: 'Investigate',
       requiresPlayerOnObject: true,
+      subGameId: 'tesseract',
     },
   },
   hermit: {
@@ -343,7 +345,7 @@ export const buildings: Record<string, GameObject> = {
     category: 'building',
     name: 'Hermit',
     description:
-      'A lonely hermit sits next to small campfire, safety and peace eminate from him and the small copse of woods around him.',
+      'A lonely hermit sits next to small campfire, safety and peace emanate from him and the small copse of woods around him.',
     width: 4,
     height: 4,
     image: hermitIMG,
@@ -362,6 +364,7 @@ export const buildings: Record<string, GameObject> = {
       subGameName: 'hermit-hollow',
       ctaLabel: 'Rest awhile',
       requiresPlayerOnObject: true,
+      subGameId: 'hermit-hollow',
     },
   },
   jauntCave: {
@@ -385,6 +388,7 @@ export const buildings: Record<string, GameObject> = {
       subGameName: 'jaunt-cave',
       ctaLabel: 'Enter the cave',
       requiresPlayerOnObject: true,
+      subGameId: 'jaunt-cave',
     },
   },
 }

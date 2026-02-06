@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native'
 import { exitSubGame } from '@modules/subGames'
+import { getSubGameDefinition } from '@config/subGames'
 import { useGameContext } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
@@ -12,8 +13,8 @@ import { saveWaypoint } from '@modules/saveGame'
 import { applyEffect } from '@modules/effects'
 import { Effect } from '@config/types'
 
-const bgHermit = require('@assets/images/backgrounds/subgames/hermit-screen1.webp')
-const SUB_GAME_NAME = 'hermit-hollow'
+const SUB_GAME_ID = 'hermit-hollow'
+const definition = getSubGameDefinition(SUB_GAME_ID)
 const WAYPOINT_NAME = 'hermit-hollow waypoint'
 
 export default function HermitHollowMain() {
@@ -38,7 +39,7 @@ export default function HermitHollowMain() {
   // Check if player has already completed the hermit conversation
   // (hermit entered trance, so return visits should start at end-state)
   const isHermitConversationCompleted = useMemo(() => {
-    return state.subGamesCompleted?.[SUB_GAME_NAME] === true
+    return state.subGamesCompleted?.[SUB_GAME_ID] === true
   }, [state.subGamesCompleted])
 
   // Initialize current node - start at end if completed, otherwise start node
@@ -96,12 +97,12 @@ export default function HermitHollowMain() {
         // Check if this is the final trance effect
         if (effect === 'hermit_enters_trance') {
           shouldCreateWaypoint = true
-          updatedSubGamesCompleted[SUB_GAME_NAME] = true
+          updatedSubGamesCompleted[SUB_GAME_ID] = true
 
           // Mark sub-game as completed
           dispatch({
             type: 'SET_SUB_GAME_COMPLETED',
-            payload: { subGameName: SUB_GAME_NAME, completed: true },
+            payload: { subGameName: SUB_GAME_ID, completed: true },
           })
         }
 
@@ -122,7 +123,7 @@ export default function HermitHollowMain() {
             state,
             dispatch,
             sourceType: 'system',
-            sourceId: SUB_GAME_NAME,
+            sourceId: SUB_GAME_ID,
             trigger: 'onInteract',
           })
         }
@@ -132,11 +133,11 @@ export default function HermitHollowMain() {
         // Format: `{sub-game-name}:{effect_flag}`
         // Example: `hermit-hollow:learned_great_power_exists`
         // These can be checked later by other systems for quest/lore progression
-        updatedSubGamesCompleted[`${SUB_GAME_NAME}:${effect}`] = true
+        updatedSubGamesCompleted[`${SUB_GAME_ID}:${effect}`] = true
 
         dispatch({
           type: 'SET_SUB_GAME_COMPLETED',
-          payload: { subGameName: `${SUB_GAME_NAME}:${effect}`, completed: true },
+          payload: { subGameName: `${SUB_GAME_ID}:${effect}`, completed: true },
         })
       })
 
@@ -231,7 +232,7 @@ export default function HermitHollowMain() {
       console.error(`[HermitHollow] Node not found: ${currentNodeId}`)
     }
     return (
-      <BackgroundImage source={bgHermit}>
+      <BackgroundImage source={definition.introBackgroundImage}>
         <View style={styles.container}>
           <View style={styles.contentArea}>
             <Text style={styles.errorText}>Error: Dialogue node not found</Text>
@@ -253,7 +254,7 @@ export default function HermitHollowMain() {
   const isEndState = currentNode.end === true
 
   return (
-    <BackgroundImage source={bgHermit}>
+    <BackgroundImage source={definition.introBackgroundImage}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
           {/* NPC Text Box */}

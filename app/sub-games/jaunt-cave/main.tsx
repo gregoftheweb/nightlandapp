@@ -4,42 +4,37 @@ import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
+import { getSubGameDefinition } from '@config/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 
-const bgMain = require('@assets/images/backgrounds/subgames/jaunt-cave-screen1.png')
-
-const SUB_GAME_NAME = 'jaunt-cave'
-
-// Sub-game metadata
-const TITLE = 'Cave of the daemon of the walking shadows'
-const DESCRIPTION =
-  'A sulfur smelling wallow in the Night Lands plains lead to a cave shining with the light from lava. Christos is drawn to it, an aegis of foreboding and necessity upon him. He knows he MUST confront what is inside. Doom and Destiny collide within.'
+const SUB_GAME_ID = 'jaunt-cave'
+const definition = getSubGameDefinition(SUB_GAME_ID)
 
 export default function JauntCaveMain() {
   const router = useRouter()
 
   const handleRejectDestiny = () => {
     if (__DEV__) {
-      console.log(`[${SUB_GAME_NAME}] Rejecting destiny and returning to overworld`)
+      console.log(`[${SUB_GAME_ID}] Rejecting destiny and returning to overworld`)
     }
     exitSubGame({ completed: false })
   }
 
   const handleEnterCave = () => {
     if (__DEV__) {
-      console.log(`[${SUB_GAME_NAME}] Entering the cave`)
+      console.log(`[${SUB_GAME_ID}] Entering the cave`)
     }
     router.push('/sub-games/jaunt-cave/screen2' as any)
   }
 
   return (
-    <BackgroundImage source={bgMain}>
+    <BackgroundImage source={definition.introBackgroundImage}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          <Text style={styles.title}>{TITLE}</Text>
-          <Text style={styles.description}>{DESCRIPTION}</Text>
+          <Text style={styles.title}>{definition.title}</Text>
+          <Text style={styles.description}>{definition.description}</Text>
         </View>
 
         <BottomActionBar>

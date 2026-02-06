@@ -355,7 +355,9 @@ export default function GameBoard({
       if (canLaunch && launch) {
         const handleCtaPress = () => {
           setInfoVisible(false)
-          enterSubGame(launch.subGameName, { objectId: building.id })
+          // Use subGameId from registry if available, otherwise fall back to subGameName
+          const subGameId = launch.subGameId || launch.subGameName
+          enterSubGame(subGameId as any, { objectId: building.id })
         }
 
         showInfo(
