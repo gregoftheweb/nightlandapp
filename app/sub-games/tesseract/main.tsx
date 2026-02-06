@@ -4,11 +4,13 @@ import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
+import { getSubGameDefinition } from '@config/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 
-const bgScreen1 = require('@assets/images/backgrounds/subgames/tesseract-screen1.webp')
+const SUB_GAME_ID = 'tesseract'
+const definition = getSubGameDefinition(SUB_GAME_ID)
 
 export default function TesseractMain() {
   const router = useRouter()
@@ -41,7 +43,7 @@ export default function TesseractMain() {
   }
 
   return (
-    <BackgroundImage source={bgScreen1}>
+    <BackgroundImage source={definition.introBackgroundImage}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
           {/* Dev-only reset button */}
