@@ -10,10 +10,10 @@
 import {
   hydrateObject,
   hydrateObjects,
-  hydrateMonsterV2,
-  hydrateGreatPowerV2,
-  hydrateMonstersV2,
-  hydrateGreatPowersV2,
+  hydrateMonster,
+  hydrateGreatPower,
+  hydrateMonsters,
+  hydrateGreatPowers,
 } from '../hydration'
 import {
   GameObjectTemplate,
@@ -106,7 +106,7 @@ describe('hydration module', () => {
     })
   })
 
-  describe('hydrateMonsterV2 (legacy compatibility)', () => {
+  describe('hydrateMonster', () => {
     it('should merge monster template and instance correctly', () => {
       const template: MonsterTemplate = {
         kind: 'monster',
@@ -126,7 +126,7 @@ describe('hydration module', () => {
         currentHP: 30, // Damaged
       }
 
-      const hydrated = hydrateMonsterV2(template, instance)
+      const hydrated = hydrateMonster(template, instance)
 
       expect(hydrated.id).toBe('test-monster-1')
       expect(hydrated.templateId).toBe('test-monster')
@@ -160,7 +160,7 @@ describe('hydration module', () => {
         spawnZoneId: 'zone-1',
       }
 
-      const hydrated = hydrateMonsterV2(template, instance)
+      const hydrated = hydrateMonster(template, instance)
 
       expect(hydrated.spawned).toBe(true)
       expect(hydrated.spawnZoneId).toBe('zone-1')
@@ -230,7 +230,7 @@ describe('hydration module', () => {
     })
   })
 
-  describe('hydrateMonstersV2 (legacy compatibility)', () => {
+  describe('hydrateMonsters', () => {
     it('should batch hydrate multiple monsters', () => {
       const templates = new Map<string, MonsterTemplate>([
         [
@@ -276,7 +276,7 @@ describe('hydration module', () => {
         },
       ]
 
-      const hydrated = hydrateMonstersV2(templates, instances)
+      const hydrated = hydrateMonsters(templates, instances)
 
       expect(hydrated).toHaveLength(2)
       expect(hydrated[0].name).toBe('Monster A')
@@ -296,15 +296,15 @@ describe('hydration module', () => {
         },
       ]
 
-      expect(() => hydrateMonstersV2(templates, instances)).toThrow(
+      expect(() => hydrateMonsters(templates, instances)).toThrow(
         'Template not found: missing-monster'
       )
     })
   })
 
-  // ===== V2 Hydration Tests =====
+  // ===== Hydration Tests =====
 
-  describe('hydrateMonsterV2', () => {
+  describe('hydrateMonster', () => {
     it('should merge monster template and instance correctly', () => {
       const template: MonsterTemplate = {
         kind: 'monster',
@@ -324,7 +324,7 @@ describe('hydration module', () => {
         currentHP: 40, // Damaged
       }
 
-      const hydrated = hydrateMonsterV2(template, instance)
+      const hydrated = hydrateMonster(template, instance)
 
       expect(hydrated.id).toBe('test-monster-v2-1')
       expect(hydrated.templateId).toBe('test-monster-v2')
@@ -358,7 +358,7 @@ describe('hydration module', () => {
         inCombatSlot: true,
       }
 
-      const hydrated = hydrateMonsterV2(template, instance)
+      const hydrated = hydrateMonster(template, instance)
 
       expect(hydrated.uiSlot).toBe(1)
       expect(hydrated.inCombatSlot).toBe(true)
@@ -385,13 +385,13 @@ describe('hydration module', () => {
         zIndex: 20, // Override
       }
 
-      const hydrated = hydrateMonsterV2(template, instance)
+      const hydrated = hydrateMonster(template, instance)
 
       expect(hydrated.zIndex).toBe(20)
     })
   })
 
-  describe('hydrateGreatPowerV2', () => {
+  describe('hydrateGreatPower', () => {
     it('should merge great power template and instance correctly', () => {
       const template: GreatPowerTemplate = {
         kind: 'greatPower',
@@ -412,7 +412,7 @@ describe('hydration module', () => {
         awakened: false,
       }
 
-      const hydrated = hydrateGreatPowerV2(template, instance)
+      const hydrated = hydrateGreatPower(template, instance)
 
       expect(hydrated.id).toBe('great-power-v2-1')
       expect(hydrated.templateId).toBe('great-power-v2')
@@ -447,13 +447,13 @@ describe('hydration module', () => {
         awakened: true, // Awakened
       }
 
-      const hydrated = hydrateGreatPowerV2(template, instance)
+      const hydrated = hydrateGreatPower(template, instance)
 
       expect(hydrated.awakened).toBe(true)
     })
   })
 
-  describe('hydrateMonstersV2', () => {
+  describe('hydrateMonsters', () => {
     it('should batch hydrate multiple monsters', () => {
       const templates = new Map<string, MonsterTemplate>([
         [
@@ -499,7 +499,7 @@ describe('hydration module', () => {
         },
       ]
 
-      const hydrated = hydrateMonstersV2(templates, instances)
+      const hydrated = hydrateMonsters(templates, instances)
 
       expect(hydrated).toHaveLength(2)
       expect(hydrated[0].name).toBe('Monster V2 A')
@@ -519,13 +519,13 @@ describe('hydration module', () => {
         },
       ]
 
-      expect(() => hydrateMonstersV2(templates, instances)).toThrow(
+      expect(() => hydrateMonsters(templates, instances)).toThrow(
         'Template not found: missing-monster-v2'
       )
     })
   })
 
-  describe('hydrateGreatPowersV2', () => {
+  describe('hydrateGreatPowers', () => {
     it('should batch hydrate multiple great powers', () => {
       const templates = new Map<string, GreatPowerTemplate>([
         [
@@ -573,7 +573,7 @@ describe('hydration module', () => {
         },
       ]
 
-      const hydrated = hydrateGreatPowersV2(templates, instances)
+      const hydrated = hydrateGreatPowers(templates, instances)
 
       expect(hydrated).toHaveLength(2)
       expect(hydrated[0].name).toBe('Power V2 A')
@@ -596,7 +596,7 @@ describe('hydration module', () => {
         },
       ]
 
-      expect(() => hydrateGreatPowersV2(templates, instances)).toThrow(
+      expect(() => hydrateGreatPowers(templates, instances)).toThrow(
         'Template not found: missing-power-v2'
       )
     })

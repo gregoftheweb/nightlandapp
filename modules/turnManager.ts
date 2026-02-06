@@ -1,7 +1,7 @@
 // modules/turnManager.ts - Clean turn-based game flow orchestration
 import { GameState, Position, Monster, MonsterInstance } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
-import { hydrateMonsterV2 } from './hydration'
+import { hydrateMonster } from './hydration'
 import { handleMoveMonsters } from './monsterUtils'
 import { handleCombatTurn } from './combat'
 import { calculateNewPosition } from './movement'
@@ -381,7 +381,7 @@ export const initializeStartingMonsters = (
       }
 
       // Hydrate template with instance to get Monster
-      const newMonster: Monster = hydrateMonsterV2(abhumanTemplate, instance)
+      const newMonster: Monster = hydrateMonster(abhumanTemplate, instance)
 
       dispatch({
         type: 'SPAWN_MONSTER',

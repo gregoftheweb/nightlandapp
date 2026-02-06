@@ -1,13 +1,13 @@
 /**
- * Unit tests for monster spawning using V2 spawn configs
+ * Unit tests for monster spawning using spawn configs
  *
  * Tests verify that:
- * - checkMonsterSpawn uses monsterSpawnConfigsV2
+ * - checkMonsterSpawn uses monsterSpawnConfigs
  * - maxInstances is enforced by templateId
  * - Spawn behavior is unchanged (rates, distance, slotting)
  */
 import { checkMonsterSpawn, getSpawnPosition } from '../monsterUtils'
-import { GameState, Monster, MonsterSpawnConfigV2, Level } from '../../config/types'
+import { GameState, Monster, MonsterSpawnConfig, Level } from '../../config/types'
 import { getLevel } from '../../config/levels'
 
 // Mock dispatch for capturing spawned monsters
@@ -19,18 +19,18 @@ const mockDispatch = (action: any) => {
 // Mock showDialog
 const mockShowDialog = jest.fn()
 
-describe('Monster Spawning V2', () => {
+describe('Monster Spawning', () => {
   beforeEach(() => {
     dispatchedActions = []
     mockShowDialog.mockClear()
   })
 
-  describe('checkMonsterSpawn with V2 configs', () => {
-    it('should use monsterSpawnConfigsV2 when available', () => {
-      // Create a state with V2 spawn configs
+  describe('checkMonsterSpawn with spawn configs', () => {
+    it('should use monsterSpawnConfigs when available', () => {
+      // Create a state with spawn configs
       const mockLevel: Level = {
         ...getLevel('1'),
-        monsterSpawnConfigsV2: [
+        monsterSpawnConfigs: [
           {
             templateId: 'abhuman',
             spawnRate: 1.0, // 100% chance to force spawn for testing
@@ -61,7 +61,7 @@ describe('Monster Spawning V2', () => {
     it('should enforce maxInstances by templateId', () => {
       const mockLevel: Level = {
         ...getLevel('1'),
-        monsterSpawnConfigsV2: [
+        monsterSpawnConfigs: [
           {
             templateId: 'abhuman',
             spawnRate: 1.0, // 100% chance
@@ -94,7 +94,7 @@ describe('Monster Spawning V2', () => {
     it('should allow spawn when below maxInstances', () => {
       const mockLevel: Level = {
         ...getLevel('1'),
-        monsterSpawnConfigsV2: [
+        monsterSpawnConfigs: [
           {
             templateId: 'abhuman',
             spawnRate: 1.0,
@@ -127,7 +127,7 @@ describe('Monster Spawning V2', () => {
     it('should respect spawnRate probability', () => {
       const mockLevel: Level = {
         ...getLevel('1'),
-        monsterSpawnConfigsV2: [
+        monsterSpawnConfigs: [
           {
             templateId: 'abhuman',
             spawnRate: 0.0, // 0% chance - should never spawn
@@ -211,17 +211,17 @@ describe('Monster Spawning V2', () => {
     })
   })
 
-  describe('V2 spawn configs in actual levels', () => {
-    it('should have V2 configs in level 1', () => {
+  describe('spawn configs in actual levels', () => {
+    it('should have configs in level 1', () => {
       const level = getLevel('1')
-      expect(level.monsterSpawnConfigsV2).toBeDefined()
-      expect(level.monsterSpawnConfigsV2!.length).toBeGreaterThan(0)
+      expect(level.monsterSpawnConfigs).toBeDefined()
+      expect(level.monsterSpawnConfigs!.length).toBeGreaterThan(0)
     })
 
-    it('should have V2 configs in level 2', () => {
+    it('should have configs in level 2', () => {
       const level = getLevel('2')
-      expect(level.monsterSpawnConfigsV2).toBeDefined()
-      expect(level.monsterSpawnConfigsV2!.length).toBeGreaterThan(0)
+      expect(level.monsterSpawnConfigs).toBeDefined()
+      expect(level.monsterSpawnConfigs!.length).toBeGreaterThan(0)
     })
   })
 })

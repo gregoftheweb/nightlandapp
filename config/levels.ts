@@ -17,7 +17,7 @@ import {
 } from './types'
 import { LevelId } from './levelTypes'
 import {
-  loadSpawnTableV2,
+  loadSpawnTable,
   validateLevel,
   createObjectInstance,
   createItemInstance,
@@ -176,8 +176,8 @@ export const levels: Record<LevelId, Level> = {
       ),
     ],
 
-    // 8. spawn configs (monsterSpawnConfigsV2)
-    monsterSpawnConfigsV2: loadSpawnTableV2('wasteland_common'),
+    // 8. spawn configs (monsterSpawnConfigs)
+    monsterSpawnConfigs: loadSpawnTable('wasteland_common'),
 
     // 9. completionConditions
     completionConditions: [
@@ -225,8 +225,8 @@ export const levels: Record<LevelId, Level> = {
     // 7. greatPowers
     greatPowers: [],
 
-    // 8. spawn configs (monsterSpawnConfigsV2)
-    monsterSpawnConfigsV2: loadSpawnTableV2('grounds_common'),
+    // 8. spawn configs (monsterSpawnConfigs)
+    monsterSpawnConfigs: loadSpawnTable('grounds_common'),
 
     // 9. completionConditions
     completionConditions: [

@@ -1,7 +1,7 @@
 // modules/monsterUtils.ts - Monster spawning and management logic
 import { GameState, Monster, Position, MonsterInstance } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
-import { hydrateMonsterV2 } from './hydration'
+import { hydrateMonster } from './hydration'
 import { moveMonsters } from './movement'
 
 // ==================== CONSTANTS ====================
@@ -43,16 +43,16 @@ export const checkMonsterSpawn = (
 ) => {
   logIfDev('Checking monster spawning...')
 
-  // Use V2 spawn configs only
-  const v2SpawnConfigs = state.level.monsterSpawnConfigsV2
+  // Use spawn configs
+  const spawnConfigs = state.level.monsterSpawnConfigs
   
-  if (!v2SpawnConfigs || v2SpawnConfigs.length === 0) {
-    logIfDev('No V2 spawn configs available, skipping monster spawn')
+  if (!spawnConfigs || spawnConfigs.length === 0) {
+    logIfDev('No spawn configs available, skipping monster spawn')
     return
   }
 
-  // V2 path: Use MonsterSpawnConfigV2[]
-  logIfDev('Using V2 spawn configs')
+  // Use MonsterSpawnConfig[]
+  logIfDev('Using spawn configs')
   
   // Pre-compute counts by templateId for O(1) lookups (perf: avoids filter per config)
   const typeCounts = new Map<string, number>()
@@ -61,7 +61,7 @@ export const checkMonsterSpawn = (
     typeCounts.set(m.shortName, count + 1)
   })
 
-  for (const spawnConfig of v2SpawnConfigs) {
+  for (const spawnConfig of spawnConfigs) {
     // Skip if spawn configuration is incomplete
     if (spawnConfig.spawnRate === undefined || spawnConfig.spawnRate === null ||
         spawnConfig.maxInstances === undefined || spawnConfig.maxInstances === null) {
@@ -127,7 +127,7 @@ export const getSpawnPosition = (state: GameState): Position => {
 
 /**
  * Create a monster instance from a template for spawning
- * Uses MonsterTemplate + MonsterInstance + hydrateMonsterV2 pattern
+ * Uses MonsterTemplate + MonsterInstance + hydrateMonster pattern
  */
 export const createMonsterFromTemplate = (
   shortName: string,
@@ -148,7 +148,7 @@ export const createMonsterFromTemplate = (
   }
 
   // Hydrate the template with the instance to create Monster
-  return hydrateMonsterV2(template, instance)
+  return hydrateMonster(template, instance)
 }
 
 /**

@@ -7,7 +7,7 @@
  * - Ranged targeting and combat can find valid HP values
  */
 import { createMonsterFromTemplate } from '../monsterUtils'
-import { hydrateMonsterV2 } from '../hydration'
+import { hydrateMonster } from '../hydration'
 import { getMonsterTemplate } from '../../config/monsters'
 import { MonsterInstance } from '../../config/types'
 
@@ -53,7 +53,7 @@ describe('Monster HP Regression Tests', () => {
     })
   })
 
-  describe('hydrateMonsterV2 with currentHP', () => {
+  describe('hydrateMonster with currentHP', () => {
     it('should preserve currentHP when it is defined', () => {
       const template = getMonsterTemplate('abhuman')
       expect(template).toBeDefined()
@@ -65,7 +65,7 @@ describe('Monster HP Regression Tests', () => {
         currentHP: 5, // Damaged monster
       }
 
-      const hydrated = hydrateMonsterV2(template!, instance)
+      const hydrated = hydrateMonster(template!, instance)
 
       expect(hydrated.currentHP).toBe(5)
       expect(hydrated.maxHP).toBe(template!.maxHP)
@@ -82,7 +82,7 @@ describe('Monster HP Regression Tests', () => {
         currentHP: 0, // Dead monster
       }
 
-      const hydrated = hydrateMonsterV2(template!, instance)
+      const hydrated = hydrateMonster(template!, instance)
 
       expect(hydrated.currentHP).toBe(0)
       expect(hydrated.maxHP).toBe(template!.maxHP)
