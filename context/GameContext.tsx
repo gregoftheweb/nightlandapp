@@ -14,9 +14,12 @@ import { GameState } from '../config/types'
 import { requestAutoSave, getStateSaveFingerprint } from '../modules/autoSave'
 import { deleteCurrentGame } from '../modules/saveGame'
 
+type GameAction = Parameters<typeof reducer>[1]
+type GameDispatch = React.Dispatch<GameAction>
+
 interface GameContextType {
   state: GameState
-  dispatch: (action: any) => void
+  dispatch: GameDispatch
   setOverlay: (overlay: any) => void
   rpgResumeNonce: number
   signalRpgResume: () => void
@@ -46,10 +49,13 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
   const setOverlay = (overlay: any) => console.log('Overlay:', overlay)
 
   const signalRpgResume = () => {
-    setRpgResumeNonce((prev) => prev + 1)
-    if (__DEV__) {
-      console.log('[GameContext] RPG resume signaled, nonce:', rpgResumeNonce + 1)
-    }
+    setRpgResumeNonce((prev) => {
+      const next = prev + 1
+      if (__DEV__) {
+        console.log('[GameContext] RPG resume signaled, nonce:', next)
+      }
+      return next
+    })
   }
 
   // Autosave effect - triggers save when important state changes
