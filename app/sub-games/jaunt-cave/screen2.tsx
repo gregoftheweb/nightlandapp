@@ -13,6 +13,9 @@ import { BackgroundImage } from '../_shared/BackgroundImage';
 import { BottomActionBar } from '../_shared/BottomActionBar';
 import { subGameTheme } from '../_shared/subGameTheme';
 import { useGameContext } from '@context/GameContext';
+import { BattleHUD } from './_components/BattleHUD';
+import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal';
+import { Item } from '@config/types';
 
 // Daemon sprite states
 enum DaemonState {
@@ -99,6 +102,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   // Track current HP in a ref to avoid stale state reads
   // This prevents HP from appearing to increase when multiple attacks happen before re-render
   const currentHPRef = useRef<number>(state.player.currentHP);
+  
+  // Battle HUD state
+  const [isBlocking, setIsBlocking] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
+  const [zapFeedback, setZapFeedback] = useState<string | null>(null);
 
   // Animation values
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -439,10 +447,48 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     }
   };
 
-  // Handle return to main screen
-  const handleReturnToSurface = useCallback(() => {
-    router.push('/sub-games/jaunt-cave/main' as any);
-  }, [router]);
+  // Battle HUD handlers
+  const handleZap = useCallback(() => {
+    // Stub: Show feedback
+    setZapFeedback('Zap!');
+    setTimeout(() => setZapFeedback(null), 1000);
+    if (__DEV__) {
+      console.log('[JauntCave] Zap action triggered');
+    }
+  }, []);
+  
+  const handleBlock = useCallback(() => {
+    setIsBlocking((prev) => !prev);
+    if (__DEV__) {
+      console.log('[JauntCave] Block toggled:', !isBlocking);
+    }
+  }, [isBlocking]);
+  
+  const handleOpenInventory = useCallback(() => {
+    setShowInventory(true);
+    if (__DEV__) {
+      console.log('[JauntCave] Inventory opened');
+    }
+  }, []);
+  
+  const handleCloseInventory = useCallback(() => {
+    setShowInventory(false);
+  }, []);
+  
+  const handleSelectWeapon = useCallback((weapon: Item) => {
+    if (__DEV__) {
+      console.log('[JauntCave] Equip weapon:', weapon.name);
+    }
+    // Stub: Just log and close for now
+    setShowInventory(false);
+  }, []);
+  
+  // Filter weapons from inventory
+  const weapons = useMemo(() => {
+    return state.player.inventory.filter(
+      (item) => item.type === 'weapon'
+    );
+  }, [state.player.inventory]);
 
   // Memoized attack overlay style
   const attackOverlayStyle = useMemo(() => {
@@ -618,14 +664,35 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       </View>
 
       <BottomActionBar>
-        <TouchableOpacity
-          style={styles.returnButton}
-          onPress={handleReturnToSurface}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.returnButtonText}>Return to the surface</Text>
-        </TouchableOpacity>
+        <BattleHUD
+          onZap={handleZap}
+          onBlock={handleBlock}
+          onOpenInventory={handleOpenInventory}
+          isBlocking={isBlocking}
+        />
       </BottomActionBar>
+      
+      {/* Blocking indicator */}
+      {isBlocking && (
+        <View style={styles.blockingIndicator}>
+          <Text style={styles.blockingText}>BLOCKING</Text>
+        </View>
+      )}
+      
+      {/* Zap feedback */}
+      {zapFeedback && (
+        <View style={styles.zapFeedback}>
+          <Text style={styles.zapFeedbackText}>{zapFeedback}</Text>
+        </View>
+      )}
+      
+      {/* Weapons inventory modal */}
+      <WeaponsInventoryModal
+        visible={showInventory}
+        weapons={weapons}
+        onClose={handleCloseInventory}
+        onSelectWeapon={handleSelectWeapon}
+      />
     </BackgroundImage>
   );
 };
@@ -730,24 +797,50 @@ const styles = StyleSheet.create({
   christosHPFill: {
     backgroundColor: '#44ff44',
   },
-  returnButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    backgroundColor: subGameTheme.red,
-    borderRadius: 14,
+  blockingIndicator: {
+    position: 'absolute',
+    bottom: 120,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 300,
+    pointerEvents: 'none',
+  },
+  blockingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: subGameTheme.blue,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     borderWidth: 2,
     borderColor: subGameTheme.blue,
-    shadowColor: subGameTheme.red,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    overflow: 'hidden',
   },
-  returnButtonText: {
-    fontSize: 16,
+  zapFeedback: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 300,
+    pointerEvents: 'none',
+  },
+  zapFeedbackText: {
+    fontSize: 32,
     fontWeight: 'bold',
-    color: subGameTheme.black,
-    textAlign: 'center',
+    color: subGameTheme.red,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: subGameTheme.red,
+    overflow: 'hidden',
+    textShadowColor: subGameTheme.red,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
 });
 
