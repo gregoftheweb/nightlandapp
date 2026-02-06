@@ -9,6 +9,7 @@ import {
   Image,
   LayoutChangeEvent,
   Pressable,
+  Animated,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { BackgroundImage } from '../_shared/BackgroundImage'
@@ -44,6 +45,12 @@ const JAUNT_ANCHORS: AnchorConfig[] = [
   { key: 'right', xPct: 0.75, yPct: 0.28 },
 ]
 
+// Attack chance per cycle (independent of position)
+const ATTACK_CHANCE = 0.35
+
+// Speed multiplier - slows down all animations
+const SPEED_MULTIPLIER = 2
+
 // Sprite mapping by phase
 const SPRITE_MAP: Record<Phase, any> = {
   resting: sprite1,
@@ -54,14 +61,22 @@ const SPRITE_MAP: Record<Phase, any> = {
   attackR: sprite6,
 }
 
-// Timing configuration (all in milliseconds)
-const TIMING = {
+// Base timing configuration (all in milliseconds, multiplied by SPEED_MULTIPLIER)
+const BASE_TIMING = {
   prep1: 200, // Quick
   prep2: 200, // Quick
   landed: 200, // Quick (vulnerable window)
   attack: 300, // Quick attack swipe
   resting: 1200, // Slow return to rest
+  crossfade: 120, // Sprite crossfade duration
+  shimmer: 150, // Landing shimmer duration
+  shake: 100, // Attack shake duration
 }
+
+// Apply speed multiplier to all timings
+const TIMING = Object.fromEntries(
+  Object.entries(BASE_TIMING).map(([key, value]) => [key, value * SPEED_MULTIPLIER])
+) as typeof BASE_TIMING
 
 // ===== COMPONENT =====
 
@@ -75,6 +90,21 @@ export default function JauntCaveScreen2() {
   const [phase, setPhase] = useState<Phase>('resting')
   const [currentAnchor, setCurrentAnchor] = useState<AnchorKey>('center')
   const [feedbackText, setFeedbackText] = useState<string | null>(null)
+
+  // Sprite crossfade state
+  const [currentSprite, setCurrentSprite] = useState<any>(sprite1)
+  const [nextSprite, setNextSprite] = useState<any | null>(null)
+  const currentOpacity = useRef(new Animated.Value(1)).current
+  const nextOpacity = useRef(new Animated.Value(0)).current
+
+  // Landing shimmer state
+  const shimmerOpacity = useRef(new Animated.Value(1)).current
+  const shimmerScale = useRef(new Animated.Value(1)).current
+  const glowScale = useRef(new Animated.Value(0)).current
+  const glowOpacity = useRef(new Animated.Value(0)).current
+
+  // Attack shake state
+  const shakeX = useRef(new Animated.Value(0)).current
 
   // Refs for cleanup
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -94,74 +124,192 @@ export default function JauntCaveScreen2() {
     }
   }, [])
 
+  // Helper: Crossfade to new sprite
+  const crossfadeToSprite = (newPhase: Phase) => {
+    const newSpriteSource = SPRITE_MAP[newPhase]
+    
+    // If same sprite, no crossfade needed
+    if (newSpriteSource === currentSprite) {
+      setPhase(newPhase)
+      return
+    }
+
+    setNextSprite(newSpriteSource)
+    setPhase(newPhase)
+
+    // Animate crossfade
+    Animated.parallel([
+      Animated.timing(currentOpacity, {
+        toValue: 0,
+        duration: TIMING.crossfade,
+        useNativeDriver: true,
+      }),
+      Animated.timing(nextOpacity, {
+        toValue: 1,
+        duration: TIMING.crossfade,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // After crossfade completes, swap sprites
+      setCurrentSprite(newSpriteSource)
+      setNextSprite(null)
+      currentOpacity.setValue(1)
+      nextOpacity.setValue(0)
+    })
+  }
+
+  // Helper: Trigger landing shimmer effect
+  const triggerLandingShimmer = () => {
+    // Reset values
+    shimmerOpacity.setValue(1)
+    shimmerScale.setValue(0.95)
+    glowScale.setValue(0.5)
+    glowOpacity.setValue(0.8)
+
+    // Shimmer sequence: opacity flicker and scale pulse
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(shimmerOpacity, {
+          toValue: 0.7,
+          duration: TIMING.shimmer * 0.3,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerScale, {
+          toValue: 1.05,
+          duration: TIMING.shimmer * 0.5,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowScale, {
+          toValue: 1.5,
+          duration: TIMING.shimmer,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowOpacity, {
+          toValue: 0,
+          duration: TIMING.shimmer,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.parallel([
+        Animated.timing(shimmerOpacity, {
+          toValue: 1,
+          duration: TIMING.shimmer * 0.3,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerScale, {
+          toValue: 1.0,
+          duration: TIMING.shimmer * 0.5,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start()
+  }
+
+  // Helper: Trigger attack shake effect
+  const triggerAttackShake = () => {
+    shakeX.setValue(0)
+
+    // Quick shake sequence
+    Animated.sequence([
+      Animated.timing(shakeX, {
+        toValue: 8,
+        duration: TIMING.shake * 0.25,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeX, {
+        toValue: -8,
+        duration: TIMING.shake * 0.25,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeX, {
+        toValue: 4,
+        duration: TIMING.shake * 0.25,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeX, {
+        toValue: 0,
+        duration: TIMING.shake * 0.25,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }
+
   // State machine: runs animation loop
   useEffect(() => {
     const runCycle = () => {
-      // Decide: side-to-side jaunt (70%) or jaunt-to-attack (30%)
-      const isAttack = Math.random() < 0.3
+      // Always pick a new position for this cycle
+      pickNewAnchor()
 
-      if (isAttack) {
-        // Sequence: resting -> prep1 -> prep2 -> attack -> landed -> resting
-        const sequence: Array<{ phase: Phase; duration: number }> = [
-          { phase: 'prep1', duration: TIMING.prep1 },
-          { phase: 'prep2', duration: TIMING.prep2 },
-          { phase: Math.random() < 0.5 ? 'attackL' : 'attackR', duration: TIMING.attack },
-          { phase: 'landed', duration: TIMING.landed }, // Pick new anchor here
-          { phase: 'resting', duration: TIMING.resting },
-        ]
+      // Decide independently whether to attack this cycle
+      const willAttack = Math.random() < ATTACK_CHANCE
 
-        let index = 0
-        const step = () => {
-          if (index >= sequence.length) {
-            // Cycle complete, start again
-            timerRef.current = setTimeout(runCycle, 0)
-            return
-          }
+      // Build sequence based on whether we're attacking
+      const sequence: Array<{ phase: Phase; duration: number; onEnter?: () => void }> = [
+        { 
+          phase: 'prep1', 
+          duration: TIMING.prep1,
+          onEnter: () => crossfadeToSprite('prep1'),
+        },
+        { 
+          phase: 'prep2', 
+          duration: TIMING.prep2,
+          onEnter: () => crossfadeToSprite('prep2'),
+        },
+      ]
 
-          const { phase: nextPhase, duration } = sequence[index]
-
-          // Pick new anchor when landing
-          if (nextPhase === 'landed') {
-            pickNewAnchor()
-          }
-
-          setPhase(nextPhase)
-          index++
-          timerRef.current = setTimeout(step, duration)
-        }
-
-        step()
-      } else {
-        // Sequence: resting -> prep1 -> prep2 -> landed -> resting
-        const sequence: Array<{ phase: Phase; duration: number }> = [
-          { phase: 'prep1', duration: TIMING.prep1 },
-          { phase: 'prep2', duration: TIMING.prep2 },
-          { phase: 'landed', duration: TIMING.landed }, // Pick new anchor here
-          { phase: 'resting', duration: TIMING.resting },
-        ]
-
-        let index = 0
-        const step = () => {
-          if (index >= sequence.length) {
-            // Cycle complete, start again
-            timerRef.current = setTimeout(runCycle, 0)
-            return
-          }
-
-          const { phase: nextPhase, duration } = sequence[index]
-
-          // Pick new anchor when landing
-          if (nextPhase === 'landed') {
-            pickNewAnchor()
-          }
-
-          setPhase(nextPhase)
-          index++
-          timerRef.current = setTimeout(step, duration)
-        }
-
-        step()
+      if (willAttack) {
+        // Insert attack phase
+        const attackPhase: Phase = Math.random() < 0.5 ? 'attackL' : 'attackR'
+        sequence.push({
+          phase: attackPhase,
+          duration: TIMING.attack,
+          onEnter: () => {
+            crossfadeToSprite(attackPhase)
+            triggerAttackShake()
+            // TODO: Apply damage to Christos when combat logic is added
+          },
+        })
       }
+
+      // Always land and return to rest
+      sequence.push(
+        { 
+          phase: 'landed', 
+          duration: TIMING.landed,
+          onEnter: () => {
+            crossfadeToSprite('landed')
+            triggerLandingShimmer()
+          },
+        },
+        { 
+          phase: 'resting', 
+          duration: TIMING.resting,
+          onEnter: () => crossfadeToSprite('resting'),
+        }
+      )
+
+      let index = 0
+      const step = () => {
+        if (index >= sequence.length) {
+          // Cycle complete, start again
+          timerRef.current = setTimeout(runCycle, 0)
+          return
+        }
+
+        const { phase: nextPhase, duration, onEnter } = sequence[index]
+
+        // Execute phase transition with animation
+        if (onEnter) {
+          onEnter()
+        } else {
+          setPhase(nextPhase)
+        }
+
+        index++
+        timerRef.current = setTimeout(step, duration)
+      }
+
+      step()
     }
 
     // Start the animation loop after initial resting period
@@ -265,33 +413,108 @@ export default function JauntCaveScreen2() {
         <View style={styles.contentArea}>
           {containerSize && (
             <>
-              {/* Daemon Sprite */}
+              {/* Daemon Sprite with Crossfade and Effects */}
               {!isAttackPhase && (
-                <Pressable
+                <Animated.View
                   style={[
                     styles.daemonContainer,
                     {
                       left: daemonPosition.left,
                       top: daemonPosition.top,
-                      transform: [{ translateX: -75 }, { translateY: -75 }], // Center on anchor
+                      transform: [
+                        { translateX: -75 }, 
+                        { translateY: -75 },
+                        { scale: shimmerScale },
+                      ],
                     },
-                    isVulnerable && styles.vulnerable,
                   ]}
-                  onPress={handleDaemonTap}
                 >
-                  <Image source={SPRITE_MAP[phase]} style={styles.daemonSprite} />
-                </Pressable>
+                  {/* Purple glow ring for landing shimmer */}
+                  <Animated.View
+                    style={[
+                      styles.glowRing,
+                      {
+                        opacity: glowOpacity,
+                        transform: [{ scale: glowScale }],
+                      },
+                    ]}
+                  />
+
+                  {/* Crossfade layer: Current sprite */}
+                  <Pressable onPress={handleDaemonTap} style={styles.spriteLayer}>
+                    <Animated.Image
+                      source={currentSprite}
+                      style={[
+                        styles.daemonSprite,
+                        {
+                          opacity: Animated.multiply(currentOpacity, shimmerOpacity),
+                        },
+                      ]}
+                    />
+                  </Pressable>
+
+                  {/* Crossfade layer: Next sprite (when transitioning) */}
+                  {nextSprite && (
+                    <Animated.Image
+                      source={nextSprite}
+                      style={[
+                        styles.daemonSprite,
+                        styles.spriteOverlay,
+                        {
+                          opacity: Animated.multiply(nextOpacity, shimmerOpacity),
+                        },
+                      ]}
+                      pointerEvents="none"
+                    />
+                  )}
+
+                  {/* Vulnerability indicator */}
+                  {isVulnerable && (
+                    <View style={styles.vulnerable} pointerEvents="none" />
+                  )}
+                </Animated.View>
               )}
 
-              {/* Attack Swipe Overlay */}
+              {/* Attack Swipe Overlay with Shake */}
               {isAttackPhase && (
-                <Pressable style={styles.attackOverlay} onPress={handleDaemonTap}>
-                  <Image
-                    source={SPRITE_MAP[phase]}
-                    style={styles.attackSprite}
-                    resizeMode="contain"
-                  />
-                </Pressable>
+                <Animated.View
+                  style={[
+                    styles.attackOverlay,
+                    {
+                      transform: [{ translateX: shakeX }],
+                    },
+                  ]}
+                >
+                  <Pressable onPress={handleDaemonTap} style={styles.attackPressable}>
+                    {/* Crossfade layer: Current sprite */}
+                    <Animated.Image
+                      source={currentSprite}
+                      style={[
+                        styles.attackSprite,
+                        {
+                          opacity: currentOpacity,
+                        },
+                      ]}
+                      resizeMode="contain"
+                    />
+
+                    {/* Crossfade layer: Next sprite (when transitioning) */}
+                    {nextSprite && (
+                      <Animated.Image
+                        source={nextSprite}
+                        style={[
+                          styles.attackSprite,
+                          styles.spriteOverlay,
+                          {
+                            opacity: nextOpacity,
+                          },
+                        ]}
+                        resizeMode="contain"
+                        pointerEvents="none"
+                      />
+                    )}
+                  </Pressable>
+                </Animated.View>
               )}
 
               {/* Feedback Text */}
@@ -379,7 +602,30 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
   },
+  spriteLayer: {
+    width: 150,
+    height: 150,
+  },
+  spriteOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  glowRing: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#9932cc',
+    opacity: 0,
+  },
   vulnerable: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     shadowColor: '#ffff00',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
@@ -401,9 +647,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 50,
   },
-  attackSprite: {
+  attackPressable: {
     width: '90%',
     height: '90%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  attackSprite: {
+    width: '100%',
+    height: '100%',
   },
   feedbackContainer: {
     position: 'absolute',
