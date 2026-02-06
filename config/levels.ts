@@ -23,6 +23,7 @@ import {
   createItemInstance,
   createNonCollisionObject,
   createGreatPowerInstance,
+  createSubGameEntranceInstance,
 } from './levelHelpers'
 
 /**
@@ -65,10 +66,10 @@ export const levels: Record<LevelId, Level> = {
       createObjectInstance('healingPool', { row: 375, col: 20 }),
       createObjectInstance('poisonPool', { row: 250, col: 250 }),
       createObjectInstance('cursedTotem', { row: 385, col: 220 }),
-      createObjectInstance('hermit', { row: 385, col: 201 }),
-      createObjectInstance('aeroWreckage', { row: 383, col: 192 }), //{ row: 364, col: 60 }),
-      createObjectInstance('tesseract', { row: 391, col: 186 }), //{ row: 345, col: 20 })
-      createObjectInstance('jauntCave', { row: 392, col: 211 }),
+      createSubGameEntranceInstance('hermit-hollow', { row: 385, col: 201 }),
+      createSubGameEntranceInstance('aerowreckage-puzzle', { row: 383, col: 192 }),
+      createSubGameEntranceInstance('tesseract', { row: 391, col: 186 }),
+      createSubGameEntranceInstance('jaunt-cave', { row: 392, col: 211 }),
     ],
 
     nonCollisionObjects: [

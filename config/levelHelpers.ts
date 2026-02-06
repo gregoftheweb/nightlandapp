@@ -28,6 +28,7 @@ import {
   getNonCollisionTemplate,
 } from './objects'
 import { getGreatPowerTemplate } from './monsters'
+import { getSubGameDefinition, SubGameId } from './subGames'
 
 /**
  * Create a level with smart defaults and optional biome preset.
@@ -214,6 +215,62 @@ export function createObjectInstance(
     zIndex: template.zIndex,
     effects: template.effects,
     subGame: template.subGame,
+    ...overrides,
+  }
+}
+
+/**
+ * Create a sub-game entrance instance from the sub-game registry.
+ *
+ * This helper creates LevelObjectInstance entries for sub-game entrances,
+ * pulling entrance definitions from the sub-game registry and merging them
+ * with the sub-game's title/description.
+ *
+ * @param subGameId Sub-game identifier (e.g., 'hermit-hollow')
+ * @param position Position on the board
+ * @param overrides Optional property overrides
+ * @returns Complete LevelObjectInstance for the sub-game entrance
+ *
+ * @example
+ * ```typescript
+ * createSubGameEntranceInstance('hermit-hollow', { row: 385, col: 201 })
+ * createSubGameEntranceInstance('tesseract', { row: 391, col: 186 })
+ * ```
+ */
+export function createSubGameEntranceInstance(
+  subGameId: SubGameId,
+  position: Position,
+  overrides: Partial<LevelObjectInstance> = {}
+): LevelObjectInstance {
+  const subGame = getSubGameDefinition(subGameId)
+  if (!subGame.entrance) {
+    throw new Error(`Sub-game ${subGameId} does not have an entrance definition`)
+  }
+
+  const entrance = subGame.entrance
+
+  return {
+    id: `${entrance.shortName}_${position.row}_${position.col}`,
+    templateId: subGameId, // Use subGameId as templateId for easy lookup
+    position,
+    active: entrance.active,
+    shortName: entrance.shortName,
+    category: entrance.category,
+    name: subGame.title, // Use title from sub-game definition
+    description: subGame.description, // Use description from sub-game definition
+    image: entrance.image,
+    size: {
+      width: entrance.width,
+      height: entrance.height,
+    },
+    zIndex: entrance.zIndex,
+    effects: entrance.effects,
+    subGame: {
+      subGameName: subGameId,
+      ctaLabel: entrance.ctaLabel,
+      requiresPlayerOnObject: entrance.requiresPlayerOnObject,
+      subGameId: subGameId,
+    },
     ...overrides,
   }
 }

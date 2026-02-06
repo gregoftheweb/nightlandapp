@@ -7,6 +7,13 @@
  */
 
 import { ImageSourcePropType } from 'react-native'
+import { SubGameEntranceDefinition } from './types/subGames'
+
+// Import entrance images
+import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
+import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.webp'
+import hermitIMG from '@assets/images/backgrounds/subgames/hermit-save2.webp'
+import jauntCaveIMG from '@assets/images/sprites/buildings/jaunt-cave.png'
 
 /**
  * Valid sub-game IDs (string slugs)
@@ -33,6 +40,9 @@ export interface SubGameDefinition {
   /** Background image for the intro screen */
   introBackgroundImage: ImageSourcePropType
   
+  /** Optional entrance definition for overworld placement */
+  entrance?: SubGameEntranceDefinition
+  
   // Optional future fields (typed for forward compatibility)
   /** Rewards granted upon completion */
   rewards?: unknown
@@ -56,6 +66,22 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     description:
       'The twisted remnants of a long-lost crashed aerocraft from a forgotten age of the Redoubt. Ancient metal and strange devices lie scattered among the wreckage, relics of a time when humanity soared above the Night Land.',
     introBackgroundImage: require('@assets/images/backgrounds/subgames/aerowreck-safe4.webp'),
+    entrance: {
+      shortName: 'aeroWreckage',
+      category: 'building',
+      width: 4,
+      height: 4,
+      image: aeroWreckageIMG,
+      active: true,
+      zIndex: 0,
+      effects: [
+        {
+          type: 'hide',
+        },
+      ],
+      ctaLabel: 'Investigate',
+      requiresPlayerOnObject: true,
+    },
   },
   
   'hermit-hollow': {
@@ -65,6 +91,26 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     description:
       'A lonely hermit sits next to small campfire, safety and peace emanate from him and the small copse of woods around him.',
     introBackgroundImage: require('@assets/images/backgrounds/subgames/hermit-screen1.webp'),
+    entrance: {
+      shortName: 'hermit',
+      category: 'building',
+      width: 4,
+      height: 4,
+      image: hermitIMG,
+      active: true,
+      zIndex: 0,
+      effects: [
+        {
+          type: 'recuperate',
+          value: 10,
+        },
+        {
+          type: 'hide',
+        },
+      ],
+      ctaLabel: 'Rest awhile',
+      requiresPlayerOnObject: true,
+    },
   },
   
   'jaunt-cave': {
@@ -74,6 +120,22 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     description:
       'A sulfur smelling wallow in the Night Lands plains lead to a cave shining with the light from lava. Christos is drawn to it, an aegis of foreboding and necessity upon him. He knows he MUST confront what is inside. Doom and Destiny collide within.',
     introBackgroundImage: require('@assets/images/backgrounds/subgames/jaunt-cave-screen1.png'),
+    entrance: {
+      shortName: 'jauntCave',
+      category: 'building',
+      width: 4,
+      height: 4,
+      image: jauntCaveIMG,
+      active: true,
+      zIndex: 0,
+      effects: [
+        {
+          type: 'hide',
+        },
+      ],
+      ctaLabel: 'Enter the cave',
+      requiresPlayerOnObject: true,
+    },
   },
   
   'tesseract': {
@@ -83,6 +145,22 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     description:
       'An ancient circle of black stone, steeped in a will that is not its own. Those who seek to command its power gain forbidden knowledge… or vanish without even the mercy of death.',
     introBackgroundImage: require('@assets/images/backgrounds/subgames/tesseract-screen1.webp'),
+    entrance: {
+      shortName: 'tesseract',
+      category: 'building',
+      width: 6,
+      height: 6,
+      image: tesseractIMG,
+      active: true,
+      zIndex: 0,
+      effects: [
+        {
+          type: 'hide',
+        },
+      ],
+      ctaLabel: 'Investigate',
+      requiresPlayerOnObject: true,
+    },
   },
 }
 
