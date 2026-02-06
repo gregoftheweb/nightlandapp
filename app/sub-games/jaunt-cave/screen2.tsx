@@ -232,37 +232,33 @@ export default function JauntCaveScreen2() {
   return (
     <BackgroundImage source={bgScreen2}>
       <View style={styles.container} onLayout={handleLayout}>
-        {/* HUD */}
-        <View style={styles.hud}>
-          {/* Daemon HP Bar */}
-          <View style={styles.hpBarContainer}>
-            <Text style={styles.hpLabel}>Jaunt Daemon</Text>
-            <View style={styles.hpBarOuter}>
-              <View
-                style={[styles.hpBarInner, { width: `${(daemonHP / daemonMaxHP) * 100}%` }]}
-              />
-            </View>
-            <Text style={styles.hpText}>
-              {daemonHP} / {daemonMaxHP}
-            </Text>
+        {/* HUD - Vertical Health Bars */}
+        {/* Daemon HP Bar - Left Side */}
+        <View style={styles.leftHpBar}>
+          <Text style={styles.hpLabelSmall}>daemon</Text>
+          <View style={styles.verticalHpBarOuter}>
+            <View
+              style={[
+                styles.verticalHpBarInner,
+                styles.daemonHpBar,
+                { height: `${(daemonHP / daemonMaxHP) * 100}%` },
+              ]}
+            />
           </View>
+        </View>
 
-          {/* Christos HP */}
-          <View style={styles.hpBarContainer}>
-            <Text style={styles.hpLabel}>Christos</Text>
-            <View style={styles.hpBarOuter}>
-              <View
-                style={[
-                  styles.hpBarInner,
-                  styles.christosHpBar,
-                  { width: `${(christosHP / christosMaxHP) * 100}%` },
-                ]}
-              />
-            </View>
-            <Text style={styles.hpText}>
-              {christosHP} / {christosMaxHP}
-            </Text>
+        {/* Christos HP Bar - Right Side */}
+        <View style={styles.rightHpBar}>
+          <View style={styles.verticalHpBarOuter}>
+            <View
+              style={[
+                styles.verticalHpBarInner,
+                styles.christosHpBar,
+                { height: `${(christosHP / christosMaxHP) * 100}%` },
+              ]}
+            />
           </View>
+          <Text style={styles.hpLabelSmall}>christos</Text>
         </View>
 
         {/* Content Area - Daemon */}
@@ -329,47 +325,50 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  hud: {
+  leftHpBar: {
     position: 'absolute',
-    top: 20,
-    left: 20,
-    right: 20,
+    left: 15,
+    top: 80,
+    bottom: 80,
     zIndex: 100,
-    gap: 10,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 8,
   },
-  hpBarContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: subGameTheme.blue,
+  rightHpBar: {
+    position: 'absolute',
+    right: 15,
+    top: 80,
+    bottom: 80,
+    zIndex: 100,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
   },
-  hpLabel: {
-    fontSize: 14,
+  hpLabelSmall: {
+    fontSize: 10,
     fontWeight: 'bold',
     color: subGameTheme.red,
-    marginBottom: 4,
+    textTransform: 'lowercase',
   },
-  hpBarOuter: {
-    height: 20,
-    backgroundColor: '#333',
-    borderRadius: 4,
+  verticalHpBarOuter: {
+    width: 12,
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 6,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#000',
+    borderWidth: 2,
+    borderColor: subGameTheme.blue,
+    justifyContent: 'flex-end',
   },
-  hpBarInner: {
-    height: '100%',
+  verticalHpBarInner: {
+    width: '100%',
+  },
+  daemonHpBar: {
     backgroundColor: subGameTheme.red,
   },
   christosHpBar: {
     backgroundColor: '#00cc00',
-  },
-  hpText: {
-    fontSize: 12,
-    color: '#fff',
-    marginTop: 4,
-    textAlign: 'right',
   },
   contentArea: {
     flex: 1,
