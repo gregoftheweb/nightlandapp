@@ -230,7 +230,7 @@ describe('hydration module', () => {
     })
   })
 
-  describe('hydrateMonsters (legacy compatibility)', () => {
+  describe('hydrateMonsters', () => {
     it('should batch hydrate multiple monsters', () => {
       const templates = new Map<string, MonsterTemplate>([
         [
