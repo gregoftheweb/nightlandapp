@@ -345,7 +345,7 @@ export const buildings: Record<string, GameObject> = {
     category: 'building',
     name: 'Hermit',
     description:
-      'A lonely hermit sits next to small campfire, safety and peace eminate from him and the small copse of woods around him.',
+      'A lonely hermit sits next to small campfire, safety and peace emanate from him and the small copse of woods around him.',
     width: 4,
     height: 4,
     image: hermitIMG,

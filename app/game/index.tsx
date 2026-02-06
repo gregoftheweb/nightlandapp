@@ -364,8 +364,8 @@ export default function Game() {
             closeInfoRef.current()
           }
           // Use subGameId from registry if available, otherwise fall back to subGameName
-          const subGameId = (launch.subGameId || launch.subGameName) as any
-          enterSubGame(subGameId, { objectId: building.id })
+          const subGameId = launch.subGameId || launch.subGameName
+          enterSubGame(subGameId as any, { objectId: building.id })
         }
 
         showInfoRef.current(

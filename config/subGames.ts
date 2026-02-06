@@ -63,7 +63,7 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     introRoute: '/sub-games/hermit-hollow/main',
     title: 'Hermit',
     description:
-      'A lonely hermit sits next to small campfire, safety and peace eminate from him and the small copse of woods around him.',
+      'A lonely hermit sits next to small campfire, safety and peace emanate from him and the small copse of woods around him.',
     introBackgroundImage: require('@assets/images/backgrounds/subgames/hermit-screen1.webp'),
   },
   
