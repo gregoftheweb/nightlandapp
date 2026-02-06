@@ -28,7 +28,7 @@ export interface BossEncounter {
   id: string
 }
 
-export interface MonsterSpawnConfigV2 {
+export interface MonsterSpawnConfig {
   templateId: string // maps to MonsterTemplate.shortName
   spawnRate: number
   maxInstances: number
@@ -56,12 +56,12 @@ export interface Level {
   spawnZones?: SpawnZone[]
   version?: string
   lastModified?: Date
-  // V2 template/instance/hydration architecture support
+  // Template/instance/hydration architecture support
   schemaVersion?: 1 | 2 // Schema version marker (1 = legacy, 2 = template/instance)
-  objectInstancesV2?: ObjectInstance[] // V2 object instances (used when schemaVersion === 2)
-  monsterInstancesV2?: MonsterInstance[] // V2 monster instances (used when schemaVersion === 2)
-  greatPowerInstancesV2?: GreatPowerInstance[] // V2 great power instances (used when schemaVersion === 2)
-  monsterSpawnConfigsV2?: MonsterSpawnConfigV2[] // V2 monster spawn configurations
+  objectInstances?: ObjectInstance[] // Object instances (used when schemaVersion === 2)
+  monsterInstances?: MonsterInstance[] // Monster instances (used when schemaVersion === 2)
+  greatPowerInstances?: GreatPowerInstance[] // Great power instances (used when schemaVersion === 2)
+  monsterSpawnConfigs?: MonsterSpawnConfig[] // Monster spawn configurations
 }
 
 // Removed: FootstepInstance, FootstepTemplate - now using buildings with rotation

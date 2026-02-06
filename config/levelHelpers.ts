@@ -4,14 +4,14 @@
  *
  * This module provides:
  * - Factory function for creating levels with smart defaults
- * - Spawn table loading utilities (V2 only)
+ * - Spawn table loading utilities
  * - Runtime validation for level configurations
  */
 
 import {
   Level,
   Position,
-  MonsterSpawnConfigV2,
+  MonsterSpawnConfig,
   LevelObjectInstance,
   Item,
   NonCollisionObject,
@@ -49,7 +49,7 @@ import { getGreatPowerTemplate } from './monsters'
  *   playerSpawn: { row: 200, col: 200 },
  *   biome: "dark_wastes",  // Auto-applies light, weather, music
  *   items: [...],
- *   monsterSpawnConfigsV2: loadSpawnTableV2("wasteland_common"),
+ *   monsterSpawnConfigs: loadSpawnTable("wasteland_common"),
  *   objects: [...],
  * });
  * ```
@@ -90,20 +90,20 @@ export function createLevel(
 }
 
 /**
- * Load V2 monster spawn configurations from a predefined spawn table.
+ * Load monster spawn configurations from a predefined spawn table.
  *
- * This helper creates MonsterSpawnConfigV2 entries using the spawn configurations
+ * This helper creates MonsterSpawnConfig entries using the spawn configurations
  * defined in SPAWN_TABLES, mapping monsterShortName to templateId.
  *
  * @param tableId Spawn table identifier
- * @returns Array of MonsterSpawnConfigV2 configurations
+ * @returns Array of MonsterSpawnConfig configurations
  *
  * @example
  * ```typescript
- * monsterSpawnConfigsV2: loadSpawnTableV2("wasteland_common")
+ * monsterSpawnConfigs: loadSpawnTable("wasteland_common")
  * ```
  */
-export function loadSpawnTableV2(tableId: SpawnTableId): MonsterSpawnConfigV2[] {
+export function loadSpawnTable(tableId: SpawnTableId): MonsterSpawnConfig[] {
   const configs = SPAWN_TABLES[tableId]
   return configs.map((cfg) => ({
     templateId: cfg.monsterShortName,
@@ -334,7 +334,7 @@ export function createNonCollisionObject(
  * This is a CONFIGURATION helper only - it creates the GreatPower object
  * for level definitions but does NOT perform runtime hydration.
  *
- * Note: This helper currently calls hydrateGreatPowerV2 to merge template
+ * Note: This helper currently calls hydrateGreatPower to merge template
  * and instance data. In a pure config system, this hydration should happen
  * at runtime, not during config creation.
  *
@@ -363,7 +363,7 @@ export function createGreatPowerInstance(
 
   // For now, we still need to import and use hydration to maintain compatibility
   // TODO: Move hydration to runtime and make this a pure config builder
-  const { hydrateGreatPowerV2 } = require('@modules/hydration')
+  const { hydrateGreatPower } = require('@modules/hydration')
 
   // Determine initial HP - support both legacy hp and currentHP in overrides
   const initialHP = overrides.currentHP ?? (overrides as any).hp ?? template.maxHP
@@ -378,7 +378,7 @@ export function createGreatPowerInstance(
   }
 
   // Hydrate to merge template + instance
-  const hydrated = hydrateGreatPowerV2(template, instance)
+  const hydrated = hydrateGreatPower(template, instance)
 
   // Extract overrides that should not be reapplied (currentHP and awakened come from the pipeline)
   const { currentHP, awakened, ...otherOverrides } = overrides

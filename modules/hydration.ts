@@ -73,7 +73,7 @@ export function hydrateObjects(
   })
 }
 
-// ===== V2 Hydration Functions =====
+// ===== Hydration Functions =====
 
 /**
  * Hydrate a monster by merging a template with an instance
@@ -83,7 +83,7 @@ export function hydrateObjects(
  * @param instance - Runtime instance data with position and state
  * @returns Monster ready for runtime use
  */
-export function hydrateMonsterV2(
+export function hydrateMonster(
   template: MonsterTemplate,
   instance: MonsterInstance
 ): Monster {
@@ -112,7 +112,7 @@ export function hydrateMonsterV2(
  * @param instance - Runtime instance data with position and state
  * @returns GreatPower ready for runtime use
  */
-export function hydrateGreatPowerV2(
+export function hydrateGreatPower(
   template: GreatPowerTemplate,
   instance: GreatPowerInstance
 ): GreatPower {
@@ -138,7 +138,7 @@ export function hydrateGreatPowerV2(
  * @param instances - Array of monster instances
  * @returns Array of hydrated monsters
  */
-export function hydrateMonstersV2(
+export function hydrateMonsters(
   templates: Map<string, MonsterTemplate>,
   instances: MonsterInstance[]
 ): Monster[] {
@@ -147,7 +147,7 @@ export function hydrateMonstersV2(
     if (!template) {
       throw new Error(`Template not found: ${instance.templateId}`)
     }
-    return hydrateMonsterV2(template, instance)
+    return hydrateMonster(template, instance)
   })
 }
 
@@ -159,7 +159,7 @@ export function hydrateMonstersV2(
  * @param instances - Array of great power instances
  * @returns Array of hydrated great powers
  */
-export function hydrateGreatPowersV2(
+export function hydrateGreatPowers(
   templates: Map<string, GreatPowerTemplate>,
   instances: GreatPowerInstance[]
 ): GreatPower[] {
@@ -168,6 +168,6 @@ export function hydrateGreatPowersV2(
     if (!template) {
       throw new Error(`Template not found: ${instance.templateId}`)
     }
-    return hydrateGreatPowerV2(template, instance)
+    return hydrateGreatPower(template, instance)
   })
 }

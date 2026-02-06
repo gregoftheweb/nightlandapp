@@ -4,9 +4,8 @@ import { EntityTemplate } from './entitiesBase'
 import { Item } from './itemsAndObjects'
 import { Effect } from './effects'
 
-// ===== V2: Enhanced Template vs Instance Architecture for Monsters and Great Powers =====
+// ===== Enhanced Template vs Instance Architecture for Monsters and Great Powers =====
 // These types provide cleaner separation and are the canonical long-term architecture
-// No V3 types will be created - these are the final types
 
 /**
  * MonsterTemplate - Static definition of a monster type

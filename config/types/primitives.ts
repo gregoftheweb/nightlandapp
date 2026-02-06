@@ -1,7 +1,7 @@
 // ===== HP Type Aliases =====
 // Explicit type aliases for HP to standardize semantics across the codebase
 export type MaxHP = number // Maximum hit points (template/design-time value)
-export type CurrentHP = number // Current hit points at runtime (for V2 instances)
+export type CurrentHP = number // Current hit points at runtime (for instances)
 
 // ===== HP Helper Interfaces =====
 // Helper interfaces for composing HP-related fields
