@@ -241,7 +241,9 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     
     if (hit) {
       const damage = rollDamage();
-      const newHP = Math.max(0, christosHP - damage);
+      // Read fresh HP value from state to avoid stale closure
+      const currentHP = state.player.currentHP;
+      const newHP = Math.max(0, currentHP - damage);
       
       // Apply damage to Christos
       dispatch({
@@ -265,7 +267,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         router.replace('/death');
       }
     }
-  }, [christosHP, dispatch, router]);
+  }, [state.player.currentHP, dispatch, router]);
 
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
