@@ -242,7 +242,9 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     
     if (hit) {
       const damage = rollDamage();
-      // Read fresh HP value from state to avoid stale closure
+      // Read fresh HP value directly from state context (not from closure)
+      // This avoids adding state.player.currentHP to dependencies, which would cause
+      // the animation cycle to restart on every HP update
       const currentHP = state.player.currentHP;
       const newHP = Math.max(0, currentHP - damage);
       
@@ -271,7 +273,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         }, TIMINGS.ATTACK);
       }
     }
-  }, [state.player.currentHP, dispatch, router]);
+  }, [dispatch, router]);
 
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
@@ -317,11 +319,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
               setDaemonState(DaemonState.ATTACKING);
               brightnessAnim.setValue(0); // Reset brightness before attack
               triggerShake();
-              
-              // Apply damage at start of attack
-              applyDaemonDamage();
 
               animationTimerRef.current = setTimeout(() => {
+                // Apply damage after attack animation completes (more realistic)
+                applyDaemonDamage();
+                
                 // STATE 4: LANDED (after attack, already at new position)
                 setDaemonState(DaemonState.LANDED);
                 startGlowEffect();
