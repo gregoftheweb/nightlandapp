@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   Animated,
+  LayoutChangeEvent,
 } from 'react-native';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { useRouter } from 'expo-router';
+import { BackgroundImage } from '../_shared/BackgroundImage';
+import { BottomActionBar } from '../_shared/BottomActionBar';
+import { subGameTheme } from '../_shared/subGameTheme';
 
 // Daemon sprite states
 enum DaemonState {
@@ -69,11 +71,13 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   onDaemonHit,
   onDaemonMiss,
 }) => {
+  const router = useRouter();
   const [daemonState, setDaemonState] = useState<DaemonState>(DaemonState.RESTING);
   const [currentPosition, setCurrentPosition] = useState<PositionKey>('center');
   const [attackDirection, setAttackDirection] = useState<'left' | 'right'>('left');
   const [previousState, setPreviousState] = useState<DaemonState>(DaemonState.RESTING);
   const [isCrossfading, setIsCrossfading] = useState(false);
+  const [arenaSize, setArenaSize] = useState<{ width: number; height: number } | null>(null);
   
   // Single timer ref - THIS IS CRITICAL
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -86,6 +90,48 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const fizzleAnim = useRef(new Animated.Value(0)).current;
   const brightnessAnim = useRef(new Animated.Value(0)).current; // 0 = normal, 1 = bright flash
   const crossfadeAnim = useRef(new Animated.Value(1)).current; // 1 = current sprite fully visible
+
+  // Compute background image rect for resizeMode="cover"
+  const bgRect = useMemo(() => {
+    if (!arenaSize) return null;
+
+    // Get intrinsic dimensions of background image
+    const bgSource = Image.resolveAssetSource(BACKGROUND);
+    if (!bgSource) return null;
+
+    const imageW = bgSource.width;
+    const imageH = bgSource.height;
+    const containerW = arenaSize.width;
+    const containerH = arenaSize.height;
+
+    // Compute scale for resizeMode="cover" (fills container, may crop)
+    const scale = Math.max(containerW / imageW, containerH / imageH);
+    const drawW = imageW * scale;
+    const drawH = imageH * scale;
+    const offsetX = (containerW - drawW) / 2;
+    const offsetY = (containerH - drawH) / 2;
+
+    return { offsetX, offsetY, drawW, drawH };
+  }, [arenaSize]);
+
+  // Compute daemon absolute position from percentage
+  const daemonPosition = useMemo(() => {
+    if (!bgRect) return { x: 0, y: 0 };
+
+    const position = POSITIONS[currentPosition];
+    const daemonX = bgRect.offsetX + position.x * bgRect.drawW;
+    const daemonY = bgRect.offsetY + position.y * bgRect.drawH;
+
+    return { x: daemonX, y: daemonY };
+  }, [bgRect, currentPosition]);
+
+  // Handle arena layout
+  const handleArenaLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    if (width > 0 && height > 0) {
+      setArenaSize({ width, height });
+    }
+  }, []);
 
   // Clear any existing timer - SINGLE SOURCE OF TRUTH
   const clearTimer = useCallback(() => {
@@ -321,194 +367,200 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     }
   };
 
+  // Handle return to main screen
+  const handleReturnToSurface = useCallback(() => {
+    router.push('/sub-games/jaunt-cave/main' as any);
+  }, [router]);
+
   // Position for daemon
   const position = POSITIONS[currentPosition];
-  const daemonX = SCREEN_WIDTH * position.x;
-  const daemonY = SCREEN_HEIGHT * position.y;
+  const daemonX = daemonPosition.x;
+  const daemonY = daemonPosition.y;
 
   const isVulnerable = daemonState === DaemonState.LANDED;
   const isAttacking = daemonState === DaemonState.ATTACKING;
 
   return (
-    <View style={styles.container}>
-      {/* Background */}
-      <Image source={BACKGROUND} style={styles.background} resizeMode="cover" />
+    <BackgroundImage source={BACKGROUND} overlayOpacity={0}>
+      <View style={styles.container} onLayout={handleArenaLayout}>
+        {/* Shake container for attack effect */}
+        <Animated.View
+          style={[
+            styles.gameContainer,
+            { transform: [{ translateX: shakeAnim }] },
+          ]}
+        >
+          {/* Attack overlay (full screen) */}
+          {isAttacking && arenaSize && (
+            <Image
+              source={getCurrentSprite()}
+              style={[styles.attackOverlay, { width: arenaSize.width, height: arenaSize.height }]}
+              resizeMode="contain"
+            />
+          )}
 
-      {/* Shake container for attack effect */}
-      <Animated.View
-        style={[
-          styles.gameContainer,
-          { transform: [{ translateX: shakeAnim }] },
-        ]}
-      >
-        {/* Attack overlay (full screen) */}
-        {isAttacking && (
-          <Image
-            source={getCurrentSprite()}
-            style={styles.attackOverlay}
-            resizeMode="contain"
-          />
-        )}
-
-        {/* Daemon (positioned) - only show when not attacking */}
-        {!isAttacking && (
-          <TouchableOpacity
-            style={[
-              styles.daemonContainer,
-              {
-                left: daemonX - 75, // Center the 150px sprite
-                top: daemonY - 75,
-              },
-            ]}
-            onPress={handleDaemonTap}
-            activeOpacity={1}
-          >
-            {/* Fizzle background effects */}
-            {daemonState === DaemonState.PREP1 && (
-              <Animated.View
-                style={[
-                  styles.fizzleBackground,
-                  {
-                    opacity: fizzleAnim,
-                    transform: [
-                      {
-                        scale: fizzleAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.8, 1.4],
-                        }),
-                      },
-                    ],
-                    backgroundColor: '#ff6600', // Orange fizzle for prep1
-                  },
-                ]}
-              />
-            )}
-            {daemonState === DaemonState.PREP2 && (
-              <Animated.View
-                style={[
-                  styles.fizzleBackground,
-                  {
-                    opacity: fizzleAnim,
-                    transform: [
-                      {
-                        scale: fizzleAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.8, 1.4],
-                        }),
-                      },
-                    ],
-                    backgroundColor: '#ff00ff', // Magenta fizzle for prep2
-                  },
-                ]}
-              />
-            )}
-
-            <Animated.View
+          {/* Daemon (positioned) - only show when not attacking */}
+          {!isAttacking && bgRect && (
+            <TouchableOpacity
               style={[
-                styles.daemonWrapper,
-                isVulnerable && {
-                  shadowColor: '#ff0',
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: glowAnim,
-                  shadowRadius: 20,
+                styles.daemonContainer,
+                {
+                  left: daemonX - 75, // Center the 150px sprite
+                  top: daemonY - 75,
                 },
               ]}
+              onPress={handleDaemonTap}
+              activeOpacity={1}
             >
-              {/* Previous sprite (fading out during crossfade) */}
-              {isCrossfading && (
+              {/* Fizzle background effects */}
+              {daemonState === DaemonState.PREP1 && (
+                <Animated.View
+                  style={[
+                    styles.fizzleBackground,
+                    {
+                      opacity: fizzleAnim,
+                      transform: [
+                        {
+                          scale: fizzleAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.8, 1.4],
+                          }),
+                        },
+                      ],
+                      backgroundColor: '#ff6600', // Orange fizzle for prep1
+                    },
+                  ]}
+                />
+              )}
+              {daemonState === DaemonState.PREP2 && (
+                <Animated.View
+                  style={[
+                    styles.fizzleBackground,
+                    {
+                      opacity: fizzleAnim,
+                      transform: [
+                        {
+                          scale: fizzleAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.8, 1.4],
+                          }),
+                        },
+                      ],
+                      backgroundColor: '#ff00ff', // Magenta fizzle for prep2
+                    },
+                  ]}
+                />
+              )}
+
+              <Animated.View
+                style={[
+                  styles.daemonWrapper,
+                  isVulnerable && {
+                    shadowColor: '#ff0',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: glowAnim,
+                    shadowRadius: 20,
+                  },
+                ]}
+              >
+                {/* Previous sprite (fading out during crossfade) */}
+                {isCrossfading && (
+                  <Animated.Image
+                    source={getSpriteForState(previousState)}
+                    style={[
+                      styles.daemonSprite,
+                      styles.absoluteSprite,
+                      {
+                        opacity: crossfadeAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1, 0],
+                        }),
+                      },
+                    ]}
+                    resizeMode="contain"
+                  />
+                )}
+                
+                {/* Current sprite (fading in during crossfade, or fully visible) */}
                 <Animated.Image
-                  source={getSpriteForState(previousState)}
+                  source={getCurrentSprite()}
                   style={[
                     styles.daemonSprite,
-                    styles.absoluteSprite,
-                    {
-                      opacity: crossfadeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [1, 0],
-                      }),
+                    isCrossfading && {
+                      opacity: crossfadeAnim,
                     },
                   ]}
                   resizeMode="contain"
                 />
-              )}
-              
-              {/* Current sprite (fading in during crossfade, or fully visible) */}
-              <Animated.Image
-                source={getCurrentSprite()}
-                style={[
-                  styles.daemonSprite,
-                  isCrossfading && {
-                    opacity: crossfadeAnim,
-                  },
-                ]}
-                resizeMode="contain"
-              />
-              
-              {/* Brightness overlay for teleport flash */}
-              <Animated.View
-                style={[
-                  styles.brightnessOverlay,
-                  {
-                    opacity: brightnessAnim,
-                  },
-                ]}
-              />
-            </Animated.View>
-          </TouchableOpacity>
-        )}
-      </Animated.View>
+                
+                {/* Brightness overlay for teleport flash */}
+                <Animated.View
+                  style={[
+                    styles.brightnessOverlay,
+                    {
+                      opacity: brightnessAnim,
+                    },
+                  ]}
+                />
+              </Animated.View>
+            </TouchableOpacity>
+          )}
+        </Animated.View>
 
-      {/* HUD - Vertical Health Bars */}
-      <View style={styles.hud}>
-        {/* Daemon HP bar - Left side */}
-        <View style={styles.leftHPContainer}>
-          <Text style={styles.hpLabel}>Daemon</Text>
-          <View style={styles.verticalHPBarBackground}>
-            <View
-              style={[
-                styles.verticalHPBarFill,
-                { height: `${(daemonHP / maxDaemonHP) * 100}%` },
-                styles.daemonHPFill,
-              ]}
-            />
+        {/* HUD - Vertical Health Bars */}
+        <View style={styles.hud}>
+          {/* Daemon HP bar - Left side */}
+          <View style={styles.leftHPContainer}>
+            <Text style={styles.hpLabel}>Daemon</Text>
+            <View style={styles.verticalHPBarBackground}>
+              <View
+                style={[
+                  styles.verticalHPBarFill,
+                  { height: `${(daemonHP / maxDaemonHP) * 100}%` },
+                  styles.daemonHPFill,
+                ]}
+              />
+            </View>
           </View>
-        </View>
 
-        {/* Christos HP bar - Right side */}
-        <View style={styles.rightHPContainer}>
-          <View style={styles.verticalHPBarBackground}>
-            <View
-              style={[
-                styles.verticalHPBarFill,
-                { height: `${(christosHP / maxChristosHP) * 100}%` },
-                styles.christosHPFill,
-              ]}
-            />
+          {/* Christos HP bar - Right side */}
+          <View style={styles.rightHPContainer}>
+            <View style={styles.verticalHPBarBackground}>
+              <View
+                style={[
+                  styles.verticalHPBarFill,
+                  { height: `${(christosHP / maxChristosHP) * 100}%` },
+                  styles.christosHPFill,
+                ]}
+              />
+            </View>
+            <Text style={styles.hpLabel}>Christos</Text>
           </View>
-          <Text style={styles.hpLabel}>Christos</Text>
         </View>
       </View>
-    </View>
+
+      <BottomActionBar>
+        <TouchableOpacity
+          style={styles.returnButton}
+          onPress={handleReturnToSurface}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.returnButtonText}>Return to the surface</Text>
+        </TouchableOpacity>
+      </BottomActionBar>
+    </BackgroundImage>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-  },
-  background: {
-    position: 'absolute',
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
   },
   gameContainer: {
     flex: 1,
   },
   attackOverlay: {
     position: 'absolute',
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
     zIndex: 100,
   },
   daemonContainer: {
@@ -556,7 +608,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: SCREEN_HEIGHT * 0.1, // 10% from top and bottom
+    paddingTop: '10%', // 10% from top
+    paddingBottom: '10%', // 10% from bottom
     zIndex: 200,
     pointerEvents: 'none',
   },
@@ -598,6 +651,25 @@ const styles = StyleSheet.create({
   },
   christosHPFill: {
     backgroundColor: '#44ff44',
+  },
+  returnButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: subGameTheme.red,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: subGameTheme.blue,
+    shadowColor: subGameTheme.red,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  returnButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: subGameTheme.black,
+    textAlign: 'center',
   },
 });
 
