@@ -458,11 +458,14 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   }, []);
   
   const handleBlock = useCallback(() => {
-    setIsBlocking((prev) => !prev);
-    if (__DEV__) {
-      console.log('[JauntCave] Block toggled:', !isBlocking);
-    }
-  }, [isBlocking]);
+    setIsBlocking((prev) => {
+      const newValue = !prev;
+      if (__DEV__) {
+        console.log('[JauntCave] Block toggled:', newValue);
+      }
+      return newValue;
+    });
+  }, []);
   
   const handleOpenInventory = useCallback(() => {
     setShowInventory(true);
@@ -816,7 +819,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 2,
     borderColor: subGameTheme.blue,
-    overflow: 'hidden',
   },
   zapFeedback: {
     position: 'absolute',
@@ -837,7 +839,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 3,
     borderColor: subGameTheme.red,
-    overflow: 'hidden',
     textShadowColor: subGameTheme.red,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
