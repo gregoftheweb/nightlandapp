@@ -1,3 +1,4 @@
+//config/types/itemsAndObjects.ts
 import { ImageSourcePropType } from 'react-native'
 import { Position, WeaponType, InteractionType, ObjectCategory } from './primitives'
 import { EntityBase, EntityTemplate } from './entitiesBase'

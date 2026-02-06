@@ -7,7 +7,7 @@ import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 
-const bgScreen2 = require('@assets/images/backgrounds/subgames/jaunt-cave-screen1.png')
+const bgScreen2 = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png')
 
 const SUB_GAME_NAME = 'jaunt-cave'
 

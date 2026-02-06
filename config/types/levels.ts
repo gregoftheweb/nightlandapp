@@ -1,3 +1,4 @@
+//config/types/levels.ts
 import { Position, Area } from './primitives'
 import { Item, LevelObjectInstance, NonCollisionObject, ObjectInstance } from './itemsAndObjects'
 import { MonsterInstance, GreatPowerInstance, GreatPower } from './actors'
