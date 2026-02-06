@@ -262,7 +262,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         });
 
         // Navigate to death screen
-        router.replace('/death' as any);
+        router.replace('/death');
       }
     }
   }, [christosHP, dispatch, router]);
