@@ -107,6 +107,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const [isBlocking, setIsBlocking] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [zapFeedback, setZapFeedback] = useState<string | null>(null);
+  const zapFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Animation values
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -408,6 +409,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         clearTimeout(deathNavigationTimerRef.current);
         deathNavigationTimerRef.current = null;
       }
+      // Clear zap feedback timer if component unmounts
+      if (zapFeedbackTimerRef.current) {
+        clearTimeout(zapFeedbackTimerRef.current);
+        zapFeedbackTimerRef.current = null;
+      }
     };
   }, [runAnimationCycle, clearTimer, stopGlowEffect]);
 
@@ -451,7 +457,14 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const handleZap = useCallback(() => {
     // Stub: Show feedback
     setZapFeedback('Zap!');
-    setTimeout(() => setZapFeedback(null), 1000);
+    // Clear any existing timer
+    if (zapFeedbackTimerRef.current) {
+      clearTimeout(zapFeedbackTimerRef.current);
+    }
+    zapFeedbackTimerRef.current = setTimeout(() => {
+      setZapFeedback(null);
+      zapFeedbackTimerRef.current = null;
+    }, 1000);
     if (__DEV__) {
       console.log('[JauntCave] Zap action triggered');
     }

@@ -50,9 +50,9 @@ export function WeaponsInventoryModal({
             {weapons.length === 0 ? (
               <Text style={styles.emptyText}>No weapons available</Text>
             ) : (
-              weapons.map((weapon, index) => (
+              weapons.map((weapon) => (
                 <TouchableOpacity
-                  key={weapon.id || index}
+                  key={weapon.id || weapon.weaponId || weapon.name}
                   style={styles.weaponItem}
                   onPress={() => onSelectWeapon(weapon)}
                   activeOpacity={0.7}
