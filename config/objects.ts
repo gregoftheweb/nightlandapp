@@ -12,7 +12,6 @@ import sanctuaryPoolImg from '@assets/images/sprites/buildings/poolofpeace.webp'
 import footprintsIMG from '@assets/images/items/quest/footprints-blue.webp'
 import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
 import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.webp'
-import hermitIMG from '@assets/images/backgrounds/subgames/hermit-save2.webp'
 import jauntCaveIMG from '@assets/images/sprites/buildings/jaunt-cave.png'
 
 // WEAPONS TEMPLATES - Pure templates without position data
@@ -337,34 +336,6 @@ export const buildings: Record<string, GameObject> = {
       ctaLabel: 'Investigate',
       requiresPlayerOnObject: true,
       subGameId: 'tesseract',
-    },
-  },
-  hermit: {
-    kind: 'object',
-    shortName: 'hermit',
-    category: 'building',
-    name: 'Hermit',
-    description:
-      'A lonely hermit sits next to small campfire, safety and peace emanate from him and the small copse of woods around him.',
-    width: 4,
-    height: 4,
-    image: hermitIMG,
-    active: true,
-    zIndex: 0,
-    effects: [
-      {
-        type: 'recuperate',
-        value: 10,
-      },
-      {
-        type: 'hide',
-      },
-    ],
-    subGame: {
-      subGameName: 'hermit-hollow',
-      ctaLabel: 'Rest awhile',
-      requiresPlayerOnObject: true,
-      subGameId: 'hermit-hollow',
     },
   },
   jauntCave: {
