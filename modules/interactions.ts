@@ -1,6 +1,6 @@
 // modules/interactions.ts - Optimized with spatial grid
 import { GameState, Position, Item, NonCollisionObject } from '../config/types'
-import { createItemInstance } from '../config/levels'
+import { createItemInstance } from '../config/levelHelpers'
 import { COMBAT_STRINGS } from '@assets/copy/combat'
 import { buildSpatialGrid, checkOverlap } from './spacialGrid'
 import { applyEffect } from './effects'
