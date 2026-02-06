@@ -253,7 +253,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
       // Check for death
       if (newHP <= 0) {
-        // Dispatch GAME_OVER action
+        // Dispatch GAME_OVER action immediately
         dispatch({
           type: 'GAME_OVER',
           payload: {
@@ -263,8 +263,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
           },
         });
 
-        // Navigate to death screen
-        router.replace('/death');
+        // Delay navigation to death screen until after attack animation completes
+        // This allows the attack overlay to display for its full duration (750ms)
+        setTimeout(() => {
+          router.replace('/death');
+        }, TIMINGS.ATTACK);
       }
     }
   }, [state.player.currentHP, dispatch, router]);
