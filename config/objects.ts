@@ -13,6 +13,7 @@ import footprintsIMG from '@assets/images/items/quest/footprints-blue.webp'
 import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
 import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.webp'
 import hermitIMG from '@assets/images/backgrounds/subgames/hermit-save2.webp'
+import jauntCaveIMG from '@assets/images/sprites/buildings/jaunt-cave.png'
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
@@ -360,6 +361,29 @@ export const buildings: Record<string, GameObject> = {
     subGame: {
       subGameName: 'hermit-hollow',
       ctaLabel: 'Rest awhile',
+      requiresPlayerOnObject: true,
+    },
+  },
+  jauntCave: {
+    kind: 'object',
+    shortName: 'jauntCave',
+    category: 'building',
+    name: 'Cave of the daemon of the walking shadows',
+    description:
+      'A sulfur smelling wallow in the Night Lands plains lead to a cave shining with the light from lava. Christos is drawn to it, an aegis of foreboding and necessity upon him. He knows he MUST confront what is inside. Doom and Destiny collide within.',
+    width: 4,
+    height: 4,
+    image: jauntCaveIMG,
+    active: true,
+    zIndex: 0,
+    effects: [
+      {
+        type: 'hide',
+      },
+    ],
+    subGame: {
+      subGameName: 'jaunt-cave',
+      ctaLabel: 'Enter the cave',
       requiresPlayerOnObject: true,
     },
   },
