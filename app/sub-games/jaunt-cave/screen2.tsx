@@ -255,8 +255,8 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         dispatch({
           type: 'GAME_OVER',
           payload: {
-            message: 'Christos was killed by the Jaunt Deamon.',
-            killerName: 'Jaunt Deamon',
+            message: 'Christos was killed by the Jaunt Daemon.',
+            killerName: 'Jaunt Daemon',
             suppressDeathDialog: true,
           },
         });
