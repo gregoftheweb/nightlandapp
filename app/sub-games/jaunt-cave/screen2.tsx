@@ -92,6 +92,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   
   // Single timer ref - THIS IS CRITICAL
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPositionRef = useRef<PositionKey>('center');
   const isRunningRef = useRef(false);
 
@@ -265,7 +266,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
         // Delay navigation to death screen until after attack animation completes
         // This allows the attack overlay to display for its full duration (750ms)
-        setTimeout(() => {
+        deathNavigationTimerRef.current = setTimeout(() => {
           router.replace('/death');
         }, TIMINGS.ATTACK);
       }
@@ -381,6 +382,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       isRunningRef.current = false;
       clearTimer();
       stopGlowEffect();
+      // Clear death navigation timer if component unmounts
+      if (deathNavigationTimerRef.current) {
+        clearTimeout(deathNavigationTimerRef.current);
+        deathNavigationTimerRef.current = null;
+      }
     };
   }, [runAnimationCycle, clearTimer, stopGlowEffect]);
 
