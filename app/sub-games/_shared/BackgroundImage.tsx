@@ -1,5 +1,11 @@
-import React, { useRef, useState } from 'react'
-import { View, Image, StyleSheet, ImageSourcePropType, LayoutChangeEvent } from 'react-native'
+import React, { useMemo, useRef, useState } from 'react'
+import {
+  View,
+  Image,
+  StyleSheet,
+  ImageSourcePropType,
+  LayoutChangeEvent,
+} from 'react-native'
 
 const puzzleBackground = require('@assets/images/backgrounds/subgames/sub-game-background.webp')
 
@@ -8,15 +14,16 @@ interface BackgroundImageProps {
   children: React.ReactNode
   overlayOpacity?: number
   contentContainerStyle?: object
-  foregroundFit?: 'cover' | 'contain'
 }
+
+const EDGE_FADE_PX = 20
+const CHARCOAL = '18,18,18' // RGB for dark charcoal
 
 export function BackgroundImage({
   source,
   children,
   overlayOpacity = 0.45,
   contentContainerStyle,
-  foregroundFit = 'cover',
 }: BackgroundImageProps) {
   const locked = useRef(false)
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
@@ -25,51 +32,150 @@ export function BackgroundImage({
     if (locked.current) return
 
     const { width, height } = e.nativeEvent.layout
-
-    // Guard against transient 0x0 layouts (rare but can happen during mount)
-    if (width <= 0 || height <= 0) {
-      if (__DEV__)
-        console.warn('[BackgroundImage] onLayout returned non-positive size', { width, height })
-      return
-    }
+    if (width <= 0 || height <= 0) return
 
     locked.current = true
     setSize({ w: width, h: height })
-
-    if (__DEV__) console.log('[BackgroundImage] locked size', { width, height })
   }
-
-  // Determine if we're in portrait mode (height > width)
-  // Default to false before layout completes - will use foregroundFit prop initially
-  const isPortrait = size ? size.h > size.w : false
-
-  // For portrait screens, use 'contain' to respect full width and center vertically
-  // For square/landscape screens, keep using the foregroundFit prop (default 'cover')
-  const effectiveResizeMode = isPortrait ? 'contain' : foregroundFit
 
   const fillLocked = size
     ? { position: 'absolute' as const, left: 0, top: 0, width: size.w, height: size.h }
     : styles.fill
 
+  /**
+   * Foreground ALWAYS full width
+   */
+  const foregroundStyle = useMemo(() => {
+    if (!size || !source) return fillLocked
+
+    const resolved = Image.resolveAssetSource(source)
+    const imgW = resolved?.width ?? 0
+    const imgH = resolved?.height ?? 0
+
+    if (imgW <= 0 || imgH <= 0) return fillLocked
+
+    const targetW = size.w
+    const targetH = targetW * (imgH / imgW)
+
+    // Center vertically
+    const top = (size.h - targetH) / 2
+
+    return {
+      position: 'absolute' as const,
+      left: 0,
+      top,
+      width: targetW,
+      height: targetH,
+    }
+  }, [fillLocked, size, source])
+
+  /**
+   * Metrics so we know when to draw fades
+   */
+  const foregroundMetrics = useMemo(() => {
+    if (!size || !source) return null
+
+    const resolved = Image.resolveAssetSource(source)
+    const imgW = resolved?.width ?? 0
+    const imgH = resolved?.height ?? 0
+    if (imgW <= 0 || imgH <= 0) return null
+
+    const targetW = size.w
+    const targetH = targetW * (imgH / imgW)
+    const top = (size.h - targetH) / 2
+
+    return {
+      top,
+      bottom: top + targetH,
+    }
+  }, [size, source])
+
+  /**
+   * Fade renderer
+   */
+  const renderEdgeFade = (edgeY: number, direction: 'up' | 'down') => {
+    const bandTop = direction === 'up' ? edgeY - EDGE_FADE_PX : edgeY
+
+    return (
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: bandTop,
+          width: size?.w ?? 0,
+          height: EDGE_FADE_PX,
+          zIndex: 9,
+        }}
+      >
+        {Array.from({ length: EDGE_FADE_PX }).map((_, i) => {
+          const t =
+            direction === 'up'
+              ? i / (EDGE_FADE_PX - 1)
+              : 1 - i / (EDGE_FADE_PX - 1)
+
+          const alpha = 0.85 * t
+
+          return (
+            <View
+              key={i}
+              style={{
+                height: 1,
+                width: '100%',
+                backgroundColor: `rgba(${CHARCOAL},${alpha})`,
+              }}
+            />
+          )
+        })}
+      </View>
+    )
+  }
+
   return (
     <View style={styles.container} onLayout={onLayout}>
-      <Image source={puzzleBackground} style={fillLocked} resizeMode="cover" fadeDuration={0} />
+      {/* Base background */}
+      <Image
+        source={puzzleBackground}
+        style={fillLocked}
+        resizeMode="cover"
+        fadeDuration={0}
+      />
 
+      {/* Foreground */}
       {source ? (
         <Image
           source={source}
-          style={fillLocked}
-          resizeMode={effectiveResizeMode}
+          style={foregroundStyle}
+          resizeMode="stretch"
           fadeDuration={0}
-          onLoadEnd={() => {
-            if (__DEV__) console.log('[BackgroundImage] foreground loaded')
-          }}
         />
       ) : null}
 
-      <View style={[styles.overlay, { backgroundColor: `rgba(0,0,0,${overlayOpacity})` }]} />
+      {/* Top / Bottom fade bands */}
+      {foregroundMetrics && size ? (
+        <>
+          {foregroundMetrics.top > 0
+            ? renderEdgeFade(foregroundMetrics.top, 'up')
+            : null}
 
-      <View style={[styles.contentContainer, contentContainerStyle]}>{children}</View>
+          {foregroundMetrics.bottom < size.h
+            ? renderEdgeFade(foregroundMetrics.bottom, 'down')
+            : null}
+        </>
+      ) : null}
+
+      {/* Overlay */}
+      <View
+        style={[
+          styles.overlay,
+          { backgroundColor: `rgba(0,0,0,${overlayOpacity})` },
+        ]}
+      />
+
+      {/* Game content */}
+      <View style={[styles.contentContainer, contentContainerStyle]}>
+        {children}
+      </View>
     </View>
   )
 }
