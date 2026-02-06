@@ -302,7 +302,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       clearTimer(); // Clear before setting new timer
 
       // Decide if this cycle includes an attack
-      const willAttack = Math.random() < 0.4; // 40% chance to attack
+      const willAttack = Math.random() < 0.6; // 60% chance to attack
       const nextPosition = getNextPosition();
 
       // STATE 1: RESTING
