@@ -95,6 +95,10 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const deathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPositionRef = useRef<PositionKey>('center');
   const isRunningRef = useRef(false);
+  
+  // Track current HP in a ref to avoid stale state reads
+  // This prevents HP from appearing to increase when multiple attacks happen before re-render
+  const currentHPRef = useRef<number>(state.player.currentHP);
 
   // Animation values
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -242,11 +246,13 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     
     if (hit) {
       const damage = rollDamage();
-      // Read fresh HP value directly from state context (not from closure)
-      // This avoids adding state.player.currentHP to dependencies, which would cause
-      // the animation cycle to restart on every HP update
-      const currentHP = state.player.currentHP;
+      // Read from ref to get the actual current HP (not stale state)
+      // This prevents HP from appearing to increase when multiple attacks happen before re-render
+      const currentHP = currentHPRef.current;
       const newHP = Math.max(0, currentHP - damage);
+      
+      // Update ref immediately to prevent race conditions
+      currentHPRef.current = newHP;
       
       // Apply damage to Christos
       dispatch({
@@ -375,6 +381,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       // Could add miss feedback animation here
     }
   }, [daemonState, onDaemonHit, onDaemonMiss]);
+
+  // Keep HP ref in sync with state
+  useEffect(() => {
+    currentHPRef.current = state.player.currentHP;
+  }, [state.player.currentHP]);
 
   // Start the loop on mount, cleanup on unmount
   useEffect(() => {
