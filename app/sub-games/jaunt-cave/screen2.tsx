@@ -71,6 +71,7 @@ const TIMINGS = {
 const BEAM_HOLD_DURATION = 200; // How long beam stays at full opacity (ms)
 const BEAM_FADEOUT_DURATION = 300; // How long beam takes to fade out (ms)
 const BEAM_THICKNESS = 8; // Thickness of main beam in pixels
+const BEAM_GLOW_MULTIPLIER = 2; // Glow effect is 2x thicker than main beam
 const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 
 interface JauntCaveScreen2Props {
@@ -787,7 +788,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
                       left: beamFrom.x,
                       top: beamFrom.y,
                       width: length,
-                      height: BEAM_THICKNESS * 2,
+                      height: BEAM_THICKNESS * BEAM_GLOW_MULTIPLIER,
                       backgroundColor: beamColor,
                       opacity: beamOpacity.interpolate({
                         inputRange: [0, 1],
