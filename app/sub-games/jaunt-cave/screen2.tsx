@@ -144,8 +144,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     const containerH = arenaSize.height;
 
     // Compute scale for resizeMode="cover" (fills container, may crop)
-    // Scale to ALWAYS match screen width
-    const scale = containerW / imageW;
+    const scale = Math.max(containerW / imageW, containerH / imageH);
 
     const drawW = imageW * scale;
     const drawH = imageH * scale;
