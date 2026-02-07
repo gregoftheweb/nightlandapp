@@ -104,10 +104,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const currentHPRef = useRef<number>(state.player.currentHP);
   
   // Battle HUD state
-  const [isBlocking, setIsBlocking] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
-  const [zapFeedback, setZapFeedback] = useState<string | null>(null);
-  const zapFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isZapMenuOpen, setIsZapMenuOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState<string | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const zapMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Animation values
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -376,6 +377,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     };
 
     executeSequence();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clearTimer, getNextPosition, startGlowEffect, stopGlowEffect, triggerShake, triggerFizzle, triggerBrightness, triggerCrossfade, applyDaemonDamage]);
 
   // Handle tap on daemon
@@ -409,10 +411,14 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         clearTimeout(deathNavigationTimerRef.current);
         deathNavigationTimerRef.current = null;
       }
-      // Clear zap feedback timer if component unmounts
-      if (zapFeedbackTimerRef.current) {
-        clearTimeout(zapFeedbackTimerRef.current);
-        zapFeedbackTimerRef.current = null;
+      // Clear feedback and zap menu timers if component unmounts
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+        feedbackTimerRef.current = null;
+      }
+      if (zapMenuTimerRef.current) {
+        clearTimeout(zapMenuTimerRef.current);
+        zapMenuTimerRef.current = null;
       }
     };
   }, [runAnimationCycle, clearTimer, stopGlowEffect]);
@@ -454,30 +460,70 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   };
 
   // Battle HUD handlers
-  const handleZap = useCallback(() => {
-    // Stub: Show feedback
-    setZapFeedback('Zap!');
-    // Clear any existing timer
-    if (zapFeedbackTimerRef.current) {
-      clearTimeout(zapFeedbackTimerRef.current);
-    }
-    zapFeedbackTimerRef.current = setTimeout(() => {
-      setZapFeedback(null);
-      zapFeedbackTimerRef.current = null;
-    }, 1000);
+  const handleZapPress = useCallback(() => {
+    // Toggle zap menu open/close
+    setIsZapMenuOpen((prev) => !prev);
     if (__DEV__) {
-      console.log('[JauntCave] Zap action triggered');
+      console.log('[JauntCave] Zap menu toggled');
+    }
+  }, []);
+
+  const handleZapTargetPress = useCallback((target: 'left' | 'center' | 'right') => {
+    const targetLabels = {
+      left: 'Left',
+      center: 'Center',
+      right: 'Right',
+    };
+    
+    // Show feedback
+    setFeedbackText(`Zap - ${targetLabels[target]}`);
+    
+    // Clear any existing timers
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+    }
+    if (zapMenuTimerRef.current) {
+      clearTimeout(zapMenuTimerRef.current);
+    }
+    
+    // Auto-hide feedback after ~1s
+    feedbackTimerRef.current = setTimeout(() => {
+      setFeedbackText(null);
+      feedbackTimerRef.current = null;
+    }, 1000);
+    
+    // Auto-close zap menu after ~1s
+    zapMenuTimerRef.current = setTimeout(() => {
+      setIsZapMenuOpen(false);
+      zapMenuTimerRef.current = null;
+    }, 1000);
+    
+    if (__DEV__) {
+      console.log('[JauntCave] Zap target selected:', target);
     }
   }, []);
   
-  const handleBlock = useCallback(() => {
-    setIsBlocking((prev) => {
-      const newValue = !prev;
-      if (__DEV__) {
-        console.log('[JauntCave] Block toggled:', newValue);
-      }
-      return newValue;
-    });
+  const handleBlockPress = useCallback(() => {
+    // Close zap menu if open
+    setIsZapMenuOpen(false);
+    
+    // Show "Block" feedback
+    setFeedbackText('Block');
+    
+    // Clear any existing timer
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+    }
+    
+    // Auto-hide feedback after ~1s
+    feedbackTimerRef.current = setTimeout(() => {
+      setFeedbackText(null);
+      feedbackTimerRef.current = null;
+    }, 1000);
+    
+    if (__DEV__) {
+      console.log('[JauntCave] Block action triggered');
+    }
   }, []);
   
   const handleOpenInventory = useCallback(() => {
@@ -493,18 +539,36 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   
   const handleSelectWeapon = useCallback((weapon: Item) => {
     if (__DEV__) {
-      console.log('[JauntCave] Equip weapon:', weapon.name);
+      console.log('[JauntCave] Equip weapon:', weapon.id);
     }
-    // Stub: Just log and close for now
+    // Dispatch EQUIP_RANGED_WEAPON action
+    if (weapon.id) {
+      dispatch({
+        type: 'EQUIP_RANGED_WEAPON',
+        payload: { id: weapon.id },
+      });
+    }
     setShowInventory(false);
-  }, []);
+  }, [dispatch]);
   
-  // Filter weapons from inventory
-  const weapons = useMemo(() => {
-    return state.player.inventory.filter(
-      (item) => item.type === 'weapon'
+  // Get ranged weapons from global weapons catalog based on player's ranged weapon inventory IDs
+  const rangedWeapons = useMemo(() => {
+    const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
+    return state.weapons.filter(
+      (weapon) =>
+        weapon.weaponType === 'ranged' && 
+        weapon.id !== null && 
+        weapon.id !== undefined &&
+        rangedWeaponIds.includes(weapon.id)
     );
-  }, [state.player.inventory]);
+  }, [state.player.rangedWeaponInventoryIds, state.weapons]);
+  
+  // Get equipped ranged weapon name for display
+  const equippedWeaponName = useMemo(() => {
+    if (!state.player.equippedRangedWeaponId) return null;
+    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
+    return weapon ? weapon.name : null;
+  }, [state.player.equippedRangedWeaponId, state.weapons]);
 
   // Memoized attack overlay style
   const attackOverlayStyle = useMemo(() => {
@@ -513,7 +577,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   }, [arenaSize]);
 
   // Position for daemon
-  const position = POSITIONS[currentPosition];
   const daemonX = daemonPosition.x;
   const daemonY = daemonPosition.y;
 
@@ -681,33 +744,29 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
       <BottomActionBar>
         <BattleHUD
-          onZap={handleZap}
-          onBlock={handleBlock}
+          onZapPress={handleZapPress}
+          onBlockPress={handleBlockPress}
           onOpenInventory={handleOpenInventory}
-          isBlocking={isBlocking}
+          isZapMenuOpen={isZapMenuOpen}
+          onZapTargetPress={handleZapTargetPress}
+          equippedWeaponName={equippedWeaponName}
         />
       </BottomActionBar>
       
-      {/* Blocking indicator */}
-      {isBlocking && (
-        <View style={styles.blockingIndicator}>
-          <Text style={styles.blockingText}>BLOCKING</Text>
-        </View>
-      )}
-      
-      {/* Zap feedback */}
-      {zapFeedback && (
-        <View style={styles.zapFeedback}>
-          <Text style={styles.zapFeedbackText}>{zapFeedback}</Text>
+      {/* Feedback message box */}
+      {feedbackText && (
+        <View style={styles.feedbackMessage}>
+          <Text style={styles.feedbackMessageText}>{feedbackText}</Text>
         </View>
       )}
       
       {/* Weapons inventory modal */}
       <WeaponsInventoryModal
         visible={showInventory}
-        weapons={weapons}
+        weapons={rangedWeapons}
         onClose={handleCloseInventory}
         onSelectWeapon={handleSelectWeapon}
+        equippedWeaponId={state.player.equippedRangedWeaponId}
       />
     </BackgroundImage>
   );
@@ -813,7 +872,7 @@ const styles = StyleSheet.create({
   christosHPFill: {
     backgroundColor: '#44ff44',
   },
-  blockingIndicator: {
+  feedbackMessage: {
     position: 'absolute',
     bottom: 120,
     left: 0,
@@ -822,39 +881,19 @@ const styles = StyleSheet.create({
     zIndex: 300,
     pointerEvents: 'none',
   },
-  blockingText: {
-    fontSize: 18,
+  feedbackMessageText: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: subGameTheme.blue,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    color: subGameTheme.white,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: subGameTheme.blue,
-  },
-  zapFeedback: {
-    position: 'absolute',
-    top: '50%',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 300,
-    pointerEvents: 'none',
-  },
-  zapFeedbackText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: subGameTheme.red,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    borderWidth: 3,
-    borderColor: subGameTheme.red,
-    textShadowColor: subGameTheme.red,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
 });
 

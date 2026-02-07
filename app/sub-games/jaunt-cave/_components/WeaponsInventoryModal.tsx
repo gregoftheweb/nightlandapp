@@ -18,17 +18,19 @@ interface WeaponsInventoryModalProps {
   weapons: Item[];
   onClose: () => void;
   onSelectWeapon: (weapon: Item) => void;
+  equippedWeaponId?: string | null;
 }
 
 /**
  * Modal overlay for selecting weapons during battle
- * Displays weapons-only from player inventory
+ * Displays ranged weapons only from player inventory
  */
 export function WeaponsInventoryModal({
   visible,
   weapons,
   onClose,
   onSelectWeapon,
+  equippedWeaponId,
 }: WeaponsInventoryModalProps) {
   return (
     <Modal
@@ -48,37 +50,49 @@ export function WeaponsInventoryModal({
 
           <ScrollView style={styles.weaponList}>
             {weapons.length === 0 ? (
-              <Text style={styles.emptyText}>No weapons available</Text>
+              <Text style={styles.emptyText}>No ranged weapons available</Text>
             ) : (
-              weapons.map((weapon) => (
-                <TouchableOpacity
-                  key={weapon.id || weapon.weaponId || weapon.name}
-                  style={styles.weaponItem}
-                  onPress={() => onSelectWeapon(weapon)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.weaponInfo}>
-                    <Text style={styles.weaponName}>{weapon.name}</Text>
-                    {weapon.description && (
-                      <Text style={styles.weaponDescription}>
-                        {weapon.description}
-                      </Text>
-                    )}
-                    <View style={styles.weaponStats}>
-                      {weapon.damage && (
-                        <Text style={styles.weaponStat}>
-                          Damage: {weapon.damage}
+              weapons.map((weapon) => {
+                const isEquipped = weapon.id === equippedWeaponId;
+                return (
+                  <TouchableOpacity
+                    key={weapon.id || weapon.weaponId || weapon.name}
+                    style={[
+                      styles.weaponItem,
+                      isEquipped && styles.weaponItemEquipped,
+                    ]}
+                    onPress={() => onSelectWeapon(weapon)}
+                    activeOpacity={isEquipped ? 0.5 : 0.7}
+                    disabled={isEquipped}
+                  >
+                    <View style={styles.weaponInfo}>
+                      <View style={styles.weaponNameRow}>
+                        <Text style={styles.weaponName}>{weapon.name}</Text>
+                        {isEquipped && (
+                          <Text style={styles.equippedBadge}>EQUIPPED</Text>
+                        )}
+                      </View>
+                      {weapon.description && (
+                        <Text style={styles.weaponDescription}>
+                          {weapon.description}
                         </Text>
                       )}
-                      {weapon.weaponType && (
-                        <Text style={styles.weaponStat}>
-                          Type: {weapon.weaponType}
-                        </Text>
-                      )}
+                      <View style={styles.weaponStats}>
+                        {weapon.damage && (
+                          <Text style={styles.weaponStat}>
+                            Damage: {weapon.damage}
+                          </Text>
+                        )}
+                        {weapon.weaponType && (
+                          <Text style={styles.weaponStat}>
+                            Type: {weapon.weaponType}
+                          </Text>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))
+                  </TouchableOpacity>
+                );
+              })
             )}
           </ScrollView>
         </View>
@@ -144,13 +158,33 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: subGameTheme.blue,
   },
+  weaponItemEquipped: {
+    backgroundColor: subGameTheme.blue,
+    borderColor: subGameTheme.red,
+    opacity: 0.7,
+  },
   weaponInfo: {
     gap: 8,
+  },
+  weaponNameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   weaponName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: subGameTheme.black,
+    flex: 1,
+  },
+  equippedBadge: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: subGameTheme.white,
+    backgroundColor: subGameTheme.red,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
   weaponDescription: {
     fontSize: 14,
