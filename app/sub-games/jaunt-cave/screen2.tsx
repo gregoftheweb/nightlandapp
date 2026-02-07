@@ -377,7 +377,8 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     };
 
     executeSequence();
-  }, [clearTimer, getNextPosition, startGlowEffect, stopGlowEffect, triggerShake, triggerFizzle, triggerBrightness, triggerCrossfade, applyDaemonDamage, brightnessAnim]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearTimer, getNextPosition, startGlowEffect, stopGlowEffect, triggerShake, triggerFizzle, triggerBrightness, triggerCrossfade, applyDaemonDamage]);
 
   // Handle tap on daemon
   const handleDaemonTap = useCallback(() => {
@@ -555,7 +556,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
     return state.weapons.filter(
       (weapon) =>
-        weapon.weaponType === 'ranged' && weapon.id != null && rangedWeaponIds.includes(weapon.id)
+        weapon.weaponType === 'ranged' && weapon.id !== null && rangedWeaponIds.includes(weapon.id)
     );
   }, [state.player.rangedWeaponInventoryIds, state.weapons]);
   
