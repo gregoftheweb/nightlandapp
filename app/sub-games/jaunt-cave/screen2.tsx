@@ -67,6 +67,12 @@ const TIMINGS = {
   TRANSITION_TO_RESTING: 400,
 };
 
+// Beam VFX constants
+const BEAM_HOLD_DURATION = 200; // How long beam stays at full opacity (ms)
+const BEAM_FADEOUT_DURATION = 300; // How long beam takes to fade out (ms)
+const BEAM_THICKNESS = 8; // Thickness of main beam in pixels
+const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
+
 interface JauntCaveScreen2Props {
   daemonHP?: number;
   maxDaemonHP?: number;
@@ -113,7 +119,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   // Beam state
   const [beamFrom, setBeamFrom] = useState<{ x: number; y: number } | null>(null);
   const [beamTo, setBeamTo] = useState<{ x: number; y: number } | null>(null);
-  const [beamColor, setBeamColor] = useState<string>('#990000');
+  const [beamColor, setBeamColor] = useState<string>(DEFAULT_BOLT_COLOR);
 
   // Animation values
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -530,10 +536,10 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
           duration: 0, // Immediate appearance
           useNativeDriver: true,
         }),
-        Animated.delay(200), // Hold for ~200ms
+        Animated.delay(BEAM_HOLD_DURATION),
         Animated.timing(beamOpacity, {
           toValue: 0,
-          duration: 300, // Fade out over ~300ms
+          duration: BEAM_FADEOUT_DURATION,
           useNativeDriver: true,
         }),
       ]).start(() => {
@@ -617,9 +623,9 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
   // Get bolt color from equipped weapon
   const boltColor = useMemo(() => {
-    if (!state.player.equippedRangedWeaponId) return '#990000'; // Fallback
+    if (!state.player.equippedRangedWeaponId) return DEFAULT_BOLT_COLOR;
     const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
-    return weapon?.projectileColor || '#990000'; // Use weapon's projectileColor or fallback
+    return weapon?.projectileColor || DEFAULT_BOLT_COLOR;
   }, [state.player.equippedRangedWeaponId, state.weapons]);
 
   // Memoized attack overlay style
@@ -771,7 +777,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
               const length = Math.sqrt(dx * dx + dy * dy);
               const angleRad = Math.atan2(dy, dx);
               const angleDeg = (angleRad * 180) / Math.PI;
-              const beamThickness = 8;
 
               return (
                 <>
@@ -782,14 +787,14 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
                       left: beamFrom.x,
                       top: beamFrom.y,
                       width: length,
-                      height: beamThickness * 2,
+                      height: BEAM_THICKNESS * 2,
                       backgroundColor: beamColor,
                       opacity: beamOpacity.interpolate({
                         inputRange: [0, 1],
                         outputRange: [0, 0.3],
                       }),
                       transform: [
-                        { translateY: -beamThickness },
+                        { translateY: -BEAM_THICKNESS },
                         { rotate: `${angleDeg}deg` },
                       ],
                     }}
@@ -802,11 +807,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
                       left: beamFrom.x,
                       top: beamFrom.y,
                       width: length,
-                      height: beamThickness,
+                      height: BEAM_THICKNESS,
                       backgroundColor: beamColor,
                       opacity: beamOpacity,
                       transform: [
-                        { translateY: -beamThickness / 2 },
+                        { translateY: -BEAM_THICKNESS / 2 },
                         { rotate: `${angleDeg}deg` },
                       ],
                     }}
