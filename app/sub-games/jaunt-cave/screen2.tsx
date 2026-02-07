@@ -556,7 +556,10 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
     return state.weapons.filter(
       (weapon) =>
-        weapon.weaponType === 'ranged' && weapon.id !== null && rangedWeaponIds.includes(weapon.id)
+        weapon.weaponType === 'ranged' && 
+        weapon.id !== null && 
+        weapon.id !== undefined &&
+        rangedWeaponIds.includes(weapon.id)
     );
   }, [state.player.rangedWeaponInventoryIds, state.weapons]);
   

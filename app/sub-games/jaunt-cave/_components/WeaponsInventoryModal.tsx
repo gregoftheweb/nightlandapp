@@ -62,7 +62,7 @@ export function WeaponsInventoryModal({
                       isEquipped && styles.weaponItemEquipped,
                     ]}
                     onPress={() => onSelectWeapon(weapon)}
-                    activeOpacity={isEquipped ? 1 : 0.7}
+                    activeOpacity={isEquipped ? 0.5 : 0.7}
                     disabled={isEquipped}
                   >
                     <View style={styles.weaponInfo}>
