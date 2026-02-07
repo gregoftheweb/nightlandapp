@@ -154,16 +154,21 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     return { offsetX, offsetY, drawW, drawH };
   }, [arenaSize]);
 
-  // Compute daemon absolute position from percentage
-  const daemonPosition = useMemo(() => {
+  // Helper to compute absolute position for any spawn point
+  const getSpawnPosition = useCallback((positionKey: PositionKey) => {
     if (!bgRect) return { x: 0, y: 0 };
 
-    const position = POSITIONS[currentPosition];
-    const daemonX = bgRect.offsetX + position.x * bgRect.drawW;
-    const daemonY = bgRect.offsetY + position.y * bgRect.drawH;
+    const position = POSITIONS[positionKey];
+    const x = bgRect.offsetX + position.x * bgRect.drawW;
+    const y = bgRect.offsetY + position.y * bgRect.drawH;
 
-    return { x: daemonX, y: daemonY };
-  }, [bgRect, currentPosition]);
+    return { x, y };
+  }, [bgRect]);
+
+  // Compute daemon absolute position from percentage
+  const daemonPosition = useMemo(() => {
+    return getSpawnPosition(currentPosition);
+  }, [getSpawnPosition, currentPosition]);
 
   // Handle arena layout
   const handleArenaLayout = useCallback((event: LayoutChangeEvent) => {
@@ -516,14 +521,12 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       const startX = arenaSize.width / 2;
       const startY = arenaSize.height - 20;
       
-      // Calculate end point (selected target position)
-      const pos = POSITIONS[target];
-      const endX = bgRect.offsetX + pos.x * bgRect.drawW;
-      const endY = bgRect.offsetY + pos.y * bgRect.drawH;
+      // Get end point (selected target spawn position - already calculated!)
+      const endPosition = getSpawnPosition(target);
       
       // Set beam state
       setBeamFrom({ x: startX, y: startY });
-      setBeamTo({ x: endX, y: endY });
+      setBeamTo(endPosition);
       setBeamColor(boltColor);
       
       // Stop any previous animation
@@ -552,7 +555,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     if (__DEV__) {
       console.log('[JauntCave] Zap target selected:', target);
     }
-  }, [arenaSize, bgRect, boltColor, beamOpacity]);
+  }, [arenaSize, bgRect, boltColor, beamOpacity, getSpawnPosition]);
   
   const handleBlockPress = useCallback(() => {
     // Close zap menu if open
