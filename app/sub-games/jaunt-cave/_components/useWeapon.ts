@@ -7,8 +7,9 @@ import { DaemonState } from './useBattleState';
 
 const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 
-// Hit indicator configuration (for timing)
-const HIT_INDICATOR_CONFIG = {
+// Hit indicator timing configuration
+// Note: Full config is in HitIndicator.tsx
+const HIT_INDICATOR_TIMING = {
   DURATION: 600,                // How long indicator shows (ms)
   FADE_OUT_DURATION: 200,       // Fade out time (ms)
 } as const;
@@ -159,7 +160,7 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
         // Clear indicator after its animation finishes
         setTimeout(() => {
           setHitIndicator(null);
-        }, HIT_INDICATOR_CONFIG.DURATION + HIT_INDICATOR_CONFIG.FADE_OUT_DURATION);
+        }, HIT_INDICATOR_TIMING.DURATION + HIT_INDICATOR_TIMING.FADE_OUT_DURATION);
       }, projectileDuration);
     }
     
