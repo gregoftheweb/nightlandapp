@@ -53,10 +53,12 @@ export function BlockShield({ active, centerX, centerY, onExpire }: BlockShieldP
       opacity.setValue(0);
 
       // Calculate hold duration (time at full opacity)
-      const holdDuration = 
+      const holdDuration = Math.max(
+        0,
         BLOCK_SHIELD_CONFIG.DURATION - 
         BLOCK_SHIELD_CONFIG.FADE_IN_DURATION - 
-        BLOCK_SHIELD_CONFIG.FADE_OUT_DURATION;
+        BLOCK_SHIELD_CONFIG.FADE_OUT_DURATION
+      );
 
       // Sequence: fade in -> hold -> fade out
       Animated.sequence([

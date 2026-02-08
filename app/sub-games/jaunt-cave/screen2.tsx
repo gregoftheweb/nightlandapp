@@ -170,11 +170,9 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     // Close zap menu if open
     closeZapMenu();
     
-    // Activate the block
-    activateBlock();
-    
-    // Show feedback based on timing
+    // Show feedback based on timing and activate block
     if (canBlockNow) {
+      activateBlock();
       setFeedbackText('BLOCK READY!');
     } else {
       setFeedbackText('BLOCK FAILED - Wrong timing!');
