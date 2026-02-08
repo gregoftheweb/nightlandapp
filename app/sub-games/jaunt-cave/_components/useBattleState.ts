@@ -5,6 +5,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Animated } from 'react-native';
 import { DaemonState, PositionKey } from './DaemonSprite';
 
+// Re-export DaemonState for use in other components
+export { DaemonState };
+
 // Combat helpers
 const rollToHit = (): boolean => {
   return Math.random() < 0.8; // 80% hit chance

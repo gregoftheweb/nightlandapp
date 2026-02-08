@@ -14,6 +14,7 @@ import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal';
 import { DaemonSprite } from './_components/DaemonSprite';
 import { FeedbackMessage } from './_components/FeedbackMessage';
 import { ProjectileEffect } from './_components/ProjectileEffect';
+import { HitIndicator } from './_components/HitIndicator';
 import { useBattleState } from './_components/useBattleState';
 import { useWeapon, ZAP_TARGETS } from './_components/useWeapon';
 import { useArenaLayout } from './_components/useArenaLayout';
@@ -127,6 +128,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     handleCloseInventory,
     handleSelectWeapon,
     closeZapMenu,
+    hitIndicator,
   } = useWeapon({
     gameState: state,
     dispatch,
@@ -136,6 +138,8 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       setProjectileFrom(from);
       setProjectileTo(to);
     },
+    getDaemonState: () => daemonState,
+    getCurrentDaemonPosition: () => currentPosition,
   });
 
   // Block action handler
@@ -187,6 +191,15 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
           onComplete={() => {
             setProjectileFrom(null);
             setProjectileTo(null);
+          }}
+        />
+
+        {/* Hit Indicator */}
+        <HitIndicator
+          position={hitIndicator?.position || null}
+          type={hitIndicator?.type || 'block'}
+          onComplete={() => {
+            // Optional: handle completion if needed
           }}
         />
 
