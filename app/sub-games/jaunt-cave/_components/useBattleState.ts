@@ -33,7 +33,6 @@ export interface UseBattleStateProps {
   maxDaemonHP?: number;
   onDaemonHit?: () => void;
   onDaemonMiss?: () => void;
-  onPlayerDealsDamage?: (damage: number) => void; // Callback when player damages daemon
   // Animation refs passed in from parent
   shakeAnim: Animated.Value;
   // Game context
@@ -61,7 +60,6 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
     maxDaemonHP = 100,
     onDaemonHit,
     onDaemonMiss,
-    onPlayerDealsDamage,
     shakeAnim,
     dispatch,
     currentPlayerHP,
@@ -167,11 +165,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
       }
       return newHP;
     });
-    
-    if (onPlayerDealsDamage) {
-      onPlayerDealsDamage(damage);
-    }
-  }, [onPlayerDealsDamage]);
+  }, []);
 
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
