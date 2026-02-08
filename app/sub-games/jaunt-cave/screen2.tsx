@@ -84,6 +84,17 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   // Battle state machine - manages daemon AI, state transitions, and battle logic
+  const battleState = useBattleState({
+    initialDaemonHP,
+    maxDaemonHP,
+    onDaemonHit,
+    onDaemonMiss,
+    shakeAnim,
+    dispatch,
+    currentPlayerHP: state.player.currentHP,
+    router,
+  });
+
   const {
     daemonState,
     currentPosition,
@@ -94,16 +105,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     handleDaemonTap,
     isVulnerable,
     isAttacking,
-  } = useBattleState({
-    initialDaemonHP,
-    maxDaemonHP,
-    onDaemonHit,
-    onDaemonMiss,
-    shakeAnim,
-    dispatch,
-    currentPlayerHP: state.player.currentHP,
-    router,
-  });
+  } = battleState;
 
   // Arena layout and positioning - calculates daemon position and arena dimensions
   const {
@@ -117,6 +119,17 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     backgroundImage: BACKGROUND,
     currentPosition,
   });
+
+  // Helper function to get equipped weapon damage
+  const getEquippedWeaponDamage = useCallback(() => {
+    if (!state.player.equippedRangedWeaponId) return null;
+    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
+    if (!weapon?.damage) return null;
+    // Use weapon damage as base, with ±20% variance
+    const min = Math.max(1, Math.floor(weapon.damage * 0.8));
+    const max = Math.ceil(weapon.damage * 1.2);
+    return { min, max };
+  }, [state.player.equippedRangedWeaponId, state.weapons]);
 
   // Weapon management - handles weapon selection, zap menu, and projectile firing
   const {
@@ -143,6 +156,8 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     },
     getDaemonState: () => daemonState,
     getCurrentDaemonPosition: () => currentPosition,
+    getEquippedWeaponDamage,
+    onDaemonHit: battleState.applyPlayerDamage,
     projectileDuration: PROJECTILE_DURATION,
   });
 

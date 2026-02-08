@@ -51,6 +51,7 @@ export interface UseBattleStateReturn {
   handleDaemonTap: () => void;
   isVulnerable: boolean;
   isAttacking: boolean;
+  applyPlayerDamage: (damage: number) => void;
 }
 
 export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn {
@@ -71,7 +72,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   const [attackDirection, setAttackDirection] = useState<'left' | 'right'>('left');
   const [previousState, setPreviousState] = useState<DaemonState>(DaemonState.RESTING);
   const [isCrossfading, setIsCrossfading] = useState(false);
-  const [daemonHP] = useState(initialDaemonHP);
+  const [daemonHP, setDaemonHP] = useState(initialDaemonHP);
 
   // Single timer ref - THIS IS CRITICAL
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -154,6 +155,17 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
       }
     }
   }, [dispatch, router]);
+
+  // Apply player damage to daemon
+  const applyPlayerDamage = useCallback((damage: number) => {
+    setDaemonHP((prevHP) => {
+      const newHP = Math.max(0, prevHP - damage);
+      if (__DEV__) {
+        console.log('[useBattleState] Daemon took', damage, 'damage. HP:', prevHP, '->', newHP);
+      }
+      return newHP;
+    });
+  }, []);
 
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
@@ -282,5 +294,6 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
     handleDaemonTap,
     isVulnerable,
     isAttacking,
+    applyPlayerDamage,
   };
 }
