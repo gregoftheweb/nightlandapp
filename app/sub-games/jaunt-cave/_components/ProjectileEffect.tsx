@@ -11,16 +11,14 @@ const PROJECTILE_CONFIG = {
   DEFAULT_DURATION: 250,        // Travel time in milliseconds (lower = faster projectiles, higher = slower)
   FADE_START_PERCENT: 0.9,      // When to start fading (0.9 = fade in last 10% of journey)
   
-  // Size and shape
-  DEFAULT_SIZE: 16,              // Diameter of projectile circle/sphere
-  BORDER_RADIUS_MULTIPLIER: 0.5, // 0.5 = perfect circle, lower values = elongated/streak effect
+  // Beam dimensions
+  BEAM_LENGTH: 70,               // Length of beam in pixels (direction of travel)
+  BEAM_THICKNESS: 5,             // Thickness/width of beam in pixels
   
   // Glow/shadow effects
   SHADOW_OPACITY: 0.8,           // Glow intensity around projectile (0.0 to 1.0)
   SHADOW_RADIUS: 8,              // How far the glow spreads (in pixels)
-  
-  // Advanced: Stretch/trail effect (future enhancement)
-  // TRAIL_LENGTH: 0,            // 0 = no trail, higher = longer streak behind projectile
+  GLOW_THICKNESS_MULTIPLIER: 3,  // Glow is 2x thicker than main beam
 } as const;
 
 interface ProjectileEffectProps {
@@ -28,7 +26,6 @@ interface ProjectileEffectProps {
   to: { x: number; y: number } | null;
   color: string;
   duration?: number;
-  size?: number;
   onComplete?: () => void;
 }
 
@@ -37,11 +34,11 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
   to,
   color,
   duration = PROJECTILE_CONFIG.DEFAULT_DURATION,
-  size = PROJECTILE_CONFIG.DEFAULT_SIZE,
   onComplete,
 }) => {
   const position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const rotation = useRef(new Animated.Value(0)).current;
   const onCompleteRef = useRef(onComplete);
 
   // Update the ref when onComplete changes
@@ -55,14 +52,30 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
       return;
     }
 
-    // Reset position to starting point (accounting for size to center the projectile)
-    position.setValue({ x: from.x - size / 2, y: from.y - size / 2 });
+    // Calculate rotation angle based on travel direction
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const angleRad = Math.atan2(dy, dx);
+    const angleDeg = (angleRad * 180) / Math.PI;
+
+    // Set rotation
+    rotation.setValue(angleDeg);
+
+    // Reset position to starting point (accounting for beam dimensions to center the beam)
+    // Center the beam: offset by half the length and half the thickness
+    position.setValue({ 
+      x: from.x - PROJECTILE_CONFIG.BEAM_LENGTH / 2, 
+      y: from.y - PROJECTILE_CONFIG.BEAM_THICKNESS / 2 
+    });
     opacity.setValue(1);
 
     // Animate to target position
     Animated.parallel([
       Animated.timing(position, {
-        toValue: { x: to.x - size / 2, y: to.y - size / 2 },
+        toValue: { 
+          x: to.x - PROJECTILE_CONFIG.BEAM_LENGTH / 2, 
+          y: to.y - PROJECTILE_CONFIG.BEAM_THICKNESS / 2 
+        },
         duration,
         useNativeDriver: true,
       }),
@@ -84,7 +97,7 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
       position.stopAnimation();
       opacity.stopAnimation();
     };
-  }, [from, to, duration, size, position, opacity]);
+  }, [from, to, duration, position, opacity, rotation]);
 
   // Don't render if from or to are null
   if (!from || !to) {
@@ -96,12 +109,19 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
       style={[
         styles.projectile,
         {
-          width: size,
-          height: size,
-          borderRadius: size * PROJECTILE_CONFIG.BORDER_RADIUS_MULTIPLIER,
+          width: PROJECTILE_CONFIG.BEAM_LENGTH,
+          height: PROJECTILE_CONFIG.BEAM_THICKNESS,
           backgroundColor: color,
           shadowColor: color,
-          transform: position.getTranslateTransform(),
+          transform: [
+            ...position.getTranslateTransform(),
+            { 
+              rotate: rotation.interpolate({
+                inputRange: [0, 360],
+                outputRange: ['0deg', '360deg'],
+              }),
+            },
+          ],
           opacity,
         },
       ]}
