@@ -15,6 +15,7 @@ import { BattleHealthBars } from './_components/BattleHealthBars';
 import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal';
 import { DaemonSprite, DaemonState, PositionKey } from './_components/DaemonSprite';
 import { FeedbackMessage } from './_components/FeedbackMessage';
+import { ProjectileEffect } from './_components/ProjectileEffect';
 import { Item } from '@config/types';
 
 // Landing positions (configurable percentages)
@@ -46,11 +47,6 @@ const TIMINGS = {
   TRANSITION_TO_RESTING: 400,
 };
 
-// Beam VFX constants
-const BEAM_HOLD_DURATION = 200; // How long beam stays at full opacity (ms)
-const BEAM_FADEOUT_DURATION = 300; // How long beam takes to fade out (ms)
-const BEAM_THICKNESS = 8; // Thickness of main beam in pixels
-const BEAM_GLOW_MULTIPLIER = 2; // Glow effect is 2x thicker than main beam
 const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 
 interface JauntCaveScreen2Props {
@@ -95,14 +91,12 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
   const zapMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Beam state
-  const [beamFrom, setBeamFrom] = useState<{ x: number; y: number } | null>(null);
-  const [beamTo, setBeamTo] = useState<{ x: number; y: number } | null>(null);
-  const [beamColor, setBeamColor] = useState<string>(DEFAULT_BOLT_COLOR);
+  // Projectile state
+  const [projectileFrom, setProjectileFrom] = useState<{ x: number; y: number } | null>(null);
+  const [projectileTo, setProjectileTo] = useState<{ x: number; y: number } | null>(null);
 
   // Animation values
   const shakeAnim = useRef(new Animated.Value(0)).current;
-  const beamOpacity = useRef(new Animated.Value(0)).current;
 
 
   
@@ -408,47 +402,24 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       zapMenuTimerRef.current = null;
     }, 1000);
     
-    // Trigger beam VFX
+    // Trigger projectile VFX
     if (arenaSize && bgRect) {
       // Calculate start point (bottom center of arena)
       const startX = arenaSize.width / 2;
       const startY = arenaSize.height - 20;
       
-      // Get end point (selected target spawn position - already calculated!)
+      // Get end point (selected target spawn position)
       const endPosition = getSpawnPosition(target);
       
-      // Set beam state
-      setBeamFrom({ x: startX, y: startY });
-      setBeamTo(endPosition);
-      setBeamColor(boltColor);
-      
-      // Stop any previous animation
-      beamOpacity.stopAnimation();
-      
-      // Animate beam: appear → hold → fade
-      Animated.sequence([
-        Animated.timing(beamOpacity, {
-          toValue: 1,
-          duration: 0, // Immediate appearance
-          useNativeDriver: true,
-        }),
-        Animated.delay(BEAM_HOLD_DURATION),
-        Animated.timing(beamOpacity, {
-          toValue: 0,
-          duration: BEAM_FADEOUT_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        // Clear beam state after animation
-        setBeamFrom(null);
-        setBeamTo(null);
-      });
+      // Set projectile state
+      setProjectileFrom({ x: startX, y: startY });
+      setProjectileTo(endPosition);
     }
     
     if (__DEV__) {
       console.log('[JauntCave] Zap target selected:', target);
     }
-  }, [arenaSize, bgRect, boltColor, beamOpacity, getSpawnPosition]);
+  }, [arenaSize, bgRect, getSpawnPosition, boltColor]);
   
   const handleBlockPress = useCallback(() => {
     // Close zap menu if open
@@ -516,59 +487,16 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
           )}
         </Animated.View>
 
-        {/* Zap Beam VFX Overlay */}
-        {beamFrom && beamTo && (
-          <View style={styles.beamOverlay} pointerEvents="none">
-            {(() => {
-              const dx = beamTo.x - beamFrom.x;
-              const dy = beamTo.y - beamFrom.y;
-              const length = Math.sqrt(dx * dx + dy * dy);
-              const angleRad = Math.atan2(dy, dx);
-              const angleDeg = (angleRad * 180) / Math.PI;
-
-              return (
-                <>
-                  {/* Glow effect (thicker, lower opacity) */}
-                  <Animated.View
-                    style={{
-                      position: 'absolute',
-                      left: beamFrom.x,
-                      top: beamFrom.y,
-                      width: length,
-                      height: BEAM_THICKNESS * BEAM_GLOW_MULTIPLIER,
-                      backgroundColor: beamColor,
-                      opacity: beamOpacity.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 0.3],
-                      }),
-                      transform: [
-                        { translateY: -BEAM_THICKNESS },
-                        { rotate: `${angleDeg}deg` },
-                      ],
-                    }}
-                  />
-                  
-                  {/* Main beam */}
-                  <Animated.View
-                    style={{
-                      position: 'absolute',
-                      left: beamFrom.x,
-                      top: beamFrom.y,
-                      width: length,
-                      height: BEAM_THICKNESS,
-                      backgroundColor: beamColor,
-                      opacity: beamOpacity,
-                      transform: [
-                        { translateY: -BEAM_THICKNESS / 2 },
-                        { rotate: `${angleDeg}deg` },
-                      ],
-                    }}
-                  />
-                </>
-              );
-            })()}
-          </View>
-        )}
+        {/* Projectile Effect */}
+        <ProjectileEffect
+          from={projectileFrom}
+          to={projectileTo}
+          color={boltColor}
+          onComplete={() => {
+            setProjectileFrom(null);
+            setProjectileTo(null);
+          }}
+        />
 
         {/* HUD - Vertical Health Bars */}
         <BattleHealthBars
@@ -614,11 +542,6 @@ const styles = StyleSheet.create({
   },
   gameContainer: {
     flex: 1,
-  },
-  beamOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 150, // Above daemon (50), below attack overlay (100) and HUD (200)
-    pointerEvents: 'none',
   },
 });
 
