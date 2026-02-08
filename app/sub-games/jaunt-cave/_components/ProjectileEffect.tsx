@@ -1,6 +1,28 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 
+// ============================================================================
+// PROJECTILE CONFIGURATION
+// Adjust these values to change the look and feel of zap projectiles
+// ============================================================================
+
+const PROJECTILE_CONFIG = {
+  // Speed and timing
+  DEFAULT_DURATION: 250,        // Travel time in milliseconds (lower = faster projectiles, higher = slower)
+  FADE_START_PERCENT: 0.9,      // When to start fading (0.9 = fade in last 10% of journey)
+  
+  // Size and shape
+  DEFAULT_SIZE: 16,              // Diameter of projectile circle/sphere
+  BORDER_RADIUS_MULTIPLIER: 0.5, // 0.5 = perfect circle, lower values = elongated/streak effect
+  
+  // Glow/shadow effects
+  SHADOW_OPACITY: 0.8,           // Glow intensity around projectile (0.0 to 1.0)
+  SHADOW_RADIUS: 8,              // How far the glow spreads (in pixels)
+  
+  // Advanced: Stretch/trail effect (future enhancement)
+  // TRAIL_LENGTH: 0,            // 0 = no trail, higher = longer streak behind projectile
+} as const;
+
 interface ProjectileEffectProps {
   from: { x: number; y: number } | null;
   to: { x: number; y: number } | null;
@@ -14,8 +36,8 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
   from,
   to,
   color,
-  duration = 250,
-  size = 16,
+  duration = PROJECTILE_CONFIG.DEFAULT_DURATION,
+  size = PROJECTILE_CONFIG.DEFAULT_SIZE,
   onComplete,
 }) => {
   const position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
@@ -46,7 +68,8 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
       }),
       Animated.timing(opacity, {
         toValue: 0,
-       // duration: duration * 0.8, // Fade out slightly before reaching target
+        delay: duration * PROJECTILE_CONFIG.FADE_START_PERCENT, // Fade out in last portion of journey
+        duration: duration * (1 - PROJECTILE_CONFIG.FADE_START_PERCENT),
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -75,7 +98,7 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
         {
           width: size,
           height: size,
-          borderRadius: size / 2,
+          borderRadius: size * PROJECTILE_CONFIG.BORDER_RADIUS_MULTIPLIER,
           backgroundColor: color,
           shadowColor: color,
           transform: position.getTranslateTransform(),
@@ -91,8 +114,8 @@ const styles = StyleSheet.create({
   projectile: {
     position: 'absolute',
     zIndex: 150, // Above daemon (50), below attack overlay (100)
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
+    shadowOpacity: PROJECTILE_CONFIG.SHADOW_OPACITY,
+    shadowRadius: PROJECTILE_CONFIG.SHADOW_RADIUS,
     shadowOffset: { width: 0, height: 0 },
   },
 });
