@@ -69,7 +69,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
 
   // Debug target visualization state
-  const [showDebugTargets, setShowDebugTargets] = useState(true);
+  const [showDebugTargets, setShowDebugTargets] = useState(__DEV__);
 
   // Projectile animation state - tracks start and end positions for projectile effects
   const [projectileFrom, setProjectileFrom] = useState<{ x: number; y: number } | null>(null);
@@ -192,39 +192,21 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         {/* Debug target visualization */}
         {showDebugTargets && arenaSize && (
           <>
-            {/* Left target dot */}
-            <View style={{
-              position: 'absolute',
-              left: arenaSize.width * 0.2 - 10,
-              top: arenaSize.height * 0.37 - 10,
-              width: 20,
-              height: 20,
-              borderRadius: 10,
-              backgroundColor: '#00ff00',
-              zIndex: 999,
-            }} />
-            {/* Center target dot */}
-            <View style={{
-              position: 'absolute',
-              left: arenaSize.width * 0.5 - 10,
-              top: arenaSize.height * 0.38 - 10,
-              width: 20,
-              height: 20,
-              borderRadius: 10,
-              backgroundColor: '#00ff00',
-              zIndex: 999,
-            }} />
-            {/* Right target dot */}
-            <View style={{
-              position: 'absolute',
-              left: arenaSize.width * 0.8 - 10,
-              top: arenaSize.height * 0.38 - 10,
-              width: 20,
-              height: 20,
-              borderRadius: 10,
-              backgroundColor: '#00ff00',
-              zIndex: 999,
-            }} />
+            {Object.entries(ZAP_TARGETS).map(([key, targetPos]) => (
+              <View
+                key={key}
+                style={{
+                  position: 'absolute',
+                  left: arenaSize.width * targetPos.x - 10,
+                  top: arenaSize.height * targetPos.y - 10,
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  backgroundColor: '#00ff00',
+                  zIndex: 999,
+                }}
+              />
+            ))}
           </>
         )}
 
