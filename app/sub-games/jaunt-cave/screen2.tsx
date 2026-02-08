@@ -13,10 +13,11 @@ import { useGameContext } from '@context/GameContext';
 import { BattleHUD } from './_components/BattleHUD';
 import { BattleHealthBars } from './_components/BattleHealthBars';
 import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal';
-import { DaemonSprite, DaemonState, PositionKey } from './_components/DaemonSprite';
+import { DaemonSprite, PositionKey } from './_components/DaemonSprite';
 import { FeedbackMessage } from './_components/FeedbackMessage';
 import { ProjectileEffect } from './_components/ProjectileEffect';
 import { Item } from '@config/types';
+import { useBattleState } from './_components/useBattleState';
 
 // Landing positions (configurable percentages)
 const POSITIONS = {
@@ -26,26 +27,6 @@ const POSITIONS = {
 } as const;
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
-
-// Combat helpers
-const rollToHit = (): boolean => {
-  return Math.random() < 0.8; // 80% hit chance
-};
-
-const rollDamage = (): number => {
-  return Math.floor(Math.random() * 16) + 10; // 10-25 inclusive
-};
-
-// Timing constants (in milliseconds)
-const TIMINGS = {
-  RESTING_MIN: 3000,
-  RESTING_MAX: 7000,
-  PREP1: 500,
-  PREP2: 200,
-  LANDED: 800,
-  ATTACK: 750,
-  TRANSITION_TO_RESTING: 400,
-};
 
 const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 
@@ -57,7 +38,7 @@ interface JauntCaveScreen2Props {
 }
 
 const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
-  daemonHP = 100,
+  daemonHP: initialDaemonHP = 100,
   maxDaemonHP = 100,
   onDaemonHit,
   onDaemonMiss,
@@ -68,22 +49,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   // Get real Christos HP from game state
   const christosHP = state.player.currentHP;
   const maxChristosHP = state.player.maxHP;
-  const [daemonState, setDaemonState] = useState<DaemonState>(DaemonState.RESTING);
-  const [currentPosition, setCurrentPosition] = useState<PositionKey>('center');
-  const [attackDirection, setAttackDirection] = useState<'left' | 'right'>('left');
-  const [previousState, setPreviousState] = useState<DaemonState>(DaemonState.RESTING);
-  const [isCrossfading, setIsCrossfading] = useState(false);
   const [arenaSize, setArenaSize] = useState<{ width: number; height: number } | null>(null);
-  
-  // Single timer ref - THIS IS CRITICAL
-  const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const deathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPositionRef = useRef<PositionKey>('center');
-  const isRunningRef = useRef(false);
-  
-  // Track current HP in a ref to avoid stale state reads
-  // This prevents HP from appearing to increase when multiple attacks happen before re-render
-  const currentHPRef = useRef<number>(state.player.currentHP);
   
   // Battle HUD state
   const [showInventory, setShowInventory] = useState(false);
@@ -97,6 +63,28 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
   // Animation values
   const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  // Battle state hook - manages all daemon AI behavior and state machine
+  const {
+    daemonState,
+    currentPosition,
+    attackDirection,
+    previousState,
+    isCrossfading,
+    daemonHP,
+    handleDaemonTap,
+    isVulnerable,
+    isAttacking,
+  } = useBattleState({
+    initialDaemonHP,
+    maxDaemonHP,
+    onDaemonHit,
+    onDaemonMiss,
+    shakeAnim,
+    dispatch,
+    currentPlayerHP: state.player.currentHP,
+    router,
+  });
 
 
   
@@ -148,33 +136,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     }
   }, []);
 
-  // Clear any existing timer - SINGLE SOURCE OF TRUTH
-  const clearTimer = useCallback(() => {
-    if (animationTimerRef.current) {
-      clearTimeout(animationTimerRef.current);
-      animationTimerRef.current = null;
-    }
-  }, []);
-
-  // Get random position (avoiding back-to-back repeats)
-  const getNextPosition = useCallback((): PositionKey => {
-    const positions: PositionKey[] = ['left', 'center', 'right'];
-    const available = positions.filter(p => p !== lastPositionRef.current);
-    const next = available[Math.floor(Math.random() * available.length)];
-    lastPositionRef.current = next;
-    return next;
-  }, []);
-
-  // Shake effect for attack
-  const triggerShake = useCallback(() => {
-    Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
-    ]).start();
-  }, [shakeAnim]);
-
   // Get ranged weapons from global weapons catalog based on player's ranged weapon inventory IDs
   const rangedWeapons = useMemo(() => {
     const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
@@ -204,173 +165,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   // Position for daemon
   const daemonX = daemonPosition.x;
   const daemonY = daemonPosition.y;
-
-  const isVulnerable = daemonState === DaemonState.LANDED;
-  const isAttacking = daemonState === DaemonState.ATTACKING;
-
-
-  // Apply damage and handle death
-  const applyDaemonDamage = useCallback(() => {
-    const hit = rollToHit();
-    
-    if (hit) {
-      const damage = rollDamage();
-      // Read from ref to get the actual current HP (not stale state)
-      // This prevents HP from appearing to increase when multiple attacks happen before re-render
-      const currentHP = currentHPRef.current;
-      const newHP = Math.max(0, currentHP - damage);
-      
-      // Update ref immediately to prevent race conditions
-      currentHPRef.current = newHP;
-      
-      // Apply damage to Christos
-      dispatch({
-        type: 'UPDATE_PLAYER',
-        payload: { updates: { currentHP: newHP } },
-      });
-
-      // Check for death
-      if (newHP <= 0) {
-        // Dispatch GAME_OVER action immediately
-        dispatch({
-          type: 'GAME_OVER',
-          payload: {
-            message: 'Christos was killed by the Jaunt Daemon.',
-            killerName: 'Jaunt Daemon',
-            suppressDeathDialog: true,
-          },
-        });
-
-        // Delay navigation to death screen until after attack animation completes
-        // This allows the attack overlay to display for its full duration (750ms)
-        deathNavigationTimerRef.current = setTimeout(() => {
-          router.replace('/death');
-        }, TIMINGS.ATTACK);
-      }
-    }
-  }, [dispatch, router]);
-
-  // THE STATE MACHINE - Single orchestrator
-  const runAnimationCycle = useCallback(() => {
-    // Prevent multiple simultaneous loops
-    if (isRunningRef.current) {
-      return;
-    }
-    isRunningRef.current = true;
-
-    const executeSequence = () => {
-      clearTimer(); // Clear before setting new timer
-
-      // Decide if this cycle includes an attack
-      const willAttack = Math.random() < 0.6; // 60% chance to attack
-      const nextPosition = getNextPosition();
-
-      // STATE 1: RESTING
-      setDaemonState(DaemonState.RESTING);
-
-      const restingTime = TIMINGS.RESTING_MIN + 
-        Math.random() * (TIMINGS.RESTING_MAX - TIMINGS.RESTING_MIN);
-
-      animationTimerRef.current = setTimeout(() => {
-        // STATE 2: PREP1 (charging up in current position - don't move yet!)
-        setDaemonState(DaemonState.PREP1);
-
-        animationTimerRef.current = setTimeout(() => {
-          // STATE 3: PREP2 (still charging in current position - don't move yet!)
-          setDaemonState(DaemonState.PREP2);
-
-          animationTimerRef.current = setTimeout(() => {
-            // >>> TELEPORT NOW! Move to new position <<<
-            setCurrentPosition(nextPosition);
-
-            if (willAttack) {
-              // ATTACK SEQUENCE (daemon appears at new position with attack overlay)
-              setAttackDirection(Math.random() < 0.5 ? 'left' : 'right');
-              setDaemonState(DaemonState.ATTACKING);
-              triggerShake();
-
-              animationTimerRef.current = setTimeout(() => {
-                // Apply damage after attack animation completes (more realistic)
-                applyDaemonDamage();
-                
-                // STATE 4: LANDED (after attack, already at new position)
-                setDaemonState(DaemonState.LANDED);
-
-                animationTimerRef.current = setTimeout(() => {
-                  // Back to RESTING with crossfade
-                  setPreviousState(DaemonState.LANDED);
-                  setIsCrossfading(true);
-                  setDaemonState(DaemonState.RESTING);
-                  
-                  // Wait for crossfade to complete before next cycle
-                  animationTimerRef.current = setTimeout(() => {
-                    setIsCrossfading(false);
-                    executeSequence();
-                  }, 400); // Match crossfade duration
-                }, TIMINGS.LANDED);
-              }, TIMINGS.ATTACK);
-            } else {
-              // NO ATTACK - daemon appears at new position in landed state
-              setDaemonState(DaemonState.LANDED);
-
-              animationTimerRef.current = setTimeout(() => {
-                // Back to RESTING with crossfade
-                setPreviousState(DaemonState.LANDED);
-                setIsCrossfading(true);
-                setDaemonState(DaemonState.RESTING);
-                
-                // Wait for crossfade to complete before next cycle
-                animationTimerRef.current = setTimeout(() => {
-                  setIsCrossfading(false);
-                  executeSequence();
-                }, 400); // Match crossfade duration
-              }, TIMINGS.LANDED);
-            }
-          }, TIMINGS.PREP2);
-        }, TIMINGS.PREP1);
-      }, restingTime);
-    };
-
-    executeSequence();
-  }, [clearTimer, getNextPosition, triggerShake, applyDaemonDamage]);
-
-  // Handle tap on daemon
-  const handleDaemonTap = useCallback(() => {
-    if (daemonState === DaemonState.LANDED) {
-      // HIT!
-      onDaemonHit?.();
-      // Could add hit feedback animation here
-    } else {
-      // MISS
-      onDaemonMiss?.();
-      // Could add miss feedback animation here
-    }
-  }, [daemonState, onDaemonHit, onDaemonMiss]);
-
-  // Keep HP ref in sync with state
-  useEffect(() => {
-    currentHPRef.current = state.player.currentHP;
-  }, [state.player.currentHP]);
-
-  // Start the loop on mount, cleanup on unmount
-  useEffect(() => {
-    runAnimationCycle();
-
-    return () => {
-      isRunningRef.current = false;
-      clearTimer();
-      // Clear death navigation timer if component unmounts
-      if (deathNavigationTimerRef.current) {
-        clearTimeout(deathNavigationTimerRef.current);
-        deathNavigationTimerRef.current = null;
-      }
-      // Clear zap menu timer if component unmounts
-      if (zapMenuTimerRef.current) {
-        clearTimeout(zapMenuTimerRef.current);
-        zapMenuTimerRef.current = null;
-      }
-    };
-  }, [runAnimationCycle, clearTimer]);
 
   // Battle HUD handlers
   const handleZapPress = useCallback(() => {
@@ -419,7 +213,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     if (__DEV__) {
       console.log('[JauntCave] Zap target selected:', target);
     }
-  }, [arenaSize, bgRect, getSpawnPosition, boltColor]);
+  }, [arenaSize, bgRect, getSpawnPosition]);
   
   const handleBlockPress = useCallback(() => {
     // Close zap menu if open
@@ -458,6 +252,15 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     setShowInventory(false);
   }, [dispatch]);
   
+  // Cleanup zap menu timer on unmount
+  useEffect(() => {
+    return () => {
+      if (zapMenuTimerRef.current) {
+        clearTimeout(zapMenuTimerRef.current);
+        zapMenuTimerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>
