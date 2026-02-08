@@ -124,8 +124,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const getEquippedWeaponDamage = useCallback(() => {
     if (!state.player.equippedRangedWeaponId) return null;
     const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
-    if (!weapon?.damageMin || !weapon?.damageMax) return null;
-    return { min: weapon.damageMin, max: weapon.damageMax };
+    if (!weapon?.damage) return null;
+    // Use weapon damage as base, with ±20% variance
+    const min = Math.max(1, Math.floor(weapon.damage * 0.8));
+    const max = Math.ceil(weapon.damage * 1.2);
+    return { min, max };
   }, [state.player.equippedRangedWeaponId, state.weapons]);
 
   // Weapon management - handles weapon selection, zap menu, and projectile firing
