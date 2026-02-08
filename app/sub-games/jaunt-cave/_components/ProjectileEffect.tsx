@@ -20,6 +20,12 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
 }) => {
   const position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const onCompleteRef = useRef(onComplete);
+
+  // Update the ref when onComplete changes
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     // Only animate when both from and to are set
@@ -45,8 +51,8 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
       }),
     ]).start(() => {
       // Call completion callback
-      if (onComplete) {
-        onComplete();
+      if (onCompleteRef.current) {
+        onCompleteRef.current();
       }
     });
 
@@ -55,7 +61,7 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
       position.stopAnimation();
       opacity.stopAnimation();
     };
-  }, [from, to, duration, size, onComplete, position, opacity]);
+  }, [from, to, duration, size, position, opacity]);
 
   // Don't render if from or to are null
   if (!from || !to) {

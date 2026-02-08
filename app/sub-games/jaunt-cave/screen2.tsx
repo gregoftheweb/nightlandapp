@@ -419,7 +419,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     if (__DEV__) {
       console.log('[JauntCave] Zap target selected:', target);
     }
-  }, [arenaSize, bgRect, getSpawnPosition]);
+  }, [arenaSize, bgRect, getSpawnPosition, boltColor]);
   
   const handleBlockPress = useCallback(() => {
     // Close zap menu if open
