@@ -1,5 +1,5 @@
-// app/sub-games/jaunt-cave/_components/useWeaponInventory.ts
-// Custom hook for managing weapon inventory UI state and interactions
+// app/sub-games/jaunt-cave/_components/useWeapon.ts
+// Custom hook for managing weapon actions and interactions
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Item, GameState } from '@config/types';
@@ -15,7 +15,7 @@ interface BgRect {
   drawH: number;
 }
 
-export interface UseWeaponInventoryProps {
+export interface UseWeaponProps {
   gameState: GameState;
   dispatch: React.Dispatch<any>; // GameAction type not exported from context
   arenaSize: { width: number; height: number } | null;
@@ -25,7 +25,7 @@ export interface UseWeaponInventoryProps {
   onFireProjectile: (from: { x: number; y: number }, to: { x: number; y: number }, color: string) => void;
 }
 
-export interface UseWeaponInventoryReturn {
+export interface UseWeaponReturn {
   showInventory: boolean;
   isZapMenuOpen: boolean;
   rangedWeapons: Item[];
@@ -39,7 +39,7 @@ export interface UseWeaponInventoryReturn {
   closeZapMenu: () => void;
 }
 
-export function useWeaponInventory(props: UseWeaponInventoryProps): UseWeaponInventoryReturn {
+export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
   const {
     gameState,
     dispatch,
@@ -121,6 +121,10 @@ export function useWeaponInventory(props: UseWeaponInventoryProps): UseWeaponInv
       const startY = arenaSize.height - 20;
       
       // Get end point (selected target spawn position)
+      // Note: getSpawnPosition returns the CENTER coordinates of the daemon.
+      // The daemon sprite (150x150px) is positioned with its container at
+      // (spawnX - 75, spawnY - 75), making the sprite's center at (spawnX, spawnY).
+      // Therefore, targeting endPosition directly hits the daemon's center.
       const endPosition = getSpawnPosition(target);
       
       // Fire projectile

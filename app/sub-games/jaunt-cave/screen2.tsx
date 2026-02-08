@@ -15,7 +15,7 @@ import { DaemonSprite } from './_components/DaemonSprite';
 import { FeedbackMessage } from './_components/FeedbackMessage';
 import { ProjectileEffect } from './_components/ProjectileEffect';
 import { useBattleState } from './_components/useBattleState';
-import { useWeaponInventory } from './_components/useWeaponInventory';
+import { useWeapon } from './_components/useWeapon';
 import { useArenaLayout } from './_components/useArenaLayout';
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
@@ -45,7 +45,7 @@ interface JauntCaveScreen2Props {
  * Architecture:
  * - useBattleState: Manages daemon AI state machine and battle logic
  * - useArenaLayout: Handles all arena sizing and positioning calculations
- * - useWeaponInventory: Manages weapon selection and projectile firing
+ * - useWeapon: Manages weapon selection and projectile firing
  * - Render components: DaemonSprite, ProjectileEffect, BattleHealthBars, BattleHUD
  * 
  * @param {JauntCaveScreen2Props} props - Component props
@@ -110,7 +110,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     currentPosition,
   });
 
-  // Weapon inventory management - handles weapon selection, zap menu, and projectile firing
+  // Weapon management - handles weapon selection, zap menu, and projectile firing
   const {
     showInventory,
     isZapMenuOpen,
@@ -123,7 +123,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     handleCloseInventory,
     handleSelectWeapon,
     closeZapMenu,
-  } = useWeaponInventory({
+  } = useWeapon({
     gameState: state,
     dispatch,
     arenaSize,
