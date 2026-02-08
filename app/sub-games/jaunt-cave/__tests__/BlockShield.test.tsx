@@ -27,10 +27,10 @@ describe('BlockShield component', () => {
       );
       const tree = toJSON();
       
-      // Should render container with RING_COUNT children (rings)
+      // Should render container with RING_COUNT + 1 children (rings + text)
       expect(tree).not.toBeNull();
       if (tree && !Array.isArray(tree)) {
-        expect(tree.children).toHaveLength(BLOCK_SHIELD_CONFIG.RING_COUNT);
+        expect(tree.children).toHaveLength(BLOCK_SHIELD_CONFIG.RING_COUNT + 1);
       }
     });
   });
@@ -45,6 +45,11 @@ describe('BlockShield component', () => {
       expect(BLOCK_SHIELD_CONFIG.RING_COUNT).toBe(4);
       expect(BLOCK_SHIELD_CONFIG.RING_SPACING).toBe(12);
       expect(BLOCK_SHIELD_CONFIG.RING_OPACITY).toBe(0.7);
+      expect(BLOCK_SHIELD_CONFIG.TEXT_COLOR).toBe('#FFFFFF');
+      expect(BLOCK_SHIELD_CONFIG.TEXT_SIZE).toBe(32);
+      expect(BLOCK_SHIELD_CONFIG.TEXT_SHADOW_RADIUS).toBe(4);
+      expect(BLOCK_SHIELD_CONFIG.TEXT_OFFSET_X).toBe(-50);
+      expect(BLOCK_SHIELD_CONFIG.TEXT_OFFSET_Y).toBe(-16);
     });
   });
 });

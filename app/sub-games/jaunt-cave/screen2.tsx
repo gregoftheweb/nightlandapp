@@ -167,21 +167,18 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
   // Block action handler
   const handleBlockPress = useCallback(() => {
-    // Close zap menu if open
-    closeZapMenu();
+    const result = battleState.activateBlock();
     
-    // Show feedback based on timing and activate block
-    if (canBlockNow) {
-      activateBlock();
-      setFeedbackText('BLOCK READY!');
-    } else {
-      setFeedbackText('BLOCK FAILED - Wrong timing!');
+    // Show appropriate feedback message
+    if (result === 'success') {
+      // No feedback text - shield with "Block" text will show
+      // Shield is already visible via battleState.isBlockActive
+    } else if (result === 'too_early') {
+      setFeedbackText('Block Failed!\nToo Early');
+    } else if (result === 'too_late') {
+      setFeedbackText('Block Failed!\nToo Late');
     }
-    
-    if (__DEV__) {
-      console.log('[JauntCave] Block action triggered');
-    }
-  }, [closeZapMenu, activateBlock, canBlockNow]);
+  }, [battleState]);
 
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>

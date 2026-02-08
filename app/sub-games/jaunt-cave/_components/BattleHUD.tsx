@@ -7,7 +7,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 interface BattleHUDProps {
   onZapPress: () => void;
-  onBlockPress: () => void;
+  onBlockPress: () => 'success' | 'too_early' | 'too_late';
   onOpenInventory: () => void;
   isZapMenuOpen: boolean;
   onZapTargetPress: (target: 'left' | 'center' | 'right') => void;

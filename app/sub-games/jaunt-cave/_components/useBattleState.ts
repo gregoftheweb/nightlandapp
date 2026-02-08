@@ -55,7 +55,7 @@ export interface UseBattleStateReturn {
   applyPlayerDamage: (damage: number) => void;
   canBlockNow: boolean;           // True only during PREP2 state
   isBlockActive: boolean;         // True if player has active block
-  activateBlock: () => void;      // Called when player presses Block button
+  activateBlock: () => 'success' | 'too_early' | 'too_late';  // Called when player presses Block button
 }
 
 export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn {
@@ -192,32 +192,41 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   }, []);
 
   // Activate block shield
-  const activateBlock = useCallback(() => {
-    // Only allow block during PREP2 (jaunt-daemon-3)
-    if (daemonState !== DaemonState.PREP2) {
+  const activateBlock = useCallback((): 'success' | 'too_early' | 'too_late' => {
+    // Check if block timing is correct (must be PREP2)
+    if (daemonState === DaemonState.PREP2) {
+      // SUCCESS - activate block shield
+      setIsBlockActive(true);
+      
       if (__DEV__) {
-        console.log('[useBattleState] Block pressed too early/late. Current state:', daemonState);
+        console.log('[useBattleState] Block activated successfully!');
       }
-      return;
-    }
 
-    // Activate block shield
-    setIsBlockActive(true);
-    
-    if (__DEV__) {
-      console.log('[useBattleState] Block activated successfully!');
-    }
+      // Clear any existing block timer
+      if (blockTimerRef.current) {
+        clearTimeout(blockTimerRef.current);
+      }
 
-    // Clear any existing block timer
-    if (blockTimerRef.current) {
-      clearTimeout(blockTimerRef.current);
-    }
+      // Auto-expire block after duration
+      blockTimerRef.current = setTimeout(() => {
+        setIsBlockActive(false);
+        blockTimerRef.current = null;
+      }, BLOCK_SHIELD_CONFIG.DURATION);
 
-    // Auto-expire block after 1 second
-    blockTimerRef.current = setTimeout(() => {
-      setIsBlockActive(false);
-      blockTimerRef.current = null;
-    }, BLOCK_SHIELD_CONFIG.DURATION);
+      return 'success';
+    } else if (daemonState === DaemonState.RESTING || daemonState === DaemonState.PREP1) {
+      // TOO EARLY
+      if (__DEV__) {
+        console.log('[useBattleState] Block too early. State:', daemonState);
+      }
+      return 'too_early';
+    } else {
+      // TOO LATE (LANDED or ATTACKING)
+      if (__DEV__) {
+        console.log('[useBattleState] Block too late. State:', daemonState);
+      }
+      return 'too_late';
+    }
   }, [daemonState]);
 
   // THE STATE MACHINE - Single orchestrator
