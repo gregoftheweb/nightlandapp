@@ -3,6 +3,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Item, GameState } from '@config/types';
+import { DaemonState } from './useBattleState';
+import { HIT_INDICATOR_CONFIG } from './HitIndicator';
 
 const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 
@@ -23,6 +25,9 @@ export interface UseWeaponProps {
   arenaSize: { width: number; height: number } | null;
   onSetFeedback: (message: string) => void;
   onFireProjectile: (from: { x: number; y: number }, to: { x: number; y: number }, color: string) => void;
+  getDaemonState: () => DaemonState;
+  getCurrentDaemonPosition: () => 'left' | 'center' | 'right';
+  projectileDuration: number; // Duration of projectile flight
 }
 
 export interface UseWeaponReturn {
@@ -37,6 +42,7 @@ export interface UseWeaponReturn {
   handleCloseInventory: () => void;
   handleSelectWeapon: (weapon: Item) => void;
   closeZapMenu: () => void;
+  hitIndicator: { position: { x: number; y: number }; type: 'hit' | 'block' } | null;
 }
 
 export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
@@ -46,6 +52,9 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     arenaSize,
     onSetFeedback,
     onFireProjectile,
+    getDaemonState,
+    getCurrentDaemonPosition,
+    projectileDuration,
   } = props;
 
   // Inventory modal state
@@ -54,6 +63,9 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
   // Zap menu state
   const [isZapMenuOpen, setIsZapMenuOpen] = useState(false);
   const zapMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Hit indicator state
+  const [hitIndicator, setHitIndicator] = useState<{ position: { x: number; y: number }; type: 'hit' | 'block' } | null>(null);
 
   // Get ranged weapons from global weapons catalog based on player's ranged weapon inventory IDs
   const rangedWeapons = useMemo(() => {
@@ -123,14 +135,33 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
       const endX = arenaSize.width * targetPos.x;
       const endY = arenaSize.height * targetPos.y;
       
-      // Fire projectile
+      // Fire projectile first
       onFireProjectile({ x: startX, y: startY }, { x: endX, y: endY }, boltColor);
+
+      // After projectile flight completes, show hit indicator
+      setTimeout(() => {
+        // Determine if this is a hit or block
+        const daemonState = getDaemonState();
+        const daemonPosition = getCurrentDaemonPosition();
+        const isHit = daemonState === DaemonState.LANDED && daemonPosition === target;
+
+        // Show indicator at target location
+        setHitIndicator({
+          position: { x: endX, y: endY },
+          type: isHit ? 'hit' : 'block',
+        });
+
+        // Clear indicator after its animation finishes
+        setTimeout(() => {
+          setHitIndicator(null);
+        }, HIT_INDICATOR_CONFIG.DURATION + HIT_INDICATOR_CONFIG.FADE_OUT_DURATION);
+      }, projectileDuration);
     }
     
     if (__DEV__) {
       console.log('[JauntCave] Zap target selected:', target);
     }
-  }, [arenaSize, onSetFeedback, onFireProjectile, boltColor]);
+  }, [arenaSize, onSetFeedback, onFireProjectile, boltColor, getDaemonState, getCurrentDaemonPosition, projectileDuration]);
 
   // Inventory modal handlers
   const handleOpenInventory = useCallback(() => {
@@ -186,5 +217,6 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     handleCloseInventory,
     handleSelectWeapon,
     closeZapMenu,
+    hitIndicator,
   };
 }
