@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Animated } from 'react-native';
 import { DaemonState, PositionKey } from './DaemonSprite';
+import { BLOCK_SHIELD_CONFIG } from './BlockShield';
 
 // Re-export DaemonState for use in other modules
 export { DaemonState };
@@ -52,6 +53,9 @@ export interface UseBattleStateReturn {
   isVulnerable: boolean;
   isAttacking: boolean;
   applyPlayerDamage: (damage: number) => void;
+  canBlockNow: boolean;           // True only during PREP2 state
+  isBlockActive: boolean;         // True if player has active block
+  activateBlock: () => void;      // Called when player presses Block button
 }
 
 export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn {
@@ -74,6 +78,10 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   const [isCrossfading, setIsCrossfading] = useState(false);
   const [daemonHP, setDaemonHP] = useState(initialDaemonHP);
 
+  // Block state
+  const [isBlockActive, setIsBlockActive] = useState(false);
+  const blockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Single timer ref - THIS IS CRITICAL
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,6 +95,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   // Computed values
   const isVulnerable = daemonState === DaemonState.LANDED;
   const isAttacking = daemonState === DaemonState.ATTACKING;
+  const canBlockNow = daemonState === DaemonState.PREP2;
 
   // Clear any existing timer - SINGLE SOURCE OF TRUTH
   const clearTimer = useCallback(() => {
@@ -117,6 +126,21 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
   // Apply damage and handle death
   const applyDaemonDamage = useCallback(() => {
+    // Check if block is active
+    if (isBlockActive) {
+      if (__DEV__) {
+        console.log('[useBattleState] Attack blocked! No damage taken.');
+      }
+      // Consume the block
+      setIsBlockActive(false);
+      if (blockTimerRef.current) {
+        clearTimeout(blockTimerRef.current);
+        blockTimerRef.current = null;
+      }
+      // Skip damage application
+      return;
+    }
+
     const hit = rollToHit();
     
     if (hit) {
@@ -154,7 +178,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
         }, TIMINGS.ATTACK);
       }
     }
-  }, [dispatch, router]);
+  }, [dispatch, router, isBlockActive]);
 
   // Apply player damage to daemon
   const applyPlayerDamage = useCallback((damage: number) => {
@@ -166,6 +190,35 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
       return newHP;
     });
   }, []);
+
+  // Activate block shield
+  const activateBlock = useCallback(() => {
+    // Only allow block during PREP2 (jaunt-daemon-3)
+    if (daemonState !== DaemonState.PREP2) {
+      if (__DEV__) {
+        console.log('[useBattleState] Block pressed too early/late. Current state:', daemonState);
+      }
+      return;
+    }
+
+    // Activate block shield
+    setIsBlockActive(true);
+    
+    if (__DEV__) {
+      console.log('[useBattleState] Block activated successfully!');
+    }
+
+    // Clear any existing block timer
+    if (blockTimerRef.current) {
+      clearTimeout(blockTimerRef.current);
+    }
+
+    // Auto-expire block after 1 second
+    blockTimerRef.current = setTimeout(() => {
+      setIsBlockActive(false);
+      blockTimerRef.current = null;
+    }, BLOCK_SHIELD_CONFIG.DURATION);
+  }, [daemonState]);
 
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
@@ -281,6 +334,11 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
         clearTimeout(deathNavigationTimerRef.current);
         deathNavigationTimerRef.current = null;
       }
+      // Clear block timer if component unmounts
+      if (blockTimerRef.current) {
+        clearTimeout(blockTimerRef.current);
+        blockTimerRef.current = null;
+      }
     };
   }, [runAnimationCycle, clearTimer]);
 
@@ -295,5 +353,8 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
     isVulnerable,
     isAttacking,
     applyPlayerDamage,
+    canBlockNow,
+    isBlockActive,
+    activateBlock,
   };
 }

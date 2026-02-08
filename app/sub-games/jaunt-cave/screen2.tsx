@@ -15,6 +15,7 @@ import { DaemonSprite } from './_components/DaemonSprite';
 import { FeedbackMessage } from './_components/FeedbackMessage';
 import { ProjectileEffect } from './_components/ProjectileEffect';
 import { HitIndicator } from './_components/HitIndicator';
+import { BlockShield } from './_components/BlockShield';
 import { useBattleState } from './_components/useBattleState';
 import { useWeapon, ZAP_TARGETS } from './_components/useWeapon';
 import { useArenaLayout } from './_components/useArenaLayout';
@@ -105,6 +106,9 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     handleDaemonTap,
     isVulnerable,
     isAttacking,
+    canBlockNow,
+    isBlockActive,
+    activateBlock,
   } = battleState;
 
   // Arena layout and positioning - calculates daemon position and arena dimensions
@@ -166,13 +170,20 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     // Close zap menu if open
     closeZapMenu();
     
-    // Show "Block" feedback
-    setFeedbackText('Block');
+    // Activate the block
+    activateBlock();
+    
+    // Show feedback based on timing
+    if (canBlockNow) {
+      setFeedbackText('BLOCK READY!');
+    } else {
+      setFeedbackText('BLOCK FAILED - Wrong timing!');
+    }
     
     if (__DEV__) {
       console.log('[JauntCave] Block action triggered');
     }
-  }, [closeZapMenu]);
+  }, [closeZapMenu, activateBlock, canBlockNow]);
 
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>
@@ -218,6 +229,15 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
           position={hitIndicator?.position ?? null}
           type={hitIndicator?.type ?? 'block'}
         />
+
+        {/* Block Shield - defensive shield effect */}
+        {arenaSize && (
+          <BlockShield
+            active={isBlockActive}
+            centerX={arenaSize.width / 2}
+            centerY={arenaSize.height / 2}
+          />
+        )}
 
         {/* Debug target visualization */}
         {showDebugTargets && arenaSize && (
