@@ -198,9 +198,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         <HitIndicator
           position={hitIndicator?.position || null}
           type={hitIndicator?.type || 'block'}
-          onComplete={() => {
-            // Optional: handle completion if needed
-          }}
         />
 
         {/* Debug target visualization */}
