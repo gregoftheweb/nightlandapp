@@ -12,13 +12,13 @@ const PROJECTILE_CONFIG = {
   FADE_START_PERCENT: 0.9,      // When to start fading (0.9 = fade in last 10% of journey)
   
   // Beam dimensions
-  BEAM_LENGTH: 30,               // Length of beam in pixels (direction of travel)
-  BEAM_THICKNESS: 4,             // Thickness/width of beam in pixels
+  BEAM_LENGTH: 70,               // Length of beam in pixels (direction of travel)
+  BEAM_THICKNESS: 5,             // Thickness/width of beam in pixels
   
   // Glow/shadow effects
   SHADOW_OPACITY: 0.8,           // Glow intensity around projectile (0.0 to 1.0)
   SHADOW_RADIUS: 8,              // How far the glow spreads (in pixels)
-  GLOW_THICKNESS_MULTIPLIER: 2,  // Glow is 2x thicker than main beam
+  GLOW_THICKNESS_MULTIPLIER: 3,  // Glow is 2x thicker than main beam
 } as const;
 
 interface ProjectileEffectProps {
