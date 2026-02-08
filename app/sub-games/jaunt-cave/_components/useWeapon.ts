@@ -3,24 +3,24 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Item, GameState } from '@config/types';
-import { PositionKey } from './DaemonSprite';
 
 const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 
-// Type for bgRect (background rectangle calculations)
-interface BgRect {
-  offsetX: number;
-  offsetY: number;
-  drawW: number;
-  drawH: number;
-}
+// Zap target positions (percentage of arena dimensions)
+// These are independent of daemon spawn positions and can be tweaked independently
+// Values are percentages (0.0 to 1.0) of arena width/height
+// Adjust these values to fine-tune where projectiles hit
+// They are initially set to match daemon spawn positions but can be adjusted as needed
+export const ZAP_TARGETS = {
+  left: { x: 0.2, y: 0.37 },    // Left target position
+  center: { x: 0.5, y: 0.38 },   // Center target position  
+  right: { x: 0.8, y: 0.38 },    // Right target position
+} as const;
 
 export interface UseWeaponProps {
   gameState: GameState;
   dispatch: React.Dispatch<any>; // GameAction type not exported from context
   arenaSize: { width: number; height: number } | null;
-  bgRect: BgRect | null;
-  getSpawnPosition: (positionKey: PositionKey) => { x: number; y: number };
   onSetFeedback: (message: string) => void;
   onFireProjectile: (from: { x: number; y: number }, to: { x: number; y: number }, color: string) => void;
 }
@@ -44,8 +44,6 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     gameState,
     dispatch,
     arenaSize,
-    bgRect,
-    getSpawnPosition,
     onSetFeedback,
     onFireProjectile,
   } = props;
@@ -115,26 +113,24 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     }, 1000);
     
     // Trigger projectile VFX
-    if (arenaSize && bgRect) {
+    if (arenaSize) {
       // Calculate start point (bottom center of arena)
       const startX = arenaSize.width / 2;
       const startY = arenaSize.height - 20;
       
-      // Get end point (selected target spawn position)
-      // Note: getSpawnPosition returns the CENTER coordinates of the daemon.
-      // The daemon sprite (150x150px) is positioned with its container at
-      // (spawnX - 75, spawnY - 75), making the sprite's center at (spawnX, spawnY).
-      // Therefore, targeting endPosition directly hits the daemon's center.
-      const endPosition = getSpawnPosition(target);
+      // Calculate target position directly from arena size
+      const targetPos = ZAP_TARGETS[target];
+      const endX = arenaSize.width * targetPos.x;
+      const endY = arenaSize.height * targetPos.y;
       
       // Fire projectile
-      onFireProjectile({ x: startX, y: startY }, endPosition, boltColor);
+      onFireProjectile({ x: startX, y: startY }, { x: endX, y: endY }, boltColor);
     }
     
     if (__DEV__) {
       console.log('[JauntCave] Zap target selected:', target);
     }
-  }, [arenaSize, bgRect, getSpawnPosition, onSetFeedback, onFireProjectile, boltColor]);
+  }, [arenaSize, onSetFeedback, onFireProjectile, boltColor]);
 
   // Inventory modal handlers
   const handleOpenInventory = useCallback(() => {

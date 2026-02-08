@@ -15,7 +15,7 @@ import { DaemonSprite } from './_components/DaemonSprite';
 import { FeedbackMessage } from './_components/FeedbackMessage';
 import { ProjectileEffect } from './_components/ProjectileEffect';
 import { useBattleState } from './_components/useBattleState';
-import { useWeapon } from './_components/useWeapon';
+import { useWeapon, ZAP_TARGETS } from './_components/useWeapon';
 import { useArenaLayout } from './_components/useArenaLayout';
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
@@ -67,6 +67,10 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   
   // Feedback message state - displays temporary battle feedback to player
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
+
+  // Debug target visualization state
+  // Note: setShowDebugTargets available for runtime toggling if needed
+  const [showDebugTargets, setShowDebugTargets] = useState(__DEV__);
 
   // Projectile animation state - tracks start and end positions for projectile effects
   const [projectileFrom, setProjectileFrom] = useState<{ x: number; y: number } | null>(null);
@@ -127,8 +131,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     gameState: state,
     dispatch,
     arenaSize,
-    bgRect,
-    getSpawnPosition,
     onSetFeedback: setFeedbackText,
     onFireProjectile: (from, to) => {
       setProjectileFrom(from);
@@ -187,6 +189,27 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
             setProjectileTo(null);
           }}
         />
+
+        {/* Debug target visualization */}
+        {showDebugTargets && arenaSize && (
+          <>
+            {Object.entries(ZAP_TARGETS).map(([key, targetPos]) => (
+              <View
+                key={key}
+                style={{
+                  position: 'absolute',
+                  left: arenaSize.width * targetPos.x - 10,
+                  top: arenaSize.height * targetPos.y - 10,
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  backgroundColor: '#00ff00',
+                  zIndex: 999,
+                }}
+              />
+            ))}
+          </>
+        )}
 
         {/* HUD - Vertical Health Bars */}
         <BattleHealthBars
