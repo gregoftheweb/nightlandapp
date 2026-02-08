@@ -20,6 +20,14 @@ import { useArenaLayout } from './_components/useArenaLayout';
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
 
+/**
+ * Props for the Jaunt Cave Screen 2 component
+ * 
+ * @property {number} daemonHP - Initial health points for the daemon (default: 100)
+ * @property {number} maxDaemonHP - Maximum health points for the daemon (default: 100)
+ * @property {() => void} onDaemonHit - Optional callback when daemon is successfully hit
+ * @property {() => void} onDaemonMiss - Optional callback when attack misses the daemon
+ */
 interface JauntCaveScreen2Props {
   daemonHP?: number;
   maxDaemonHP?: number;
@@ -27,6 +35,21 @@ interface JauntCaveScreen2Props {
   onDaemonMiss?: () => void;
 }
 
+/**
+ * Jaunt Cave Screen 2 - Battle with teleporting daemon
+ * 
+ * This component orchestrates the battle sequence by combining specialized hooks
+ * and components. The daemon teleports between positions, attacks, and can be
+ * targeted with ranged weapons during its vulnerable state.
+ * 
+ * Architecture:
+ * - useBattleState: Manages daemon AI state machine and battle logic
+ * - useArenaLayout: Handles all arena sizing and positioning calculations
+ * - useWeaponInventory: Manages weapon selection and projectile firing
+ * - Render components: DaemonSprite, ProjectileEffect, BattleHealthBars, BattleHUD
+ * 
+ * @param {JauntCaveScreen2Props} props - Component props
+ */
 const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   daemonHP: initialDaemonHP = 100,
   maxDaemonHP = 100,
@@ -34,23 +57,25 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   onDaemonMiss,
 }) => {
   const router = useRouter();
+  
+  // Game context - provides global game state and dispatch for updates
   const { state, dispatch } = useGameContext();
   
   // Get real Christos HP from game state
   const christosHP = state.player.currentHP;
   const maxChristosHP = state.player.maxHP;
   
-  // Battle HUD state (feedback only - weapon/inventory state in useWeaponInventory)
+  // Feedback message state - displays temporary battle feedback to player
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
 
-  // Projectile state
+  // Projectile animation state - tracks start and end positions for projectile effects
   const [projectileFrom, setProjectileFrom] = useState<{ x: number; y: number } | null>(null);
   const [projectileTo, setProjectileTo] = useState<{ x: number; y: number } | null>(null);
 
-  // Animation values
+  // Animation ref - shake effect when player takes damage
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
-  // Battle state hook - manages all daemon AI behavior and state machine
+  // Battle state machine - manages daemon AI, state transitions, and battle logic
   const {
     daemonState,
     currentPosition,
@@ -72,7 +97,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     router,
   });
 
-  // Arena layout hook - manages all arena sizing and positioning calculations
+  // Arena layout and positioning - calculates daemon position and arena dimensions
   const {
     arenaSize,
     bgRect,
@@ -85,7 +110,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     currentPosition,
   });
 
-  // Weapon inventory hook - manages all weapon/inventory UI state and interactions
+  // Weapon inventory management - handles weapon selection, zap menu, and projectile firing
   const {
     showInventory,
     isZapMenuOpen,
