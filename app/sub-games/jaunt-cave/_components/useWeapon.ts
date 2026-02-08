@@ -14,9 +14,9 @@ const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 // Adjust these values to fine-tune where projectiles hit
 // They are initially set to match daemon spawn positions but can be adjusted as needed
 export const ZAP_TARGETS = {
-  left: { x: 0.2, y: 0.37 },    // Left target position
-  center: { x: 0.5, y: 0.38 },   // Center target position  
-  right: { x: 0.8, y: 0.38 },    // Right target position
+  left: { x: 0.2, y: 0.335 },    // Left target position (moved up from 0.37)
+  center: { x: 0.5, y: 0.345 },   // Center target position (moved up from 0.38)
+  right: { x: 0.8, y: 0.345 },    // Right target position (moved up from 0.38)
 } as const;
 
 export interface UseWeaponProps {
@@ -28,6 +28,8 @@ export interface UseWeaponProps {
   getDaemonState: () => DaemonState;
   getCurrentDaemonPosition: () => 'left' | 'center' | 'right';
   projectileDuration: number; // Duration of projectile flight
+  getEquippedWeaponDamage: () => { min: number; max: number } | null;
+  onDaemonHit: (damage: number) => void; // Callback to apply damage to daemon
 }
 
 export interface UseWeaponReturn {
@@ -55,6 +57,8 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     getDaemonState,
     getCurrentDaemonPosition,
     projectileDuration,
+    getEquippedWeaponDamage,
+    onDaemonHit,
   } = props;
 
   // Inventory modal state
@@ -150,6 +154,20 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
           position: { x: endX, y: endY },
           type: isHit ? 'hit' : 'block',
         });
+
+        // Apply damage on successful hit
+        if (isHit) {
+          const weaponDamage = getEquippedWeaponDamage();
+          if (weaponDamage) {
+            // Roll damage between min and max
+            const damage = Math.floor(Math.random() * (weaponDamage.max - weaponDamage.min + 1)) + weaponDamage.min;
+            onDaemonHit(damage);
+            
+            if (__DEV__) {
+              console.log('[useWeapon] HIT! Dealt', damage, 'damage');
+            }
+          }
+        }
 
         // Clear indicator after its animation finishes
         setTimeout(() => {
