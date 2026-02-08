@@ -69,6 +69,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
 
   // Debug target visualization state
+  // Note: setShowDebugTargets available for runtime toggling if needed
   const [showDebugTargets, setShowDebugTargets] = useState(__DEV__);
 
   // Projectile animation state - tracks start and end positions for projectile effects
