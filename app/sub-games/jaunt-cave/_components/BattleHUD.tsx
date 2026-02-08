@@ -110,12 +110,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   zapTargetMenu: {
+    position: 'absolute',
+    bottom: '100%', // Position above the button row
+    left: 20,
+    right: 20,
+    marginBottom: 12,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     borderRadius: 4,
     borderWidth: 2,
     borderColor: '#990000',
     padding: 12,
-    marginBottom: 12,
   },
   zapTargetLabel: {
     fontSize: 14,

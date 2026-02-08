@@ -67,6 +67,13 @@ const TIMINGS = {
   TRANSITION_TO_RESTING: 400,
 };
 
+// Beam VFX constants
+const BEAM_HOLD_DURATION = 200; // How long beam stays at full opacity (ms)
+const BEAM_FADEOUT_DURATION = 300; // How long beam takes to fade out (ms)
+const BEAM_THICKNESS = 8; // Thickness of main beam in pixels
+const BEAM_GLOW_MULTIPLIER = 2; // Glow effect is 2x thicker than main beam
+const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
+
 interface JauntCaveScreen2Props {
   daemonHP?: number;
   maxDaemonHP?: number;
@@ -110,12 +117,18 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const zapMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Beam state
+  const [beamFrom, setBeamFrom] = useState<{ x: number; y: number } | null>(null);
+  const [beamTo, setBeamTo] = useState<{ x: number; y: number } | null>(null);
+  const [beamColor, setBeamColor] = useState<string>(DEFAULT_BOLT_COLOR);
+
   // Animation values
   const glowAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const fizzleAnim = useRef(new Animated.Value(0)).current;
   const brightnessAnim = useRef(new Animated.Value(0)).current; // 0 = normal, 1 = bright flash
   const crossfadeAnim = useRef(new Animated.Value(1)).current; // 1 = current sprite fully visible
+  const beamOpacity = useRef(new Animated.Value(0)).current;
 
   // Compute background image rect for resizeMode="cover"
   const bgRect = useMemo(() => {
@@ -131,8 +144,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     const containerH = arenaSize.height;
 
     // Compute scale for resizeMode="cover" (fills container, may crop)
-    // Scale to ALWAYS match screen width
-    const scale = containerW / imageW;
+    const scale = Math.max(containerW / imageW, containerH / imageH);
 
     const drawW = imageW * scale;
     const drawH = imageH * scale;
@@ -142,16 +154,21 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     return { offsetX, offsetY, drawW, drawH };
   }, [arenaSize]);
 
-  // Compute daemon absolute position from percentage
-  const daemonPosition = useMemo(() => {
+  // Helper to compute absolute position for any spawn point
+  const getSpawnPosition = useCallback((positionKey: PositionKey) => {
     if (!bgRect) return { x: 0, y: 0 };
 
-    const position = POSITIONS[currentPosition];
-    const daemonX = bgRect.offsetX + position.x * bgRect.drawW;
-    const daemonY = bgRect.offsetY + position.y * bgRect.drawH;
+    const position = POSITIONS[positionKey];
+    const x = bgRect.offsetX + position.x * bgRect.drawW;
+    const y = bgRect.offsetY + position.y * bgRect.drawH;
 
-    return { x: daemonX, y: daemonY };
-  }, [bgRect, currentPosition]);
+    return { x, y };
+  }, [bgRect]);
+
+  // Compute daemon absolute position from percentage
+  const daemonPosition = useMemo(() => {
+    return getSpawnPosition(currentPosition);
+  }, [getSpawnPosition, currentPosition]);
 
   // Handle arena layout
   const handleArenaLayout = useCallback((event: LayoutChangeEvent) => {
@@ -498,10 +515,47 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       zapMenuTimerRef.current = null;
     }, 1000);
     
+    // Trigger beam VFX
+    if (arenaSize && bgRect) {
+      // Calculate start point (bottom center of arena)
+      const startX = arenaSize.width / 2;
+      const startY = arenaSize.height - 20;
+      
+      // Get end point (selected target spawn position - already calculated!)
+      const endPosition = getSpawnPosition(target);
+      
+      // Set beam state
+      setBeamFrom({ x: startX, y: startY });
+      setBeamTo(endPosition);
+      setBeamColor(boltColor);
+      
+      // Stop any previous animation
+      beamOpacity.stopAnimation();
+      
+      // Animate beam: appear → hold → fade
+      Animated.sequence([
+        Animated.timing(beamOpacity, {
+          toValue: 1,
+          duration: 0, // Immediate appearance
+          useNativeDriver: true,
+        }),
+        Animated.delay(BEAM_HOLD_DURATION),
+        Animated.timing(beamOpacity, {
+          toValue: 0,
+          duration: BEAM_FADEOUT_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        // Clear beam state after animation
+        setBeamFrom(null);
+        setBeamTo(null);
+      });
+    }
+    
     if (__DEV__) {
       console.log('[JauntCave] Zap target selected:', target);
     }
-  }, []);
+  }, [arenaSize, bgRect, boltColor, beamOpacity, getSpawnPosition]);
   
   const handleBlockPress = useCallback(() => {
     // Close zap menu if open
@@ -568,6 +622,13 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     if (!state.player.equippedRangedWeaponId) return null;
     const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
     return weapon ? weapon.name : null;
+  }, [state.player.equippedRangedWeaponId, state.weapons]);
+
+  // Get bolt color from equipped weapon
+  const boltColor = useMemo(() => {
+    if (!state.player.equippedRangedWeaponId) return DEFAULT_BOLT_COLOR;
+    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
+    return weapon?.projectileColor || DEFAULT_BOLT_COLOR;
   }, [state.player.equippedRangedWeaponId, state.weapons]);
 
   // Memoized attack overlay style
@@ -709,6 +770,60 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
             </TouchableOpacity>
           )}
         </Animated.View>
+
+        {/* Zap Beam VFX Overlay */}
+        {beamFrom && beamTo && (
+          <View style={styles.beamOverlay} pointerEvents="none">
+            {(() => {
+              const dx = beamTo.x - beamFrom.x;
+              const dy = beamTo.y - beamFrom.y;
+              const length = Math.sqrt(dx * dx + dy * dy);
+              const angleRad = Math.atan2(dy, dx);
+              const angleDeg = (angleRad * 180) / Math.PI;
+
+              return (
+                <>
+                  {/* Glow effect (thicker, lower opacity) */}
+                  <Animated.View
+                    style={{
+                      position: 'absolute',
+                      left: beamFrom.x,
+                      top: beamFrom.y,
+                      width: length,
+                      height: BEAM_THICKNESS * BEAM_GLOW_MULTIPLIER,
+                      backgroundColor: beamColor,
+                      opacity: beamOpacity.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 0.3],
+                      }),
+                      transform: [
+                        { translateY: -BEAM_THICKNESS },
+                        { rotate: `${angleDeg}deg` },
+                      ],
+                    }}
+                  />
+                  
+                  {/* Main beam */}
+                  <Animated.View
+                    style={{
+                      position: 'absolute',
+                      left: beamFrom.x,
+                      top: beamFrom.y,
+                      width: length,
+                      height: BEAM_THICKNESS,
+                      backgroundColor: beamColor,
+                      opacity: beamOpacity,
+                      transform: [
+                        { translateY: -BEAM_THICKNESS / 2 },
+                        { rotate: `${angleDeg}deg` },
+                      ],
+                    }}
+                  />
+                </>
+              );
+            })()}
+          </View>
+        )}
 
         {/* HUD - Vertical Health Bars */}
         <View style={styles.hud}>
@@ -894,6 +1009,11 @@ const styles = StyleSheet.create({
     textShadowColor: '#000',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 4,
+  },
+  beamOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 150, // Above daemon (50), below attack overlay (100) and HUD (200)
+    pointerEvents: 'none',
   },
 });
 
