@@ -105,6 +105,8 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const beamOpacity = useRef(new Animated.Value(0)).current;
 
+
+  
   // Compute background image rect for resizeMode="cover"
   const bgRect = useMemo(() => {
     if (!arenaSize) return null;
@@ -179,6 +181,40 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
     ]).start();
   }, [shakeAnim]);
+
+  // Get ranged weapons from global weapons catalog based on player's ranged weapon inventory IDs
+  const rangedWeapons = useMemo(() => {
+    const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
+    return state.weapons.filter(
+      (weapon) =>
+        weapon.weaponType === 'ranged' && 
+        weapon.id !== null && 
+        weapon.id !== undefined &&
+        rangedWeaponIds.includes(weapon.id)
+    );
+  }, [state.player.rangedWeaponInventoryIds, state.weapons]);
+  
+  // Get equipped ranged weapon name for display
+  const equippedWeaponName = useMemo(() => {
+    if (!state.player.equippedRangedWeaponId) return null;
+    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
+    return weapon ? weapon.name : null;
+  }, [state.player.equippedRangedWeaponId, state.weapons]);
+
+  // Get bolt color from equipped weapon
+  const boltColor = useMemo(() => {
+    if (!state.player.equippedRangedWeaponId) return DEFAULT_BOLT_COLOR;
+    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
+    return weapon?.projectileColor || DEFAULT_BOLT_COLOR;
+  }, [state.player.equippedRangedWeaponId, state.weapons]);
+
+  // Position for daemon
+  const daemonX = daemonPosition.x;
+  const daemonY = daemonPosition.y;
+
+  const isVulnerable = daemonState === DaemonState.LANDED;
+  const isAttacking = daemonState === DaemonState.ATTACKING;
+
 
   // Apply damage and handle death
   const applyDaemonDamage = useCallback(() => {
@@ -476,38 +512,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     setShowInventory(false);
   }, [dispatch]);
   
-  // Get ranged weapons from global weapons catalog based on player's ranged weapon inventory IDs
-  const rangedWeapons = useMemo(() => {
-    const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
-    return state.weapons.filter(
-      (weapon) =>
-        weapon.weaponType === 'ranged' && 
-        weapon.id !== null && 
-        weapon.id !== undefined &&
-        rangedWeaponIds.includes(weapon.id)
-    );
-  }, [state.player.rangedWeaponInventoryIds, state.weapons]);
-  
-  // Get equipped ranged weapon name for display
-  const equippedWeaponName = useMemo(() => {
-    if (!state.player.equippedRangedWeaponId) return null;
-    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
-    return weapon ? weapon.name : null;
-  }, [state.player.equippedRangedWeaponId, state.weapons]);
-
-  // Get bolt color from equipped weapon
-  const boltColor = useMemo(() => {
-    if (!state.player.equippedRangedWeaponId) return DEFAULT_BOLT_COLOR;
-    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
-    return weapon?.projectileColor || DEFAULT_BOLT_COLOR;
-  }, [state.player.equippedRangedWeaponId, state.weapons]);
-
-  // Position for daemon
-  const daemonX = daemonPosition.x;
-  const daemonY = daemonPosition.y;
-
-  const isVulnerable = daemonState === DaemonState.LANDED;
-  const isAttacking = daemonState === DaemonState.ATTACKING;
 
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>
