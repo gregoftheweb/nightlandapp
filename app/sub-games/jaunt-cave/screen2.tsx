@@ -151,7 +151,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     bgRect,
     getSpawnPosition,
     onSetFeedback: setFeedbackText,
-    onFireProjectile: (from, to, color) => {
+    onFireProjectile: (from, to) => {
       setProjectileFrom(from);
       setProjectileTo(to);
     },

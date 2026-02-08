@@ -2,16 +2,24 @@
 // Custom hook for managing weapon inventory UI state and interactions
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Item } from '@config/types';
+import { Item, GameState } from '@config/types';
 import { PositionKey } from './DaemonSprite';
 
 const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 
+// Type for bgRect (background rectangle calculations)
+interface BgRect {
+  offsetX: number;
+  offsetY: number;
+  drawW: number;
+  drawH: number;
+}
+
 export interface UseWeaponInventoryProps {
-  gameState: any; // from useGameContext
-  dispatch: any;
+  gameState: GameState;
+  dispatch: React.Dispatch<any>; // GameAction type not exported from context
   arenaSize: { width: number; height: number } | null;
-  bgRect: any;
+  bgRect: BgRect | null;
   getSpawnPosition: (positionKey: PositionKey) => { x: number; y: number };
   onSetFeedback: (message: string) => void;
   onFireProjectile: (from: { x: number; y: number }, to: { x: number; y: number }, color: string) => void;
