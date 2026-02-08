@@ -48,6 +48,8 @@ describe('BlockShield component', () => {
       expect(BLOCK_SHIELD_CONFIG.TEXT_COLOR).toBe('#FFFFFF');
       expect(BLOCK_SHIELD_CONFIG.TEXT_SIZE).toBe(32);
       expect(BLOCK_SHIELD_CONFIG.TEXT_SHADOW_RADIUS).toBe(4);
+      expect(BLOCK_SHIELD_CONFIG.TEXT_OFFSET_X).toBe(-50);
+      expect(BLOCK_SHIELD_CONFIG.TEXT_OFFSET_Y).toBe(-16);
     });
   });
 });

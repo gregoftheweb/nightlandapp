@@ -178,7 +178,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     } else if (result === 'too_late') {
       setFeedbackText('Block Failed!\nToo Late');
     }
-  }, [battleState.activateBlock]);
+  }, [battleState]);
 
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>

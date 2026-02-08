@@ -29,6 +29,8 @@ export const BLOCK_SHIELD_CONFIG = {
   TEXT_COLOR: '#FFFFFF',         // White text
   TEXT_SIZE: 32,                 // Font size for "Block" text
   TEXT_SHADOW_RADIUS: 4,         // Text shadow for readability
+  TEXT_OFFSET_X: -50,            // Horizontal offset to center text
+  TEXT_OFFSET_Y: -16,            // Vertical offset to center text
 } as const;
 
 interface BlockShieldProps {
@@ -129,7 +131,10 @@ export function BlockShield({ active, centerX, centerY, onExpire }: BlockShieldP
           position: 'absolute',
           left: centerX,
           top: centerY,
-          transform: [{ translateX: -50 }, { translateY: -16 }],
+          transform: [
+            { translateX: BLOCK_SHIELD_CONFIG.TEXT_OFFSET_X }, 
+            { translateY: BLOCK_SHIELD_CONFIG.TEXT_OFFSET_Y }
+          ],
           fontSize: BLOCK_SHIELD_CONFIG.TEXT_SIZE,
           fontWeight: 'bold',
           color: BLOCK_SHIELD_CONFIG.TEXT_COLOR,
