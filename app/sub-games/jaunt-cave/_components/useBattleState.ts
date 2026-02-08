@@ -208,7 +208,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
                   animationTimerRef.current = setTimeout(() => {
                     setIsCrossfading(false);
                     executeSequence();
-                  }, 400); // Match crossfade duration
+                  }, TIMINGS.TRANSITION_TO_RESTING);
                 }, TIMINGS.LANDED);
               }, TIMINGS.ATTACK);
             } else {
@@ -225,7 +225,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
                 animationTimerRef.current = setTimeout(() => {
                   setIsCrossfading(false);
                   executeSequence();
-                }, 400); // Match crossfade duration
+                }, TIMINGS.TRANSITION_TO_RESTING);
               }, TIMINGS.LANDED);
             }
           }, TIMINGS.PREP2);
