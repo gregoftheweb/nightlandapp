@@ -143,6 +143,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     handleOpenInventory,
     handleCloseInventory,
     handleSelectWeapon,
+    closeZapMenu,
   } = useWeaponInventory({
     gameState: state,
     dispatch,
@@ -163,7 +164,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   // Block action handler
   const handleBlockPress = useCallback(() => {
     // Close zap menu if open
-    setIsZapMenuOpen(false);
+    closeZapMenu();
     
     // Show "Block" feedback
     setFeedbackText('Block');
@@ -171,7 +172,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     if (__DEV__) {
       console.log('[JauntCave] Block action triggered');
     }
-  }, []);
+  }, [closeZapMenu]);
 
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>

@@ -28,6 +28,7 @@ export interface UseWeaponInventoryReturn {
   handleOpenInventory: () => void;
   handleCloseInventory: () => void;
   handleSelectWeapon: (weapon: Item) => void;
+  closeZapMenu: () => void;
 }
 
 export function useWeaponInventory(props: UseWeaponInventoryProps): UseWeaponInventoryReturn {
@@ -150,6 +151,11 @@ export function useWeaponInventory(props: UseWeaponInventoryProps): UseWeaponInv
     setShowInventory(false);
   }, [dispatch]);
 
+  // Close zap menu method (for external control, e.g., when blocking)
+  const closeZapMenu = useCallback(() => {
+    setIsZapMenuOpen(false);
+  }, []);
+
   // Cleanup zap menu timer on unmount
   useEffect(() => {
     return () => {
@@ -171,5 +177,6 @@ export function useWeaponInventory(props: UseWeaponInventoryProps): UseWeaponInv
     handleOpenInventory,
     handleCloseInventory,
     handleSelectWeapon,
+    closeZapMenu,
   };
 }
