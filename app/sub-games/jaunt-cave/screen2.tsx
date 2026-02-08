@@ -21,6 +21,9 @@ import { useArenaLayout } from './_components/useArenaLayout';
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
 
+// Projectile duration constant (from ProjectileEffect component)
+const PROJECTILE_DURATION = 250; // ms
+
 /**
  * Props for the Jaunt Cave Screen 2 component
  * 
@@ -140,6 +143,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     },
     getDaemonState: () => daemonState,
     getCurrentDaemonPosition: () => currentPosition,
+    projectileDuration: PROJECTILE_DURATION,
   });
 
   // Block action handler
@@ -196,8 +200,8 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
         {/* Hit Indicator */}
         <HitIndicator
-          position={hitIndicator?.position || null}
-          type={hitIndicator?.type || 'block'}
+          position={hitIndicator?.position ?? null}
+          type={hitIndicator?.type ?? 'block'}
         />
 
         {/* Debug target visualization */}

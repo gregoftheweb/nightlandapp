@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Animated } from 'react-native';
 import { DaemonState, PositionKey } from './DaemonSprite';
 
-// Re-export DaemonState for use in other components
+// Re-export DaemonState for use in other modules
 export { DaemonState };
 
 // Combat helpers

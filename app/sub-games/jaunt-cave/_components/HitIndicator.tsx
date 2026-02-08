@@ -1,6 +1,3 @@
-// app/sub-games/jaunt-cave/_components/HitIndicator.tsx
-// Visual feedback component for hit/block indicators at target locations
-
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 
@@ -19,6 +16,7 @@ export const HIT_INDICATOR_CONFIG = {
   // Colors
   BLOCK_COLOR: '#CC6600',       // Dull orange for blocked shots
   HIT_COLOR: '#FF0000',         // Bright red for successful hits
+  HIT_TEXT_COLOR: '#FFFFFF',    // Bold white for HIT text
   
   // Hit effect
   HIT_RING_COUNT: 3,            // Number of concentric circles for hit
@@ -31,65 +29,86 @@ interface HitIndicatorProps {
   onComplete?: () => void;                     // Callback when animation finishes
 }
 
-export function HitIndicator({ position, type, onComplete }: HitIndicatorProps) {
-  const opacityAnim = useRef(new Animated.Value(1)).current;
+export const HitIndicator: React.FC<HitIndicatorProps> = ({
+  position,
+  type,
+  onComplete,
+}) => {
+  const opacity = useRef(new Animated.Value(1)).current;
+  const onCompleteRef = useRef(onComplete);
+
+  // Update the ref when onComplete changes
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
-    if (position) {
-      // Reset opacity to 1
-      opacityAnim.setValue(1);
-
-      // Start fade out after DURATION
-      const timer = setTimeout(() => {
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: HIT_INDICATOR_CONFIG.FADE_OUT_DURATION,
-          useNativeDriver: true,
-        }).start(() => {
-          onComplete?.();
-        });
-      }, HIT_INDICATOR_CONFIG.DURATION);
-
-      return () => clearTimeout(timer);
+    // Only animate when position is set
+    if (!position) {
+      return;
     }
-  }, [position, opacityAnim, onComplete]);
 
-  // Don't render if no position
+    // Reset opacity to full
+    opacity.setValue(1);
+
+    // Hold at full opacity for DURATION, then fade out
+    Animated.sequence([
+      Animated.delay(HIT_INDICATOR_CONFIG.DURATION),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: HIT_INDICATOR_CONFIG.FADE_OUT_DURATION,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Call completion callback
+      if (onCompleteRef.current) {
+        onCompleteRef.current();
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      opacity.stopAnimation();
+    };
+  }, [position, opacity]);
+
+  // Don't render if position is null
   if (!position) {
     return null;
   }
 
-  const size = HIT_INDICATOR_CONFIG.CIRCLE_SIZE;
-  const halfSize = size / 2;
+  const { x, y } = position;
+  const halfSize = HIT_INDICATOR_CONFIG.CIRCLE_SIZE / 2;
 
   return (
     <Animated.View
       style={[
         styles.container,
         {
-          left: position.x - halfSize,
-          top: position.y - halfSize,
-          width: size,
-          height: size,
-          opacity: opacityAnim,
+          left: x - halfSize,
+          top: y - halfSize,
+          width: HIT_INDICATOR_CONFIG.CIRCLE_SIZE,
+          height: HIT_INDICATOR_CONFIG.CIRCLE_SIZE,
+          opacity,
         },
       ]}
+      pointerEvents="none"
     >
       {type === 'block' ? (
-        // BLOCK indicator: dull orange X
-        <View style={styles.blockContainer}>
+        // BLOCK indicator: orange circle with X through it
+        <>
           <View
             style={[
               styles.circle,
               {
+                width: HIT_INDICATOR_CONFIG.CIRCLE_SIZE,
+                height: HIT_INDICATOR_CONFIG.CIRCLE_SIZE,
+                borderRadius: HIT_INDICATOR_CONFIG.CIRCLE_SIZE / 2,
                 borderColor: HIT_INDICATOR_CONFIG.BLOCK_COLOR,
-                width: size,
-                height: size,
-                borderRadius: size / 2,
               },
             ]}
           />
-          {/* X through the circle - diagonal lines */}
+          {/* X diagonal lines */}
           <View
             style={[
               styles.xLine,
@@ -108,79 +127,65 @@ export function HitIndicator({ position, type, onComplete }: HitIndicatorProps) 
               },
             ]}
           />
-        </View>
+        </>
       ) : (
-        // HIT indicator: bright red concentric circles with text
-        <View style={styles.hitContainer}>
-          {/* Render concentric circles */}
-          {Array.from({ length: HIT_INDICATOR_CONFIG.HIT_RING_COUNT }).map((_, index) => {
-            const ringRadius = size / 2 - index * HIT_INDICATOR_CONFIG.HIT_RING_SPACING;
-            const ringDiameter = ringRadius * 2;
+        // HIT indicator: 3 concentric red circles with "HIT" text
+        <>
+          {Array.from({ length: HIT_INDICATOR_CONFIG.HIT_RING_COUNT }).map((_, i) => {
+            const radius =
+              halfSize - i * HIT_INDICATOR_CONFIG.HIT_RING_SPACING;
+            const diameter = radius * 2;
             return (
               <View
-                key={index}
+                key={i}
                 style={[
-                  styles.hitCircle,
+                  styles.circle,
                   {
-                    width: ringDiameter,
-                    height: ringDiameter,
-                    borderRadius: ringRadius,
+                    width: diameter,
+                    height: diameter,
+                    borderRadius: radius,
                     borderColor: HIT_INDICATOR_CONFIG.HIT_COLOR,
                     position: 'absolute',
-                    top: (size - ringDiameter) / 2,
-                    left: (size - ringDiameter) / 2,
+                    left: (HIT_INDICATOR_CONFIG.CIRCLE_SIZE - diameter) / 2,
+                    top: (HIT_INDICATOR_CONFIG.CIRCLE_SIZE - diameter) / 2,
                   },
                 ]}
               />
             );
           })}
-          {/* HIT text centered */}
-          <Text style={[styles.hitText, { color: HIT_INDICATOR_CONFIG.HIT_COLOR }]}>
+          <Text
+            style={[
+              styles.hitText,
+              { color: HIT_INDICATOR_CONFIG.HIT_TEXT_COLOR },
+            ]}
+          >
             HIT
           </Text>
-        </View>
+        </>
       )}
     </Animated.View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    zIndex: 1000,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  blockContainer: {
-    width: '100%',
-    height: '100%',
+    zIndex: 200, // Above projectile (150)
     justifyContent: 'center',
     alignItems: 'center',
   },
   circle: {
     borderWidth: 3,
-    position: 'absolute',
+    backgroundColor: 'transparent',
   },
   xLine: {
     position: 'absolute',
-    width: '80%',
+    width: '70%',
     height: 3,
   },
-  hitContainer: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  hitCircle: {
-    borderWidth: 2,
-  },
   hitText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
   },
 });
-
-// Export config for use in other components
-// (Exported at declaration above)

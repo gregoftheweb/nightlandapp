@@ -27,6 +27,7 @@ export interface UseWeaponProps {
   onFireProjectile: (from: { x: number; y: number }, to: { x: number; y: number }, color: string) => void;
   getDaemonState: () => DaemonState;
   getCurrentDaemonPosition: () => 'left' | 'center' | 'right';
+  projectileDuration: number; // Duration of projectile flight
 }
 
 export interface UseWeaponReturn {
@@ -53,6 +54,7 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     onFireProjectile,
     getDaemonState,
     getCurrentDaemonPosition,
+    projectileDuration,
   } = props;
 
   // Inventory modal state
@@ -133,34 +135,33 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
       const endX = arenaSize.width * targetPos.x;
       const endY = arenaSize.height * targetPos.y;
       
-      // Fire projectile
+      // Fire projectile first
       onFireProjectile({ x: startX, y: startY }, { x: endX, y: endY }, boltColor);
 
-      // Determine if this is a hit or block
-      const daemonState = getDaemonState();
-      const daemonPosition = getCurrentDaemonPosition();
-      const isHit = daemonState === DaemonState.LANDED && daemonPosition === target;
-
-      // Calculate indicator position (same as target)
-      const indicatorX = arenaSize.width * targetPos.x;
-      const indicatorY = arenaSize.height * targetPos.y;
-
-      // Set hit indicator
-      setHitIndicator({
-        position: { x: indicatorX, y: indicatorY },
-        type: isHit ? 'hit' : 'block',
-      });
-
-      // Clear indicator after animation
+      // After projectile flight completes, show hit indicator
       setTimeout(() => {
-        setHitIndicator(null);
-      }, HIT_INDICATOR_CONFIG.DURATION + HIT_INDICATOR_CONFIG.FADE_OUT_DURATION);
+        // Determine if this is a hit or block
+        const daemonState = getDaemonState();
+        const daemonPosition = getCurrentDaemonPosition();
+        const isHit = daemonState === DaemonState.LANDED && daemonPosition === target;
+
+        // Show indicator at target location
+        setHitIndicator({
+          position: { x: endX, y: endY },
+          type: isHit ? 'hit' : 'block',
+        });
+
+        // Clear indicator after its animation finishes
+        setTimeout(() => {
+          setHitIndicator(null);
+        }, HIT_INDICATOR_CONFIG.DURATION + HIT_INDICATOR_CONFIG.FADE_OUT_DURATION);
+      }, projectileDuration);
     }
     
     if (__DEV__) {
       console.log('[JauntCave] Zap target selected:', target);
     }
-  }, [arenaSize, onSetFeedback, onFireProjectile, boltColor, getDaemonState, getCurrentDaemonPosition]);
+  }, [arenaSize, onSetFeedback, onFireProjectile, boltColor, getDaemonState, getCurrentDaemonPosition, projectileDuration]);
 
   // Inventory modal handlers
   const handleOpenInventory = useCallback(() => {
