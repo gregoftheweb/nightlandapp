@@ -46,6 +46,12 @@ interface BlockShieldProps {
  */
 export function BlockShield({ active, centerX, centerY, onExpire }: BlockShieldProps) {
   const opacity = useRef(new Animated.Value(0)).current;
+  const onExpireRef = useRef(onExpire);
+
+  // Keep onExpire ref up to date
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
 
   useEffect(() => {
     if (active) {
@@ -78,10 +84,10 @@ export function BlockShield({ active, centerX, centerY, onExpire }: BlockShieldP
         }),
       ]).start(() => {
         // Call onExpire when animation completes
-        onExpire?.();
+        onExpireRef.current?.();
       });
     }
-  }, [active, opacity, onExpire]);
+  }, [active, opacity]);
 
   if (!active) {
     return null;
