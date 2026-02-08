@@ -62,6 +62,11 @@ export function BlockShield({ active, centerX, centerY, onExpire }: BlockShieldP
 
   useEffect(() => {
     if (active) {
+      // Dev logging
+      if (__DEV__) {
+        console.log('[BlockShield] Rendering shield with zIndex: 10000');
+      }
+      
       // Reset opacity to 0
       opacity.setValue(0);
 
@@ -152,8 +157,13 @@ export function BlockShield({ active, centerX, centerY, onExpire }: BlockShieldP
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1000, // Above everything including attack sprites
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10000, // Much higher than attack overlay (100)
+    elevation: 10000, // For Android
     pointerEvents: 'none',
   },
   ring: {
