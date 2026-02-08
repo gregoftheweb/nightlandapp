@@ -25,6 +25,12 @@ export function FeedbackMessage({
   onDismiss 
 }: FeedbackMessageProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onDismissRef = useRef(onDismiss);
+
+  // Keep ref up to date
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   useEffect(() => {
     // Clear any existing timer
@@ -36,7 +42,7 @@ export function FeedbackMessage({
     // Start auto-dismiss timer when message changes to non-null value
     if (message !== null) {
       timerRef.current = setTimeout(() => {
-        onDismiss?.();
+        onDismissRef.current?.();
         timerRef.current = null;
       }, duration);
     }
@@ -48,7 +54,7 @@ export function FeedbackMessage({
         timerRef.current = null;
       }
     };
-  }, [message, duration, onDismiss]);
+  }, [message, duration]);
 
   // Only render when message is not null
   if (message === null) {
