@@ -63,7 +63,7 @@ export function FeedbackMessage({
 
   return (
     <View style={styles.feedbackMessage}>
-      <Text style={styles.feedbackMessageText}>{message}</Text>
+      <Text style={styles.feedbackMessageText} numberOfLines={2}>{message}</Text>
     </View>
   );
 }
@@ -91,5 +91,6 @@ const styles = StyleSheet.create({
     textShadowColor: '#000',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 4,
+    textAlign: 'center',
   },
 });

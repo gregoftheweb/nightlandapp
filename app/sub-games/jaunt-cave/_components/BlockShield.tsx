@@ -24,6 +24,11 @@ export const BLOCK_SHIELD_CONFIG = {
   RING_COUNT: 4,                 // Number of concentric circles
   RING_SPACING: 12,              // Spacing between rings in pixels
   RING_OPACITY: 0.7,             // Base opacity of rings
+  
+  // Text
+  TEXT_COLOR: '#FFFFFF',         // White text
+  TEXT_SIZE: 32,                 // Font size for "Block" text
+  TEXT_SHADOW_RADIUS: 4,         // Text shadow for readability
 } as const;
 
 interface BlockShieldProps {
@@ -119,18 +124,32 @@ export function BlockShield({ active, centerX, centerY, onExpire }: BlockShieldP
           ]}
         />
       ))}
+      <Animated.Text
+        style={{
+          position: 'absolute',
+          left: centerX,
+          top: centerY,
+          transform: [{ translateX: -50 }, { translateY: -16 }],
+          fontSize: BLOCK_SHIELD_CONFIG.TEXT_SIZE,
+          fontWeight: 'bold',
+          color: BLOCK_SHIELD_CONFIG.TEXT_COLOR,
+          textShadowColor: 'rgba(0, 0, 0, 0.8)',
+          textShadowOffset: { width: 0, height: 0 },
+          textShadowRadius: BLOCK_SHIELD_CONFIG.TEXT_SHADOW_RADIUS,
+          opacity: opacity,
+        }}
+      >
+        Block
+      </Animated.Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 999, // Above everything, even attack overlay at 100
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000, // Above everything including attack sprites
+    pointerEvents: 'none',
   },
   ring: {
     position: 'absolute',
