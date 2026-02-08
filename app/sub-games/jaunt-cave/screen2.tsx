@@ -1,10 +1,8 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
-  Image,
   StyleSheet,
   Animated,
-  LayoutChangeEvent,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BackgroundImage } from '../_shared/BackgroundImage';
@@ -13,18 +11,12 @@ import { useGameContext } from '@context/GameContext';
 import { BattleHUD } from './_components/BattleHUD';
 import { BattleHealthBars } from './_components/BattleHealthBars';
 import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal';
-import { DaemonSprite, PositionKey } from './_components/DaemonSprite';
+import { DaemonSprite } from './_components/DaemonSprite';
 import { FeedbackMessage } from './_components/FeedbackMessage';
 import { ProjectileEffect } from './_components/ProjectileEffect';
 import { useBattleState } from './_components/useBattleState';
 import { useWeaponInventory } from './_components/useWeaponInventory';
-
-// Landing positions (configurable percentages)
-const POSITIONS = {
-  left: { x: 0.2, y: 0.37 },
-  center: { x: 0.5, y: 0.38 },
-  right: { x: 0.8, y: 0.38 },
-} as const;
+import { useArenaLayout } from './_components/useArenaLayout';
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
 
@@ -47,7 +39,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   // Get real Christos HP from game state
   const christosHP = state.player.currentHP;
   const maxChristosHP = state.player.maxHP;
-  const [arenaSize, setArenaSize] = useState<{ width: number; height: number } | null>(null);
   
   // Battle HUD state (feedback only - weapon/inventory state in useWeaponInventory)
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
@@ -81,55 +72,18 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     router,
   });
 
-
-  
-  // Compute background image rect for resizeMode="cover"
-  const bgRect = useMemo(() => {
-    if (!arenaSize) return null;
-
-    // Get intrinsic dimensions of background image
-    const bgSource = Image.resolveAssetSource(BACKGROUND);
-    if (!bgSource) return null;
-
-    const imageW = bgSource.width;
-    const imageH = bgSource.height;
-    const containerW = arenaSize.width;
-    const containerH = arenaSize.height;
-
-    // Compute scale for resizeMode="cover" (fills container, may crop)
-    const scale = Math.max(containerW / imageW, containerH / imageH);
-
-    const drawW = imageW * scale;
-    const drawH = imageH * scale;
-    const offsetX = (containerW - drawW) / 2;
-    const offsetY = (containerH - drawH) / 2;
-
-    return { offsetX, offsetY, drawW, drawH };
-  }, [arenaSize]);
-
-  // Helper to compute absolute position for any spawn point
-  const getSpawnPosition = useCallback((positionKey: PositionKey) => {
-    if (!bgRect) return { x: 0, y: 0 };
-
-    const position = POSITIONS[positionKey];
-    const x = bgRect.offsetX + position.x * bgRect.drawW;
-    const y = bgRect.offsetY + position.y * bgRect.drawH;
-
-    return { x, y };
-  }, [bgRect]);
-
-  // Compute daemon absolute position from percentage
-  const daemonPosition = useMemo(() => {
-    return getSpawnPosition(currentPosition);
-  }, [getSpawnPosition, currentPosition]);
-
-  // Handle arena layout
-  const handleArenaLayout = useCallback((event: LayoutChangeEvent) => {
-    const { width, height } = event.nativeEvent.layout;
-    if (width > 0 && height > 0) {
-      setArenaSize({ width, height });
-    }
-  }, []);
+  // Arena layout hook - manages all arena sizing and positioning calculations
+  const {
+    arenaSize,
+    bgRect,
+    daemonX,
+    daemonY,
+    handleArenaLayout,
+    getSpawnPosition,
+  } = useArenaLayout({
+    backgroundImage: BACKGROUND,
+    currentPosition,
+  });
 
   // Weapon inventory hook - manages all weapon/inventory UI state and interactions
   const {
@@ -156,10 +110,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       setProjectileTo(to);
     },
   });
-
-  // Position for daemon
-  const daemonX = daemonPosition.x;
-  const daemonY = daemonPosition.y;
 
   // Block action handler
   const handleBlockPress = useCallback(() => {
