@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Image,
-  TouchableOpacity,
   StyleSheet,
   Animated,
   LayoutChangeEvent,
@@ -15,16 +14,8 @@ import { subGameTheme } from '../_shared/subGameTheme';
 import { useGameContext } from '@context/GameContext';
 import { BattleHUD } from './_components/BattleHUD';
 import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal';
+import { DaemonSprite, DaemonState, PositionKey } from './_components/DaemonSprite';
 import { Item } from '@config/types';
-
-// Daemon sprite states
-enum DaemonState {
-  RESTING = 'resting',
-  PREP1 = 'prep1',
-  PREP2 = 'prep2',
-  LANDED = 'landed',
-  ATTACKING = 'attacking',
-}
 
 // Landing positions (configurable percentages)
 const POSITIONS = {
@@ -32,18 +23,6 @@ const POSITIONS = {
   center: { x: 0.5, y: 0.38 },
   right: { x: 0.8, y: 0.38 },
 } as const;
-
-type PositionKey = keyof typeof POSITIONS;
-
-// Sprite sources
-const SPRITES = {
-  resting: require('@assets/images/sprites/monsters/jaunt-deamon-1.png'),
-  prep1: require('@assets/images/sprites/monsters/jaunt-deamon-2.png'),
-  prep2: require('@assets/images/sprites/monsters/jaunt-deamon-3.png'),
-  landed: require('@assets/images/sprites/monsters/jaunt-deamon-4.png'),
-  attackLeft: require('@assets/images/sprites/monsters/jaunt-deamon-5.png'),
-  attackRight: require('@assets/images/sprites/monsters/jaunt-deamon-6.png'),
-};
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
 
@@ -123,13 +102,11 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const [beamColor, setBeamColor] = useState<string>(DEFAULT_BOLT_COLOR);
 
   // Animation values
-  const glowAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
-  const fizzleAnim = useRef(new Animated.Value(0)).current;
-  const brightnessAnim = useRef(new Animated.Value(0)).current; // 0 = normal, 1 = bright flash
-  const crossfadeAnim = useRef(new Animated.Value(1)).current; // 1 = current sprite fully visible
   const beamOpacity = useRef(new Animated.Value(0)).current;
 
+
+  
   // Compute background image rect for resizeMode="cover"
   const bgRect = useMemo(() => {
     if (!arenaSize) return null;
@@ -195,29 +172,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     return next;
   }, []);
 
-  // Glow effect for vulnerable state
-  const startGlowEffect = useCallback(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [glowAnim]);
-
-  const stopGlowEffect = useCallback(() => {
-    glowAnim.stopAnimation();
-    glowAnim.setValue(0);
-  }, [glowAnim]);
-
   // Shake effect for attack
   const triggerShake = useCallback(() => {
     Animated.sequence([
@@ -228,44 +182,39 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     ]).start();
   }, [shakeAnim]);
 
-  // Fizzle effect for charge-up transitions (resting → prep1, prep1 → prep2)
-  const triggerFizzle = useCallback(() => {
-    fizzleAnim.setValue(0);
-    Animated.timing(fizzleAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      fizzleAnim.setValue(0);
-    });
-  }, [fizzleAnim]);
+  // Get ranged weapons from global weapons catalog based on player's ranged weapon inventory IDs
+  const rangedWeapons = useMemo(() => {
+    const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
+    return state.weapons.filter(
+      (weapon) =>
+        weapon.weaponType === 'ranged' && 
+        weapon.id !== null && 
+        weapon.id !== undefined &&
+        rangedWeaponIds.includes(weapon.id)
+    );
+  }, [state.player.rangedWeaponInventoryIds, state.weapons]);
+  
+  // Get equipped ranged weapon name for display
+  const equippedWeaponName = useMemo(() => {
+    if (!state.player.equippedRangedWeaponId) return null;
+    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
+    return weapon ? weapon.name : null;
+  }, [state.player.equippedRangedWeaponId, state.weapons]);
 
-  // Brightness burst when teleporting (end of prep2)
-  const triggerBrightness = useCallback(() => {
-    brightnessAnim.setValue(1); // Bright flash
-    Animated.timing(brightnessAnim, {
-      toValue: 0,
-      duration: 400,
-      useNativeDriver: true, // Use native driver consistently
-    }).start();
-  }, [brightnessAnim]);
+  // Get bolt color from equipped weapon
+  const boltColor = useMemo(() => {
+    if (!state.player.equippedRangedWeaponId) return DEFAULT_BOLT_COLOR;
+    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
+    return weapon?.projectileColor || DEFAULT_BOLT_COLOR;
+  }, [state.player.equippedRangedWeaponId, state.weapons]);
 
-  // Crossfade between sprites (landed → resting transition)
-  const triggerCrossfade = useCallback((fromState: DaemonState, toState: DaemonState) => {
-    setPreviousState(fromState);
-    setIsCrossfading(true);
-    crossfadeAnim.setValue(0); // Start with previous sprite visible
-    
-    setDaemonState(toState);
-    
-    Animated.timing(crossfadeAnim, {
-      toValue: 1,
-      duration: 400, // 400ms crossfade
-      useNativeDriver: true,
-    }).start(() => {
-      setIsCrossfading(false);
-    });
-  }, [crossfadeAnim]);
+  // Position for daemon
+  const daemonX = daemonPosition.x;
+  const daemonY = daemonPosition.y;
+
+  const isVulnerable = daemonState === DaemonState.LANDED;
+  const isAttacking = daemonState === DaemonState.ATTACKING;
+
 
   // Apply damage and handle death
   const applyDaemonDamage = useCallback(() => {
@@ -325,8 +274,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
       // STATE 1: RESTING
       setDaemonState(DaemonState.RESTING);
-      stopGlowEffect();
-      brightnessAnim.setValue(0); // Ensure brightness is reset for next cycle
 
       const restingTime = TIMINGS.RESTING_MIN + 
         Math.random() * (TIMINGS.RESTING_MAX - TIMINGS.RESTING_MIN);
@@ -334,23 +281,19 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       animationTimerRef.current = setTimeout(() => {
         // STATE 2: PREP1 (charging up in current position - don't move yet!)
         setDaemonState(DaemonState.PREP1);
-        triggerFizzle(); // Fizzle effect on resting → prep1
 
         animationTimerRef.current = setTimeout(() => {
           // STATE 3: PREP2 (still charging in current position - don't move yet!)
           setDaemonState(DaemonState.PREP2);
-          triggerFizzle(); // Fizzle effect on prep1 → prep2
 
           animationTimerRef.current = setTimeout(() => {
             // >>> TELEPORT NOW! Move to new position <<<
             setCurrentPosition(nextPosition);
-            triggerBrightness(); // Brightness burst on teleport
 
             if (willAttack) {
               // ATTACK SEQUENCE (daemon appears at new position with attack overlay)
               setAttackDirection(Math.random() < 0.5 ? 'left' : 'right');
               setDaemonState(DaemonState.ATTACKING);
-              brightnessAnim.setValue(0); // Reset brightness before attack
               triggerShake();
 
               animationTimerRef.current = setTimeout(() => {
@@ -359,15 +302,16 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
                 
                 // STATE 4: LANDED (after attack, already at new position)
                 setDaemonState(DaemonState.LANDED);
-                startGlowEffect();
 
                 animationTimerRef.current = setTimeout(() => {
                   // Back to RESTING with crossfade
-                  stopGlowEffect();
-                  triggerCrossfade(DaemonState.LANDED, DaemonState.RESTING);
+                  setPreviousState(DaemonState.LANDED);
+                  setIsCrossfading(true);
+                  setDaemonState(DaemonState.RESTING);
                   
                   // Wait for crossfade to complete before next cycle
                   animationTimerRef.current = setTimeout(() => {
+                    setIsCrossfading(false);
                     executeSequence();
                   }, 400); // Match crossfade duration
                 }, TIMINGS.LANDED);
@@ -375,15 +319,16 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
             } else {
               // NO ATTACK - daemon appears at new position in landed state
               setDaemonState(DaemonState.LANDED);
-              startGlowEffect();
 
               animationTimerRef.current = setTimeout(() => {
                 // Back to RESTING with crossfade
-                stopGlowEffect();
-                triggerCrossfade(DaemonState.LANDED, DaemonState.RESTING);
+                setPreviousState(DaemonState.LANDED);
+                setIsCrossfading(true);
+                setDaemonState(DaemonState.RESTING);
                 
                 // Wait for crossfade to complete before next cycle
                 animationTimerRef.current = setTimeout(() => {
+                  setIsCrossfading(false);
                   executeSequence();
                 }, 400); // Match crossfade duration
               }, TIMINGS.LANDED);
@@ -394,8 +339,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     };
 
     executeSequence();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clearTimer, getNextPosition, startGlowEffect, stopGlowEffect, triggerShake, triggerFizzle, triggerBrightness, triggerCrossfade, applyDaemonDamage]);
+  }, [clearTimer, getNextPosition, triggerShake, applyDaemonDamage]);
 
   // Handle tap on daemon
   const handleDaemonTap = useCallback(() => {
@@ -422,7 +366,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     return () => {
       isRunningRef.current = false;
       clearTimer();
-      stopGlowEffect();
       // Clear death navigation timer if component unmounts
       if (deathNavigationTimerRef.current) {
         clearTimeout(deathNavigationTimerRef.current);
@@ -438,43 +381,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         zapMenuTimerRef.current = null;
       }
     };
-  }, [runAnimationCycle, clearTimer, stopGlowEffect]);
-
-  // Get current sprite
-  const getCurrentSprite = () => {
-    switch (daemonState) {
-      case DaemonState.RESTING:
-        return SPRITES.resting;
-      case DaemonState.PREP1:
-        return SPRITES.prep1;
-      case DaemonState.PREP2:
-        return SPRITES.prep2;
-      case DaemonState.LANDED:
-        return SPRITES.landed;
-      case DaemonState.ATTACKING:
-        return attackDirection === 'left' ? SPRITES.attackLeft : SPRITES.attackRight;
-      default:
-        return SPRITES.resting;
-    }
-  };
-
-  // Get sprite for a specific state (used for crossfade)
-  const getSpriteForState = (state: DaemonState) => {
-    switch (state) {
-      case DaemonState.RESTING:
-        return SPRITES.resting;
-      case DaemonState.PREP1:
-        return SPRITES.prep1;
-      case DaemonState.PREP2:
-        return SPRITES.prep2;
-      case DaemonState.LANDED:
-        return SPRITES.landed;
-      case DaemonState.ATTACKING:
-        return attackDirection === 'left' ? SPRITES.attackLeft : SPRITES.attackRight;
-      default:
-        return SPRITES.resting;
-    }
-  };
+  }, [runAnimationCycle, clearTimer]);
 
   // Battle HUD handlers
   const handleZapPress = useCallback(() => {
@@ -605,44 +512,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     setShowInventory(false);
   }, [dispatch]);
   
-  // Get ranged weapons from global weapons catalog based on player's ranged weapon inventory IDs
-  const rangedWeapons = useMemo(() => {
-    const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
-    return state.weapons.filter(
-      (weapon) =>
-        weapon.weaponType === 'ranged' && 
-        weapon.id !== null && 
-        weapon.id !== undefined &&
-        rangedWeaponIds.includes(weapon.id)
-    );
-  }, [state.player.rangedWeaponInventoryIds, state.weapons]);
-  
-  // Get equipped ranged weapon name for display
-  const equippedWeaponName = useMemo(() => {
-    if (!state.player.equippedRangedWeaponId) return null;
-    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
-    return weapon ? weapon.name : null;
-  }, [state.player.equippedRangedWeaponId, state.weapons]);
-
-  // Get bolt color from equipped weapon
-  const boltColor = useMemo(() => {
-    if (!state.player.equippedRangedWeaponId) return DEFAULT_BOLT_COLOR;
-    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
-    return weapon?.projectileColor || DEFAULT_BOLT_COLOR;
-  }, [state.player.equippedRangedWeaponId, state.weapons]);
-
-  // Memoized attack overlay style
-  const attackOverlayStyle = useMemo(() => {
-    if (!arenaSize) return styles.attackOverlay;
-    return [styles.attackOverlay, { width: arenaSize.width, height: arenaSize.height }];
-  }, [arenaSize]);
-
-  // Position for daemon
-  const daemonX = daemonPosition.x;
-  const daemonY = daemonPosition.y;
-
-  const isVulnerable = daemonState === DaemonState.LANDED;
-  const isAttacking = daemonState === DaemonState.ATTACKING;
 
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>
@@ -654,120 +523,21 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
             { transform: [{ translateX: shakeAnim }] },
           ]}
         >
-          {/* Attack overlay (full screen) */}
-          {isAttacking && arenaSize && (
-            <Image
-              source={getCurrentSprite()}
-              style={attackOverlayStyle}
-              resizeMode="contain"
+          {/* Daemon sprite - handles all daemon rendering and animations */}
+          {bgRect && (
+            <DaemonSprite
+              daemonState={daemonState}
+              currentPosition={currentPosition}
+              attackDirection={attackDirection}
+              previousState={previousState}
+              isCrossfading={isCrossfading}
+              daemonX={daemonX}
+              daemonY={daemonY}
+              arenaSize={arenaSize}
+              isVulnerable={isVulnerable}
+              isAttacking={isAttacking}
+              onDaemonTap={handleDaemonTap}
             />
-          )}
-
-          {/* Daemon (positioned) - only show when not attacking */}
-          {!isAttacking && bgRect && (
-            <TouchableOpacity
-              style={[
-                styles.daemonContainer,
-                {
-                  left: daemonX - 75, // Center the 150px sprite
-                  top: daemonY - 75,
-                },
-              ]}
-              onPress={handleDaemonTap}
-              activeOpacity={1}
-            >
-              {/* Fizzle background effects */}
-              {daemonState === DaemonState.PREP1 && (
-                <Animated.View
-                  style={[
-                    styles.fizzleBackground,
-                    {
-                      opacity: fizzleAnim,
-                      transform: [
-                        {
-                          scale: fizzleAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0.8, 1.4],
-                          }),
-                        },
-                      ],
-                      backgroundColor: '#ff6600', // Orange fizzle for prep1
-                    },
-                  ]}
-                />
-              )}
-              {daemonState === DaemonState.PREP2 && (
-                <Animated.View
-                  style={[
-                    styles.fizzleBackground,
-                    {
-                      opacity: fizzleAnim,
-                      transform: [
-                        {
-                          scale: fizzleAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0.8, 1.4],
-                          }),
-                        },
-                      ],
-                      backgroundColor: '#ff00ff', // Magenta fizzle for prep2
-                    },
-                  ]}
-                />
-              )}
-
-              <Animated.View
-                style={[
-                  styles.daemonWrapper,
-                  isVulnerable && {
-                    shadowColor: '#ff0',
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: glowAnim,
-                    shadowRadius: 20,
-                  },
-                ]}
-              >
-                {/* Previous sprite (fading out during crossfade) */}
-                {isCrossfading && (
-                  <Animated.Image
-                    source={getSpriteForState(previousState)}
-                    style={[
-                      styles.daemonSprite,
-                      styles.absoluteSprite,
-                      {
-                        opacity: crossfadeAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [1, 0],
-                        }),
-                      },
-                    ]}
-                    resizeMode="contain"
-                  />
-                )}
-                
-                {/* Current sprite (fading in during crossfade, or fully visible) */}
-                <Animated.Image
-                  source={getCurrentSprite()}
-                  style={[
-                    styles.daemonSprite,
-                    isCrossfading && {
-                      opacity: crossfadeAnim,
-                    },
-                  ]}
-                  resizeMode="contain"
-                />
-                
-                {/* Brightness overlay for teleport flash */}
-                <Animated.View
-                  style={[
-                    styles.brightnessOverlay,
-                    {
-                      opacity: brightnessAnim,
-                    },
-                  ]}
-                />
-              </Animated.View>
-            </TouchableOpacity>
           )}
         </Animated.View>
 
@@ -893,47 +663,6 @@ const styles = StyleSheet.create({
   },
   gameContainer: {
     flex: 1,
-  },
-  attackOverlay: {
-    position: 'absolute',
-    zIndex: 100,
-  },
-  daemonContainer: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    zIndex: 50,
-  },
-  daemonWrapper: {
-    width: '100%',
-    height: '100%',
-  },
-  fizzleBackground: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 75,
-    zIndex: -1,
-  },
-  brightnessOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#ffffff',
-    borderRadius: 75,
-  },
-  daemonSprite: {
-    width: '100%',
-    height: '100%',
-  },
-  absoluteSprite: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   hud: {
     position: 'absolute',
