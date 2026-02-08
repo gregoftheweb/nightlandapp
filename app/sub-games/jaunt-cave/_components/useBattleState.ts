@@ -6,7 +6,7 @@ import { Animated } from 'react-native';
 import { DaemonState, PositionKey } from './DaemonSprite';
 
 // Re-export DaemonState for use in other modules
-export { DaemonState } from './DaemonSprite';
+export { DaemonState };
 
 // Combat helpers
 const rollToHit = (): boolean => {

@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 // HIT INDICATOR CONFIGURATION
 // ============================================================================
 
-const HIT_INDICATOR_CONFIG = {
+export const HIT_INDICATOR_CONFIG = {
   // Size
   CIRCLE_SIZE: 80,              // Diameter of indicator circle in pixels
   

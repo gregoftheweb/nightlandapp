@@ -4,15 +4,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Item, GameState } from '@config/types';
 import { DaemonState } from './useBattleState';
+import { HIT_INDICATOR_CONFIG } from './HitIndicator';
 
 const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
-
-// Hit indicator timing configuration
-// Note: Full config is in HitIndicator.tsx
-const HIT_INDICATOR_TIMING = {
-  DURATION: 600,                // How long indicator shows (ms)
-  FADE_OUT_DURATION: 200,       // Fade out time (ms)
-} as const;
 
 // Zap target positions (percentage of arena dimensions)
 // These are independent of daemon spawn positions and can be tweaked independently
@@ -160,7 +154,7 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
         // Clear indicator after its animation finishes
         setTimeout(() => {
           setHitIndicator(null);
-        }, HIT_INDICATOR_TIMING.DURATION + HIT_INDICATOR_TIMING.FADE_OUT_DURATION);
+        }, HIT_INDICATOR_CONFIG.DURATION + HIT_INDICATOR_CONFIG.FADE_OUT_DURATION);
       }, projectileDuration);
     }
     
