@@ -46,7 +46,7 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
       }),
       Animated.timing(opacity, {
         toValue: 0,
-        duration: duration * 0.8, // Fade out slightly before reaching target
+       // duration: duration * 0.8, // Fade out slightly before reaching target
         useNativeDriver: true,
       }),
     ]).start(() => {
