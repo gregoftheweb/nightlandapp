@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
-  Text,
   Image,
   StyleSheet,
   Animated,
@@ -10,12 +9,12 @@ import {
 import { useRouter } from 'expo-router';
 import { BackgroundImage } from '../_shared/BackgroundImage';
 import { BottomActionBar } from '../_shared/BottomActionBar';
-import { subGameTheme } from '../_shared/subGameTheme';
 import { useGameContext } from '@context/GameContext';
 import { BattleHUD } from './_components/BattleHUD';
 import { BattleHealthBars } from './_components/BattleHealthBars';
 import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal';
 import { DaemonSprite, DaemonState, PositionKey } from './_components/DaemonSprite';
+import { FeedbackMessage } from './_components/FeedbackMessage';
 import { Item } from '@config/types';
 
 // Landing positions (configurable percentages)
@@ -94,7 +93,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const [showInventory, setShowInventory] = useState(false);
   const [isZapMenuOpen, setIsZapMenuOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
-  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const zapMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Beam state
@@ -372,11 +370,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         clearTimeout(deathNavigationTimerRef.current);
         deathNavigationTimerRef.current = null;
       }
-      // Clear feedback and zap menu timers if component unmounts
-      if (feedbackTimerRef.current) {
-        clearTimeout(feedbackTimerRef.current);
-        feedbackTimerRef.current = null;
-      }
+      // Clear zap menu timer if component unmounts
       if (zapMenuTimerRef.current) {
         clearTimeout(zapMenuTimerRef.current);
         zapMenuTimerRef.current = null;
@@ -403,19 +397,10 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     // Show feedback
     setFeedbackText(`Zap - ${targetLabels[target]}`);
     
-    // Clear any existing timers
-    if (feedbackTimerRef.current) {
-      clearTimeout(feedbackTimerRef.current);
-    }
+    // Clear any existing timer
     if (zapMenuTimerRef.current) {
       clearTimeout(zapMenuTimerRef.current);
     }
-    
-    // Auto-hide feedback after ~1s
-    feedbackTimerRef.current = setTimeout(() => {
-      setFeedbackText(null);
-      feedbackTimerRef.current = null;
-    }, 1000);
     
     // Auto-close zap menu after ~1s
     zapMenuTimerRef.current = setTimeout(() => {
@@ -471,17 +456,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     
     // Show "Block" feedback
     setFeedbackText('Block');
-    
-    // Clear any existing timer
-    if (feedbackTimerRef.current) {
-      clearTimeout(feedbackTimerRef.current);
-    }
-    
-    // Auto-hide feedback after ~1s
-    feedbackTimerRef.current = setTimeout(() => {
-      setFeedbackText(null);
-      feedbackTimerRef.current = null;
-    }, 1000);
     
     if (__DEV__) {
       console.log('[JauntCave] Block action triggered');
@@ -617,11 +591,10 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       </BottomActionBar>
       
       {/* Feedback message box */}
-      {feedbackText && (
-        <View style={styles.feedbackMessage}>
-          <Text style={styles.feedbackMessageText}>{feedbackText}</Text>
-        </View>
-      )}
+      <FeedbackMessage 
+        message={feedbackText} 
+        onDismiss={() => setFeedbackText(null)} 
+      />
       
       {/* Weapons inventory modal */}
       <WeaponsInventoryModal
@@ -641,29 +614,6 @@ const styles = StyleSheet.create({
   },
   gameContainer: {
     flex: 1,
-  },
-  feedbackMessage: {
-    position: 'absolute',
-    bottom: 120,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 300,
-    pointerEvents: 'none',
-  },
-  feedbackMessageText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: subGameTheme.white,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: subGameTheme.blue,
-    textShadowColor: '#000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
   },
   beamOverlay: {
     ...StyleSheet.absoluteFillObject,
