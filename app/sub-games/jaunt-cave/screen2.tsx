@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Image,
@@ -16,8 +16,8 @@ import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal';
 import { DaemonSprite, PositionKey } from './_components/DaemonSprite';
 import { FeedbackMessage } from './_components/FeedbackMessage';
 import { ProjectileEffect } from './_components/ProjectileEffect';
-import { Item } from '@config/types';
 import { useBattleState } from './_components/useBattleState';
+import { useWeaponInventory } from './_components/useWeaponInventory';
 
 // Landing positions (configurable percentages)
 const POSITIONS = {
@@ -27,8 +27,6 @@ const POSITIONS = {
 } as const;
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
-
-const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 
 interface JauntCaveScreen2Props {
   daemonHP?: number;
@@ -51,11 +49,8 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const maxChristosHP = state.player.maxHP;
   const [arenaSize, setArenaSize] = useState<{ width: number; height: number } | null>(null);
   
-  // Battle HUD state
-  const [showInventory, setShowInventory] = useState(false);
-  const [isZapMenuOpen, setIsZapMenuOpen] = useState(false);
+  // Battle HUD state (feedback only - weapon/inventory state in useWeaponInventory)
   const [feedbackText, setFeedbackText] = useState<string | null>(null);
-  const zapMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Projectile state
   const [projectileFrom, setProjectileFrom] = useState<{ x: number; y: number } | null>(null);
@@ -136,85 +131,36 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     }
   }, []);
 
-  // Get ranged weapons from global weapons catalog based on player's ranged weapon inventory IDs
-  const rangedWeapons = useMemo(() => {
-    const rangedWeaponIds = state.player.rangedWeaponInventoryIds || [];
-    return state.weapons.filter(
-      (weapon) =>
-        weapon.weaponType === 'ranged' && 
-        weapon.id !== null && 
-        weapon.id !== undefined &&
-        rangedWeaponIds.includes(weapon.id)
-    );
-  }, [state.player.rangedWeaponInventoryIds, state.weapons]);
-  
-  // Get equipped ranged weapon name for display
-  const equippedWeaponName = useMemo(() => {
-    if (!state.player.equippedRangedWeaponId) return null;
-    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
-    return weapon ? weapon.name : null;
-  }, [state.player.equippedRangedWeaponId, state.weapons]);
-
-  // Get bolt color from equipped weapon
-  const boltColor = useMemo(() => {
-    if (!state.player.equippedRangedWeaponId) return DEFAULT_BOLT_COLOR;
-    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
-    return weapon?.projectileColor || DEFAULT_BOLT_COLOR;
-  }, [state.player.equippedRangedWeaponId, state.weapons]);
+  // Weapon inventory hook - manages all weapon/inventory UI state and interactions
+  const {
+    showInventory,
+    isZapMenuOpen,
+    rangedWeapons,
+    equippedWeaponName,
+    boltColor,
+    handleZapPress,
+    handleZapTargetPress,
+    handleOpenInventory,
+    handleCloseInventory,
+    handleSelectWeapon,
+  } = useWeaponInventory({
+    gameState: state,
+    dispatch,
+    arenaSize,
+    bgRect,
+    getSpawnPosition,
+    onSetFeedback: setFeedbackText,
+    onFireProjectile: (from, to, color) => {
+      setProjectileFrom(from);
+      setProjectileTo(to);
+    },
+  });
 
   // Position for daemon
   const daemonX = daemonPosition.x;
   const daemonY = daemonPosition.y;
 
-  // Battle HUD handlers
-  const handleZapPress = useCallback(() => {
-    // Toggle zap menu open/close
-    setIsZapMenuOpen((prev) => !prev);
-    if (__DEV__) {
-      console.log('[JauntCave] Zap menu toggled');
-    }
-  }, []);
-
-  const handleZapTargetPress = useCallback((target: 'left' | 'center' | 'right') => {
-    const targetLabels = {
-      left: 'Left',
-      center: 'Center',
-      right: 'Right',
-    };
-    
-    // Show feedback
-    setFeedbackText(`Zap - ${targetLabels[target]}`);
-    
-    // Clear any existing timer
-    if (zapMenuTimerRef.current) {
-      clearTimeout(zapMenuTimerRef.current);
-    }
-    
-    // Auto-close zap menu after ~1s
-    zapMenuTimerRef.current = setTimeout(() => {
-      setIsZapMenuOpen(false);
-      zapMenuTimerRef.current = null;
-    }, 1000);
-    
-    // Trigger projectile VFX
-    if (arenaSize && bgRect) {
-      // Calculate start point (bottom center of arena)
-      const startX = arenaSize.width / 2;
-      const startY = arenaSize.height - 20;
-      
-      // Get end point (selected target spawn position)
-      const endPosition = getSpawnPosition(target);
-      
-      // Set projectile state
-      setProjectileFrom({ x: startX, y: startY });
-      setProjectileTo(endPosition);
-    }
-    
-    if (__DEV__) {
-      console.log('[JauntCave] Zap target selected:', target);
-    }
-  }, [arenaSize, bgRect, getSpawnPosition]);
-  
+  // Block action handler
   const handleBlockPress = useCallback(() => {
     // Close zap menu if open
     setIsZapMenuOpen(false);
@@ -225,41 +171,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     if (__DEV__) {
       console.log('[JauntCave] Block action triggered');
     }
-  }, []);
-  
-  const handleOpenInventory = useCallback(() => {
-    setShowInventory(true);
-    if (__DEV__) {
-      console.log('[JauntCave] Inventory opened');
-    }
-  }, []);
-  
-  const handleCloseInventory = useCallback(() => {
-    setShowInventory(false);
-  }, []);
-  
-  const handleSelectWeapon = useCallback((weapon: Item) => {
-    if (__DEV__) {
-      console.log('[JauntCave] Equip weapon:', weapon.id);
-    }
-    // Dispatch EQUIP_RANGED_WEAPON action
-    if (weapon.id) {
-      dispatch({
-        type: 'EQUIP_RANGED_WEAPON',
-        payload: { id: weapon.id },
-      });
-    }
-    setShowInventory(false);
-  }, [dispatch]);
-  
-  // Cleanup zap menu timer on unmount
-  useEffect(() => {
-    return () => {
-      if (zapMenuTimerRef.current) {
-        clearTimeout(zapMenuTimerRef.current);
-        zapMenuTimerRef.current = null;
-      }
-    };
   }, []);
 
   return (
