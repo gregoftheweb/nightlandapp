@@ -1,58 +1,54 @@
-import React, { useState, useRef, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  Animated,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { BackgroundImage } from '../_shared/BackgroundImage';
-import { BottomActionBar } from '../_shared/BottomActionBar';
-import { useGameContext } from '@context/GameContext';
-import { BattleHUD } from './_components/BattleHUD';
-import { BattleHealthBars } from './_components/BattleHealthBars';
-import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal';
-import { DaemonSprite } from './_components/DaemonSprite';
-import { FeedbackMessage } from './_components/FeedbackMessage';
-import { ProjectileEffect } from './_components/ProjectileEffect';
-import { HitIndicator } from './_components/HitIndicator';
-import { BlockShield } from './_components/BlockShield';
-import { useBattleState } from './_components/useBattleState';
-import { useWeapon, ZAP_TARGETS } from './_components/useWeapon';
-import { useArenaLayout } from './_components/useArenaLayout';
+import React, { useState, useRef, useCallback } from 'react'
+import { View, StyleSheet, Animated } from 'react-native'
+import { useRouter } from 'expo-router'
+import { BackgroundImage } from '../_shared/BackgroundImage'
+import { BottomActionBar } from '../_shared/BottomActionBar'
+import { useGameContext } from '@context/GameContext'
+import { BattleHUD } from './_components/BattleHUD'
+import { BattleHealthBars } from './_components/BattleHealthBars'
+import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal'
+import { DaemonSprite } from './_components/DaemonSprite'
+import { FeedbackMessage } from './_components/FeedbackMessage'
+import { ProjectileEffect } from './_components/ProjectileEffect'
+import { HitIndicator } from './_components/HitIndicator'
+import { BlockShield } from './_components/BlockShield'
+import { useBattleState } from './_components/useBattleState'
+import { useWeapon, ZAP_TARGETS } from './_components/useWeapon'
+import { useArenaLayout } from './_components/useArenaLayout'
 
-const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
+const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png')
 
 // Projectile duration constant (from ProjectileEffect component)
-const PROJECTILE_DURATION = 250; // ms
+const PROJECTILE_DURATION = 250 // ms
 
 /**
  * Props for the Jaunt Cave Screen 2 component
- * 
+ *
  * @property {number} daemonHP - Initial health points for the daemon (default: 100)
  * @property {number} maxDaemonHP - Maximum health points for the daemon (default: 100)
  * @property {() => void} onDaemonHit - Optional callback when daemon is successfully hit
  * @property {() => void} onDaemonMiss - Optional callback when attack misses the daemon
  */
 interface JauntCaveScreen2Props {
-  daemonHP?: number;
-  maxDaemonHP?: number;
-  onDaemonHit?: () => void;
-  onDaemonMiss?: () => void;
+  daemonHP?: number
+  maxDaemonHP?: number
+  onDaemonHit?: () => void
+  onDaemonMiss?: () => void
 }
 
 /**
  * Jaunt Cave Screen 2 - Battle with teleporting daemon
- * 
+ *
  * This component orchestrates the battle sequence by combining specialized hooks
  * and components. The daemon teleports between positions, attacks, and can be
  * targeted with ranged weapons during its vulnerable state.
- * 
+ *
  * Architecture:
  * - useBattleState: Manages daemon AI state machine and battle logic
  * - useArenaLayout: Handles all arena sizing and positioning calculations
  * - useWeapon: Manages weapon selection and projectile firing
  * - Render components: DaemonSprite, ProjectileEffect, BattleHealthBars, BattleHUD
- * 
+ *
  * @param {JauntCaveScreen2Props} props - Component props
  */
 const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
@@ -61,28 +57,28 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   onDaemonHit,
   onDaemonMiss,
 }) => {
-  const router = useRouter();
-  
+  const router = useRouter()
+
   // Game context - provides global game state and dispatch for updates
-  const { state, dispatch } = useGameContext();
-  
+  const { state, dispatch } = useGameContext()
+
   // Get real Christos HP from game state
-  const christosHP = state.player.currentHP;
-  const maxChristosHP = state.player.maxHP;
-  
+  const christosHP = state.player.currentHP
+  const maxChristosHP = state.player.maxHP
+
   // Feedback message state - displays temporary battle feedback to player
-  const [feedbackText, setFeedbackText] = useState<string | null>(null);
+  const [feedbackText, setFeedbackText] = useState<string | null>(null)
 
   // Debug target visualization state
   // Note: setShowDebugTargets available for runtime toggling if needed
-  const [showDebugTargets, setShowDebugTargets] = useState(__DEV__);
+  const [showDebugTargets, setShowDebugTargets] = useState(__DEV__)
 
   // Projectile animation state - tracks start and end positions for projectile effects
-  const [projectileFrom, setProjectileFrom] = useState<{ x: number; y: number } | null>(null);
-  const [projectileTo, setProjectileTo] = useState<{ x: number; y: number } | null>(null);
+  const [projectileFrom, setProjectileFrom] = useState<{ x: number; y: number } | null>(null)
+  const [projectileTo, setProjectileTo] = useState<{ x: number; y: number } | null>(null)
 
   // Animation ref - shake effect when player takes damage
-  const shakeAnim = useRef(new Animated.Value(0)).current;
+  const shakeAnim = useRef(new Animated.Value(0)).current
 
   // Battle state machine - manages daemon AI, state transitions, and battle logic
   const battleState = useBattleState({
@@ -94,7 +90,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     dispatch,
     currentPlayerHP: state.player.currentHP,
     router,
-  });
+  })
 
   const {
     daemonState,
@@ -109,31 +105,25 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     canBlockNow,
     isBlockActive,
     activateBlock,
-  } = battleState;
+  } = battleState
 
   // Arena layout and positioning - calculates daemon position and arena dimensions
-  const {
-    arenaSize,
-    bgRect,
-    daemonX,
-    daemonY,
-    handleArenaLayout,
-    getSpawnPosition,
-  } = useArenaLayout({
-    backgroundImage: BACKGROUND,
-    currentPosition,
-  });
+  const { arenaSize, bgRect, daemonX, daemonY, handleArenaLayout, getSpawnPosition } =
+    useArenaLayout({
+      backgroundImage: BACKGROUND,
+      currentPosition,
+    })
 
   // Helper function to get equipped weapon damage
   const getEquippedWeaponDamage = useCallback(() => {
-    if (!state.player.equippedRangedWeaponId) return null;
-    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId);
-    if (!weapon?.damage) return null;
+    if (!state.player.equippedRangedWeaponId) return null
+    const weapon = state.weapons.find((w) => w.id === state.player.equippedRangedWeaponId)
+    if (!weapon?.damage) return null
     // Use weapon damage as base, with ±20% variance
-    const min = Math.max(1, Math.floor(weapon.damage * 0.8));
-    const max = Math.ceil(weapon.damage * 1.2);
-    return { min, max };
-  }, [state.player.equippedRangedWeaponId, state.weapons]);
+    const min = Math.max(1, Math.floor(weapon.damage * 0.8))
+    const max = Math.ceil(weapon.damage * 1.2)
+    return { min, max }
+  }, [state.player.equippedRangedWeaponId, state.weapons])
 
   // Weapon management - handles weapon selection, zap menu, and projectile firing
   const {
@@ -155,30 +145,30 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     arenaSize,
     onSetFeedback: setFeedbackText,
     onFireProjectile: (from, to) => {
-      setProjectileFrom(from);
-      setProjectileTo(to);
+      setProjectileFrom(from)
+      setProjectileTo(to)
     },
     getDaemonState: () => daemonState,
     getCurrentDaemonPosition: () => currentPosition,
     getEquippedWeaponDamage,
     onDaemonHit: battleState.applyPlayerDamage,
     projectileDuration: PROJECTILE_DURATION,
-  });
+  })
 
   // Block action handler
-  const handleBlockPress = useCallback(() => {
-    const result = battleState.activateBlock();
-    
-    // Show appropriate feedback message
+  const handleBlockPress = useCallback((): 'success' | 'too_early' | 'too_late' => {
+    const result = battleState.activateBlock()
+
     if (result === 'success') {
-      // No feedback text - shield with "Block" text will show
-      // Shield is already visible via battleState.isBlockActive
+      // Shield handles visual feedback
     } else if (result === 'too_early') {
-      setFeedbackText('Block Failed!\nToo Early');
+      setFeedbackText('Block Failed!\nToo Early')
     } else if (result === 'too_late') {
-      setFeedbackText('Block Failed!\nToo Late');
+      setFeedbackText('Block Failed!\nToo Late')
     }
-  }, [battleState]);
+
+    return result
+  }, [battleState])
 
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>
@@ -186,12 +176,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         {/* Arena Stack - Single parent for all fight overlays to ensure proper z-index ordering */}
         <View style={styles.arenaStack}>
           {/* Shake container for attack effect */}
-          <Animated.View
-            style={[
-              styles.gameContainer,
-              { transform: [{ translateX: shakeAnim }] },
-            ]}
-          >
+          <Animated.View style={[styles.gameContainer, { transform: [{ translateX: shakeAnim }] }]}>
             {/* Daemon sprite - handles all daemon rendering and animations */}
             {bgRect && (
               <DaemonSprite
@@ -216,8 +201,8 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
             to={projectileTo}
             color={boltColor}
             onComplete={() => {
-              setProjectileFrom(null);
-              setProjectileTo(null);
+              setProjectileFrom(null)
+              setProjectileTo(null)
             }}
           />
 
@@ -277,13 +262,10 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
           equippedWeaponName={equippedWeaponName}
         />
       </BottomActionBar>
-      
+
       {/* Feedback message box */}
-      <FeedbackMessage 
-        message={feedbackText} 
-        onDismiss={() => setFeedbackText(null)} 
-      />
-      
+      <FeedbackMessage message={feedbackText} onDismiss={() => setFeedbackText(null)} />
+
       {/* Weapons inventory modal */}
       <WeaponsInventoryModal
         visible={showInventory}
@@ -293,8 +275,8 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         equippedWeaponId={state.player.equippedRangedWeaponId}
       />
     </BackgroundImage>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -309,6 +291,6 @@ const styles = StyleSheet.create({
   gameContainer: {
     flex: 1,
   },
-});
+})
 
-export default JauntCaveScreen2;
+export default JauntCaveScreen2

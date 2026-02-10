@@ -2,16 +2,16 @@
 // Battle-specific HUD component for Jaunt Cave screen2
 // This is intentionally duplicated and NOT the shared PlayerHUD
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
 interface BattleHUDProps {
-  onZapPress: () => void;
-  onBlockPress: () => 'success' | 'too_early' | 'too_late';
-  onOpenInventory: () => void;
-  isZapMenuOpen: boolean;
-  onZapTargetPress: (target: 'left' | 'center' | 'right') => void;
-  equippedWeaponName?: string | null;
+  onZapPress: () => void
+  onBlockPress: () => 'success' | 'too_early' | 'too_late'
+  onOpenInventory: () => void
+  isZapMenuOpen: boolean
+  onZapTargetPress: (target: 'left' | 'center' | 'right') => void
+  equippedWeaponName?: string | null
 }
 
 /**
@@ -20,10 +20,10 @@ interface BattleHUDProps {
  * - B: Block (block with discos)
  * - I: Inventory (open weapons-only inventory)
  */
-export function BattleHUD({ 
-  onZapPress, 
-  onBlockPress, 
-  onOpenInventory, 
+export function BattleHUD({
+  onZapPress,
+  onBlockPress,
+  onOpenInventory,
   isZapMenuOpen,
   onZapTargetPress,
   equippedWeaponName,
@@ -59,15 +59,12 @@ export function BattleHUD({
           </View>
         </View>
       )}
-      
+
       {/* Main action buttons */}
       <View style={styles.buttonRow}>
         {/* Zap button */}
         <TouchableOpacity
-          style={[
-            styles.actionButton,
-            isZapMenuOpen && styles.actionButtonActive,
-          ]}
+          style={[styles.actionButton, isZapMenuOpen && styles.actionButtonActive]}
           onPress={onZapPress}
           activeOpacity={0.7}
         >
@@ -80,28 +77,24 @@ export function BattleHUD({
           )}
         </TouchableOpacity>
 
-        {/* Block button */}
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={onBlockPress}
+          onPress={() => {
+            onBlockPress() // return value intentionally ignored here
+          }}
           activeOpacity={0.7}
         >
           <Text style={styles.actionButtonText}>B</Text>
           <Text style={styles.actionButtonLabel}>Block</Text>
         </TouchableOpacity>
-
         {/* Inventory button */}
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={onOpenInventory}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.actionButton} onPress={onOpenInventory} activeOpacity={0.7}>
           <Text style={styles.actionButtonText}>I</Text>
           <Text style={styles.actionButtonLabel}>Inventory</Text>
         </TouchableOpacity>
       </View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -203,4 +196,4 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textAlign: 'center',
   },
-});
+})
