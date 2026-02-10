@@ -281,6 +281,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    position: 'relative',
   },
   arenaStack: {
     position: 'relative',
@@ -289,7 +290,12 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
   gameContainer: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
   },
 })
 
