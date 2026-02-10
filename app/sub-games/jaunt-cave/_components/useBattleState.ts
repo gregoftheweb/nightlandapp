@@ -53,7 +53,7 @@ export interface UseBattleStateReturn {
   isVulnerable: boolean;
   isAttacking: boolean;
   applyPlayerDamage: (damage: number) => void;
-  canBlockNow: boolean;           // True only during PREP2 state
+  canBlockNow: boolean;           // True only during ATTACKING state (when block window is open)
   isBlockActive: boolean;         // True if player has active block
   activateBlock: () => 'success' | 'too_early' | 'too_late';  // Called when player presses Block button
 }
@@ -80,10 +80,14 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
   // Block state
   const [isBlockActive, setIsBlockActive] = useState(false);
+  const [isInAttackWindow, setIsInAttackWindow] = useState(false); // Track if we're in the attack window
   const blockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track if current animation cycle will include an attack
   const willAttackRef = useRef<boolean>(false);
+  
+  // Track if current attack was blocked (to prevent damage without consuming visual shield early)
+  const attackWasBlockedRef = useRef<boolean>(false);
 
   // Block statistics counters
   const blockStatsRef = useRef({
@@ -105,7 +109,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   // Computed values
   const isVulnerable = daemonState === DaemonState.LANDED;
   const isAttacking = daemonState === DaemonState.ATTACKING;
-  const canBlockNow = daemonState === DaemonState.PREP2;
+  const canBlockNow = isInAttackWindow && daemonState === DaemonState.ATTACKING;
 
   // Clear any existing timer - SINGLE SOURCE OF TRUTH
   const clearTimer = useCallback(() => {
@@ -136,8 +140,8 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
   // Apply damage and handle death
   const applyDaemonDamage = useCallback(() => {
-    // Check if block is active
-    if (isBlockActive) {
+    // Check if this attack was blocked (don't consume isBlockActive here - let it show visually)
+    if (attackWasBlockedRef.current) {
       // Increment counter for blocks that actually prevented damage
       blockStatsRef.current.blocksWithAttack++;
       
@@ -149,13 +153,11 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
           wastedBlocks: blockStatsRef.current.blocksWithoutAttack,
         });
       }
-      // Consume the block
-      setIsBlockActive(false);
-      if (blockTimerRef.current) {
-        clearTimeout(blockTimerRef.current);
-        blockTimerRef.current = null;
-      }
-      // Skip damage application
+      
+      // Reset the block flag for next attack
+      attackWasBlockedRef.current = false;
+      
+      // Skip damage application - isBlockActive will naturally expire via its timer
       return;
     }
 
@@ -211,25 +213,18 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
   // Activate block shield
   const activateBlock = useCallback((): 'success' | 'too_early' | 'too_late' => {
-    // Check if block timing is correct (must be PREP2)
-    if (daemonState === DaemonState.PREP2) {
-      // SUCCESS - activate block shield
+    // Block can only succeed if we're in an attack window
+    // Must be during ATTACKING state (not PREP2) when daemon is actually attacking
+    if (isInAttackWindow && daemonState === DaemonState.ATTACKING) {
+      // SUCCESS - activate block shield during active attack
       setIsBlockActive(true);
+      attackWasBlockedRef.current = true;
       
       // Increment total successful blocks counter
       blockStatsRef.current.totalSuccessfulBlocks++;
       
-      // Check if this block will actually block an attack or is just timed correctly
-      const willBlockAttack = willAttackRef.current;
-      
       if (__DEV__) {
-        if (willBlockAttack) {
-          console.log('[useBattleState] ✅ Block activated successfully! WILL BLOCK INCOMING ATTACK');
-        } else {
-          console.log('[useBattleState] ✅ Block activated successfully! (No attack this cycle - wasted block)');
-          // Increment wasted block counter immediately since no attack will come
-          blockStatsRef.current.blocksWithoutAttack++;
-        }
+        console.log('[useBattleState] ✅ Block activated successfully! BLOCKING ACTIVE ATTACK');
         console.log('[useBattleState] 📊 Block Stats:', {
           total: blockStatsRef.current.totalSuccessfulBlocks,
           blockedAttacks: blockStatsRef.current.blocksWithAttack,
@@ -242,27 +237,28 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
         clearTimeout(blockTimerRef.current);
       }
 
-      // Auto-expire block after duration
+      // Auto-expire block shield after ~900ms (for visual effect overlap with attack)
+      // This is slightly shorter than BLOCK_SHIELD_CONFIG.DURATION to ensure clean transition
       blockTimerRef.current = setTimeout(() => {
         setIsBlockActive(false);
         blockTimerRef.current = null;
-      }, BLOCK_SHIELD_CONFIG.DURATION);
+      }, 900);
 
       return 'success';
-    } else if (daemonState === DaemonState.RESTING || daemonState === DaemonState.PREP1) {
-      // TOO EARLY
+    } else if (daemonState === DaemonState.RESTING || daemonState === DaemonState.PREP1 || daemonState === DaemonState.PREP2) {
+      // TOO EARLY - not attacking yet (or won't attack this cycle)
       if (__DEV__) {
-        console.log('[useBattleState] ❌ Block too early. State:', daemonState);
+        console.log('[useBattleState] ❌ Block too early. State:', daemonState, 'Will attack:', willAttackRef.current);
       }
       return 'too_early';
     } else {
-      // TOO LATE (LANDED or ATTACKING)
+      // TOO LATE (LANDED or ATTACKING without attack window - shouldn't normally happen)
       if (__DEV__) {
         console.log('[useBattleState] ❌ Block too late. State:', daemonState);
       }
       return 'too_late';
     }
-  }, [daemonState]);
+  }, [daemonState, isInAttackWindow]);
 
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
@@ -308,11 +304,18 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
               // ATTACK SEQUENCE (daemon appears at new position with attack overlay)
               setAttackDirection(Math.random() < 0.5 ? 'left' : 'right');
               setDaemonState(DaemonState.ATTACKING);
+              setIsInAttackWindow(true); // Open block window
               triggerShake();
 
               animationTimerRef.current = setTimeout(() => {
                 // Apply damage after attack animation completes (more realistic)
                 applyDaemonDamage();
+                
+                // Close the attack window
+                setIsInAttackWindow(false);
+                
+                // Reset attack blocked flag for next cycle
+                attackWasBlockedRef.current = false;
                 
                 // STATE 4: LANDED (after attack, already at new position)
                 setDaemonState(DaemonState.LANDED);
@@ -332,6 +335,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
               }, TIMINGS.ATTACK);
             } else {
               // NO ATTACK - daemon appears at new position in landed state
+              setIsInAttackWindow(false); // No attack window
               setDaemonState(DaemonState.LANDED);
 
               animationTimerRef.current = setTimeout(() => {
