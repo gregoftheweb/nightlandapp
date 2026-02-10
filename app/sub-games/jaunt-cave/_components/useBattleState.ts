@@ -82,6 +82,16 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   const [isBlockActive, setIsBlockActive] = useState(false);
   const blockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Track if current animation cycle will include an attack
+  const willAttackRef = useRef<boolean>(false);
+
+  // Block statistics counters
+  const blockStatsRef = useRef({
+    totalSuccessfulBlocks: 0,
+    blocksWithAttack: 0,      // Blocks that actually prevented damage
+    blocksWithoutAttack: 0,   // Blocks timed correctly but no attack
+  });
+
   // Single timer ref - THIS IS CRITICAL
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -128,8 +138,16 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   const applyDaemonDamage = useCallback(() => {
     // Check if block is active
     if (isBlockActive) {
+      // Increment counter for blocks that actually prevented damage
+      blockStatsRef.current.blocksWithAttack++;
+      
       if (__DEV__) {
-        console.log('[useBattleState] Attack blocked! No damage taken.');
+        console.log('[useBattleState] ⚔️ Attack BLOCKED! Damage prevented.');
+        console.log('[useBattleState] 📊 Block Stats:', {
+          total: blockStatsRef.current.totalSuccessfulBlocks,
+          blockedAttacks: blockStatsRef.current.blocksWithAttack,
+          wastedBlocks: blockStatsRef.current.blocksWithoutAttack,
+        });
       }
       // Consume the block
       setIsBlockActive(false);
@@ -198,8 +216,25 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
       // SUCCESS - activate block shield
       setIsBlockActive(true);
       
+      // Increment total successful blocks counter
+      blockStatsRef.current.totalSuccessfulBlocks++;
+      
+      // Check if this block will actually block an attack or is just timed correctly
+      const willBlockAttack = willAttackRef.current;
+      
       if (__DEV__) {
-        console.log('[useBattleState] Block activated successfully!');
+        if (willBlockAttack) {
+          console.log('[useBattleState] ✅ Block activated successfully! WILL BLOCK INCOMING ATTACK');
+        } else {
+          console.log('[useBattleState] ✅ Block activated successfully! (No attack this cycle - wasted block)');
+          // Increment wasted block counter immediately since no attack will come
+          blockStatsRef.current.blocksWithoutAttack++;
+        }
+        console.log('[useBattleState] 📊 Block Stats:', {
+          total: blockStatsRef.current.totalSuccessfulBlocks,
+          blockedAttacks: blockStatsRef.current.blocksWithAttack,
+          wastedBlocks: blockStatsRef.current.blocksWithoutAttack,
+        });
       }
 
       // Clear any existing block timer
@@ -217,13 +252,13 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
     } else if (daemonState === DaemonState.RESTING || daemonState === DaemonState.PREP1) {
       // TOO EARLY
       if (__DEV__) {
-        console.log('[useBattleState] Block too early. State:', daemonState);
+        console.log('[useBattleState] ❌ Block too early. State:', daemonState);
       }
       return 'too_early';
     } else {
       // TOO LATE (LANDED or ATTACKING)
       if (__DEV__) {
-        console.log('[useBattleState] Block too late. State:', daemonState);
+        console.log('[useBattleState] ❌ Block too late. State:', daemonState);
       }
       return 'too_late';
     }
@@ -243,6 +278,13 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
       // Decide if this cycle includes an attack
       const willAttack = Math.random() < 0.6; // 60% chance to attack
       const nextPosition = getNextPosition();
+      
+      // Store attack decision in ref so activateBlock can check it
+      willAttackRef.current = willAttack;
+      
+      if (__DEV__) {
+        console.log('[useBattleState] 🎲 New cycle starting. Will attack:', willAttack);
+      }
 
       // STATE 1: RESTING
       setDaemonState(DaemonState.RESTING);
