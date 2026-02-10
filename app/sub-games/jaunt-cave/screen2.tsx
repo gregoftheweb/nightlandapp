@@ -225,15 +225,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
           type={hitIndicator?.type ?? 'block'}
         />
 
-        {/* Block Shield - defensive shield effect */}
-        {arenaSize && (
-          <BlockShield
-            active={isBlockActive}
-            centerX={arenaSize.width / 2}
-            centerY={arenaSize.height / 2}
-          />
-        )}
-
         {/* Debug target visualization */}
         {showDebugTargets && arenaSize && (
           <>
@@ -289,6 +280,15 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         onSelectWeapon={handleSelectWeapon}
         equippedWeaponId={state.player.equippedRangedWeaponId}
       />
+      
+      {/* BlockShield LAST - renders on top of everything */}
+      {arenaSize && (
+        <BlockShield
+          active={isBlockActive}
+          centerX={arenaSize.width / 2}
+          centerY={arenaSize.height / 2}
+        />
+      )}
     </BackgroundImage>
   );
 };
