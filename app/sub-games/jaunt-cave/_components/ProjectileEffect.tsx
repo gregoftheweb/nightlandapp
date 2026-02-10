@@ -133,7 +133,8 @@ export const ProjectileEffect: React.FC<ProjectileEffectProps> = ({
 const styles = StyleSheet.create({
   projectile: {
     position: 'absolute',
-    zIndex: 150, // Above daemon (50), below attack overlay (100)
+    zIndex: 200, // Above daemon attack overlay (100)
+    elevation: 200, // For Android
     shadowOpacity: PROJECTILE_CONFIG.SHADOW_OPACITY,
     shadowRadius: PROJECTILE_CONFIG.SHADOW_RADIUS,
     shadowOffset: { width: 0, height: 0 },

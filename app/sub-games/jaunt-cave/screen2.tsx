@@ -183,68 +183,80 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>
       <View style={styles.container} onLayout={handleArenaLayout}>
-        {/* Shake container for attack effect */}
-        <Animated.View
-          style={[
-            styles.gameContainer,
-            { transform: [{ translateX: shakeAnim }] },
-          ]}
-        >
-          {/* Daemon sprite - handles all daemon rendering and animations */}
-          {bgRect && (
-            <DaemonSprite
-              daemonState={daemonState}
-              currentPosition={currentPosition}
-              attackDirection={attackDirection}
-              previousState={previousState}
-              isCrossfading={isCrossfading}
-              daemonX={daemonX}
-              daemonY={daemonY}
-              arenaSize={arenaSize}
-              isVulnerable={isVulnerable}
-              isAttacking={isAttacking}
-              onDaemonTap={handleDaemonTap}
+        {/* Arena Stack - Single parent for all fight overlays to ensure proper z-index ordering */}
+        <View style={styles.arenaStack}>
+          {/* Shake container for attack effect */}
+          <Animated.View
+            style={[
+              styles.gameContainer,
+              { transform: [{ translateX: shakeAnim }] },
+            ]}
+          >
+            {/* Daemon sprite - handles all daemon rendering and animations */}
+            {bgRect && (
+              <DaemonSprite
+                daemonState={daemonState}
+                currentPosition={currentPosition}
+                attackDirection={attackDirection}
+                previousState={previousState}
+                isCrossfading={isCrossfading}
+                daemonX={daemonX}
+                daemonY={daemonY}
+                arenaSize={arenaSize}
+                isVulnerable={isVulnerable}
+                isAttacking={isAttacking}
+                onDaemonTap={handleDaemonTap}
+              />
+            )}
+          </Animated.View>
+
+          {/* Projectile Effect */}
+          <ProjectileEffect
+            from={projectileFrom}
+            to={projectileTo}
+            color={boltColor}
+            onComplete={() => {
+              setProjectileFrom(null);
+              setProjectileTo(null);
+            }}
+          />
+
+          {/* Hit Indicator */}
+          <HitIndicator
+            position={hitIndicator?.position ?? null}
+            type={hitIndicator?.type ?? 'block'}
+          />
+
+          {/* BlockShield - Always renders on top within arena stack */}
+          {arenaSize && (
+            <BlockShield
+              active={isBlockActive}
+              centerX={arenaSize.width / 2}
+              centerY={arenaSize.height / 2}
             />
           )}
-        </Animated.View>
 
-        {/* Projectile Effect */}
-        <ProjectileEffect
-          from={projectileFrom}
-          to={projectileTo}
-          color={boltColor}
-          onComplete={() => {
-            setProjectileFrom(null);
-            setProjectileTo(null);
-          }}
-        />
-
-        {/* Hit Indicator */}
-        <HitIndicator
-          position={hitIndicator?.position ?? null}
-          type={hitIndicator?.type ?? 'block'}
-        />
-
-        {/* Debug target visualization */}
-        {showDebugTargets && arenaSize && (
-          <>
-            {Object.entries(ZAP_TARGETS).map(([key, targetPos]) => (
-              <View
-                key={key}
-                style={{
-                  position: 'absolute',
-                  left: arenaSize.width * targetPos.x - 10,
-                  top: arenaSize.height * targetPos.y - 10,
-                  width: 20,
-                  height: 20,
-                  borderRadius: 10,
-                  backgroundColor: '#00ff00',
-                  zIndex: 999,
-                }}
-              />
-            ))}
-          </>
-        )}
+          {/* Debug target visualization */}
+          {showDebugTargets && arenaSize && (
+            <>
+              {Object.entries(ZAP_TARGETS).map(([key, targetPos]) => (
+                <View
+                  key={key}
+                  style={{
+                    position: 'absolute',
+                    left: arenaSize.width * targetPos.x - 10,
+                    top: arenaSize.height * targetPos.y - 10,
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    backgroundColor: '#00ff00',
+                    zIndex: 999,
+                  }}
+                />
+              ))}
+            </>
+          )}
+        </View>
 
         {/* HUD - Vertical Health Bars */}
         <BattleHealthBars
@@ -280,15 +292,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
         onSelectWeapon={handleSelectWeapon}
         equippedWeaponId={state.player.equippedRangedWeaponId}
       />
-      
-      {/* BlockShield LAST - renders on top of everything */}
-      {arenaSize && (
-        <BlockShield
-          active={isBlockActive}
-          centerX={arenaSize.width / 2}
-          centerY={arenaSize.height / 2}
-        />
-      )}
     </BackgroundImage>
   );
 };
@@ -296,6 +299,12 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  arenaStack: {
+    position: 'relative',
+    alignSelf: 'stretch',
+    flex: 1,
+    overflow: 'visible',
   },
   gameContainer: {
     flex: 1,

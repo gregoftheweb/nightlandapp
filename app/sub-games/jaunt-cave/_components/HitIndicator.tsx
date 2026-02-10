@@ -170,7 +170,8 @@ export const HitIndicator: React.FC<HitIndicatorProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    zIndex: 200, // Above projectile (150)
+    zIndex: 300, // Above projectile (200)
+    elevation: 300, // For Android
     justifyContent: 'center',
     alignItems: 'center',
   },

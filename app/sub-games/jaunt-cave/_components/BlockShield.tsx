@@ -64,7 +64,7 @@ export function BlockShield({ active, centerX, centerY, onExpire }: BlockShieldP
     if (active) {
       // Dev logging
       if (__DEV__) {
-        console.log('[BlockShield] Rendering shield with zIndex: 10000');
+        console.log('[BlockShield] Rendering shield with zIndex: 1000');
       }
       
       // Reset opacity to 0
@@ -162,9 +162,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 10000, // Much higher than attack overlay (100)
-    elevation: 10000, // For Android
-    pointerEvents: 'none',
+    zIndex: 1000, // Highest - always on top
+    elevation: 1000, // For Android
   },
   ring: {
     position: 'absolute',
