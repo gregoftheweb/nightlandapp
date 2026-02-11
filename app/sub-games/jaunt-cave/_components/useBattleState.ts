@@ -378,7 +378,9 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
     if (daemonHP <= 0 && !daemonDeadRef.current) {
       daemonDeadRef.current = true;
 
+      // Stop the animation cycle
       isRunningRef.current = false;
+      // Clear any pending animation timers
       clearTimer();
 
       daemonDeathNavigationTimerRef.current = setTimeout(() => {
