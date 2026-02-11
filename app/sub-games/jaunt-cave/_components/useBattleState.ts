@@ -4,7 +4,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Animated } from 'react-native';
 import { DaemonState, PositionKey } from './DaemonSprite';
-import { BLOCK_SHIELD_CONFIG } from './BlockShield';
 
 // Re-export DaemonState for use in other modules
 export { DaemonState };
@@ -27,6 +26,9 @@ const TIMINGS = {
   LANDED: 800,
   ATTACK: 750,
   TRANSITION_TO_RESTING: 400,
+  // 900ms ensures shield circles remain visible for the full attack overlay (750ms) + a small buffer (150ms)
+  // This prevents the shield from disappearing before the attack animation completes
+  BLOCK_SHIELD_VISUAL_DURATION: 900,
 };
 
 export interface UseBattleStateProps {
@@ -81,6 +83,28 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   // Block state
   const [isBlockActive, setIsBlockActive] = useState(false);
   const blockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  /**
+   * Tracks whether a block has been armed during PREP2 phase.
+   * - Set to true when player presses Block during PREP2 (activateBlock)
+   * - Consumed (set to false) when attack starts or when cycle ends without attack
+   * - Allows block to be "prepared" in PREP2 and consumed when attack actually occurs
+   */
+  const blockArmedRef = useRef(false);
+  
+  /**
+   * Tracks whether the current attack was successfully blocked.
+   * - Set to true when armed block is consumed at attack start
+   * - Checked by applyDaemonDamage to prevent damage
+   * - Cleared (set to false) after damage prevention logic runs
+   */
+  const attackWasBlockedRef = useRef(false);
+  
+  /**
+   * Statistics for block usage.
+   * - blocksWithoutAttack: Counts blocks armed in PREP2 but wasted (no attack occurred)
+   */
+  const blockStatsRef = useRef({ blocksWithoutAttack: 0 });
 
   // Single timer ref - THIS IS CRITICAL
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -126,17 +150,13 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
   // Apply damage and handle death
   const applyDaemonDamage = useCallback(() => {
-    // Check if block is active
-    if (isBlockActive) {
+    // Check if attack was blocked (armed block consumed during attack start)
+    if (attackWasBlockedRef.current) {
       if (__DEV__) {
         console.log('[useBattleState] Attack blocked! No damage taken.');
       }
-      // Consume the block
-      setIsBlockActive(false);
-      if (blockTimerRef.current) {
-        clearTimeout(blockTimerRef.current);
-        blockTimerRef.current = null;
-      }
+      // Clear the blocked flag
+      attackWasBlockedRef.current = false;
       // Skip damage application
       return;
     }
@@ -178,7 +198,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
         }, TIMINGS.ATTACK);
       }
     }
-  }, [dispatch, router, isBlockActive]);
+  }, [dispatch, router]);
 
   // Apply player damage to daemon
   const applyPlayerDamage = useCallback((damage: number) => {
@@ -195,23 +215,12 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   const activateBlock = useCallback((): 'success' | 'too_early' | 'too_late' => {
     // Check if block timing is correct (must be PREP2)
     if (daemonState === DaemonState.PREP2) {
-      // SUCCESS - activate block shield
-      setIsBlockActive(true);
+      // SUCCESS - arm block (will be consumed if attack happens)
+      blockArmedRef.current = true;
       
       if (__DEV__) {
-        console.log('[useBattleState] Block activated successfully!');
+        console.log('[useBattleState] Block armed successfully in PREP2!');
       }
-
-      // Clear any existing block timer
-      if (blockTimerRef.current) {
-        clearTimeout(blockTimerRef.current);
-      }
-
-      // Auto-expire block after duration
-      blockTimerRef.current = setTimeout(() => {
-        setIsBlockActive(false);
-        blockTimerRef.current = null;
-      }, BLOCK_SHIELD_CONFIG.DURATION);
 
       return 'success';
     } else if (daemonState === DaemonState.RESTING || daemonState === DaemonState.PREP1) {
@@ -268,6 +277,22 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
               setDaemonState(DaemonState.ATTACKING);
               triggerShake();
 
+              // Consume an armed block (armed only in PREP2) for this incoming attack
+              if (blockArmedRef.current) {
+                blockArmedRef.current = false;
+                attackWasBlockedRef.current = true;
+
+                // Force shield to be visible DURING the attack overlay
+                setIsBlockActive(true);
+                if (blockTimerRef.current) clearTimeout(blockTimerRef.current);
+                blockTimerRef.current = setTimeout(() => {
+                  setIsBlockActive(false);
+                  blockTimerRef.current = null;
+                }, TIMINGS.BLOCK_SHIELD_VISUAL_DURATION);
+
+                if (__DEV__) console.log('[useBattleState] 🛡 Armed block CONSUMED for incoming attack');
+              }
+
               animationTimerRef.current = setTimeout(() => {
                 // Apply damage after attack animation completes (more realistic)
                 applyDaemonDamage();
@@ -291,6 +316,13 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
             } else {
               // NO ATTACK - daemon appears at new position in landed state
               setDaemonState(DaemonState.LANDED);
+
+              // Clear wasted armed block if player blocked but no attack occurred
+              if (blockArmedRef.current) {
+                blockArmedRef.current = false;
+                blockStatsRef.current.blocksWithoutAttack++;
+                if (__DEV__) console.log('[useBattleState] 🫗 Block armed but no attack (wasted)');
+              }
 
               animationTimerRef.current = setTimeout(() => {
                 // Back to RESTING with crossfade
