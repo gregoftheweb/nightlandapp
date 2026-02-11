@@ -16,6 +16,7 @@ export default function JauntCaveScreen1_5() {
 
   useEffect(() => {
     // Create aggressive shake animation sequence
+    // Each sequence is 350ms, looped to fill 2 seconds
     const shakeSequence = Animated.sequence([
       Animated.timing(shake, { toValue: -10, duration: 50, useNativeDriver: true }),
       Animated.timing(shake, { toValue: 10, duration: 50, useNativeDriver: true }),
@@ -26,7 +27,7 @@ export default function JauntCaveScreen1_5() {
       Animated.timing(shake, { toValue: 0, duration: 50, useNativeDriver: true }),
     ])
 
-    // Loop the shake animation
+    // Loop the shake animation continuously
     const animation = Animated.loop(shakeSequence)
     animation.start()
 
@@ -61,12 +62,10 @@ export default function JauntCaveScreen1_5() {
       >
         <View style={styles.contentArea}>
           {showContent && (
-            <>
-              <Text style={styles.title}>
-                There is a rockfall in the cave! Christos is TRAPPED!{'\n'}
-                In here his destiny becomes his DOOM!
-              </Text>
-            </>
+            <Text style={styles.title}>
+              There is a rockfall in the cave! Christos is TRAPPED!{'\n'}
+              In here his destiny becomes his DOOM!
+            </Text>
           )}
         </View>
 
