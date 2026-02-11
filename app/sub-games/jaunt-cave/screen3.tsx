@@ -12,6 +12,7 @@ import { subGameTheme } from '../_shared/subGameTheme'
 import { saveWaypoint } from '@modules/saveGame'
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen3.png')
+const SUB_GAME_ID = 'jaunt-cave'
 const WAYPOINT_NAME = 'jaunt-cave'
 
 export default function JauntCaveScreen3() {
@@ -19,7 +20,7 @@ export default function JauntCaveScreen3() {
   const { state, dispatch, signalRpgResume } = useGameContext()
 
   // Check if this is a return visit (jaunt-cave already completed)
-  const isReturnVisit = state.subGamesCompleted?.['jaunt-cave'] === true
+  const isReturnVisit = state.subGamesCompleted?.[SUB_GAME_ID] === true
 
   const handleReturnToNightLand = () => {
     if (__DEV__) {
@@ -36,7 +37,7 @@ export default function JauntCaveScreen3() {
       dispatch({
         type: 'SET_SUB_GAME_COMPLETED',
         payload: {
-          subGameName: 'jaunt-cave',
+          subGameName: SUB_GAME_ID,
           completed: true,
         },
       })
@@ -54,7 +55,7 @@ export default function JauntCaveScreen3() {
         // Build updated state with completion flag for the save
         const updatedSubGamesCompleted = {
           ...(state.subGamesCompleted || {}),
-          'jaunt-cave': true,
+          [SUB_GAME_ID]: true,
         }
 
         const stateWithCompletion = {
