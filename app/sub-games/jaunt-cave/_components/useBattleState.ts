@@ -26,6 +26,7 @@ const TIMINGS = {
   LANDED: 800,
   ATTACK: 750,
   TRANSITION_TO_RESTING: 400,
+  BLOCK_SHIELD_VISUAL_DURATION: 900, // Duration to show shield circles during attack overlay
 };
 
 export interface UseBattleStateProps {
@@ -80,8 +81,27 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   // Block state
   const [isBlockActive, setIsBlockActive] = useState(false);
   const blockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  /**
+   * Tracks whether a block has been armed during PREP2 phase.
+   * - Set to true when player presses Block during PREP2 (activateBlock)
+   * - Consumed (set to false) when attack starts or when cycle ends without attack
+   * - Allows block to be "prepared" in PREP2 and consumed when attack actually occurs
+   */
   const blockArmedRef = useRef(false);
+  
+  /**
+   * Tracks whether the current attack was successfully blocked.
+   * - Set to true when armed block is consumed at attack start
+   * - Checked by applyDaemonDamage to prevent damage
+   * - Cleared (set to false) after damage prevention logic runs
+   */
   const attackWasBlockedRef = useRef(false);
+  
+  /**
+   * Statistics for block usage.
+   * - blocksWithoutAttack: Counts blocks armed in PREP2 but wasted (no attack occurred)
+   */
   const blockStatsRef = useRef({ blocksWithoutAttack: 0 });
 
   // Single timer ref - THIS IS CRITICAL
@@ -266,7 +286,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
                 blockTimerRef.current = setTimeout(() => {
                   setIsBlockActive(false);
                   blockTimerRef.current = null;
-                }, 900);
+                }, TIMINGS.BLOCK_SHIELD_VISUAL_DURATION);
 
                 if (__DEV__) console.log('[useBattleState] 🛡 Armed block CONSUMED for incoming attack');
               }
