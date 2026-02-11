@@ -111,6 +111,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   const deathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPositionRef = useRef<PositionKey>('center');
   const isRunningRef = useRef(false);
+  const daemonDeadRef = useRef(false);
 
   // Track current HP in a ref to avoid stale state reads
   // This prevents HP from appearing to increase when multiple attacks happen before re-render
@@ -202,6 +203,9 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
   // Apply player damage to daemon
   const applyPlayerDamage = useCallback((damage: number) => {
+    // Early return if daemon is already dead
+    if (daemonDeadRef.current) return;
+    
     setDaemonHP((prevHP) => {
       const newHP = Math.max(0, prevHP - damage);
       if (__DEV__) {
@@ -240,6 +244,9 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
+    // Early return if daemon is dead
+    if (daemonDeadRef.current) return;
+    
     // Prevent multiple simultaneous loops
     if (isRunningRef.current) {
       return;
@@ -362,6 +369,20 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   useEffect(() => {
     currentHPRef.current = currentPlayerHP;
   }, [currentPlayerHP]);
+
+  // Watch daemon HP and trigger navigation when daemon dies
+  useEffect(() => {
+    if (daemonHP <= 0 && !daemonDeadRef.current) {
+      daemonDeadRef.current = true;
+
+      isRunningRef.current = false;
+      clearTimer();
+
+      setTimeout(() => {
+        router.replace('/sub-games/jaunt-cave/screen3');
+      }, 400);
+    }
+  }, [daemonHP, router, clearTimer]);
 
   // Start the loop on mount, cleanup on unmount
   useEffect(() => {
