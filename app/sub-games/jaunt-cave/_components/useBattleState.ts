@@ -29,6 +29,8 @@ const TIMINGS = {
   // 900ms ensures shield circles remain visible for the full attack overlay (750ms) + a small buffer (150ms)
   // This prevents the shield from disappearing before the attack animation completes
   BLOCK_SHIELD_VISUAL_DURATION: 900,
+  // Delay before navigating to victory screen when daemon dies
+  DAEMON_DEATH_NAVIGATION_DELAY: 400,
 };
 
 export interface UseBattleStateProps {
@@ -380,7 +382,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
       setTimeout(() => {
         router.replace('/sub-games/jaunt-cave/screen3');
-      }, 400);
+      }, TIMINGS.DAEMON_DEATH_NAVIGATION_DELAY);
     }
   }, [daemonHP, router, clearTimer]);
 
