@@ -1,6 +1,6 @@
 // app/sub-games/jaunt-cave/screen3.tsx
 // Screen 3: Victory screen for the jaunt-cave sub-game
-import React, { useEffect } from 'react'
+import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
@@ -18,11 +18,20 @@ export default function JauntCaveScreen3() {
   // Check if this is a return visit (jaunt-cave already completed)
   const isReturnVisit = state.subGamesCompleted?.['jaunt-cave'] === true
 
-  // Mark jaunt-cave as completed on mount (only once)
-  useEffect(() => {
+  // Log the visit type on component render
+  if (__DEV__) {
+    if (isReturnVisit) {
+      console.log('[Jaunt Cave] Return visit - already completed')
+    } else {
+      console.log('[Jaunt Cave] First victory - showing first kill messaging')
+    }
+  }
+
+  const handleReturnToNightLand = () => {
+    // Mark as completed only on first victory (when user confirms)
     if (!isReturnVisit) {
       if (__DEV__) {
-        console.log('[Jaunt Cave] Marking sub-game as completed')
+        console.log('[Jaunt Cave] Marking sub-game as completed on victory confirm')
       }
 
       dispatch({
@@ -32,14 +41,8 @@ export default function JauntCaveScreen3() {
           completed: true,
         },
       })
-    } else {
-      if (__DEV__) {
-        console.log('[Jaunt Cave] Return visit - already completed')
-      }
     }
-  }, [dispatch, isReturnVisit])
 
-  const handleReturnToNightLand = () => {
     if (__DEV__) {
       console.log('[Jaunt Cave] Victory - returning to Night Land')
     }
