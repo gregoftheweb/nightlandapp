@@ -111,6 +111,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   // Single timer ref - THIS IS CRITICAL
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const daemonDeathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPositionRef = useRef<PositionKey>('center');
   const isRunningRef = useRef(false);
   const daemonDeadRef = useRef(false);
@@ -380,10 +381,18 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
       isRunningRef.current = false;
       clearTimer();
 
-      setTimeout(() => {
+      daemonDeathNavigationTimerRef.current = setTimeout(() => {
         router.replace('/sub-games/jaunt-cave/screen3');
       }, TIMINGS.DAEMON_DEATH_NAVIGATION_DELAY);
     }
+
+    // Cleanup: clear daemon death navigation timer on unmount or daemonHP change
+    return () => {
+      if (daemonDeathNavigationTimerRef.current) {
+        clearTimeout(daemonDeathNavigationTimerRef.current);
+        daemonDeathNavigationTimerRef.current = null;
+      }
+    };
   }, [daemonHP, router, clearTimer]);
 
   // Start the loop on mount, cleanup on unmount
@@ -397,6 +406,11 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
       if (deathNavigationTimerRef.current) {
         clearTimeout(deathNavigationTimerRef.current);
         deathNavigationTimerRef.current = null;
+      }
+      // Clear daemon death navigation timer if component unmounts
+      if (daemonDeathNavigationTimerRef.current) {
+        clearTimeout(daemonDeathNavigationTimerRef.current);
+        daemonDeathNavigationTimerRef.current = null;
       }
       // Clear block timer if component unmounts
       if (blockTimerRef.current) {
