@@ -26,7 +26,7 @@ export default function JauntCaveMain() {
     if (__DEV__) {
       console.log(`[${SUB_GAME_ID}] Entering the cave`)
     }
-    router.push('/sub-games/jaunt-cave/screen2' as any)
+    router.push('/sub-games/jaunt-cave/screen1_5' as any)
   }
 
   return (
