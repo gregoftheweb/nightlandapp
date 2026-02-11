@@ -211,54 +211,40 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
     });
   }, []);
 
+  const blockArmedRef = useRef(false);
+
   // Activate block shield
-  const activateBlock = useCallback((): 'success' | 'too_early' | 'too_late' => {
-    // Block can only succeed if we're in an attack window
-    // Must be during ATTACKING state (not PREP2) when daemon is actually attacking
-    if (isInAttackWindow && daemonState === DaemonState.ATTACKING) {
-      // SUCCESS - activate block shield during active attack
-      setIsBlockActive(true);
-      attackWasBlockedRef.current = true;
-      
-      // Increment total successful blocks counter
-      blockStatsRef.current.totalSuccessfulBlocks++;
-      
-      if (__DEV__) {
-        console.log('[useBattleState] ✅ Block activated successfully! BLOCKING ACTIVE ATTACK');
-        console.log('[useBattleState] 📊 Block Stats:', {
-          total: blockStatsRef.current.totalSuccessfulBlocks,
-          blockedAttacks: blockStatsRef.current.blocksWithAttack,
-          wastedBlocks: blockStatsRef.current.blocksWithoutAttack,
-        });
-      }
+ const activateBlock = useCallback((): 'success' | 'too_early' | 'too_late' => {
+  // Only PREP2 can arm the block
+  if (daemonState === DaemonState.PREP2) {
+    blockArmedRef.current = true;
+    setIsBlockActive(true);
 
-      // Clear any existing block timer
-      if (blockTimerRef.current) {
-        clearTimeout(blockTimerRef.current);
-      }
+    // visual: show the circles briefly as “raising shield”
+    if (blockTimerRef.current) clearTimeout(blockTimerRef.current);
+    blockTimerRef.current = setTimeout(() => {
+      setIsBlockActive(false);
+      blockTimerRef.current = null;
+    }, 900);
 
-      // Auto-expire block shield after ~900ms (for visual effect overlap with attack)
-      // This is slightly shorter than BLOCK_SHIELD_CONFIG.DURATION to ensure clean transition
-      blockTimerRef.current = setTimeout(() => {
-        setIsBlockActive(false);
-        blockTimerRef.current = null;
-      }, 900);
+    if (__DEV__) console.log('[useBattleState] 🛡 Block ARMED in PREP2');
+    return 'success';
+  }
 
-      return 'success';
-    } else if (daemonState === DaemonState.RESTING || daemonState === DaemonState.PREP1 || daemonState === DaemonState.PREP2) {
-      // TOO EARLY - not attacking yet (or won't attack this cycle)
-      if (__DEV__) {
-        console.log('[useBattleState] ❌ Block too early. State:', daemonState, 'Will attack:', willAttackRef.current);
-      }
-      return 'too_early';
-    } else {
-      // TOO LATE (LANDED or ATTACKING without attack window - shouldn't normally happen)
-      if (__DEV__) {
-        console.log('[useBattleState] ❌ Block too late. State:', daemonState);
-      }
-      return 'too_late';
-    }
-  }, [daemonState, isInAttackWindow]);
+  // PREP1 or earlier is too early
+  if (
+    daemonState === DaemonState.RESTING ||
+    daemonState === DaemonState.PREP1
+  ) {
+    if (__DEV__) console.log('[useBattleState] ❌ Block TOO EARLY. State:', daemonState);
+    return 'too_early';
+  }
+
+  // ATTACKING or later is too late
+  if (__DEV__) console.log('[useBattleState] ❌ Block TOO LATE. State:', daemonState);
+  return 'too_late';
+}, [daemonState]);
+
 
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
