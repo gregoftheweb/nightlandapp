@@ -1,10 +1,11 @@
 // app/sub-games/jaunt-cave/main.tsx
 // Screen 1: Intro screen for the jaunt-cave sub-game
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
 import { getSubGameDefinition } from '@config/subGames'
+import { useGameContext } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { ReadableTextBox } from '../_shared/ReadableTextBox'
@@ -15,6 +16,25 @@ const definition = getSubGameDefinition(SUB_GAME_ID)
 
 export default function JauntCaveMain() {
   const router = useRouter()
+  const { state } = useGameContext()
+  const [isCheckingCompletion, setIsCheckingCompletion] = useState(true)
+
+  // Check if Jaunt Cave has been completed on mount
+  useEffect(() => {
+    const isCompleted = state.subGamesCompleted?.[SUB_GAME_ID] === true
+
+    if (isCompleted) {
+      if (__DEV__) {
+        console.log(`[${SUB_GAME_ID}] Already completed - routing to aftermath screen (screen5)`)
+      }
+      router.replace('/sub-games/jaunt-cave/screen5' as any)
+    } else {
+      if (__DEV__) {
+        console.log(`[${SUB_GAME_ID}] Not completed - showing intro screen`)
+      }
+      setIsCheckingCompletion(false)
+    }
+  }, [router, state.subGamesCompleted])
 
   const handleRejectDestiny = () => {
     if (__DEV__) {
@@ -28,6 +48,11 @@ export default function JauntCaveMain() {
       console.log(`[${SUB_GAME_ID}] Entering the cave`)
     }
     router.push('/sub-games/jaunt-cave/screen1_5' as any)
+  }
+
+  // Prevent UI flicker while checking completion status
+  if (isCheckingCompletion) {
+    return null
   }
 
   return (
