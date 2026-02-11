@@ -2,6 +2,8 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet } from 'react-native'
 
+const FLASH_SIZE = 80 // Base size in pixels
+
 interface TeleportFlashProps {
   id: string
   gridCol: number // Grid column position
@@ -75,8 +77,6 @@ export default function TeleportFlash({
     />
   )
 }
-
-const FLASH_SIZE = 80 // Base size in pixels
 
 const styles = StyleSheet.create({
   flash: {
