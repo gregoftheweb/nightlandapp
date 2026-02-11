@@ -1030,7 +1030,6 @@ export default function Game() {
           <Pressable
             style={styles.jauntTargetOverlay}
             onPress={handleJauntTargetTap}
-            pointerEvents="box-none"
           />
         )}
         <PlayerHUD

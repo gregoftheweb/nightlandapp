@@ -208,6 +208,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
 const HUD_WIDTH = 350 // Standard bar width
 const HUD_WIDTH_EXPANDED = 420 // Expanded bar width when hide button is unlocked
+const CHARGE_INDICATOR_OFFSET = -8 // Offset for charge pips below ability buttons
 
 const styles = StyleSheet.create({
   container: {
@@ -388,7 +389,7 @@ const styles = StyleSheet.create({
   // Charge meter below hide button
   chargeMeter: {
     position: 'absolute',
-    bottom: -8,
+    bottom: CHARGE_INDICATOR_OFFSET,
     left: 0,
     flexDirection: 'row',
     gap: 1,
@@ -449,7 +450,7 @@ const styles = StyleSheet.create({
   // Charge pips below jaunt button
   jauntChargePips: {
     position: 'absolute',
-    bottom: -8,
+    bottom: CHARGE_INDICATOR_OFFSET,
     left: 0,
     flexDirection: 'row',
     gap: 2,
