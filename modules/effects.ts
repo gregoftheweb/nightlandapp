@@ -108,7 +108,7 @@ export interface EffectResult {
  */
 const executeHealEffect: EffectHandler<'heal'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
-  
+
   const healAmount = effect.value
 
   logIfDev('🩹 Executing heal effect:', {
@@ -181,7 +181,7 @@ const executeHealEffect: EffectHandler<'heal'> = (effect, context) => {
  */
 const executeRecuperateEffect: EffectHandler<'recuperate'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
-  
+
   const healAmount = effect.value
 
   logIfDev('💤 Executing recuperate effect:', {
@@ -285,7 +285,7 @@ const executeHideEffect: EffectHandler<'hide'> = (effect, context) => {
  */
 const executeCloakingEffect: EffectHandler<'cloaking'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
-  
+
   const duration = effect.duration
 
   logIfDev('🌫️ Executing cloaking effect:', { duration, currentHideTurns: state.player.hideTurns })
@@ -447,7 +447,7 @@ const executeSoulsuckEffect: EffectHandler<'soulsuck'> = (effect, context) => {
  */
 const executePoisonEffect: EffectHandler<'poison'> = (effect, context) => {
   const { state, dispatch, showDialog } = context
-  
+
   const damage = effect.value
 
   logIfDev('☠️ Executing poison effect:', { damage, currentHP: state.player.currentHP })
@@ -493,7 +493,7 @@ const executePoisonEffect: EffectHandler<'poison'> = (effect, context) => {
  */
 const executeShowMessageEffect: EffectHandler<'showMessage'> = (effect, context) => {
   const { showDialog, item } = context
-  
+
   const message = effect.message || effect.description || 'A message appears.'
 
   logIfDev('📜 Executing showMessage effect')

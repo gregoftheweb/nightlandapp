@@ -16,7 +16,7 @@ export function enterSubGame(subGameId: SubGameId, context?: { objectId?: string
 
   // Get the sub-game definition from the registry
   const definition = getSubGameDefinition(subGameId)
-  
+
   // Navigate to the sub-game's intro route
   // Use replace to prevent navigation stack buildup when entering/exiting sub-games
   router.replace(definition.introRoute as any)

@@ -34,7 +34,7 @@ export const executeAttack = (attacker: any, defender: any, dispatch: any): bool
   if (hit) {
     const damageRoll = Math.floor(Math.random() * 6) + 1
     const totalDamage = damageRoll + Math.floor(attacker.attack / 2)
-    
+
     // Use currentHP consistently for both player and monsters
     const currentHp = defender.currentHP
     const newHp = Math.max(0, currentHp - totalDamage)

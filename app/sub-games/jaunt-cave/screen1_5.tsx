@@ -55,12 +55,7 @@ export default function JauntCaveScreen1_5() {
 
   return (
     <View style={styles.rootContainer}>
-      <Animated.View
-        style={[
-          styles.fullScreen,
-          { transform: [{ translateX: shake }] },
-        ]}
-      >
+      <Animated.View style={[styles.fullScreen, { transform: [{ translateX: shake }] }]}>
         <BackgroundImage source={BACKGROUND}>
           <View style={styles.container}>
             <View style={styles.contentArea}>

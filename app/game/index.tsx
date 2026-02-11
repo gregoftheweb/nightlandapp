@@ -841,7 +841,9 @@ export default function Game() {
         (m) => m.id === state.targetedMonsterId && m.currentHP > 0
       )
       if (!targetMonster) {
-        targetMonster = state.attackSlots.find((m) => m.id === state.targetedMonsterId && m.currentHP > 0)
+        targetMonster = state.attackSlots.find(
+          (m) => m.id === state.targetedMonsterId && m.currentHP > 0
+        )
       }
 
       if (!targetMonster) {
@@ -1043,10 +1045,7 @@ export default function Game() {
         )}
         {/* Jaunt tap-to-target overlay - shown when Jaunt is armed */}
         {state.player.isJauntArmed && (
-          <Pressable
-            style={styles.jauntTargetOverlay}
-            onPress={handleJauntTargetTap}
-          />
+          <Pressable style={styles.jauntTargetOverlay} onPress={handleJauntTargetTap} />
         )}
         <PlayerHUD
           currentHP={state.player.currentHP}

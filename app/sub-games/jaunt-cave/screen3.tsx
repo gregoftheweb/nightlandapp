@@ -116,9 +116,7 @@ export default function JauntCaveScreen3() {
     <BackgroundImage source={BACKGROUND}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          <ReadableTextBox textStyle={styles.titleText}>
-            Victory!
-          </ReadableTextBox>
+          <ReadableTextBox textStyle={styles.titleText}>Victory!</ReadableTextBox>
 
           <ReadableTextBox textStyle={styles.descriptionText}>
             {isReturnVisit
@@ -128,13 +126,17 @@ export default function JauntCaveScreen3() {
           <ReadableTextBox textStyle={styles.descriptionText}>
             {isReturnVisit
               ? 'Christos should not tarry here, nothing but fire and woe remain.'
-              : 'Christos claims the Jaunt Daemon\'s Black Diamond Heart!\n\nHe feels a new power surge through him.'}
+              : "Christos claims the Jaunt Daemon's Black Diamond Heart!\n\nHe feels a new power surge through him."}
           </ReadableTextBox>
         </View>
 
         <BottomActionBar>
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.button} onPress={handleReturnToNightLand} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleReturnToNightLand}
+              activeOpacity={0.7}
+            >
               <Text style={styles.buttonText}>Return to the Night Land</Text>
             </TouchableOpacity>
           </View>

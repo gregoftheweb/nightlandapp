@@ -1,14 +1,14 @@
 // app/sub-games/jaunt-cave/_components/BattleHealthBars.tsx
 // Vertical health bars for Daemon (left) and Christos (right) in battle
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from 'react'
+import { View, Text, StyleSheet } from 'react-native'
 
 interface BattleHealthBarsProps {
-  daemonHP: number;
-  maxDaemonHP: number;
-  christosHP: number;
-  maxChristosHP: number;
+  daemonHP: number
+  maxDaemonHP: number
+  christosHP: number
+  maxChristosHP: number
 }
 
 /**
@@ -53,7 +53,7 @@ export function BattleHealthBars({
         <Text style={styles.hpLabel}>Christos</Text>
       </View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -109,4 +109,4 @@ const styles = StyleSheet.create({
   christosHPFill: {
     backgroundColor: '#44ff44',
   },
-});
+})

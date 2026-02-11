@@ -1,24 +1,17 @@
 // app/sub-games/jaunt-cave/_components/WeaponsInventoryModal.tsx
 // Weapons-only inventory modal for battle screen
 
-import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
-import { subGameTheme } from '../../_shared/subGameTheme';
-import { Item } from '@config/types';
+import React from 'react'
+import { View, Text, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native'
+import { subGameTheme } from '../../_shared/subGameTheme'
+import { Item } from '@config/types'
 
 interface WeaponsInventoryModalProps {
-  visible: boolean;
-  weapons: Item[];
-  onClose: () => void;
-  onSelectWeapon: (weapon: Item) => void;
-  equippedWeaponId?: string | null;
+  visible: boolean
+  weapons: Item[]
+  onClose: () => void
+  onSelectWeapon: (weapon: Item) => void
+  equippedWeaponId?: string | null
 }
 
 /**
@@ -33,12 +26,7 @@ export function WeaponsInventoryModal({
   equippedWeaponId,
 }: WeaponsInventoryModalProps) {
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <View style={styles.header}>
@@ -53,14 +41,11 @@ export function WeaponsInventoryModal({
               <Text style={styles.emptyText}>No ranged weapons available</Text>
             ) : (
               weapons.map((weapon) => {
-                const isEquipped = weapon.id === equippedWeaponId;
+                const isEquipped = weapon.id === equippedWeaponId
                 return (
                   <TouchableOpacity
                     key={weapon.id || weapon.weaponId || weapon.name}
-                    style={[
-                      styles.weaponItem,
-                      isEquipped && styles.weaponItemEquipped,
-                    ]}
+                    style={[styles.weaponItem, isEquipped && styles.weaponItemEquipped]}
                     onPress={() => onSelectWeapon(weapon)}
                     activeOpacity={isEquipped ? 0.5 : 0.7}
                     disabled={isEquipped}
@@ -68,37 +53,29 @@ export function WeaponsInventoryModal({
                     <View style={styles.weaponInfo}>
                       <View style={styles.weaponNameRow}>
                         <Text style={styles.weaponName}>{weapon.name}</Text>
-                        {isEquipped && (
-                          <Text style={styles.equippedBadge}>EQUIPPED</Text>
-                        )}
+                        {isEquipped && <Text style={styles.equippedBadge}>EQUIPPED</Text>}
                       </View>
                       {weapon.description && (
-                        <Text style={styles.weaponDescription}>
-                          {weapon.description}
-                        </Text>
+                        <Text style={styles.weaponDescription}>{weapon.description}</Text>
                       )}
                       <View style={styles.weaponStats}>
                         {weapon.damage && (
-                          <Text style={styles.weaponStat}>
-                            Damage: {weapon.damage}
-                          </Text>
+                          <Text style={styles.weaponStat}>Damage: {weapon.damage}</Text>
                         )}
                         {weapon.weaponType && (
-                          <Text style={styles.weaponStat}>
-                            Type: {weapon.weaponType}
-                          </Text>
+                          <Text style={styles.weaponStat}>Type: {weapon.weaponType}</Text>
                         )}
                       </View>
                     </View>
                   </TouchableOpacity>
-                );
+                )
               })
             )}
           </ScrollView>
         </View>
       </View>
     </Modal>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -200,4 +177,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: subGameTheme.black,
   },
-});
+})

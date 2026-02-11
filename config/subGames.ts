@@ -1,6 +1,6 @@
 /**
  * Sub-game Registry
- * 
+ *
  * Central registry for all sub-game metadata including titles, descriptions,
  * routes, and intro background images. This standardizes sub-game configuration
  * without changing their unique puzzle mechanics.
@@ -27,29 +27,29 @@ export type SubGameId = 'aerowreckage-puzzle' | 'hermit-hollow' | 'jaunt-cave' |
 export interface SubGameDefinition {
   /** Unique identifier matching the sub-game directory name */
   id: SubGameId
-  
+
   /** Full route path to the intro screen */
   introRoute: string
-  
+
   /** Display title for the sub-game */
   title: string
-  
+
   /** Descriptive text about the sub-game */
   description: string
-  
+
   /** Background image for the intro screen */
   introBackgroundImage: ImageSourcePropType
-  
+
   /** Optional entrance definition for overworld placement */
   entrance?: SubGameEntranceDefinition
-  
+
   // Optional future fields (typed for forward compatibility)
   /** Rewards granted upon completion */
   rewards?: unknown
-  
+
   /** Flag name in state.subGamesCompleted */
   completionFlag?: string
-  
+
   /** Whether the sub-game can only be played once */
   isOneShot?: boolean
 }
@@ -83,7 +83,7 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
       requiresPlayerOnObject: true,
     },
   },
-  
+
   'hermit-hollow': {
     id: 'hermit-hollow',
     introRoute: '/sub-games/hermit-hollow/main',
@@ -112,7 +112,7 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
       requiresPlayerOnObject: true,
     },
   },
-  
+
   'jaunt-cave': {
     id: 'jaunt-cave',
     introRoute: '/sub-games/jaunt-cave/main',
@@ -137,8 +137,8 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
       requiresPlayerOnObject: true,
     },
   },
-  
-  'tesseract': {
+
+  tesseract: {
     id: 'tesseract',
     introRoute: '/sub-games/tesseract/main',
     title: 'Tesseract',

@@ -16,10 +16,10 @@ interface TeleportFlashProps {
 
 /**
  * TeleportFlash - A visual effect for teleportation
- * 
+ *
  * Displays a bright radial flash that expands and fades out.
  * Used when the player uses the Jaunt ability to teleport.
- * 
+ *
  * Animation:
  * - Starts small (scale 0.4) and bright (opacity 0.9)
  * - Expands to scale 2.2 while fading to transparent

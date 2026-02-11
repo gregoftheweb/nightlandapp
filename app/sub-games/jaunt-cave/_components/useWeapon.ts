@@ -1,15 +1,15 @@
 // app/sub-games/jaunt-cave/_components/useWeapon.ts
 // Custom hook for managing weapon actions and interactions
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Item, GameState } from '@config/types';
-import { DaemonState } from './useBattleState';
-import { HIT_INDICATOR_CONFIG } from './HitIndicator';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { Item, GameState } from '@config/types'
+import { DaemonState } from './useBattleState'
+import { HIT_INDICATOR_CONFIG } from './HitIndicator'
 
-const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
+const DEFAULT_BOLT_COLOR = '#990000' // Fallback color when no weapon equipped
 
 // Laser pistol weapon ID for damage multiplier
-const LASER_PISTOL_ID = 'weapon-lazer-pistol-001';
+const LASER_PISTOL_ID = 'weapon-lazer-pistol-001'
 
 // Zap target positions (percentage of arena dimensions)
 // These are independent of daemon spawn positions and can be tweaked independently
@@ -17,37 +17,41 @@ const LASER_PISTOL_ID = 'weapon-lazer-pistol-001';
 // Adjust these values to fine-tune where projectiles hit
 // They are initially set to match daemon spawn positions but can be adjusted as needed
 export const ZAP_TARGETS = {
-  left: { x: 0.2, y: 0.335 },    // Left target position (moved up from 0.37)
-  center: { x: 0.5, y: 0.345 },   // Center target position (moved up from 0.38)
-  right: { x: 0.8, y: 0.345 },    // Right target position (moved up from 0.38)
-} as const;
+  left: { x: 0.2, y: 0.335 }, // Left target position (moved up from 0.37)
+  center: { x: 0.5, y: 0.345 }, // Center target position (moved up from 0.38)
+  right: { x: 0.8, y: 0.345 }, // Right target position (moved up from 0.38)
+} as const
 
 export interface UseWeaponProps {
-  gameState: GameState;
-  dispatch: React.Dispatch<any>; // GameAction type not exported from context
-  arenaSize: { width: number; height: number } | null;
-  onSetFeedback: (message: string) => void;
-  onFireProjectile: (from: { x: number; y: number }, to: { x: number; y: number }, color: string) => void;
-  getDaemonState: () => DaemonState;
-  getCurrentDaemonPosition: () => 'left' | 'center' | 'right';
-  projectileDuration: number; // Duration of projectile flight
-  getEquippedWeaponDamage: () => { min: number; max: number } | null;
-  onDaemonHit: (damage: number) => void; // Callback to apply damage to daemon
+  gameState: GameState
+  dispatch: React.Dispatch<any> // GameAction type not exported from context
+  arenaSize: { width: number; height: number } | null
+  onSetFeedback: (message: string) => void
+  onFireProjectile: (
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    color: string
+  ) => void
+  getDaemonState: () => DaemonState
+  getCurrentDaemonPosition: () => 'left' | 'center' | 'right'
+  projectileDuration: number // Duration of projectile flight
+  getEquippedWeaponDamage: () => { min: number; max: number } | null
+  onDaemonHit: (damage: number) => void // Callback to apply damage to daemon
 }
 
 export interface UseWeaponReturn {
-  showInventory: boolean;
-  isZapMenuOpen: boolean;
-  rangedWeapons: Item[];
-  equippedWeaponName: string | null;
-  boltColor: string;
-  handleZapPress: () => void;
-  handleZapTargetPress: (target: 'left' | 'center' | 'right') => void;
-  handleOpenInventory: () => void;
-  handleCloseInventory: () => void;
-  handleSelectWeapon: (weapon: Item) => void;
-  closeZapMenu: () => void;
-  hitIndicator: { position: { x: number; y: number }; type: 'hit' | 'block' } | null;
+  showInventory: boolean
+  isZapMenuOpen: boolean
+  rangedWeapons: Item[]
+  equippedWeaponName: string | null
+  boltColor: string
+  handleZapPress: () => void
+  handleZapTargetPress: (target: 'left' | 'center' | 'right') => void
+  handleOpenInventory: () => void
+  handleCloseInventory: () => void
+  handleSelectWeapon: (weapon: Item) => void
+  closeZapMenu: () => void
+  hitIndicator: { position: { x: number; y: number }; type: 'hit' | 'block' } | null
 }
 
 export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
@@ -62,181 +66,210 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     projectileDuration,
     getEquippedWeaponDamage,
     onDaemonHit,
-  } = props;
+  } = props
 
   // Inventory modal state
-  const [showInventory, setShowInventory] = useState(false);
-  
+  const [showInventory, setShowInventory] = useState(false)
+
   // Zap menu state
-  const [isZapMenuOpen, setIsZapMenuOpen] = useState(false);
-  const zapMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isZapMenuOpen, setIsZapMenuOpen] = useState(false)
+  const zapMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Hit indicator state
-  const [hitIndicator, setHitIndicator] = useState<{ position: { x: number; y: number }; type: 'hit' | 'block' } | null>(null);
+  const [hitIndicator, setHitIndicator] = useState<{
+    position: { x: number; y: number }
+    type: 'hit' | 'block'
+  } | null>(null)
 
   // Get ranged weapons from global weapons catalog based on player's ranged weapon inventory IDs
   const rangedWeapons = useMemo(() => {
-    const rangedWeaponIds = gameState.player.rangedWeaponInventoryIds || [];
+    const rangedWeaponIds = gameState.player.rangedWeaponInventoryIds || []
     return gameState.weapons.filter(
       (weapon: Item) =>
-        weapon.weaponType === 'ranged' && 
-        weapon.id !== null && 
+        weapon.weaponType === 'ranged' &&
+        weapon.id !== null &&
         weapon.id !== undefined &&
         rangedWeaponIds.includes(weapon.id)
-    );
-  }, [gameState.player.rangedWeaponInventoryIds, gameState.weapons]);
-  
+    )
+  }, [gameState.player.rangedWeaponInventoryIds, gameState.weapons])
+
   // Get equipped ranged weapon name for display
   const equippedWeaponName = useMemo(() => {
-    if (!gameState.player.equippedRangedWeaponId) return null;
-    const weapon = gameState.weapons.find((w: Item) => w.id === gameState.player.equippedRangedWeaponId);
-    return weapon ? weapon.name : null;
-  }, [gameState.player.equippedRangedWeaponId, gameState.weapons]);
+    if (!gameState.player.equippedRangedWeaponId) return null
+    const weapon = gameState.weapons.find(
+      (w: Item) => w.id === gameState.player.equippedRangedWeaponId
+    )
+    return weapon ? weapon.name : null
+  }, [gameState.player.equippedRangedWeaponId, gameState.weapons])
 
   // Get bolt color from equipped weapon
   const boltColor = useMemo(() => {
-    if (!gameState.player.equippedRangedWeaponId) return DEFAULT_BOLT_COLOR;
-    const weapon = gameState.weapons.find((w: Item) => w.id === gameState.player.equippedRangedWeaponId);
-    return weapon?.projectileColor || DEFAULT_BOLT_COLOR;
-  }, [gameState.player.equippedRangedWeaponId, gameState.weapons]);
+    if (!gameState.player.equippedRangedWeaponId) return DEFAULT_BOLT_COLOR
+    const weapon = gameState.weapons.find(
+      (w: Item) => w.id === gameState.player.equippedRangedWeaponId
+    )
+    return weapon?.projectileColor || DEFAULT_BOLT_COLOR
+  }, [gameState.player.equippedRangedWeaponId, gameState.weapons])
 
   // Zap menu toggle handler
   const handleZapPress = useCallback(() => {
     // Toggle zap menu open/close
-    setIsZapMenuOpen((prev) => !prev);
+    setIsZapMenuOpen((prev) => !prev)
     if (__DEV__) {
-      console.log('[JauntCave] Zap menu toggled');
+      console.log('[JauntCave] Zap menu toggled')
     }
-  }, []);
+  }, [])
 
   // Zap target selection handler
-  const handleZapTargetPress = useCallback((target: 'left' | 'center' | 'right') => {
-    const targetLabels = {
-      left: 'Left',
-      center: 'Center',
-      right: 'Right',
-    };
-    
-    // Show feedback
-    onSetFeedback(`Zap - ${targetLabels[target]}`);
-    
-    // Clear any existing timer
-    if (zapMenuTimerRef.current) {
-      clearTimeout(zapMenuTimerRef.current);
-    }
-    
-    // Auto-close zap menu after ~1s
-    zapMenuTimerRef.current = setTimeout(() => {
-      setIsZapMenuOpen(false);
-      zapMenuTimerRef.current = null;
-    }, 1000);
-    
-    // Trigger projectile VFX
-    if (arenaSize) {
-      // Calculate start point (bottom center of arena)
-      const startX = arenaSize.width / 2;
-      const startY = arenaSize.height - 20;
-      
-      // Calculate target position directly from arena size
-      const targetPos = ZAP_TARGETS[target];
-      const endX = arenaSize.width * targetPos.x;
-      const endY = arenaSize.height * targetPos.y;
-      
-      // Fire projectile first
-      onFireProjectile({ x: startX, y: startY }, { x: endX, y: endY }, boltColor);
+  const handleZapTargetPress = useCallback(
+    (target: 'left' | 'center' | 'right') => {
+      const targetLabels = {
+        left: 'Left',
+        center: 'Center',
+        right: 'Right',
+      }
 
-      // After projectile flight completes, show hit indicator
-      setTimeout(() => {
-        // Determine if this is a hit or block
-        const daemonState = getDaemonState();
-        const daemonPosition = getCurrentDaemonPosition();
-        const isHit = daemonState === DaemonState.LANDED && daemonPosition === target;
+      // Show feedback
+      onSetFeedback(`Zap - ${targetLabels[target]}`)
 
-        // Show indicator at target location
-        setHitIndicator({
-          position: { x: endX, y: endY },
-          type: isHit ? 'hit' : 'block',
-        });
+      // Clear any existing timer
+      if (zapMenuTimerRef.current) {
+        clearTimeout(zapMenuTimerRef.current)
+      }
 
-        // Apply damage on successful hit
-        if (isHit) {
-          const weaponDamage = getEquippedWeaponDamage();
-          if (weaponDamage) {
-            // Roll damage between min and max
-            const baseDamage = Math.floor(Math.random() * (weaponDamage.max - weaponDamage.min + 1)) + weaponDamage.min;
-            
-            // Get equipped weapon to check for laser pistol
-            const equippedWeapon = gameState.weapons.find((w: Item) => w.id === gameState.player.equippedRangedWeaponId);
-            
-            // Apply 3x damage multiplier for laser pistol
-            const damageToApply = equippedWeapon?.id === LASER_PISTOL_ID
-              ? baseDamage * 3
-              : baseDamage;
-            
-            onDaemonHit(damageToApply);
-            
-            if (__DEV__) {
-              console.log('[useWeapon] HIT! Dealt', damageToApply, 'damage');
-              if (equippedWeapon?.id === LASER_PISTOL_ID) {
-                console.log('[Jaunt] Laser pistol 3x multiplier applied:', baseDamage, '→', damageToApply);
+      // Auto-close zap menu after ~1s
+      zapMenuTimerRef.current = setTimeout(() => {
+        setIsZapMenuOpen(false)
+        zapMenuTimerRef.current = null
+      }, 1000)
+
+      // Trigger projectile VFX
+      if (arenaSize) {
+        // Calculate start point (bottom center of arena)
+        const startX = arenaSize.width / 2
+        const startY = arenaSize.height - 20
+
+        // Calculate target position directly from arena size
+        const targetPos = ZAP_TARGETS[target]
+        const endX = arenaSize.width * targetPos.x
+        const endY = arenaSize.height * targetPos.y
+
+        // Fire projectile first
+        onFireProjectile({ x: startX, y: startY }, { x: endX, y: endY }, boltColor)
+
+        // After projectile flight completes, show hit indicator
+        setTimeout(() => {
+          // Determine if this is a hit or block
+          const daemonState = getDaemonState()
+          const daemonPosition = getCurrentDaemonPosition()
+          const isHit = daemonState === DaemonState.LANDED && daemonPosition === target
+
+          // Show indicator at target location
+          setHitIndicator({
+            position: { x: endX, y: endY },
+            type: isHit ? 'hit' : 'block',
+          })
+
+          // Apply damage on successful hit
+          if (isHit) {
+            const weaponDamage = getEquippedWeaponDamage()
+            if (weaponDamage) {
+              // Roll damage between min and max
+              const baseDamage =
+                Math.floor(Math.random() * (weaponDamage.max - weaponDamage.min + 1)) +
+                weaponDamage.min
+
+              // Get equipped weapon to check for laser pistol
+              const equippedWeapon = gameState.weapons.find(
+                (w: Item) => w.id === gameState.player.equippedRangedWeaponId
+              )
+
+              // Apply 3x damage multiplier for laser pistol
+              const damageToApply =
+                equippedWeapon?.id === LASER_PISTOL_ID ? baseDamage * 3 : baseDamage
+
+              onDaemonHit(damageToApply)
+
+              if (__DEV__) {
+                console.log('[useWeapon] HIT! Dealt', damageToApply, 'damage')
+                if (equippedWeapon?.id === LASER_PISTOL_ID) {
+                  console.log(
+                    '[Jaunt] Laser pistol 3x multiplier applied:',
+                    baseDamage,
+                    '→',
+                    damageToApply
+                  )
+                }
               }
             }
           }
-        }
 
-        // Clear indicator after its animation finishes
-        setTimeout(() => {
-          setHitIndicator(null);
-        }, HIT_INDICATOR_CONFIG.DURATION + HIT_INDICATOR_CONFIG.FADE_OUT_DURATION);
-      }, projectileDuration);
-    }
-    
-    if (__DEV__) {
-      console.log('[JauntCave] Zap target selected:', target);
-    }
-  }, [arenaSize, onSetFeedback, onFireProjectile, boltColor, getDaemonState, getCurrentDaemonPosition, projectileDuration]);
+          // Clear indicator after its animation finishes
+          setTimeout(() => {
+            setHitIndicator(null)
+          }, HIT_INDICATOR_CONFIG.DURATION + HIT_INDICATOR_CONFIG.FADE_OUT_DURATION)
+        }, projectileDuration)
+      }
+
+      if (__DEV__) {
+        console.log('[JauntCave] Zap target selected:', target)
+      }
+    },
+    [
+      arenaSize,
+      onSetFeedback,
+      onFireProjectile,
+      boltColor,
+      getDaemonState,
+      getCurrentDaemonPosition,
+      projectileDuration,
+    ]
+  )
 
   // Inventory modal handlers
   const handleOpenInventory = useCallback(() => {
-    setShowInventory(true);
+    setShowInventory(true)
     if (__DEV__) {
-      console.log('[JauntCave] Inventory opened');
+      console.log('[JauntCave] Inventory opened')
     }
-  }, []);
-  
+  }, [])
+
   const handleCloseInventory = useCallback(() => {
-    setShowInventory(false);
-  }, []);
-  
+    setShowInventory(false)
+  }, [])
+
   // Weapon selection handler
-  const handleSelectWeapon = useCallback((weapon: Item) => {
-    if (__DEV__) {
-      console.log('[JauntCave] Equip weapon:', weapon.id);
-    }
-    // Dispatch EQUIP_RANGED_WEAPON action
-    if (weapon.id) {
-      dispatch({
-        type: 'EQUIP_RANGED_WEAPON',
-        payload: { id: weapon.id },
-      });
-    }
-    setShowInventory(false);
-  }, [dispatch]);
+  const handleSelectWeapon = useCallback(
+    (weapon: Item) => {
+      if (__DEV__) {
+        console.log('[JauntCave] Equip weapon:', weapon.id)
+      }
+      // Dispatch EQUIP_RANGED_WEAPON action
+      if (weapon.id) {
+        dispatch({
+          type: 'EQUIP_RANGED_WEAPON',
+          payload: { id: weapon.id },
+        })
+      }
+      setShowInventory(false)
+    },
+    [dispatch]
+  )
 
   // Close zap menu method (for external control, e.g., when blocking)
   const closeZapMenu = useCallback(() => {
-    setIsZapMenuOpen(false);
-  }, []);
+    setIsZapMenuOpen(false)
+  }, [])
 
   // Cleanup zap menu timer on unmount
   useEffect(() => {
     return () => {
       if (zapMenuTimerRef.current) {
-        clearTimeout(zapMenuTimerRef.current);
-        zapMenuTimerRef.current = null;
+        clearTimeout(zapMenuTimerRef.current)
+        zapMenuTimerRef.current = null
       }
-    };
-  }, []);
+    }
+  }, [])
 
   return {
     showInventory,
@@ -251,5 +284,5 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     handleSelectWeapon,
     closeZapMenu,
     hitIndicator,
-  };
+  }
 }

@@ -12,8 +12,7 @@ export function reduceCombat(state: GameState, action: any): GameState | null {
       const exitingCombat = !action.payload.inCombat && state.inCombat
       // Check if there are any living monsters remaining
       const hasRemainingMonsters =
-        action.payload.attackSlots.length > 0 ||
-        state.activeMonsters.some((m) => m.currentHP > 0)
+        action.payload.attackSlots.length > 0 || state.activeMonsters.some((m) => m.currentHP > 0)
 
       // Determine if we should clear ranged mode
       // Clear when: entering combat OR exiting combat with no monsters left

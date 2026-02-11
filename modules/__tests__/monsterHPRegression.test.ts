@@ -1,6 +1,6 @@
 /**
  * Regression tests for monster HP field consistency
- * 
+ *
  * Ensures that after migrating to MonsterTemplate:
  * - Runtime monsters always have both currentHP and maxHP
  * - currentHP is never null/undefined

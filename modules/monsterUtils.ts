@@ -45,7 +45,7 @@ export const checkMonsterSpawn = (
 
   // Use spawn configs
   const spawnConfigs = state.level.monsterSpawnConfigs
-  
+
   if (!spawnConfigs || spawnConfigs.length === 0) {
     logIfDev('No spawn configs available, skipping monster spawn')
     return
@@ -53,7 +53,7 @@ export const checkMonsterSpawn = (
 
   // Use MonsterSpawnConfig[]
   logIfDev('Using spawn configs')
-  
+
   // Pre-compute counts by templateId for O(1) lookups (perf: avoids filter per config)
   const typeCounts = new Map<string, number>()
   state.activeMonsters.forEach((m) => {
@@ -63,8 +63,12 @@ export const checkMonsterSpawn = (
 
   for (const spawnConfig of spawnConfigs) {
     // Skip if spawn configuration is incomplete
-    if (spawnConfig.spawnRate === undefined || spawnConfig.spawnRate === null ||
-        spawnConfig.maxInstances === undefined || spawnConfig.maxInstances === null) {
+    if (
+      spawnConfig.spawnRate === undefined ||
+      spawnConfig.spawnRate === null ||
+      spawnConfig.maxInstances === undefined ||
+      spawnConfig.maxInstances === null
+    ) {
       continue
     }
 
@@ -78,10 +82,7 @@ export const checkMonsterSpawn = (
 
     // Use the spawn logic: Math.random() < spawnRate (percentage chance per turn)
     if (Math.random() < spawnConfig.spawnRate) {
-      const newMonster = createMonsterFromTemplate(
-        spawnConfig.templateId,
-        getSpawnPosition(state)
-      )
+      const newMonster = createMonsterFromTemplate(spawnConfig.templateId, getSpawnPosition(state))
       if (!newMonster) {
         continue
       }

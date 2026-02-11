@@ -1,6 +1,6 @@
 /**
  * Unit tests for hydration module
- * 
+ *
  * Tests verify that:
  * - Templates and instances merge correctly
  * - Instance properties override template defaults

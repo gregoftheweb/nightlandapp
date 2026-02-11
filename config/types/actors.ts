@@ -1,5 +1,12 @@
 import { ImageSourcePropType } from 'react-native'
-import { MaxHP, CurrentHP, Position, WeaponType, MonsterCategory, GreatPowerCategory } from './primitives'
+import {
+  MaxHP,
+  CurrentHP,
+  Position,
+  WeaponType,
+  MonsterCategory,
+  GreatPowerCategory,
+} from './primitives'
 import { EntityTemplate } from './entitiesBase'
 import { Item } from './itemsAndObjects'
 import { Effect } from './effects'
