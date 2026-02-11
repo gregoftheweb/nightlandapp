@@ -22,11 +22,7 @@ interface ReadableTextBoxProps {
 export function ReadableTextBox({ children, style, textStyle }: ReadableTextBoxProps) {
   return (
     <View style={[styles.textBox, style]}>
-      {typeof children === 'string' ? (
-        <Text style={[styles.text, textStyle]}>{children}</Text>
-      ) : (
-        children
-      )}
+      <Text style={[styles.text, textStyle]}>{children}</Text>
     </View>
   )
 }
