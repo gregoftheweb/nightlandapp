@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native
 import { useRouter } from 'expo-router'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
+import { ReadableTextBox } from '../_shared/ReadableTextBox'
 import { subGameTheme } from '../_shared/subGameTheme'
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png')
@@ -64,10 +65,10 @@ export default function JauntCaveScreen1_5() {
           <View style={styles.container}>
             <View style={styles.contentArea}>
               {showContent && (
-                <Text style={styles.title}>
-                  There is a rockfall in the cave! Christos is TRAPPED!{'\n'}
+                <ReadableTextBox textStyle={styles.narrativeText}>
+                  There is a rockfall in the cave! Christos is TRAPPED!{'\n\n'}
                   In here his destiny becomes his DOOM!
-                </Text>
+                </ReadableTextBox>
               )}
             </View>
 
@@ -111,12 +112,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     gap: 20,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: subGameTheme.red,
+  narrativeText: {
     textAlign: 'center',
-    lineHeight: 32,
+    fontWeight: '600',
   },
   buttonRow: {
     flexDirection: 'row',

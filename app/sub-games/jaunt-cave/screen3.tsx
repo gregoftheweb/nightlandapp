@@ -7,6 +7,7 @@ import { exitSubGame } from '@modules/subGames'
 import { useGameContext } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
+import { ReadableTextBox } from '../_shared/ReadableTextBox'
 import { subGameTheme } from '../_shared/subGameTheme'
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen3.png')
@@ -50,18 +51,20 @@ export default function JauntCaveScreen3() {
     <BackgroundImage source={BACKGROUND}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          <Text style={styles.title}>Victory!</Text>
+          <ReadableTextBox textStyle={styles.titleText}>
+            Victory!
+          </ReadableTextBox>
 
-          <Text style={styles.description}>
+          <ReadableTextBox textStyle={styles.descriptionText}>
             {isReturnVisit
               ? 'Christos has already defeated the Jaunt Daemon.\n\nOnly a pile of black dust remains.'
               : 'Christos has slain the Jaunt Daemon!\n\nThe creature dissolves into shadow and ash.\n\nThe cave falls silent.'}
-          </Text>
-          <Text style={styles.description}>
+          </ReadableTextBox>
+          <ReadableTextBox textStyle={styles.descriptionText}>
             {isReturnVisit
               ? 'Christos should not tarry here, nothing but fire and woe remain.'
               : 'Christos claims the Jaunt Daemon\'s Black Diamond Heart!\n\nHe feels a new power surge through him.'}
-          </Text>
+          </ReadableTextBox>
         </View>
 
         <BottomActionBar>
@@ -88,19 +91,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     gap: 20,
   },
-  title: {
-    fontSize: 32,
+  titleText: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: subGameTheme.red,
     textAlign: 'center',
-    lineHeight: 40,
   },
-  description: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: subGameTheme.red,
+  descriptionText: {
     textAlign: 'center',
-    lineHeight: 26,
   },
   buttonRow: {
     flexDirection: 'row',
