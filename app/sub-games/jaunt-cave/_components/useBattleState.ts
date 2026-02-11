@@ -29,6 +29,8 @@ const TIMINGS = {
   // 900ms ensures shield circles remain visible for the full attack overlay (750ms) + a small buffer (150ms)
   // This prevents the shield from disappearing before the attack animation completes
   BLOCK_SHIELD_VISUAL_DURATION: 900,
+  // Delay before navigating to victory screen when daemon dies
+  DAEMON_DEATH_NAVIGATION_DELAY: 400,
 };
 
 export interface UseBattleStateProps {
@@ -109,8 +111,10 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
   // Single timer ref - THIS IS CRITICAL
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const daemonDeathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPositionRef = useRef<PositionKey>('center');
   const isRunningRef = useRef(false);
+  const daemonDeadRef = useRef(false);
 
   // Track current HP in a ref to avoid stale state reads
   // This prevents HP from appearing to increase when multiple attacks happen before re-render
@@ -194,7 +198,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
         // Delay navigation to death screen until after attack animation completes
         // This allows the attack overlay to display for its full duration (750ms)
         deathNavigationTimerRef.current = setTimeout(() => {
-          router.replace('/death');
+          router.replace('/sub-games/jaunt-cave/screen4' as any);
         }, TIMINGS.ATTACK);
       }
     }
@@ -202,6 +206,9 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
   // Apply player damage to daemon
   const applyPlayerDamage = useCallback((damage: number) => {
+    // Early return if daemon is already dead
+    if (daemonDeadRef.current) return;
+    
     setDaemonHP((prevHP) => {
       const newHP = Math.max(0, prevHP - damage);
       if (__DEV__) {
@@ -240,6 +247,9 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
 
   // THE STATE MACHINE - Single orchestrator
   const runAnimationCycle = useCallback(() => {
+    // Early return if daemon is dead
+    if (daemonDeadRef.current) return;
+    
     // Prevent multiple simultaneous loops
     if (isRunningRef.current) {
       return;
@@ -363,6 +373,30 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
     currentHPRef.current = currentPlayerHP;
   }, [currentPlayerHP]);
 
+  // Watch daemon HP and trigger navigation when daemon dies
+  useEffect(() => {
+    if (daemonHP <= 0 && !daemonDeadRef.current) {
+      daemonDeadRef.current = true;
+
+      // Stop the animation cycle
+      isRunningRef.current = false;
+      // Clear any pending animation timers
+      clearTimer();
+
+      daemonDeathNavigationTimerRef.current = setTimeout(() => {
+        router.replace('/sub-games/jaunt-cave/screen3');
+      }, TIMINGS.DAEMON_DEATH_NAVIGATION_DELAY);
+    }
+
+    // Cleanup: clear daemon death navigation timer on unmount or daemonHP change
+    return () => {
+      if (daemonDeathNavigationTimerRef.current) {
+        clearTimeout(daemonDeathNavigationTimerRef.current);
+        daemonDeathNavigationTimerRef.current = null;
+      }
+    };
+  }, [daemonHP, router, clearTimer]);
+
   // Start the loop on mount, cleanup on unmount
   useEffect(() => {
     runAnimationCycle();
@@ -374,6 +408,11 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
       if (deathNavigationTimerRef.current) {
         clearTimeout(deathNavigationTimerRef.current);
         deathNavigationTimerRef.current = null;
+      }
+      // Clear daemon death navigation timer if component unmounts
+      if (daemonDeathNavigationTimerRef.current) {
+        clearTimeout(daemonDeathNavigationTimerRef.current);
+        daemonDeathNavigationTimerRef.current = null;
       }
       // Clear block timer if component unmounts
       if (blockTimerRef.current) {

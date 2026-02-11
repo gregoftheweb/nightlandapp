@@ -166,19 +166,21 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   });
 
   // Block action handler
-  const handleBlockPress = useCallback(() => {
+const handleBlockPress = useCallback(
+  (): 'success' | 'too_early' | 'too_late' => {
     const result = battleState.activateBlock();
-    
-    // Show appropriate feedback message
-    if (result === 'success') {
-      // No feedback text - shield with "Block" text will show
-      // Shield is already visible via battleState.isBlockActive
-    } else if (result === 'too_early') {
+
+    if (result === 'too_early') {
       setFeedbackText('Block Failed!\nToo Early');
     } else if (result === 'too_late') {
       setFeedbackText('Block Failed!\nToo Late');
     }
-  }, [battleState]);
+
+    return result; // 🔥 THIS is what TS needs
+  },
+  [battleState]
+);
+
 
   return (
     <BackgroundImage source={BACKGROUND} overlayOpacity={0}>
