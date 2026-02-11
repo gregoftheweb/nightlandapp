@@ -67,17 +67,18 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   // Game context - provides global game state and dispatch for updates
   const { state, dispatch } = useGameContext();
   
+  // Extract completion status for use in effect dependency
+  const isCompleted = state.subGamesCompleted?.[SUB_GAME_ID] ?? false
+  
   // Hardening: Redirect to screen5 if jaunt-cave already completed
   useEffect(() => {
-    const isCompleted = state.subGamesCompleted?.[SUB_GAME_ID] === true
-    
     if (isCompleted) {
       if (__DEV__) {
         console.log('[Jaunt Cave Screen2] Already completed - redirecting to screen5')
       }
       router.replace('/sub-games/jaunt-cave/screen5' as any)
     }
-  }, [router, state.subGamesCompleted])
+  }, [router, isCompleted])
   
   // Get real Christos HP from game state
   const christosHP = state.player.currentHP;

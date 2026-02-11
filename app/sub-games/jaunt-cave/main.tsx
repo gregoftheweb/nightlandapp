@@ -18,11 +18,12 @@ export default function JauntCaveMain() {
   const router = useRouter()
   const { state } = useGameContext()
   const [isCheckingCompletion, setIsCheckingCompletion] = useState(true)
+  
+  // Extract completion status for use in effect dependency
+  const isCompleted = state.subGamesCompleted?.[SUB_GAME_ID] ?? false
 
   // Check if Jaunt Cave has been completed on mount
   useEffect(() => {
-    const isCompleted = state.subGamesCompleted?.[SUB_GAME_ID] === true
-
     if (isCompleted) {
       if (__DEV__) {
         console.log(`[${SUB_GAME_ID}] Already completed - routing to aftermath screen (screen5)`)
@@ -34,7 +35,7 @@ export default function JauntCaveMain() {
       }
       setIsCheckingCompletion(false)
     }
-  }, [router, state.subGamesCompleted])
+  }, [router, isCompleted])
 
   const handleRejectDestiny = () => {
     if (__DEV__) {
