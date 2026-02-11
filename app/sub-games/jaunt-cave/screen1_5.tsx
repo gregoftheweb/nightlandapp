@@ -53,43 +53,50 @@ export default function JauntCaveScreen1_5() {
   }
 
   return (
-    <Animated.View
-      style={[
-        styles.fullScreen,
-        { transform: [{ translateX: shake }] },
-      ]}
-    >
-      <BackgroundImage source={BACKGROUND}>
-        <View style={styles.container}>
-          <View style={styles.contentArea}>
+    <View style={styles.rootContainer}>
+      <Animated.View
+        style={[
+          styles.fullScreen,
+          { transform: [{ translateX: shake }] },
+        ]}
+      >
+        <BackgroundImage source={BACKGROUND}>
+          <View style={styles.container}>
+            <View style={styles.contentArea}>
+              {showContent && (
+                <Text style={styles.title}>
+                  There is a rockfall in the cave! Christos is TRAPPED!{'\n'}
+                  In here his destiny becomes his DOOM!
+                </Text>
+              )}
+            </View>
+
             {showContent && (
-              <Text style={styles.title}>
-                There is a rockfall in the cave! Christos is TRAPPED!{'\n'}
-                In here his destiny becomes his DOOM!
-              </Text>
+              <BottomActionBar>
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={handleContinue}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.buttonText}>He meets his doom</Text>
+                  </TouchableOpacity>
+                </View>
+              </BottomActionBar>
             )}
           </View>
-
-          {showContent && (
-            <BottomActionBar>
-              <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={handleContinue}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.buttonText}>He meets his doom</Text>
-                </TouchableOpacity>
-              </View>
-            </BottomActionBar>
-          )}
-        </View>
-      </BackgroundImage>
-    </Animated.View>
+        </BackgroundImage>
+      </Animated.View>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    overflow: 'hidden',
+  },
   fullScreen: {
     flex: 1,
   },
