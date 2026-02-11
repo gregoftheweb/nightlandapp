@@ -1,6 +1,6 @@
 /**
  * Hydration module - Merges templates with instances to produce runtime entities
- * 
+ *
  * This module provides helper functions to combine static template definitions
  * with runtime instance data, producing "hydrated" entities ready for use in gameplay.
  */
@@ -25,7 +25,7 @@ import type { ImageSourcePropType } from 'react-native'
 /**
  * Hydrate an object by merging a template with an instance
  * Instance-specific properties (position, rotation, zIndex, etc.) override template defaults
- * 
+ *
  * @param template - Static template definition
  * @param instance - Runtime instance data with position and overrides
  * @returns HydratedObject ready for runtime use
@@ -55,7 +55,7 @@ export function hydrateObject(
 /**
  * Batch hydrate multiple objects
  * Useful for hydrating all objects in a level
- * 
+ *
  * @param templates - Map of template shortName -> template
  * @param instances - Array of object instances
  * @returns Array of hydrated objects
@@ -78,15 +78,12 @@ export function hydrateObjects(
 /**
  * Hydrate a monster by merging a template with an instance
  * Instance-specific properties (position, currentHP, spawned, etc.) override template defaults
- * 
+ *
  * @param template - Static monster template definition
  * @param instance - Runtime instance data with position and state
  * @returns Monster ready for runtime use
  */
-export function hydrateMonster(
-  template: MonsterTemplate,
-  instance: MonsterInstance
-): Monster {
+export function hydrateMonster(template: MonsterTemplate, instance: MonsterInstance): Monster {
   return {
     // Spread template first (base definition)
     ...template,
@@ -107,7 +104,7 @@ export function hydrateMonster(
 /**
  * Hydrate a great power by merging a template with an instance
  * Instance-specific properties (position, currentHP, awakened) override template defaults
- * 
+ *
  * @param template - Static great power template definition
  * @param instance - Runtime instance data with position and state
  * @returns GreatPower ready for runtime use
@@ -133,7 +130,7 @@ export function hydrateGreatPower(
 /**
  * Batch hydrate multiple monsters
  * Useful for hydrating all monsters in a level
- * 
+ *
  * @param templates - Map of template shortName -> template
  * @param instances - Array of monster instances
  * @returns Array of hydrated monsters
@@ -154,7 +151,7 @@ export function hydrateMonsters(
 /**
  * Batch hydrate multiple great powers
  * Useful for hydrating all great powers in a level
- * 
+ *
  * @param templates - Map of template shortName -> template
  * @param instances - Array of great power instances
  * @returns Array of hydrated great powers

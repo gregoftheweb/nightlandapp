@@ -3,6 +3,9 @@ import { GameState } from '../../config/types'
 import { logIfDev } from '../../modules/utils'
 import { Position } from '../../config/types/primitives'
 
+// Counter to ensure unique flash IDs even with rapid successive teleports
+let flashIdCounter = 0
+
 export function reduceJaunt(state: GameState, action: any): GameState | null {
   switch (action.type) {
     case 'ARM_JAUNT': {
@@ -78,6 +81,16 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
         chargesRemaining: jauntCharges - 1,
       })
 
+      // Create a teleport flash effect at the destination
+      // Use counter to ensure unique IDs even with rapid successive teleports
+      flashIdCounter++
+      const flashId = `flash-${Date.now()}-${flashIdCounter}`
+      const newFlash = {
+        id: flashId,
+        gridCol: clampedCol,
+        gridRow: clampedRow,
+      }
+
       // Teleport player and consume charge
       return {
         ...state,
@@ -87,6 +100,7 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
           jauntCharges: jauntCharges - 1,
           isJauntArmed: false,
         },
+        activeTeleportFlashes: [...(state.activeTeleportFlashes || []), newFlash],
       }
     }
 

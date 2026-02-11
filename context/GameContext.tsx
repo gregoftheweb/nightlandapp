@@ -42,7 +42,7 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
 
   // Autosave controller - tracks state fingerprint to trigger saves
   const lastSaveFingerprintRef = useRef<string>('')
-  
+
   // Track if game over save deletion has been triggered to avoid multiple calls
   const gameOverDeleteTriggeredRef = useRef<boolean>(false)
 
@@ -81,7 +81,7 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
         gameOverDeleteTriggeredRef.current = false
       })
     }
-    
+
     // Reset the flag when game is reset (gameOver becomes false)
     if (!state.gameOver && gameOverDeleteTriggeredRef.current) {
       gameOverDeleteTriggeredRef.current = false

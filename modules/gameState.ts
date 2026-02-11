@@ -97,6 +97,7 @@ function buildInitialState(
     rangedAttackMode: false,
     targetedMonsterId: null,
     activeProjectiles: [],
+    activeTeleportFlashes: [],
 
     // ===== UI DOMAIN =====
     showInventory: false,
@@ -190,6 +191,7 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
     // Clear combat UI state (combat mechanics will restore if needed)
     combatLog: [],
     activeProjectiles: [],
+    activeTeleportFlashes: [],
     // Keep game state flags from snapshot
     gameOver: snapshot.gameOver || false,
     inCombat: snapshot.inCombat || false,

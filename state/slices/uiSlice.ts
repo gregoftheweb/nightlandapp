@@ -49,6 +49,22 @@ export function reduceUI(state: GameState, action: any): GameState | null {
         activeProjectiles: state.activeProjectiles.filter((p) => p.id !== action.payload.id),
       }
 
+    case 'ADD_TELEPORT_FLASH':
+      logIfDev(`✨ ADD_TELEPORT_FLASH: id=${action.payload.id}`)
+      return {
+        ...state,
+        activeTeleportFlashes: [...(state.activeTeleportFlashes || []), action.payload],
+      }
+
+    case 'REMOVE_TELEPORT_FLASH':
+      logIfDev(`✨ REMOVE_TELEPORT_FLASH: id=${action.payload.id}`)
+      return {
+        ...state,
+        activeTeleportFlashes: (state.activeTeleportFlashes || []).filter(
+          (f) => f.id !== action.payload.id
+        ),
+      }
+
     default:
       return null
   }

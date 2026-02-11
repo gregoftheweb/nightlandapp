@@ -39,7 +39,18 @@ export type EntityKind = 'object' | 'monster' | 'greatPower' | 'item' | 'nonColl
  * Category union types - Provide type safety for known categories while allowing unknown values
  * Using union with string to avoid breaking existing code that may use custom categories
  */
-export type ObjectCategory = 'building' | 'pool' | 'npc' | 'decoration' | 'portal' | 'door' | 'chest' | 'weapon' | 'consumable' | 'collectible' | string
+export type ObjectCategory =
+  | 'building'
+  | 'pool'
+  | 'npc'
+  | 'decoration'
+  | 'portal'
+  | 'door'
+  | 'chest'
+  | 'weapon'
+  | 'consumable'
+  | 'collectible'
+  | string
 export type MonsterCategory = 'regular' | 'elite' | 'boss' | string
 export type GreatPowerCategory = 'greatPower' | 'boss' | string
 export type ItemCategory = 'weapon' | 'consumable' | 'key' | 'collectible' | 'building' | string

@@ -10,13 +10,13 @@ interface ReadableTextBoxProps {
 
 /**
  * ReadableTextBox - Shared component for narrative/description text across sub-games
- * 
+ *
  * Provides consistent readable text treatment with:
  * - Dark translucent background for readability
  * - Blue border with rounded corners
  * - Shadow/glow effect
  * - Proper padding and spacing
- * 
+ *
  * Based on Hermit Hollow conversation text style (the source of truth)
  */
 export function ReadableTextBox({ children, style, textStyle }: ReadableTextBoxProps) {

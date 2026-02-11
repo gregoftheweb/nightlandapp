@@ -1,13 +1,8 @@
 // app/sub-games/jaunt-cave/_components/DaemonSprite.tsx
 // Daemon sprite rendering component for Jaunt Cave screen2
 
-import React, { useRef, useEffect, useCallback } from 'react';
-import {
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from 'react-native';
+import React, { useRef, useEffect, useCallback } from 'react'
+import { Image, TouchableOpacity, StyleSheet, Animated } from 'react-native'
 
 // Daemon sprite states
 export enum DaemonState {
@@ -26,22 +21,22 @@ export const SPRITES = {
   landed: require('@assets/images/sprites/monsters/jaunt-deamon-4.png'),
   attackLeft: require('@assets/images/sprites/monsters/jaunt-deamon-5.png'),
   attackRight: require('@assets/images/sprites/monsters/jaunt-deamon-6.png'),
-};
+}
 
-export type PositionKey = 'left' | 'center' | 'right';
+export type PositionKey = 'left' | 'center' | 'right'
 
 interface DaemonSpriteProps {
-  daemonState: DaemonState;
-  currentPosition: PositionKey;
-  attackDirection: 'left' | 'right';
-  previousState: DaemonState;
-  isCrossfading: boolean;
-  daemonX: number;
-  daemonY: number;
-  arenaSize: { width: number; height: number } | null;
-  isVulnerable: boolean;
-  isAttacking: boolean;
-  onDaemonTap: () => void;
+  daemonState: DaemonState
+  currentPosition: PositionKey
+  attackDirection: 'left' | 'right'
+  previousState: DaemonState
+  isCrossfading: boolean
+  daemonX: number
+  daemonY: number
+  arenaSize: { width: number; height: number } | null
+  isVulnerable: boolean
+  isAttacking: boolean
+  onDaemonTap: () => void
 }
 
 export function DaemonSprite({
@@ -57,46 +52,49 @@ export function DaemonSprite({
   onDaemonTap,
 }: DaemonSpriteProps) {
   // Animation values
-  const glowAnim = useRef(new Animated.Value(0)).current;
-  const fizzleAnim = useRef(new Animated.Value(0)).current;
-  const brightnessAnim = useRef(new Animated.Value(0)).current; // 0 = normal, 1 = bright flash
-  const crossfadeAnim = useRef(new Animated.Value(1)).current; // 1 = current sprite fully visible
+  const glowAnim = useRef(new Animated.Value(0)).current
+  const fizzleAnim = useRef(new Animated.Value(0)).current
+  const brightnessAnim = useRef(new Animated.Value(0)).current // 0 = normal, 1 = bright flash
+  const crossfadeAnim = useRef(new Animated.Value(1)).current // 1 = current sprite fully visible
 
   // Get current sprite
   const getCurrentSprite = useCallback(() => {
     switch (daemonState) {
       case DaemonState.RESTING:
-        return SPRITES.resting;
+        return SPRITES.resting
       case DaemonState.PREP1:
-        return SPRITES.prep1;
+        return SPRITES.prep1
       case DaemonState.PREP2:
-        return SPRITES.prep2;
+        return SPRITES.prep2
       case DaemonState.LANDED:
-        return SPRITES.landed;
+        return SPRITES.landed
       case DaemonState.ATTACKING:
-        return attackDirection === 'left' ? SPRITES.attackLeft : SPRITES.attackRight;
+        return attackDirection === 'left' ? SPRITES.attackLeft : SPRITES.attackRight
       default:
-        return SPRITES.resting;
+        return SPRITES.resting
     }
-  }, [daemonState, attackDirection]);
+  }, [daemonState, attackDirection])
 
   // Get sprite for a specific state (used for crossfade)
-  const getSpriteForState = useCallback((state: DaemonState) => {
-    switch (state) {
-      case DaemonState.RESTING:
-        return SPRITES.resting;
-      case DaemonState.PREP1:
-        return SPRITES.prep1;
-      case DaemonState.PREP2:
-        return SPRITES.prep2;
-      case DaemonState.LANDED:
-        return SPRITES.landed;
-      case DaemonState.ATTACKING:
-        return attackDirection === 'left' ? SPRITES.attackLeft : SPRITES.attackRight;
-      default:
-        return SPRITES.resting;
-    }
-  }, [attackDirection]);
+  const getSpriteForState = useCallback(
+    (state: DaemonState) => {
+      switch (state) {
+        case DaemonState.RESTING:
+          return SPRITES.resting
+        case DaemonState.PREP1:
+          return SPRITES.prep1
+        case DaemonState.PREP2:
+          return SPRITES.prep2
+        case DaemonState.LANDED:
+          return SPRITES.landed
+        case DaemonState.ATTACKING:
+          return attackDirection === 'left' ? SPRITES.attackLeft : SPRITES.attackRight
+        default:
+          return SPRITES.resting
+      }
+    },
+    [attackDirection]
+  )
 
   // Glow effect for vulnerable state
   const startGlowEffect = useCallback(() => {
@@ -113,79 +111,75 @@ export function DaemonSprite({
           useNativeDriver: true,
         }),
       ])
-    ).start();
-  }, [glowAnim]);
+    ).start()
+  }, [glowAnim])
 
   const stopGlowEffect = useCallback(() => {
-    glowAnim.stopAnimation();
-    glowAnim.setValue(0);
-  }, [glowAnim]);
+    glowAnim.stopAnimation()
+    glowAnim.setValue(0)
+  }, [glowAnim])
 
   // Start/stop glow effect based on vulnerable state
   useEffect(() => {
     if (isVulnerable) {
-      startGlowEffect();
+      startGlowEffect()
     } else {
-      stopGlowEffect();
+      stopGlowEffect()
     }
     return () => {
-      stopGlowEffect();
-    };
-  }, [isVulnerable, startGlowEffect, stopGlowEffect]);
+      stopGlowEffect()
+    }
+  }, [isVulnerable, startGlowEffect, stopGlowEffect])
 
   // Fizzle effect for charge-up transitions (triggered by parent)
   useEffect(() => {
     if (daemonState === DaemonState.PREP1 || daemonState === DaemonState.PREP2) {
-      fizzleAnim.setValue(0);
+      fizzleAnim.setValue(0)
       Animated.timing(fizzleAnim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }).start(() => {
-        fizzleAnim.setValue(0);
-      });
+        fizzleAnim.setValue(0)
+      })
     }
-  }, [daemonState, fizzleAnim]);
+  }, [daemonState, fizzleAnim])
 
   // Brightness burst when teleporting (end of prep2 -> landed transition)
   useEffect(() => {
     if (daemonState === DaemonState.LANDED) {
-      brightnessAnim.setValue(1); // Bright flash
+      brightnessAnim.setValue(1) // Bright flash
       Animated.timing(brightnessAnim, {
         toValue: 0,
         duration: 400,
         useNativeDriver: true,
-      }).start();
+      }).start()
     }
-  }, [daemonState, brightnessAnim]);
+  }, [daemonState, brightnessAnim])
 
   // Crossfade animation (triggered when isCrossfading changes)
   useEffect(() => {
     if (isCrossfading) {
-      crossfadeAnim.setValue(0); // Start with previous sprite visible
+      crossfadeAnim.setValue(0) // Start with previous sprite visible
       Animated.timing(crossfadeAnim, {
         toValue: 1,
         duration: 400, // 400ms crossfade
         useNativeDriver: true,
-      }).start();
+      }).start()
     }
-  }, [isCrossfading, crossfadeAnim]);
+  }, [isCrossfading, crossfadeAnim])
 
   // Memoized attack overlay style
   const attackOverlayStyle = [
     styles.attackOverlay,
     arenaSize ? { width: arenaSize.width, height: arenaSize.height } : {},
-  ];
+  ]
 
   return (
     <>
       {/* Attack overlay (full screen) */}
       {isAttacking && arenaSize && (
-        <Image
-          source={getCurrentSprite()}
-          style={attackOverlayStyle}
-          resizeMode="contain"
-        />
+        <Image source={getCurrentSprite()} style={attackOverlayStyle} resizeMode="contain" />
       )}
 
       {/* Daemon (positioned) - only show when not attacking */}
@@ -269,7 +263,7 @@ export function DaemonSprite({
                 resizeMode="contain"
               />
             )}
-            
+
             {/* Current sprite (fading in during crossfade, or fully visible) */}
             <Animated.Image
               source={getCurrentSprite()}
@@ -281,7 +275,7 @@ export function DaemonSprite({
               ]}
               resizeMode="contain"
             />
-            
+
             {/* Brightness overlay for teleport flash */}
             <Animated.View
               style={[
@@ -295,7 +289,7 @@ export function DaemonSprite({
         </TouchableOpacity>
       )}
     </>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -340,4 +334,4 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-});
+})

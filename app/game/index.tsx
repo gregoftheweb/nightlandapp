@@ -685,6 +685,21 @@ export default function Game() {
     [dispatch]
   )
 
+  const handleTeleportFlashComplete = useCallback(
+    (flashId: string) => {
+      if (__DEV__) {
+        console.log('✨ Teleport flash complete:', flashId)
+      }
+
+      // Remove flash from state
+      dispatch({
+        type: 'REMOVE_TELEPORT_FLASH',
+        payload: { id: flashId },
+      })
+    },
+    [dispatch]
+  )
+
   const handleZapPress = useCallback(() => {
     // Cancel Jaunt if armed
     if (state.player.isJauntArmed) {
@@ -826,7 +841,9 @@ export default function Game() {
         (m) => m.id === state.targetedMonsterId && m.currentHP > 0
       )
       if (!targetMonster) {
-        targetMonster = state.attackSlots.find((m) => m.id === state.targetedMonsterId && m.currentHP > 0)
+        targetMonster = state.attackSlots.find(
+          (m) => m.id === state.targetedMonsterId && m.currentHP > 0
+        )
       }
 
       if (!targetMonster) {
@@ -1019,6 +1036,7 @@ export default function Game() {
           onNonCollisionObjectTap={handleNonCollisionObjectTap}
           onDeathInfoBoxClose={handleDeathInfoBoxClose}
           onProjectileComplete={handleProjectileComplete}
+          onTeleportFlashComplete={handleTeleportFlashComplete}
           onShowInfoRef={showInfoRef}
           onCloseInfoRef={closeInfoRef}
         />
@@ -1027,10 +1045,7 @@ export default function Game() {
         )}
         {/* Jaunt tap-to-target overlay - shown when Jaunt is armed */}
         {state.player.isJauntArmed && (
-          <Pressable
-            style={styles.jauntTargetOverlay}
-            onPress={handleJauntTargetTap}
-          />
+          <Pressable style={styles.jauntTargetOverlay} onPress={handleJauntTargetTap} />
         )}
         <PlayerHUD
           currentHP={state.player.currentHP}

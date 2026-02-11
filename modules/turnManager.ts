@@ -398,7 +398,9 @@ export const initializeStartingMonsters = (
           i + 1
         } at (${spawnRow}, ${spawnCol}), distance: ${Math.round(distance)}`
       )
-      logIfDev(`   Stats: HP:${newMonster.currentHP}, Attack:${newMonster.attack}, AC:${newMonster.ac}`)
+      logIfDev(
+        `   Stats: HP:${newMonster.currentHP}, Attack:${newMonster.attack}, AC:${newMonster.ac}`
+      )
     }
   }
 }

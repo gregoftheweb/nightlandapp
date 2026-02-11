@@ -1,11 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react'
-import {
-  View,
-  Image,
-  StyleSheet,
-  ImageSourcePropType,
-  LayoutChangeEvent,
-} from 'react-native'
+import { View, Image, StyleSheet, ImageSourcePropType, LayoutChangeEvent } from 'react-native'
 
 const puzzleBackground = require('@assets/images/backgrounds/subgames/sub-game-background.webp')
 
@@ -109,10 +103,7 @@ export function BackgroundImage({
         }}
       >
         {Array.from({ length: EDGE_FADE_PX }).map((_, i) => {
-          const t =
-            direction === 'up'
-              ? i / (EDGE_FADE_PX - 1)
-              : 1 - i / (EDGE_FADE_PX - 1)
+          const t = direction === 'up' ? i / (EDGE_FADE_PX - 1) : 1 - i / (EDGE_FADE_PX - 1)
 
           const alpha = 0.85 * t
 
@@ -134,29 +125,17 @@ export function BackgroundImage({
   return (
     <View style={styles.container} onLayout={onLayout}>
       {/* Base background */}
-      <Image
-        source={puzzleBackground}
-        style={fillLocked}
-        resizeMode="cover"
-        fadeDuration={0}
-      />
+      <Image source={puzzleBackground} style={fillLocked} resizeMode="cover" fadeDuration={0} />
 
       {/* Foreground */}
       {source ? (
-        <Image
-          source={source}
-          style={foregroundStyle}
-          resizeMode="stretch"
-          fadeDuration={0}
-        />
+        <Image source={source} style={foregroundStyle} resizeMode="stretch" fadeDuration={0} />
       ) : null}
 
       {/* Top / Bottom fade bands */}
       {foregroundMetrics && size ? (
         <>
-          {foregroundMetrics.top > 0
-            ? renderEdgeFade(foregroundMetrics.top, 'up')
-            : null}
+          {foregroundMetrics.top > 0 ? renderEdgeFade(foregroundMetrics.top, 'up') : null}
 
           {foregroundMetrics.bottom < size.h
             ? renderEdgeFade(foregroundMetrics.bottom, 'down')
@@ -165,17 +144,10 @@ export function BackgroundImage({
       ) : null}
 
       {/* Overlay */}
-      <View
-        style={[
-          styles.overlay,
-          { backgroundColor: `rgba(0,0,0,${overlayOpacity})` },
-        ]}
-      />
+      <View style={[styles.overlay, { backgroundColor: `rgba(0,0,0,${overlayOpacity})` }]} />
 
       {/* Game content */}
-      <View style={[styles.contentContainer, contentContainerStyle]}>
-        {children}
-      </View>
+      <View style={[styles.contentContainer, contentContainerStyle]}>{children}</View>
     </View>
   )
 }

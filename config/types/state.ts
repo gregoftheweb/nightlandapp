@@ -1,7 +1,7 @@
 import { Level } from './levels'
 import { Item, LevelObjectInstance, NonCollisionObject } from './itemsAndObjects'
 import { Player, Monster, GreatPower } from './actors'
-import { CombatParticipant, CombatLogEntry, Projectile } from './combat'
+import { CombatParticipant, CombatLogEntry, Projectile, TeleportFlash } from './combat'
 
 /**
  * GameState represents the complete state of the game.
@@ -46,6 +46,7 @@ export interface GameState {
   rangedAttackMode?: boolean // True when player is in ranged attack targeting mode
   targetedMonsterId?: string | null // ID of the currently targeted monster for ranged attack
   activeProjectiles: Projectile[] // Active projectiles being animated
+  activeTeleportFlashes: TeleportFlash[] // Active teleport flash effects
 
   // ===== UI DOMAIN =====
   showInventory?: boolean // Show inventory modal

@@ -18,7 +18,7 @@ export default function JauntCaveMain() {
   const router = useRouter()
   const { state } = useGameContext()
   const [isCheckingCompletion, setIsCheckingCompletion] = useState(true)
-  
+
   // Extract completion status for use in effect dependency
   const isCompleted = state.subGamesCompleted?.[SUB_GAME_ID] ?? false
 
@@ -60,9 +60,7 @@ export default function JauntCaveMain() {
     <BackgroundImage source={definition.introBackgroundImage}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          <ReadableTextBox textStyle={styles.titleText}>
-            {definition.title}
-          </ReadableTextBox>
+          <ReadableTextBox textStyle={styles.titleText}>{definition.title}</ReadableTextBox>
           <ReadableTextBox textStyle={styles.descriptionText}>
             {definition.description}
           </ReadableTextBox>
@@ -75,7 +73,9 @@ export default function JauntCaveMain() {
               onPress={handleRejectDestiny}
               activeOpacity={0.7}
             >
-              <Text style={styles.buttonText}>Reject your destiny and return to the Night Land</Text>
+              <Text style={styles.buttonText}>
+                Reject your destiny and return to the Night Land
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.button} onPress={handleEnterCave} activeOpacity={0.7}>
