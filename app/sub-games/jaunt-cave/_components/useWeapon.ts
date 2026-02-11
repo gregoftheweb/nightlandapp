@@ -160,11 +160,23 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
           const weaponDamage = getEquippedWeaponDamage();
           if (weaponDamage) {
             // Roll damage between min and max
-            const damage = Math.floor(Math.random() * (weaponDamage.max - weaponDamage.min + 1)) + weaponDamage.min;
-            onDaemonHit(damage);
+            const baseDamage = Math.floor(Math.random() * (weaponDamage.max - weaponDamage.min + 1)) + weaponDamage.min;
+            
+            // Get equipped weapon to check for laser pistol
+            const equippedWeapon = gameState.weapons.find((w: Item) => w.id === gameState.player.equippedRangedWeaponId);
+            
+            // Apply 3x damage multiplier for laser pistol
+            const damageToApply = equippedWeapon?.id === 'weapon-lazer-pistol-001'
+              ? baseDamage * 3
+              : baseDamage;
+            
+            onDaemonHit(damageToApply);
             
             if (__DEV__) {
-              console.log('[useWeapon] HIT! Dealt', damage, 'damage');
+              if (equippedWeapon?.id === 'weapon-lazer-pistol-001') {
+                console.log('[Jaunt] Laser pistol bonus damage applied:', damageToApply);
+              }
+              console.log('[useWeapon] HIT! Dealt', damageToApply, 'damage');
             }
           }
         }

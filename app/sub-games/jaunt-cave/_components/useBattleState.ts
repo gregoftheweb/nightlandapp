@@ -194,7 +194,7 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
         // Delay navigation to death screen until after attack animation completes
         // This allows the attack overlay to display for its full duration (750ms)
         deathNavigationTimerRef.current = setTimeout(() => {
-          router.replace('/death');
+          router.replace('/sub-games/jaunt-cave/screen4' as any);
         }, TIMINGS.ATTACK);
       }
     }
