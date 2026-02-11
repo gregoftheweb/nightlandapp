@@ -26,7 +26,9 @@ const TIMINGS = {
   LANDED: 800,
   ATTACK: 750,
   TRANSITION_TO_RESTING: 400,
-  BLOCK_SHIELD_VISUAL_DURATION: 900, // Duration to show shield circles during attack overlay
+  // 900ms ensures shield circles remain visible for the full attack overlay (750ms) + a small buffer (150ms)
+  // This prevents the shield from disappearing before the attack animation completes
+  BLOCK_SHIELD_VISUAL_DURATION: 900,
 };
 
 export interface UseBattleStateProps {
