@@ -60,6 +60,11 @@ describe('Self-Healing Mechanic', () => {
       hideChargeTurns: 0,
       hideActive: false,
       hideRechargeProgressTurns: 0,
+      // Jaunt ability state
+      canJaunt: false,
+      jauntCharges: 0,
+      jauntRechargeCounter: 0,
+      isJauntArmed: false,
     }
 
     return {
