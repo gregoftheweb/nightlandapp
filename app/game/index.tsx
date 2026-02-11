@@ -881,6 +881,22 @@ export default function Game() {
     dispatch({ type: 'TOGGLE_HIDE' })
   }, [state.player.hideUnlocked, state.player.hideActive, state.player.hideChargeTurns, dispatch])
 
+  const handleJauntPress = useCallback(() => {
+    if (!state.player.canJaunt) {
+      if (__DEV__) {
+        console.log('🌀 Jaunt ability not unlocked')
+      }
+      return
+    }
+
+    if (__DEV__) {
+      console.log('🌀 handleJauntPress - Jaunt ability activated (stub)')
+    }
+
+    // Stub handler - dispatch action for future implementation
+    dispatch({ type: 'PLAYER_JAUNT_REQUESTED' })
+  }, [state.player.canJaunt, dispatch])
+
   const handleTurnPress = useCallback(() => {
     if (state.inCombat) return
     handlePassTurn(state, dispatch)
@@ -967,9 +983,11 @@ export default function Game() {
           onInventoryPress={handleInventoryPress}
           onZapPress={handleZapPress}
           onHidePress={handleHidePress}
+          onJauntPress={handleJauntPress}
           hideUnlocked={state.player.hideUnlocked}
           hideChargeTurns={state.player.hideChargeTurns}
           hideActive={state.player.hideActive}
+          canJaunt={state.player.canJaunt}
           inCombat={state.inCombat}
         />
         <Settings visible={settingsVisible} onClose={handleCloseSettings} />

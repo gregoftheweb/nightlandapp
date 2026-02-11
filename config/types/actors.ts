@@ -141,4 +141,6 @@ export interface Player {
   hideChargeTurns: number // Current charge (0-10 turns)
   hideActive: boolean // Whether hide is currently active
   hideRechargeProgressTurns: number // Progress toward next charge (0-2)
+  // Jaunt ability state (granted by defeating Jaunt Daemon in jaunt-cave)
+  canJaunt: boolean // Whether the jaunt ability has been unlocked
 }

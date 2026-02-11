@@ -23,6 +23,7 @@ import { reduceInventory } from './slices/inventorySlice'
 import { reduceWeapons } from './slices/weaponsSlice'
 import { reduceItems } from './slices/itemsSlice'
 import { reduceHide } from './slices/hideSlice'
+import { reduceJaunt } from './slices/jauntSlice'
 import { reduceUI } from './slices/uiSlice'
 import { reduceSave } from './slices/saveSlice'
 
@@ -40,6 +41,7 @@ export const reducer = (state: GameState = getInitialState('1'), action: any): G
     reduceWeapons,
     reduceItems,
     reduceHide,
+    reduceJaunt,
     reduceUI,
     reduceSave,
   ]
