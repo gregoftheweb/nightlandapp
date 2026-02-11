@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
+import { ReadableTextBox } from '../_shared/ReadableTextBox'
 import { subGameTheme } from '../_shared/subGameTheme'
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen4.png')
@@ -25,11 +26,13 @@ export default function JauntCaveScreen4() {
     <BackgroundImage source={BACKGROUND}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          <Text style={styles.title}>Defeated by the Daemon</Text>
-          <Text style={styles.description}>
+          <ReadableTextBox textStyle={styles.titleText}>
+            Defeated by the Daemon
+          </ReadableTextBox>
+          <ReadableTextBox textStyle={styles.descriptionText}>
             The Jaunt Daemon has slain Christos.{'\n\n'}
             Sophia will weep in sorrow for you, now lost to your doom in the Night Land.
-          </Text>
+          </ReadableTextBox>
         </View>
 
         <BottomActionBar>
@@ -61,19 +64,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     gap: 20,
   },
-  title: {
-    fontSize: 28,
+  titleText: {
+    fontSize: 22,
     fontWeight: 'bold',
-    color: subGameTheme.red,
     textAlign: 'center',
-    lineHeight: 36,
   },
-  description: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: subGameTheme.red,
+  descriptionText: {
     textAlign: 'center',
-    lineHeight: 26,
   },
   buttonRow: {
     flexDirection: 'row',
