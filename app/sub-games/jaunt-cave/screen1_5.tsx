@@ -53,41 +53,46 @@ export default function JauntCaveScreen1_5() {
   }
 
   return (
-    <BackgroundImage source={BACKGROUND}>
-      <Animated.View
-        style={[
-          styles.container,
-          { transform: [{ translateX: shake }] },
-        ]}
-      >
-        <View style={styles.contentArea}>
+    <Animated.View
+      style={[
+        styles.fullScreen,
+        { transform: [{ translateX: shake }] },
+      ]}
+    >
+      <BackgroundImage source={BACKGROUND}>
+        <View style={styles.container}>
+          <View style={styles.contentArea}>
+            {showContent && (
+              <Text style={styles.title}>
+                There is a rockfall in the cave! Christos is TRAPPED!{'\n'}
+                In here his destiny becomes his DOOM!
+              </Text>
+            )}
+          </View>
+
           {showContent && (
-            <Text style={styles.title}>
-              There is a rockfall in the cave! Christos is TRAPPED!{'\n'}
-              In here his destiny becomes his DOOM!
-            </Text>
+            <BottomActionBar>
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={handleContinue}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.buttonText}>He meets his doom</Text>
+                </TouchableOpacity>
+              </View>
+            </BottomActionBar>
           )}
         </View>
-
-        {showContent && (
-          <BottomActionBar>
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={handleContinue}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.buttonText}>He meets his doom</Text>
-              </TouchableOpacity>
-            </View>
-          </BottomActionBar>
-        )}
-      </Animated.View>
-    </BackgroundImage>
+      </BackgroundImage>
+    </Animated.View>
   )
 }
 
 const styles = StyleSheet.create({
+  fullScreen: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: 'transparent',
