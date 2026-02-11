@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -21,6 +21,7 @@ import { useWeapon, ZAP_TARGETS } from './_components/useWeapon';
 import { useArenaLayout } from './_components/useArenaLayout';
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png');
+const SUB_GAME_ID = 'jaunt-cave';
 
 // Projectile duration constant (from ProjectileEffect component)
 const PROJECTILE_DURATION = 250; // ms
@@ -65,6 +66,19 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   
   // Game context - provides global game state and dispatch for updates
   const { state, dispatch } = useGameContext();
+  
+  // Extract completion status for use in effect dependency
+  const isCompleted = state.subGamesCompleted?.[SUB_GAME_ID] ?? false
+  
+  // Hardening: Redirect to screen5 if jaunt-cave already completed
+  useEffect(() => {
+    if (isCompleted) {
+      if (__DEV__) {
+        console.log('[Jaunt Cave Screen2] Already completed - redirecting to screen5')
+      }
+      router.replace('/sub-games/jaunt-cave/screen5' as any)
+    }
+  }, [router, isCompleted])
   
   // Get real Christos HP from game state
   const christosHP = state.player.currentHP;
