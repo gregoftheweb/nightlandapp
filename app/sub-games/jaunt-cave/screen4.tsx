@@ -13,13 +13,7 @@ const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-scree
 export default function JauntCaveScreen4() {
   const router = useRouter()
 
-  const handleReturnToNightLand = () => {
-    if (__DEV__) {
-      console.log('[Jaunt Cave] Player died - returning to Night Land')
-    }
-    exitSubGame({ completed: false })
-  }
-
+ 
   const handleGoToDeath = () => {
     if (__DEV__) {
       console.log('[Jaunt Cave] Navigating to main death screen')
@@ -34,23 +28,16 @@ export default function JauntCaveScreen4() {
           <Text style={styles.title}>Defeated by the Daemon</Text>
           <Text style={styles.description}>
             The Jaunt Daemon has slain Christos.{'\n\n'}
-            The darkness of the cave claims another victim.
+            Sophia will weep in sorrow for you, now lost to your doom in the Night Land.
           </Text>
         </View>
 
         <BottomActionBar>
           <View style={styles.buttonRow}>
+          
             <TouchableOpacity
               style={styles.button}
               onPress={handleGoToDeath}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.buttonText}>Continue to Death Screen</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleReturnToNightLand}
               activeOpacity={0.7}
             >
               <Text style={styles.buttonText}>Return to Night Land</Text>

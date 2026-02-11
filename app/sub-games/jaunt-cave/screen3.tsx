@@ -18,17 +18,13 @@ export default function JauntCaveScreen3() {
   // Check if this is a return visit (jaunt-cave already completed)
   const isReturnVisit = state.subGamesCompleted?.['jaunt-cave'] === true
 
-  // Log the visit type on component render
-  if (__DEV__) {
-    if (isReturnVisit) {
-      console.log('[Jaunt Cave] Return visit - already completed')
-    } else {
-      console.log('[Jaunt Cave] First victory - showing first kill messaging')
-    }
-  }
-
   const handleReturnToNightLand = () => {
-    // Mark as completed only on first victory (when user confirms)
+    if (__DEV__) {
+      console.log('[Jaunt Cave] Victory - returning to Night Land')
+    }
+
+    // Only mark as completed AFTER the player confirms victory on this screen.
+    // This ensures first-time victory messaging displays even if completion is set later.
     if (!isReturnVisit) {
       if (__DEV__) {
         console.log('[Jaunt Cave] Marking sub-game as completed on victory confirm')
@@ -43,10 +39,6 @@ export default function JauntCaveScreen3() {
       })
     }
 
-    if (__DEV__) {
-      console.log('[Jaunt Cave] Victory - returning to Night Land')
-    }
-
     // Signal RPG to refresh
     signalRpgResume()
 
@@ -59,20 +51,22 @@ export default function JauntCaveScreen3() {
       <View style={styles.container}>
         <View style={styles.contentArea}>
           <Text style={styles.title}>Victory!</Text>
+
           <Text style={styles.description}>
             {isReturnVisit
-              ? 'The Jaunt Daemon has already been vanquished.\n\nThe cave echoes with the memory of your triumph.'
+              ? 'Christos has already defeated the Jaunt Daemon.\n\nOnly a pile of black dust remains.'
               : 'Christos has slain the Jaunt Daemon!\n\nThe creature dissolves into shadow and ash.\n\nThe cave falls silent.'}
+          </Text>
+          <Text style={styles.description}>
+            {isReturnVisit
+              ? 'Christos should not tarry here, nothing but fire and woe remain.'
+              : 'Christos claims the Jaunt Daemon\'s Black Diamond Heart!\n\nHe feels a new power surge through him.'}
           </Text>
         </View>
 
         <BottomActionBar>
           <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleReturnToNightLand}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.button} onPress={handleReturnToNightLand} activeOpacity={0.7}>
               <Text style={styles.buttonText}>Return to the Night Land</Text>
             </TouchableOpacity>
           </View>
