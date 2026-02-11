@@ -52,6 +52,9 @@ export default function JauntCaveScreen3() {
         payload: {
           updates: {
             canJaunt: true,
+            jauntCharges: 3, // Start with 3 charges when unlocked
+            jauntRechargeCounter: 0,
+            isJauntArmed: false,
           },
         },
       })
@@ -78,6 +81,9 @@ export default function JauntCaveScreen3() {
           player: {
             ...state.player,
             canJaunt: true,
+            jauntCharges: 3,
+            jauntRechargeCounter: 0,
+            isJauntArmed: false,
           },
         }
 

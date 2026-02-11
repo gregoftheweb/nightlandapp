@@ -632,12 +632,17 @@ export default function Game() {
   }, [])
 
   const handleInventoryPress = useCallback(() => {
+    // Cancel Jaunt if armed
+    if (state.player.isJauntArmed) {
+      dispatch({ type: 'CANCEL_JAUNT' })
+    }
+
     // Exit ranged attack mode before opening inventory
     if (state.rangedAttackMode) {
       dispatch({ type: 'CLEAR_RANGED_MODE' })
     }
     if (!state.inCombat) setInventoryVisible(true)
-  }, [state.inCombat, state.rangedAttackMode, dispatch])
+  }, [state.inCombat, state.rangedAttackMode, state.player.isJauntArmed, dispatch])
 
   const handleCloseInventory = useCallback(() => {
     setInventoryVisible(false)
@@ -681,6 +686,11 @@ export default function Game() {
   )
 
   const handleZapPress = useCallback(() => {
+    // Cancel Jaunt if armed
+    if (state.player.isJauntArmed) {
+      dispatch({ type: 'CANCEL_JAUNT' })
+    }
+
     // Throttle rapid button presses to prevent overwhelming the system
     const now = Date.now()
     const timeSinceLastPress = now - lastZapPressTime.current
@@ -871,6 +881,11 @@ export default function Game() {
       return
     }
 
+    // Cancel Jaunt if armed
+    if (state.player.isJauntArmed) {
+      dispatch({ type: 'CANCEL_JAUNT' })
+    }
+
     if (__DEV__) {
       console.log('🥷 handleHidePress - toggling hide', {
         current: state.player.hideActive,
@@ -879,7 +894,13 @@ export default function Game() {
     }
 
     dispatch({ type: 'TOGGLE_HIDE' })
-  }, [state.player.hideUnlocked, state.player.hideActive, state.player.hideChargeTurns, dispatch])
+  }, [
+    state.player.hideUnlocked,
+    state.player.hideActive,
+    state.player.hideChargeTurns,
+    state.player.isJauntArmed,
+    dispatch,
+  ])
 
   const handleJauntPress = useCallback(() => {
     if (!state.player.canJaunt) {
@@ -890,12 +911,42 @@ export default function Game() {
     }
 
     if (__DEV__) {
-      console.log('🌀 handleJauntPress - Jaunt ability activated (stub)')
+      console.log('🌀 handleJauntPress - arming/disarming jaunt')
     }
 
-    // Stub handler - dispatch action for future implementation
-    dispatch({ type: 'PLAYER_JAUNT_REQUESTED' })
+    // Dispatch ARM_JAUNT which handles toggle logic
+    dispatch({ type: 'ARM_JAUNT' })
   }, [state.player.canJaunt, dispatch])
+
+  const handleJauntTargetTap = useCallback(
+    (event: any) => {
+      if (!state.player.isJauntArmed) {
+        return
+      }
+
+      // Get tap coordinates
+      const { locationX, locationY } = event.nativeEvent
+
+      // Convert to world coordinates
+      const { tapCol, tapRow } = calculateTapPosition(locationX, locationY)
+
+      if (__DEV__) {
+        console.log('🌀 Jaunt target tapped', {
+          screen: { x: locationX, y: locationY },
+          world: { col: tapCol, row: tapRow },
+        })
+      }
+
+      // Execute the jaunt teleport
+      dispatch({
+        type: 'EXECUTE_JAUNT',
+        payload: {
+          targetPosition: { col: tapCol, row: tapRow },
+        },
+      })
+    },
+    [state.player.isJauntArmed, calculateTapPosition, dispatch]
+  )
 
   const handleTurnPress = useCallback(() => {
     if (state.inCombat) return
@@ -974,6 +1025,13 @@ export default function Game() {
         {showCoordinates && (
           <PositionDisplay position={state.player.position} level={state.level} />
         )}
+        {/* Jaunt tap-to-target overlay - shown when Jaunt is armed */}
+        {state.player.isJauntArmed && (
+          <Pressable
+            style={styles.jauntTargetOverlay}
+            onPress={handleJauntTargetTap}
+          />
+        )}
         <PlayerHUD
           currentHP={state.player.currentHP}
           maxHP={state.player.maxHP}
@@ -988,6 +1046,8 @@ export default function Game() {
           hideChargeTurns={state.player.hideChargeTurns}
           hideActive={state.player.hideActive}
           canJaunt={state.player.canJaunt}
+          jauntCharges={state.player.jauntCharges}
+          isJauntArmed={state.player.isJauntArmed}
           inCombat={state.inCombat}
         />
         <Settings visible={settingsVisible} onClose={handleCloseSettings} />
@@ -1011,5 +1071,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  jauntTargetOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 900, // Above gameplay, below HUD
   },
 })

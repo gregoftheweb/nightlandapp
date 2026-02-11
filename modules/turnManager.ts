@@ -174,6 +174,11 @@ const doTurnCleanup = (): void => {
     // Note: Current state will be updated by dispatcher
   }
 
+  // Update jaunt ability state (recharge)
+  if (currentGameState.player.canJaunt) {
+    gameDispatch({ type: 'UPDATE_JAUNT_STATE' })
+  }
+
   // Apply self-healing if configured for the current level
   const turnsPerHitPoint = currentGameState.level.turnsPerHitPoint
   if (turnsPerHitPoint && turnsPerHitPoint > 0) {
