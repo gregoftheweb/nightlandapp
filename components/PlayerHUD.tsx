@@ -35,6 +35,8 @@ interface PlayerHUDProps {
   hideActive?: boolean
   // Jaunt ability state
   canJaunt?: boolean
+  jauntCharges?: number
+  isJauntArmed?: boolean
 }
 
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
@@ -52,6 +54,8 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   hideChargeTurns = 0,
   hideActive = false,
   canJaunt = false,
+  jauntCharges = 0,
+  isJauntArmed = false,
 }) => {
   const insets = useSafeAreaInsets()
 
@@ -169,13 +173,33 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
         {/* Jaunt Button - only show if unlocked (mirrored position to Hide button) */}
         {canJaunt && (
-          <TouchableOpacity
-            style={styles.jauntButton}
-            onPress={handleJauntPress}
-            activeOpacity={0.7}
-          >
-            <Image source={jauntButtonIMG} style={styles.jauntButtonImage} />
-          </TouchableOpacity>
+          <View style={styles.jauntButtonContainer}>
+            {/* Background indicator - green glow when armed */}
+            {isJauntArmed && <View style={styles.jauntArmedBackground} />}
+            <TouchableOpacity
+              style={[styles.jauntButton, jauntCharges === 0 && styles.jauntButtonDepleted]}
+              onPress={handleJauntPress}
+              activeOpacity={0.7}
+              disabled={jauntCharges === 0}
+            >
+              <Image
+                source={jauntButtonIMG}
+                style={[
+                  styles.jauntButtonImage,
+                  jauntCharges === 0 && styles.jauntButtonImageDepleted,
+                ]}
+              />
+            </TouchableOpacity>
+            {/* Charge pips (3 max) */}
+            <View style={styles.jauntChargePips}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.jauntChargePip, i < jauntCharges && styles.jauntChargePipFilled]}
+                />
+              ))}
+            </View>
+          </View>
         )}
       </View>
     </View>
@@ -382,20 +406,65 @@ const styles = StyleSheet.create({
     backgroundColor: '#888888', // Changed from bright green to gray
   },
 
-  // Jaunt button (mirrored position to Hide button - on the right side)
-  jauntButton: {
+  // Jaunt button container (mirrored position to Hide button - on the right side)
+  jauntButtonContainer: {
     position: 'absolute',
     bottom: 15,
     right: 80,
+    zIndex: 20,
+    alignItems: 'center',
+  },
+
+  // Background indicator for armed state
+  jauntArmedBackground: {
+    position: 'absolute',
     width: 40,
     height: 40,
-    zIndex: 20,
+    backgroundColor: '#00aa00',
+    borderRadius: 20,
+    zIndex: 19,
+  },
+
+  // Jaunt button (mirrored position to Hide button - on the right side)
+  jauntButton: {
+    width: 40,
+    height: 40,
+    zIndex: 21,
+  },
+
+  jauntButtonDepleted: {
+    opacity: 0.4,
   },
 
   jauntButtonImage: {
     width: 40,
     height: 40,
     resizeMode: 'contain',
+  },
+
+  jauntButtonImageDepleted: {
+    opacity: 0.5,
+  },
+
+  // Charge pips below jaunt button
+  jauntChargePips: {
+    position: 'absolute',
+    bottom: -8,
+    left: 0,
+    flexDirection: 'row',
+    gap: 2,
+    zIndex: 25,
+  },
+
+  jauntChargePip: {
+    width: 10,
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 1,
+  },
+
+  jauntChargePipFilled: {
+    backgroundColor: '#888888',
   },
 })
 

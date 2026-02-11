@@ -40,4 +40,7 @@ export const playerConfig: Player = {
   hideRechargeProgressTurns: 0,
   // Jaunt ability state (granted by defeating Jaunt Daemon in jaunt-cave)
   canJaunt: false,
+  jauntCharges: 0,
+  jauntRechargeCounter: 0,
+  isJauntArmed: false,
 }
