@@ -16,6 +16,7 @@ import attackButtonIMG from '@assets/images/ui/icons/buttonAttack.webp'
 import inventoryButtonIMG from '@assets/images/ui/icons/buttonInventory.webp'
 import zapButtonIMG from '@assets/images/ui/icons/buttonZap.webp'
 import hideButtonIMG from '@assets/images/ui/icons/buttonHide.webp'
+import jauntButtonIMG from '@assets/images/ui/icons/buttonJaunt.webp'
 
 interface PlayerHUDProps {
   currentHP: number
@@ -27,10 +28,13 @@ interface PlayerHUDProps {
   onInventoryPress?: () => void // New prop for inventory
   onZapPress?: () => void // New prop for zap button
   onHidePress?: () => void // New prop for hide button
+  onJauntPress?: () => void // New prop for jaunt button
   // Hide ability state
   hideUnlocked?: boolean
   hideChargeTurns?: number
   hideActive?: boolean
+  // Jaunt ability state
+  canJaunt?: boolean
 }
 
 const PlayerHUD: React.FC<PlayerHUDProps> = ({
@@ -43,9 +47,11 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onInventoryPress, // New prop
   onZapPress, // New prop
   onHidePress, // New prop
+  onJauntPress, // New prop
   hideUnlocked = false,
   hideChargeTurns = 0,
   hideActive = false,
+  canJaunt = false,
 }) => {
   const insets = useSafeAreaInsets()
 
@@ -79,17 +85,22 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
     onHidePress?.()
   }
 
+  const handleJauntPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
+    event.stopPropagation()
+    onJauntPress?.()
+  }
+
   return (
     <View
       style={[styles.container, { paddingBottom: insets.bottom + 10 }]}
       pointerEvents="box-none"
     >
       <View
-        style={hideUnlocked ? styles.hudFrameExpanded : styles.hudFrame}
+        style={hideUnlocked || canJaunt ? styles.hudFrameExpanded : styles.hudFrame}
         pointerEvents="box-none"
       >
         <View
-          style={hideUnlocked ? styles.statusBarExpanded : styles.statusBar}
+          style={hideUnlocked || canJaunt ? styles.statusBarExpanded : styles.statusBar}
           pointerEvents="box-none"
         >
           <Text style={styles.hpText}>HP: {currentHP}</Text>
@@ -101,7 +112,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
         {/* Zap Button */}
         <TouchableOpacity
-          style={hideUnlocked ? styles.zapButtonExpanded : styles.zapButton}
+          style={hideUnlocked || canJaunt ? styles.zapButtonExpanded : styles.zapButton}
           onPress={handleZapPress}
           activeOpacity={0.7}
         >
@@ -149,12 +160,23 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
         {/* Inventory Button */}
         <TouchableOpacity
-          style={hideUnlocked ? styles.inventoryButtonExpanded : styles.inventoryButton}
+          style={hideUnlocked || canJaunt ? styles.inventoryButtonExpanded : styles.inventoryButton}
           onPress={handleInventoryPress}
           activeOpacity={0.7}
         >
           <Image source={inventoryButtonIMG} style={styles.inventoryButtonImage} />
         </TouchableOpacity>
+
+        {/* Jaunt Button - only show if unlocked (mirrored position to Hide button) */}
+        {canJaunt && (
+          <TouchableOpacity
+            style={styles.jauntButton}
+            onPress={handleJauntPress}
+            activeOpacity={0.7}
+          >
+            <Image source={jauntButtonIMG} style={styles.jauntButtonImage} />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   )
@@ -358,6 +380,22 @@ const styles = StyleSheet.create({
 
   chargeTickFilled: {
     backgroundColor: '#888888', // Changed from bright green to gray
+  },
+
+  // Jaunt button (mirrored position to Hide button - on the right side)
+  jauntButton: {
+    position: 'absolute',
+    bottom: 15,
+    right: 80,
+    width: 40,
+    height: 40,
+    zIndex: 20,
+  },
+
+  jauntButtonImage: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
   },
 })
 

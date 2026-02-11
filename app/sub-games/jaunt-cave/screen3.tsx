@@ -42,6 +42,20 @@ export default function JauntCaveScreen3() {
         },
       })
 
+      // Unlock Jaunt capability (following Hermit Hollow pattern with hideUnlocked)
+      if (__DEV__) {
+        console.log('[Jaunt Cave] Unlocking Jaunt capability')
+      }
+
+      dispatch({
+        type: 'UPDATE_PLAYER',
+        payload: {
+          updates: {
+            canJaunt: true,
+          },
+        },
+      })
+
       // Create waypoint save on first completion (following Hermit Hollow pattern)
       // Check if waypoint has already been created to prevent duplicates
       const waypointAlreadyCreated = state.waypointSavesCreated?.[WAYPOINT_NAME] === true
@@ -61,6 +75,10 @@ export default function JauntCaveScreen3() {
         const stateWithCompletion = {
           ...state,
           subGamesCompleted: updatedSubGamesCompleted,
+          player: {
+            ...state.player,
+            canJaunt: true,
+          },
         }
 
         saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
