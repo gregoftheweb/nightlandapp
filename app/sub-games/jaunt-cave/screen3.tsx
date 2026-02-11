@@ -9,8 +9,10 @@ import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { ReadableTextBox } from '../_shared/ReadableTextBox'
 import { subGameTheme } from '../_shared/subGameTheme'
+import { saveWaypoint } from '@modules/saveGame'
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen3.png')
+const WAYPOINT_NAME = 'jaunt-cave'
 
 export default function JauntCaveScreen3() {
   const router = useRouter()
@@ -38,6 +40,44 @@ export default function JauntCaveScreen3() {
           completed: true,
         },
       })
+
+      // Create waypoint save on first completion (following Hermit Hollow pattern)
+      // Check if waypoint has already been created to prevent duplicates
+      const waypointAlreadyCreated = state.waypointSavesCreated?.[WAYPOINT_NAME] === true
+
+      if (waypointAlreadyCreated) {
+        if (__DEV__) {
+          console.log(`[Jaunt Cave] Waypoint already created - skipping save: ${WAYPOINT_NAME}`)
+        }
+      } else {
+        // First time completing - create the waypoint
+        // Build updated state with completion flag for the save
+        const updatedSubGamesCompleted = {
+          ...(state.subGamesCompleted || {}),
+          'jaunt-cave': true,
+        }
+
+        const stateWithCompletion = {
+          ...state,
+          subGamesCompleted: updatedSubGamesCompleted,
+        }
+
+        saveWaypoint(stateWithCompletion, WAYPOINT_NAME)
+          .then(() => {
+            if (__DEV__) {
+              console.log(`[Jaunt Cave] Waypoint save created (FIRST TIME): ${WAYPOINT_NAME}`)
+            }
+
+            // Mark waypoint as created to prevent future saves
+            dispatch({
+              type: 'SET_WAYPOINT_CREATED',
+              payload: { waypointName: WAYPOINT_NAME },
+            })
+          })
+          .catch((err) => {
+            console.error('[Jaunt Cave] Failed to create waypoint save:', err)
+          })
+      }
     }
 
     // Signal RPG to refresh
