@@ -8,6 +8,9 @@ import { HIT_INDICATOR_CONFIG } from './HitIndicator';
 
 const DEFAULT_BOLT_COLOR = '#990000'; // Fallback color when no weapon equipped
 
+// Laser pistol weapon ID for damage multiplier
+const LASER_PISTOL_ID = 'weapon-lazer-pistol-001';
+
 // Zap target positions (percentage of arena dimensions)
 // These are independent of daemon spawn positions and can be tweaked independently
 // Values are percentages (0.0 to 1.0) of arena width/height
@@ -166,14 +169,14 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
             const equippedWeapon = gameState.weapons.find((w: Item) => w.id === gameState.player.equippedRangedWeaponId);
             
             // Apply 3x damage multiplier for laser pistol
-            const damageToApply = equippedWeapon?.id === 'weapon-lazer-pistol-001'
+            const damageToApply = equippedWeapon?.id === LASER_PISTOL_ID
               ? baseDamage * 3
               : baseDamage;
             
             onDaemonHit(damageToApply);
             
             if (__DEV__) {
-              if (equippedWeapon?.id === 'weapon-lazer-pistol-001') {
+              if (equippedWeapon?.id === LASER_PISTOL_ID) {
                 console.log('[Jaunt] Laser pistol bonus damage applied:', damageToApply);
               }
               console.log('[useWeapon] HIT! Dealt', damageToApply, 'damage');
