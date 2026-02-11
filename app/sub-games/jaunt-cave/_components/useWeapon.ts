@@ -176,10 +176,10 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
             onDaemonHit(damageToApply);
             
             if (__DEV__) {
-              if (equippedWeapon?.id === LASER_PISTOL_ID) {
-                console.log('[Jaunt] Laser pistol bonus damage applied:', damageToApply);
-              }
               console.log('[useWeapon] HIT! Dealt', damageToApply, 'damage');
+              if (equippedWeapon?.id === LASER_PISTOL_ID) {
+                console.log('[Jaunt] Laser pistol 3x multiplier applied:', baseDamage, '→', damageToApply);
+              }
             }
           }
         }
