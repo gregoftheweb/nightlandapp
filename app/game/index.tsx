@@ -685,6 +685,21 @@ export default function Game() {
     [dispatch]
   )
 
+  const handleTeleportFlashComplete = useCallback(
+    (flashId: string) => {
+      if (__DEV__) {
+        console.log('✨ Teleport flash complete:', flashId)
+      }
+
+      // Remove flash from state
+      dispatch({
+        type: 'REMOVE_TELEPORT_FLASH',
+        payload: { id: flashId },
+      })
+    },
+    [dispatch]
+  )
+
   const handleZapPress = useCallback(() => {
     // Cancel Jaunt if armed
     if (state.player.isJauntArmed) {
@@ -1019,6 +1034,7 @@ export default function Game() {
           onNonCollisionObjectTap={handleNonCollisionObjectTap}
           onDeathInfoBoxClose={handleDeathInfoBoxClose}
           onProjectileComplete={handleProjectileComplete}
+          onTeleportFlashComplete={handleTeleportFlashComplete}
           onShowInfoRef={showInfoRef}
           onCloseInfoRef={closeInfoRef}
         />

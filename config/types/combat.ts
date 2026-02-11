@@ -63,3 +63,9 @@ export interface Projectile {
   thicknessPx?: number // Optional thickness override
   glow?: boolean // Optional glow effect
 }
+
+export interface TeleportFlash {
+  id: string
+  gridCol: number // Grid column position
+  gridRow: number // Grid row position
+}

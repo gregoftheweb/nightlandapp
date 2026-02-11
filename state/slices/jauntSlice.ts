@@ -78,6 +78,14 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
         chargesRemaining: jauntCharges - 1,
       })
 
+      // Create a teleport flash effect at the destination
+      const flashId = `flash-${Date.now()}`
+      const newFlash = {
+        id: flashId,
+        gridCol: clampedCol,
+        gridRow: clampedRow,
+      }
+
       // Teleport player and consume charge
       return {
         ...state,
@@ -87,6 +95,7 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
           jauntCharges: jauntCharges - 1,
           isJauntArmed: false,
         },
+        activeTeleportFlashes: [...(state.activeTeleportFlashes || []), newFlash],
       }
     }
 

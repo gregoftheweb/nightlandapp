@@ -15,6 +15,7 @@ import { getTextContent, isPlayerOnObject } from '../modules/utils'
 import { getItemTemplate } from '@config/objects'
 import deadChristosIMG from '@assets/images/ui/dialogs/deadChristos.webp'
 import Projectile from './Projectile'
+import TeleportFlash from './effects/TeleportFlash'
 import { enterSubGame } from '@modules/subGames'
 
 const { width, height } = Dimensions.get('window')
@@ -41,6 +42,7 @@ interface GameBoardProps {
   onNonCollisionObjectTap?: (obj: NonCollisionObject) => void
   onDeathInfoBoxClose?: () => void
   onProjectileComplete?: (projectileId: string) => void
+  onTeleportFlashComplete?: (flashId: string) => void
   onShowInfoRef?: React.MutableRefObject<
     | ((
         name: string,
@@ -65,6 +67,7 @@ export default function GameBoard({
   onNonCollisionObjectTap,
   onDeathInfoBoxClose,
   onProjectileComplete,
+  onTeleportFlashComplete,
   onShowInfoRef,
   onCloseInfoRef,
 }: GameBoardProps) {
@@ -116,6 +119,7 @@ export default function GameBoard({
   const attackSlots = state.attackSlots ?? []
   const nonCollisionObjects = state.nonCollisionObjects ?? []
   const activeProjectiles = state.activeProjectiles ?? []
+  const activeTeleportFlashes = state.activeTeleportFlashes ?? []
 
   // Memoized entity position maps for O(1) lookups (perf: replaces linear scans)
   const monsterPositionMap = useMemo(() => {
@@ -837,6 +841,24 @@ export default function GameBoard({
     ))
   }, [activeProjectiles, onProjectileComplete])
 
+  // Render active teleport flashes
+  const renderTeleportFlashes = useMemo(() => {
+    if (activeTeleportFlashes.length === 0) return []
+
+    return activeTeleportFlashes.map((flash) => (
+      <TeleportFlash
+        key={flash.id}
+        id={flash.id}
+        gridCol={flash.gridCol}
+        gridRow={flash.gridRow}
+        cellSize={CELL_SIZE}
+        cameraOffsetX={cameraOffset.offsetX}
+        cameraOffsetY={cameraOffset.offsetY}
+        onComplete={onTeleportFlashComplete || (() => {})}
+      />
+    ))
+  }, [activeTeleportFlashes, cameraOffset.offsetX, cameraOffset.offsetY, onTeleportFlashComplete])
+
   // Memoized grid render
   const renderGrid = useMemo(() => {
     const gridCells = renderGridCells
@@ -935,6 +957,9 @@ export default function GameBoard({
 
       {/* Projectiles */}
       {renderProjectiles}
+
+      {/* Teleport Flashes */}
+      {renderTeleportFlashes}
 
       <InfoBox
         visible={infoVisible}
