@@ -979,6 +979,19 @@ export default function Game() {
 
     if (!targetMonster) {
       console.warn('No target monster in attack slots')
+      // Edge case fix: Exit attack mode when no monsters are present
+      // This prevents the game from getting stuck in attack mode
+      dispatch({
+        type: 'SET_COMBAT',
+        payload: {
+          inCombat: false,
+          attackSlots: [],
+          waitingMonsters: state.waitingMonsters || [],
+          turnOrder: [state.player],
+          combatTurn: state.player,
+          combatLog: [],
+        },
+      })
       return
     }
 
