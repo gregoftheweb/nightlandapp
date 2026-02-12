@@ -8,7 +8,7 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { ReadableTextBox } from '../_shared/ReadableTextBox'
 import { subGameTheme } from '../_shared/subGameTheme'
 
-const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png')
+const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.webp')
 
 export default function JauntCaveScreen1_5() {
   const router = useRouter()

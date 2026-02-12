@@ -15,12 +15,12 @@ export enum DaemonState {
 
 // Sprite sources
 export const SPRITES = {
-  resting: require('@assets/images/sprites/monsters/jaunt-deamon-1.png'),
-  prep1: require('@assets/images/sprites/monsters/jaunt-deamon-2.png'),
-  prep2: require('@assets/images/sprites/monsters/jaunt-deamon-3.png'),
-  landed: require('@assets/images/sprites/monsters/jaunt-deamon-4.png'),
-  attackLeft: require('@assets/images/sprites/monsters/jaunt-deamon-5.png'),
-  attackRight: require('@assets/images/sprites/monsters/jaunt-deamon-6.png'),
+  resting: require('@assets/images/sprites/monsters/jaunt-deamon-1.webp'),
+  prep1: require('@assets/images/sprites/monsters/jaunt-deamon-2.webp'),
+  prep2: require('@assets/images/sprites/monsters/jaunt-deamon-3.webp'),
+  landed: require('@assets/images/sprites/monsters/jaunt-deamon-4.webp'),
+  attackLeft: require('@assets/images/sprites/monsters/jaunt-deamon-5.webp'),
+  attackRight: require('@assets/images/sprites/monsters/jaunt-deamon-6.webp'),
 }
 
 export type PositionKey = 'left' | 'center' | 'right'

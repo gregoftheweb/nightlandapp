@@ -24,7 +24,7 @@ import {
   type Tile,
 } from './tiles'
 
-const puzzleBoard = require('@assets/images/backgrounds/subgames/tesseract-puzzle-board.png')
+const puzzleBoard = require('@assets/images/backgrounds/subgames/tesseract-puzzle-board.webp')
 
 // Target word to spell
 const TARGET = ['T', 'E', 'S', 'S', 'E', 'R', 'A', 'C', 'T']

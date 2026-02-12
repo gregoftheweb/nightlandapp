@@ -16,7 +16,7 @@ import { useBattleState } from './_components/useBattleState'
 import { useWeapon, ZAP_TARGETS } from './_components/useWeapon'
 import { useArenaLayout } from './_components/useArenaLayout'
 
-const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png')
+const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.webp')
 const SUB_GAME_ID = 'jaunt-cave'
 
 // Projectile duration constant (from ProjectileEffect component)

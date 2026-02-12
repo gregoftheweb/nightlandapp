@@ -5,7 +5,7 @@ import { renderHook, act } from '@testing-library/react-hooks'
 import { useArenaLayout } from '../_components/useArenaLayout'
 
 // Mock the background image
-const mockBackgroundImage = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.png')
+const mockBackgroundImage = require('@assets/images/backgrounds/subgames/jaunt-cave-screen2.webp')
 
 // Mock Image.resolveAssetSource
 jest.mock('react-native', () => ({

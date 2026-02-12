@@ -8,9 +8,21 @@ import re
 # CHANGE THIS EACH RUN
 #############################################
 
-RUN_DIR = Path("/home/greg/devplex/Nightland/nightlandapp/assets/images/items/")
+RUN_DIR = Path("/home/greg/devplex/Nightland/nightlandapp/assets/images/sprites/monsters/")
 LOSSLESS = True
 QUALITY = 85   # great default for dark games
+
+#############################################
+# FILES TO EXCLUDE FROM CONVERSION
+# Use just the filename, e.g. "icon.png"
+# or a partial path, e.g. "icons/icon.png"
+#############################################
+
+EXCLUDE_FILES = [
+    # "icon.png",
+    # "splash.png",
+    # "adaptive-icon.png",
+]
 
 #############################################
 
@@ -41,12 +53,25 @@ png_files = list(RUN_DIR.rglob("*.png"))
 
 print(f"Found {len(png_files)} PNG files\n")
 
+
+def is_excluded(png: Path) -> bool:
+    for entry in EXCLUDE_FILES:
+        # Match by filename only or by partial path suffix
+        if png.name == entry or str(png).endswith(entry):
+            return True
+    return False
+
+
 for png in png_files:
+
+    if is_excluded(png):
+        print(f"Excluded (skipping):         {png.name}")
+        continue
 
     webp = png.with_suffix(".webp")
 
     if webp.exists():
-        print(f"Skipping (already exists): {png.name}")
+        print(f"Skipping (already exists):   {png.name}")
         continue
 
     if LOSSLESS:
@@ -67,7 +92,7 @@ for png in png_files:
             str(webp)
         ], check=True)
 
-    print(f"Converted: {png.name}")
+    print(f"Converted:                   {png.name}")
 
 #############################################
 # Rewrite references across repo
@@ -79,7 +104,7 @@ code_exts = {".ts", ".tsx", ".js", ".jsx"}
 
 png_regex = re.compile(r"""(['"])([^'"]+?\.png)\1""")
 
-rewrites = 0
+nonlocal_rewrites = [0]
 
 
 def webp_exists_for_import_path(path: str) -> bool:
@@ -98,19 +123,22 @@ def webp_exists_for_import_path(path: str) -> bool:
     return (repo_root / fs_path).with_suffix(".webp").exists()
 
 
+def is_excluded_import(path: str) -> bool:
+    for entry in EXCLUDE_FILES:
+        if path.endswith(entry) or Path(path).name == entry:
+            return True
+    return False
+
+
 SKIP_DIRS = {"node_modules", ".git", ".expo", ".next", "dist", "build"}
-
-
-def repl(match):
-    nonlocal_rewrites[0] += 0  # placeholder so closure exists
-
-
-nonlocal_rewrites = [0]  # mutable counter
 
 
 def repl(match):
     quote = match.group(1)
     path = match.group(2)
+
+    if is_excluded_import(path):
+        return match.group(0)
 
     if webp_exists_for_import_path(path):
         nonlocal_rewrites[0] += 1
@@ -141,10 +169,12 @@ for file in repo_root.rglob("*"):
 rewrites = nonlocal_rewrites[0]
 
 #############################################
-# Delete PNGs
+# Delete PNGs (skips excluded files)
 #############################################
 
 for png in png_files:
+    if is_excluded(png):
+        continue
     if png.with_suffix(".webp").exists():
         png.unlink()
 

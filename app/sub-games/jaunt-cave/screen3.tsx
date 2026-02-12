@@ -11,7 +11,7 @@ import { ReadableTextBox } from '../_shared/ReadableTextBox'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { saveWaypoint } from '@modules/saveGame'
 
-const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen3.png')
+const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave-screen3.webp')
 const SUB_GAME_ID = 'jaunt-cave'
 const WAYPOINT_NAME = 'jaunt-cave'
 
