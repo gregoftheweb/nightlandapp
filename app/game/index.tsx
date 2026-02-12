@@ -993,7 +993,6 @@ export default function Game() {
           waitingMonsters: state.waitingMonsters || [],
           turnOrder: [state.player],
           combatTurn: state.player,
-          combatLog: [],
         },
       })
       return
