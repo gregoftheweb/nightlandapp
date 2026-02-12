@@ -982,6 +982,10 @@ export default function Game() {
       // Edge case fix: Exit attack mode when no monsters are present
       // This prevents the game from getting stuck in attack mode
       dispatch({
+        type: 'ADD_COMBAT_LOG',
+        payload: { message: 'No enemies remain!' },
+      })
+      dispatch({
         type: 'SET_COMBAT',
         payload: {
           inCombat: false,
