@@ -14,12 +14,13 @@ import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp
 import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.webp'
 import hermitIMG from '@assets/images/backgrounds/subgames/hermit-save2.webp'
 import jauntCaveIMG from '@assets/images/sprites/buildings/jaunt-cave.webp'
+import deepSiloIMG from '@assets/images/sprites/buildings/silo.webp'
 
 /**
  * Valid sub-game IDs (string slugs)
  * These match the directory names under /app/sub-games/
  */
-export type SubGameId = 'aerowreckage-puzzle' | 'hermit-hollow' | 'jaunt-cave' | 'tesseract'
+export type SubGameId = 'aerowreckage-puzzle' | 'deep-silo' | 'hermit-hollow' | 'jaunt-cave' | 'tesseract'
 
 /**
  * Sub-game definition containing metadata and routing information
@@ -80,6 +81,31 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
         },
       ],
       ctaLabel: 'Investigate',
+      requiresPlayerOnObject: true,
+    },
+  },
+
+  'deep-silo': {
+    id: 'deep-silo',
+    introRoute: '/sub-games/deep-silo/screen1',
+    title: 'Deep Silo',
+    description:
+      'A massive silo rises from the Night Land, its dark interior an unknown descent into the deep.',
+    introBackgroundImage: require('@assets/images/backgrounds/subgames/silo-screen1.png'),
+    entrance: {
+      shortName: 'deepSilo',
+      category: 'building',
+      width: 4,
+      height: 4,
+      image: deepSiloIMG,
+      active: true,
+      zIndex: 0,
+      effects: [
+        {
+          type: 'hide',
+        },
+      ],
+      ctaLabel: 'Enter the silo',
       requiresPlayerOnObject: true,
     },
   },

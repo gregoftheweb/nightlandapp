@@ -70,6 +70,7 @@ export const levels: Record<LevelId, Level> = {
       createSubGameEntranceInstance('aerowreckage-puzzle', { row: 383, col: 192 }),
       createSubGameEntranceInstance('tesseract', { row: 391, col: 186 }),
       createSubGameEntranceInstance('jaunt-cave', { row: 392, col: 211 }),
+      createSubGameEntranceInstance('deep-silo', { row: 380, col: 205 }),
     ],
 
     nonCollisionObjects: [
