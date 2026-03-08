@@ -93,6 +93,25 @@ export const consumables: Record<string, GameObject> = {
   },
 }
 
+// Persius Note 2 text constant
+const PERSIUS_NOTE_2_TEXT = `A Note from Persius
+
+Christos,
+
+I feared you would follow me into the Night Land. I had hoped you would remain within the safety of the Last Redoubt, yet I know your heart too well. Once you decide upon a path, nothing living can turn you aside.
+
+Since you are here, I will at least give you what aid I can.
+
+In this room stands an old Earth Current generator. Place your Discos upon the metal plate on the table so that it touches the copper contacts. Then go to the control panel and apply power. The current beneath the earth will flow into the weapon and strengthen it.
+
+Stand clear while it charges.
+
+The creatures that roam the Night Land are terrible beyond telling; you will need every advantage to survive them.
+
+I wish you had never come, Christos… yet I am glad you still live.
+
+— Persius`
+
 // Scroll text constant - single source of truth
 const PERSIUS_SCROLL_TEXT = `Christos,
 
@@ -109,6 +128,24 @@ I must.
 — Persius`
 
 export const collectible: Record<string, GameObject> = {
+  persiusNote2: {
+    kind: 'object',
+    shortName: 'persiusNote2',
+    category: 'collectible',
+    name: 'Persius Note 2',
+    description: PERSIUS_NOTE_2_TEXT,
+    type: 'collectible',
+    collectible: true,
+    active: true,
+    usable: true,
+    consumeOnUse: false,
+    effects: [
+      {
+        type: 'showMessage',
+        message: PERSIUS_NOTE_2_TEXT,
+      },
+    ],
+  },
   persiusScroll: {
     kind: 'object',
     shortName: 'persiusScroll',

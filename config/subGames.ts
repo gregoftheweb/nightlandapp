@@ -12,7 +12,7 @@ import { SubGameEntranceDefinition } from './types/subGames'
 // Import entrance images
 import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
 import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.webp'
-import hermitIMG from '@assets/images/backgrounds/subgames/hermit-save2.webp'
+import hermitIMG from '@assets/images/backgrounds/subgames/hermit/hermit-save2.webp'
 import jauntCaveIMG from '@assets/images/sprites/buildings/jaunt-cave.webp'
 import deepSiloIMG from '@assets/images/sprites/buildings/silo.webp'
 
@@ -66,7 +66,7 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     title: 'Aero-Wreckage',
     description:
       'The twisted remnants of a long-lost crashed aerocraft from a forgotten age of the Redoubt. Ancient metal and strange devices lie scattered among the wreckage, relics of a time when humanity soared above the Night Land.',
-    introBackgroundImage: require('@assets/images/backgrounds/subgames/aerowreck-safe4.webp'),
+    introBackgroundImage: require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe4.webp'),
     entrance: {
       shortName: 'aeroWreckage',
       category: 'building',
@@ -91,7 +91,7 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     title: 'Deep Silo',
     description:
       'A massive silo rises from the Night Land, its dark interior an unknown descent into the deep.',
-    introBackgroundImage: require('@assets/images/backgrounds/subgames/silo-screen1.png'),
+    introBackgroundImage: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen1.png'),
     entrance: {
       shortName: 'deepSilo',
       category: 'building',
@@ -116,7 +116,7 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     title: 'Hermit',
     description:
       'A lonely hermit sits next to small campfire, safety and peace emanate from him and the small copse of woods around him.',
-    introBackgroundImage: require('@assets/images/backgrounds/subgames/hermit-screen1.webp'),
+    introBackgroundImage: require('@assets/images/backgrounds/subgames/hermit/hermit-screen1.webp'),
     entrance: {
       shortName: 'hermit',
       category: 'building',
@@ -145,7 +145,7 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     title: 'Cave of the daemon of the walking shadows',
     description:
       'A sulfur smelling wallow in the Night Lands plains lead to a cave shining with the light from lava. Christos is drawn to it, an aegis of foreboding and necessity upon him. He knows he MUST confront what is inside. Doom and Destiny collide within.',
-    introBackgroundImage: require('@assets/images/backgrounds/subgames/jaunt-cave-screen1.webp'),
+    introBackgroundImage: require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen1.webp'),
     entrance: {
       shortName: 'jauntCave',
       category: 'building',
@@ -170,7 +170,7 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     title: 'Tesseract',
     description:
       'An ancient circle of black stone, steeped in a will that is not its own. Those who seek to command its power gain forbidden knowledge… or vanish without even the mercy of death.',
-    introBackgroundImage: require('@assets/images/backgrounds/subgames/tesseract-screen1.webp'),
+    introBackgroundImage: require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen1.webp'),
     entrance: {
       shortName: 'tesseract',
       category: 'building',
