@@ -6,7 +6,10 @@ import {
   Item,
   LevelObjectInstance,
   NonCollisionObject,
+  GameState,
 } from '../config/types'
+
+export const DEFAULT_SPATIAL_CELL_SIZE = 10
 
 export interface GridEntity {
   id: string
@@ -120,7 +123,10 @@ export function checkOverlap(
 }
 
 // Helper to build grid from game state
-export function buildSpatialGrid(gameState: any, cellSize: number = 10): SpatialGrid {
+export function buildSpatialGrid(
+  gameState: GameState,
+  cellSize: number = DEFAULT_SPATIAL_CELL_SIZE
+): SpatialGrid {
   const grid = new SpatialGrid(cellSize, gameState.gridWidth, gameState.gridHeight)
 
   // Add active monsters
@@ -141,7 +147,7 @@ export function buildSpatialGrid(gameState: any, cellSize: number = 10): Spatial
   gameState.items?.forEach((item: Item) => {
     if (item.active && item.collectible && item.position) {
       grid.insert({
-        id: item.id || `item-${item.shortName}`,
+        id: item.id || `item-${item.shortName}-${item.position.row}-${item.position.col}`,
         position: item.position,
         width: item.size?.width || 1,
         height: item.size?.height || 1,

@@ -7,6 +7,8 @@ import React, {
   useState,
   useEffect,
   useRef,
+  useCallback,
+  useMemo,
 } from 'react'
 import { deserializeGameState, createInitialGameState } from '../modules/gameState'
 import { reducer } from '../state/reducer'
@@ -17,15 +19,15 @@ import { deleteCurrentGame } from '../modules/saveGame'
 type GameAction = Parameters<typeof reducer>[1]
 type GameDispatch = React.Dispatch<GameAction>
 
-interface GameContextType {
-  state: GameState
+interface GameActionsContextType {
   dispatch: GameDispatch
   setOverlay: (overlay: any) => void
-  rpgResumeNonce: number
   signalRpgResume: () => void
 }
 
-const GameContext = createContext<GameContextType | undefined>(undefined)
+const GameStateContext = createContext<GameState | undefined>(undefined)
+const GameActionsContext = createContext<GameActionsContextType | undefined>(undefined)
+const RpgResumeContext = createContext<number | undefined>(undefined)
 
 interface GameProviderProps {
   children: ReactNode
@@ -33,9 +35,13 @@ interface GameProviderProps {
 }
 
 export const GameProvider = ({ children, initialGameState }: GameProviderProps) => {
-  const initialState = initialGameState
-    ? deserializeGameState(initialGameState)
-    : createInitialGameState()
+  const initialState = useMemo(
+    () =>
+      initialGameState
+        ? deserializeGameState(initialGameState)
+        : createInitialGameState(),
+    [initialGameState]
+  )
 
   const [state, dispatch] = useReducer(reducer, initialState)
   const [rpgResumeNonce, setRpgResumeNonce] = useState(0)
@@ -46,9 +52,9 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
   // Track if game over save deletion has been triggered to avoid multiple calls
   const gameOverDeleteTriggeredRef = useRef<boolean>(false)
 
-  const setOverlay = (overlay: any) => console.log('Overlay:', overlay)
+  const setOverlay = useCallback((overlay: any) => console.log('Overlay:', overlay), [])
 
-  const signalRpgResume = () => {
+  const signalRpgResume = useCallback(() => {
     setRpgResumeNonce((prev) => {
       const next = prev + 1
       if (__DEV__) {
@@ -56,7 +62,12 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
       }
       return next
     })
-  }
+  }, [])
+
+  const actions = useMemo(
+    () => ({ dispatch, setOverlay, signalRpgResume }),
+    [dispatch, setOverlay, signalRpgResume]
+  )
 
   // Autosave effect - triggers save when important state changes
   useEffect(() => {
@@ -89,14 +100,37 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
   }, [state.gameOver])
 
   return (
-    <GameContext.Provider value={{ state, dispatch, setOverlay, rpgResumeNonce, signalRpgResume }}>
-      {children}
-    </GameContext.Provider>
+    <GameActionsContext.Provider value={actions}>
+      <RpgResumeContext.Provider value={rpgResumeNonce}>
+        <GameStateContext.Provider value={state}>{children}</GameStateContext.Provider>
+      </RpgResumeContext.Provider>
+    </GameActionsContext.Provider>
   )
 }
 
+export const useGameState = () => {
+  const state = useContext(GameStateContext)
+  if (!state) throw new Error('useGameState must be used within a GameProvider')
+  return state
+}
+
+export const useGameActions = () => {
+  const actions = useContext(GameActionsContext)
+  if (!actions) throw new Error('useGameActions must be used within a GameProvider')
+  return actions
+}
+
+export const useRpgResumeNonce = () => {
+  const nonce = useContext(RpgResumeContext)
+  if (nonce === undefined) {
+    throw new Error('useRpgResumeNonce must be used within a GameProvider')
+  }
+  return nonce
+}
+
 export const useGameContext = () => {
-  const context = useContext(GameContext)
-  if (!context) throw new Error('useGameContext must be used within a GameProvider')
-  return context
+  const state = useGameState()
+  const actions = useGameActions()
+  const rpgResumeNonce = useRpgResumeNonce()
+  return { state, ...actions, rpgResumeNonce }
 }

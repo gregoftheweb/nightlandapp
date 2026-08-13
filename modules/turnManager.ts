@@ -6,6 +6,7 @@ import { handleMoveMonsters } from './monsterUtils'
 import { handleCombatTurn } from './combat'
 import { calculateNewPosition } from './movement'
 import { checkItemInteractions, checkObjectInteractions } from './interactions'
+import { buildSpatialGrid } from './spacialGrid'
 import { SPAWN_CONSTANTS } from '../constants/Game'
 import { logIfDev } from './utils'
 import { reducer as gameReducer } from '../state/reducer'
@@ -119,8 +120,9 @@ const doMoveTurn = (direction: string, setOverlay?: (overlay: any) => void): voi
   logIfDev(`Player moved to: (${newPosition.row}, ${newPosition.col}), Move: ${newMoveCount}`)
 
   // Handle world interactions at new position
-  checkItemInteractions(currentGameState, gameDispatch, setOverlay)
-  checkObjectInteractions(currentGameState, gameDispatch, newPosition)
+  const spatialGrid = buildSpatialGrid(currentGameState)
+  checkItemInteractions(currentGameState, gameDispatch, setOverlay, spatialGrid)
+  checkObjectInteractions(currentGameState, gameDispatch, newPosition, spatialGrid)
 }
 
 // ==================== NON-MOVE TURN EXECUTION ====================

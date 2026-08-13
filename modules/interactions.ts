@@ -2,7 +2,7 @@
 import { GameState, Position, Item, NonCollisionObject } from '../config/types'
 import { createItemInstance } from '../config/levelHelpers'
 import { COMBAT_STRINGS } from '@assets/copy/combat'
-import { buildSpatialGrid, checkOverlap } from './spacialGrid'
+import { buildSpatialGrid, checkOverlap, SpatialGrid } from './spacialGrid'
 import { applyEffect } from './effects'
 
 // ==================== ITEM INTERACTIONS ====================
@@ -10,17 +10,14 @@ import { applyEffect } from './effects'
 export const checkItemInteractions = (
   state: GameState,
   dispatch: (action: any) => void,
-  setOverlay?: (overlay: any) => void
+  setOverlay?: (overlay: any) => void,
+  spatialGrid: SpatialGrid = buildSpatialGrid(state)
 ) => {
   const playerPos = state.player.position
 
   console.log(`🔍 CHECKING ITEM INTERACTIONS at position (${playerPos.row}, ${playerPos.col})`)
 
-  // Build spatial grid for efficient lookup
-  const grid = buildSpatialGrid(state, 10) // 10x10 cell size
-
-  // Only check items in nearby cells (massive performance boost)
-  const nearbyEntities = grid.getNearbyByType(playerPos, 'item', 1)
+  const nearbyEntities = spatialGrid.getNearbyByType(playerPos, 'item', 0)
 
   console.log(
     `Found ${nearbyEntities.length} nearby items (filtered from ${state.items?.length || 0} total)`
@@ -140,15 +137,13 @@ const handleConsumableCollection = (
 export const checkObjectInteractions = (
   state: GameState,
   dispatch: (action: any) => void,
-  playerPos: Position
+  playerPos: Position,
+  spatialGrid: SpatialGrid = buildSpatialGrid(state)
 ) => {
   console.log('Checking object interactions at playerPos:', playerPos)
 
-  // Build spatial grid for efficient lookup
-  const grid = buildSpatialGrid(state, 10)
-
   // Check regular objects
-  const nearbyObjects = grid.getNearbyByType(playerPos, 'object', 1)
+  const nearbyObjects = spatialGrid.getNearbyByType(playerPos, 'object', 0)
 
   const collidingObject = nearbyObjects.find((entity) => {
     const obj = entity.data as any
@@ -176,7 +171,11 @@ export const checkObjectInteractions = (
   })
 
   // Check non-collision objects (now using spatial grid!)
-  const nearbyNonCollisionObjects = grid.getNearbyByType(playerPos, 'nonCollisionObject', 1)
+  const nearbyNonCollisionObjects = spatialGrid.getNearbyByType(
+    playerPos,
+    'nonCollisionObject',
+    0
+  )
 
   const collidingNonCollisionObject = nearbyNonCollisionObjects.find((entity) => {
     // The grid entity position already represents the mask tile position

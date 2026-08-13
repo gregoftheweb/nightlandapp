@@ -48,7 +48,7 @@ class AudioManager {
         console.log('Loading background music...')
       }
       const { sound } = await Audio.Sound.createAsync(
-        require('../assets/sounds/ambient-background.wav'),
+        require('../assets/sounds/ambient-background.mp3'),
         {
           isLooping: true,
           volume: gameConfig.audio.backgroundVolume * gameConfig.audio.masterVolume,

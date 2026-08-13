@@ -16,7 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.gobyrne.nightlandapp"
+      "package": "com.columbiafoundry.nightlandapp"
     },
     "web": {
       "bundler": "metro",

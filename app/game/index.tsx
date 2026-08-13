@@ -3,7 +3,7 @@ import { View, StyleSheet, Dimensions, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
 import { PositionDisplay } from '../../components/PositionDisplay'
-import { useGameContext } from '../../context/GameContext'
+import { useGameActions, useGameState } from '../../context/GameContext'
 import GameBoard, { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE } from '../../components/GameBoard'
 import PlayerHUD from '../../components/PlayerHUD'
 import Settings from '../../components/Settings'
@@ -33,7 +33,8 @@ const { width, height } = Dimensions.get('window')
 type Direction = 'up' | 'down' | 'left' | 'right' | 'stay' | null
 
 export default function Game() {
-  const { state, dispatch, setOverlay } = useGameContext()
+  const state = useGameState()
+  const { dispatch, setOverlay } = useGameActions()
   const [settingsVisible, setSettingsVisible] = useState(false)
   const [inventoryVisible, setInventoryVisible] = useState(false)
   const [targetId, setTargetId] = useState<string | undefined>()

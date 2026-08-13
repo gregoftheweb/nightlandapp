@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router'
 import { STRINGS } from '../assets/copy/strings'
 import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
-import { useGameContext } from '@context/GameContext'
+import { useGameActions } from '@context/GameContext'
 import {
   hasCurrentGame,
   loadCurrentGame,
@@ -30,7 +30,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function SplashScreen() {
   const router = useRouter()
-  const { dispatch } = useGameContext()
+  const { dispatch } = useGameActions()
 
   const [hasCurrentSave, setHasCurrentSave] = React.useState(false)
   const [waypointSaves, setWaypointSaves] = React.useState<WaypointSaveMetadata[]>([])

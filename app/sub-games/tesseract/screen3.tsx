@@ -2,7 +2,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
-import { useGameContext } from '@context/GameContext'
+import { useGameActions } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { subGameTheme } from '../_shared/subGameTheme'
 
@@ -10,7 +10,7 @@ const bgScreen3 = require('@assets/images/backgrounds/subgames/tesseract/tessera
 
 export default function TesseractScreen3() {
   const router = useRouter()
-  const { dispatch } = useGameContext()
+  const { dispatch } = useGameActions()
 
   const handleAcceptDoom = () => {
     dispatch({
