@@ -13,7 +13,7 @@
  */
 
 import { GameState } from '@config/types'
-import { saveCurrentGame } from './saveGame'
+import { deleteCurrentGame, saveCurrentGame } from './saveGame'
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null
 let activeSave: Promise<void> | null = null
@@ -140,6 +140,21 @@ export function cancelAutoSave(): void {
     saveTimeout = null
   }
   latestPendingState = null
+}
+
+/**
+ * Invalidate pending autosaves and delete the current save without allowing an
+ * already-running write to recreate it afterward.
+ */
+export async function invalidateAutoSaveAndDeleteCurrentGame(): Promise<void> {
+  cancelAutoSave()
+
+  // AsyncStorage writes cannot be cancelled once started. Serialize deletion
+  // behind the active write so removal is guaranteed to be the final operation.
+  const writeInFlight = activeSave
+  if (writeInFlight !== null) await writeInFlight
+
+  await deleteCurrentGame()
 }
 
 /**

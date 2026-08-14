@@ -13,8 +13,11 @@ import React, {
 import { deserializeGameState, createInitialGameState } from '../modules/gameState'
 import { reducer } from '../state/reducer'
 import { GameState } from '../config/types'
-import { requestAutoSave, getStateSaveFingerprint } from '../modules/autoSave'
-import { deleteCurrentGame } from '../modules/saveGame'
+import {
+  requestAutoSave,
+  getStateSaveFingerprint,
+  invalidateAutoSaveAndDeleteCurrentGame,
+} from '../modules/autoSave'
 
 export type GameAction = Parameters<typeof reducer>[1]
 export type GameDispatch = React.Dispatch<GameAction>
@@ -83,7 +86,7 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
   useEffect(() => {
     if (state.gameOver && !gameOverDeleteTriggeredRef.current) {
       gameOverDeleteTriggeredRef.current = true
-      deleteCurrentGame().catch((err) => {
+      invalidateAutoSaveAndDeleteCurrentGame().catch((err) => {
         console.error('Failed to delete current save on death:', err)
         // Reset flag on error to allow retry if needed
         gameOverDeleteTriggeredRef.current = false

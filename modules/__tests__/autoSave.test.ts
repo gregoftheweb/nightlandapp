@@ -1,11 +1,17 @@
 import { getInitialState } from '../gameState'
-import { cancelAutoSave, requestAutoSave } from '../autoSave'
-import { saveCurrentGame } from '../saveGame'
+import {
+  cancelAutoSave,
+  invalidateAutoSaveAndDeleteCurrentGame,
+  requestAutoSave,
+} from '../autoSave'
+import { deleteCurrentGame, saveCurrentGame } from '../saveGame'
 
 jest.mock('../saveGame', () => ({
+  deleteCurrentGame: jest.fn(),
   saveCurrentGame: jest.fn(),
 }))
 
+const mockedDeleteCurrentGame = jest.mocked(deleteCurrentGame)
 const mockedSaveCurrentGame = jest.mocked(saveCurrentGame)
 
 const stateAtMove = (moveCount: number) => ({
@@ -23,6 +29,8 @@ describe('autosave throttling', () => {
     jest.useFakeTimers()
     mockedSaveCurrentGame.mockReset()
     mockedSaveCurrentGame.mockResolvedValue(undefined)
+    mockedDeleteCurrentGame.mockReset()
+    mockedDeleteCurrentGame.mockResolvedValue(undefined)
   })
 
   afterEach(() => {
@@ -65,5 +73,42 @@ describe('autosave throttling', () => {
     expect(mockedSaveCurrentGame).toHaveBeenLastCalledWith(
       expect.objectContaining({ moveCount: 3 })
     )
+  })
+
+  test('cancels a queued save before deleting the current game', async () => {
+    requestAutoSave(stateAtMove(1))
+
+    await invalidateAutoSaveAndDeleteCurrentGame()
+    await jest.advanceTimersByTimeAsync(2000)
+
+    expect(mockedSaveCurrentGame).not.toHaveBeenCalled()
+    expect(mockedDeleteCurrentGame).toHaveBeenCalledTimes(1)
+  })
+
+  test('waits for an in-flight save before deleting the current game', async () => {
+    const operations: string[] = []
+    let finishSave!: () => void
+    mockedSaveCurrentGame.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          operations.push('save started')
+          finishSave = resolve
+        })
+    )
+    mockedDeleteCurrentGame.mockImplementationOnce(async () => {
+      operations.push('save deleted')
+    })
+
+    requestAutoSave(stateAtMove(1))
+    await jest.advanceTimersByTimeAsync(2000)
+
+    const deletion = invalidateAutoSaveAndDeleteCurrentGame()
+    await flushPromises()
+    expect(mockedDeleteCurrentGame).not.toHaveBeenCalled()
+
+    finishSave()
+    await deletion
+
+    expect(operations).toEqual(['save started', 'save deleted'])
   })
 })
