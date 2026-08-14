@@ -6,6 +6,15 @@ import { render } from '@testing-library/react-native'
 import { HitIndicator } from '../_components/HitIndicator'
 
 describe('HitIndicator component', () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
+  })
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers()
+    jest.useRealTimers()
+  })
+
   describe('rendering', () => {
     it('should not render when position is null', () => {
       const { toJSON } = render(<HitIndicator position={null} type="block" />)

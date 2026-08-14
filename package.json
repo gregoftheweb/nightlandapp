@@ -10,12 +10,15 @@
     "web": "npx expo start --web",
     "reset-project": "node ./scripts/reset-project.js",
     "test": "jest --watchAll",
+    "test:ci": "jest --ci --runInBand",
+    "typecheck": "tsc --noEmit",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "lint": "npx expo lint",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:all": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:all:strict": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings=0",
-    "lint:all:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix"
+    "lint:all:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:ci"
   },
   "jest": {
     "preset": "jest-expo"

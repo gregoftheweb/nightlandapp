@@ -8,6 +8,7 @@ interface BackgroundImageProps {
   children: React.ReactNode
   overlayOpacity?: number
   contentContainerStyle?: object
+  foregroundFit?: 'full-width' | 'cover'
 }
 
 const EDGE_FADE_PX = 20
@@ -18,6 +19,7 @@ export function BackgroundImage({
   children,
   overlayOpacity = 0.45,
   contentContainerStyle,
+  foregroundFit = 'full-width',
 }: BackgroundImageProps) {
   const locked = useRef(false)
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
@@ -48,20 +50,21 @@ export function BackgroundImage({
 
     if (imgW <= 0 || imgH <= 0) return fillLocked
 
-    const targetW = size.w
-    const targetH = targetW * (imgH / imgW)
+    const scale = foregroundFit === 'cover' ? Math.max(size.w / imgW, size.h / imgH) : size.w / imgW
+    const targetW = imgW * scale
+    const targetH = imgH * scale
 
-    // Center vertically
+    const left = (size.w - targetW) / 2
     const top = (size.h - targetH) / 2
 
     return {
       position: 'absolute' as const,
-      left: 0,
+      left,
       top,
       width: targetW,
       height: targetH,
     }
-  }, [fillLocked, size, source])
+  }, [fillLocked, foregroundFit, size, source])
 
   /**
    * Metrics so we know when to draw fades
@@ -74,15 +77,15 @@ export function BackgroundImage({
     const imgH = resolved?.height ?? 0
     if (imgW <= 0 || imgH <= 0) return null
 
-    const targetW = size.w
-    const targetH = targetW * (imgH / imgW)
+    const scale = foregroundFit === 'cover' ? Math.max(size.w / imgW, size.h / imgH) : size.w / imgW
+    const targetH = imgH * scale
     const top = (size.h - targetH) / 2
 
     return {
       top,
       bottom: top + targetH,
     }
-  }, [size, source])
+  }, [foregroundFit, size, source])
 
   /**
    * Fade renderer

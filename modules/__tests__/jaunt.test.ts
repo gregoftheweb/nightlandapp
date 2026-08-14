@@ -45,7 +45,7 @@ describe('Jaunt Power', () => {
         id: 'test-level',
         name: 'Test Level',
         description: 'Test level',
-        image: 0 as any,
+        boardSize: { width: 500, height: 500 },
         playerSpawn: { row: 25, col: 25 },
         items: [],
         objects: [],
@@ -74,6 +74,7 @@ describe('Jaunt Power', () => {
       playTime: 0,
       lastAction: '',
       activeProjectiles: [],
+      activeTeleportFlashes: [],
     }
   })
 

@@ -112,11 +112,16 @@ export const getSpawnPosition = (state: GameState): Position => {
     spawnCol = Math.max(0, Math.min(gridWidth - 1, spawnCol))
 
     const candidate: Position = { row: spawnRow, col: spawnCol }
+    const rowDelta = spawnRow - player.position.row
+    const colDelta = spawnCol - player.position.col
+    const roundedDistance = Math.sqrt(rowDelta * rowDelta + colDelta * colDelta)
+    const isWithinSpawnRange =
+      roundedDistance >= MIN_SPAWN_DISTANCE && roundedDistance <= MAX_SPAWN_DISTANCE
     const isOccupied = activeMonsters.some(
       (m) => m.position.row === spawnRow && m.position.col === spawnCol
     )
 
-    if (!isOccupied) return candidate
+    if (isWithinSpawnRange && !isOccupied) return candidate
     attempts++
   }
 

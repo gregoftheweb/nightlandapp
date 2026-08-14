@@ -76,6 +76,7 @@ describe('getObjectAtPoint', () => {
       combatTurn: null,
       attackSlots: [],
       activeProjectiles: [],
+      activeTeleportFlashes: [],
       waitingMonsters: [],
       turnOrder: [],
       combatLog: [],

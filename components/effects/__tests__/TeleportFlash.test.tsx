@@ -3,9 +3,6 @@ import React from 'react'
 import { render } from '@testing-library/react-native'
 import TeleportFlash from '../TeleportFlash'
 
-// Mock Animated to avoid timing issues in tests
-jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper')
-
 describe('TeleportFlash component', () => {
   const defaultProps = {
     id: 'flash-123',
@@ -18,7 +15,13 @@ describe('TeleportFlash component', () => {
   }
 
   beforeEach(() => {
+    jest.useFakeTimers()
     jest.clearAllMocks()
+  })
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers()
+    jest.useRealTimers()
   })
 
   describe('rendering', () => {
@@ -64,20 +67,13 @@ describe('TeleportFlash component', () => {
   })
 
   describe('cleanup', () => {
-    it('should call onComplete with the correct id', (done) => {
-      const onComplete = jest.fn((id) => {
-        expect(id).toBe('flash-456')
-        done()
-      })
+    it('should call onComplete with the correct id', () => {
+      const onComplete = jest.fn()
 
       render(<TeleportFlash {...defaultProps} id="flash-456" onComplete={onComplete} />)
 
-      // Wait for animation to complete (400ms + buffer)
-      setTimeout(() => {
-        if (!onComplete.mock.calls.length) {
-          done(new Error('onComplete was not called'))
-        }
-      }, 500)
+      jest.runAllTimers()
+      expect(onComplete).toHaveBeenCalledWith('flash-456')
     })
   })
 })

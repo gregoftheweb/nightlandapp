@@ -1,8 +1,8 @@
 // app/sub-games/jaunt-cave/__tests__/useArenaLayout.test.ts
 // Test to verify the useArenaLayout hook
 
-import { renderHook, act } from '@testing-library/react-hooks'
-import { useArenaLayout } from '../_components/useArenaLayout'
+import { renderHook, act } from '@testing-library/react-native'
+import { getDaemonAnchorY, useArenaLayout } from '../_components/useArenaLayout'
 
 // Mock the background image
 const mockBackgroundImage = require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen2.webp')
@@ -188,10 +188,10 @@ describe('useArenaLayout hook', () => {
         } as any)
       })
 
-      // Center position should be at 50% of drawW, 38% of drawH
+      // Center position uses the aspect-aware vertical anchor.
       const bgRect = result.current.bgRect!
       const expectedX = bgRect.offsetX + 0.5 * bgRect.drawW
-      const expectedY = bgRect.offsetY + 0.38 * bgRect.drawH
+      const expectedY = bgRect.offsetY + getDaemonAnchorY(500, 500) * bgRect.drawH
 
       expect(result.current.daemonX).toBeCloseTo(expectedX)
       expect(result.current.daemonY).toBeCloseTo(expectedY)
@@ -215,10 +215,10 @@ describe('useArenaLayout hook', () => {
         } as any)
       })
 
-      // Left position should be at 20% of drawW, 37% of drawH
+      // Left is one percentage point above the aspect-aware center anchor.
       const bgRect = result.current.bgRect!
       const expectedX = bgRect.offsetX + 0.2 * bgRect.drawW
-      const expectedY = bgRect.offsetY + 0.37 * bgRect.drawH
+      const expectedY = bgRect.offsetY + (getDaemonAnchorY(500, 500) - 0.01) * bgRect.drawH
 
       expect(result.current.daemonX).toBeCloseTo(expectedX)
       expect(result.current.daemonY).toBeCloseTo(expectedY)
@@ -240,10 +240,10 @@ describe('useArenaLayout hook', () => {
         } as any)
       })
 
-      // Right position should be at 80% of drawW, 38% of drawH
+      // Right uses the aspect-aware vertical anchor.
       const bgRect = result.current.bgRect!
       const expectedX = bgRect.offsetX + 0.8 * bgRect.drawW
-      const expectedY = bgRect.offsetY + 0.38 * bgRect.drawH
+      const expectedY = bgRect.offsetY + getDaemonAnchorY(500, 500) * bgRect.drawH
 
       expect(result.current.daemonX).toBeCloseTo(expectedX)
       expect(result.current.daemonY).toBeCloseTo(expectedY)
@@ -251,13 +251,13 @@ describe('useArenaLayout hook', () => {
 
     it('should update position when currentPosition changes', () => {
       const { result, rerender } = renderHook(
-        ({ currentPosition }) =>
+        ({ currentPosition }: { currentPosition: 'left' | 'center' | 'right' }) =>
           useArenaLayout({
             backgroundImage: mockBackgroundImage,
             currentPosition,
           }),
         {
-          initialProps: { currentPosition: 'left' as const },
+          initialProps: { currentPosition: 'left' as 'left' | 'center' | 'right' },
         }
       )
 

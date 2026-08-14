@@ -77,6 +77,7 @@ describe('Unified Effects System', () => {
       combatTurn: null,
       attackSlots: [],
       activeProjectiles: [],
+      activeTeleportFlashes: [],
       waitingMonsters: [],
       turnOrder: [],
       combatLog: [],

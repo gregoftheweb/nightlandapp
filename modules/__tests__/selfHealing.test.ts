@@ -76,6 +76,7 @@ describe('Self-Healing Mechanic', () => {
       combatTurn: null,
       attackSlots: [],
       activeProjectiles: [],
+      activeTeleportFlashes: [],
       waitingMonsters: [],
       turnOrder: [],
       combatLog: [],
