@@ -15,7 +15,17 @@ export function usePuzzleState() {
   // Refs for tracking
   const lastNumberRef = useRef<number>(0)
   const saveThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const immediatelySavedStateRef = useRef<PuzzleState | null>(null)
   const lastAngleRef = useRef<number>(0)
+
+  const enqueueSave = useCallback((snapshot: PuzzleState): Promise<void> => {
+    const write = saveQueueRef.current
+      .catch(() => undefined)
+      .then(() => setSubGameSave(SAVE_KEY, snapshot))
+    saveQueueRef.current = write
+    return write
+  }, [])
 
   // Load saved state on mount
   useEffect(() => {
@@ -25,9 +35,20 @@ export function usePuzzleState() {
   // Auto-save on state changes (throttled)
   useEffect(() => {
     if (!isLoading && !state.isOpened) {
-      throttledSave()
+      if (immediatelySavedStateRef.current === state) {
+        immediatelySavedStateRef.current = null
+        return
+      }
+
+      if (saveThrottleRef.current) clearTimeout(saveThrottleRef.current)
+
+      const snapshot = state
+      saveThrottleRef.current = setTimeout(() => {
+        saveThrottleRef.current = null
+        void enqueueSave(snapshot)
+      }, 250)
     }
-  }, [state, isLoading])
+  }, [enqueueSave, state, isLoading])
 
   const loadSave = async () => {
     try {
@@ -46,57 +67,46 @@ export function usePuzzleState() {
     }
   }
 
-  const throttledSave = useCallback(() => {
+  const resetPuzzle = async () => {
     if (saveThrottleRef.current) {
       clearTimeout(saveThrottleRef.current)
+      saveThrottleRef.current = null
     }
-
-    saveThrottleRef.current = setTimeout(() => {
-      setSubGameSave(SAVE_KEY, state)
-    }, 250)
-  }, [state])
-
-  const resetPuzzle = async () => {
+    await saveQueueRef.current
     await clearSubGameSave(SAVE_KEY)
     setState(INITIAL_STATE)
     lastNumberRef.current = 0
     lastAngleRef.current = 0
   }
 
-  const updateAngle = useCallback(
-    (newAngle: number) => {
-      const newNumber = angleToNumber(newAngle)
-      const angleDelta = newAngle - lastAngleRef.current
-      const rotationDirection = getRotationDirection(angleDelta)
+  const updateAngle = useCallback((newAngle: number, explicitDirection?: DialDirection) => {
+    const newNumber = angleToNumber(newAngle)
+    const angleDelta = newAngle - lastAngleRef.current
+    const rotationDirection = explicitDirection ?? getRotationDirection(angleDelta)
 
-      // Update last angle
-      lastAngleRef.current = newAngle
+    // Update last angle
+    lastAngleRef.current = newAngle
 
-      lastNumberRef.current = newNumber
+    lastNumberRef.current = newNumber
 
+    setState((prev) => {
       // If puzzle is already opened, just update angle/number
-      if (state.isOpened) {
-        setState((prev) => ({
+      if (prev.isOpened) {
+        return {
           ...prev,
           currentAngle: newAngle,
           currentNumber: newNumber,
-        }))
-        return
+        }
       }
 
-      // Update rotation direction if we have movement
-      const newRotationDirection = rotationDirection || state.lastRotationDirection
-
-      // Just update state, no auto-locking
-      setState((prev) => ({
+      return {
         ...prev,
         currentAngle: newAngle,
         currentNumber: newNumber,
-        lastRotationDirection: newRotationDirection,
-      }))
-    },
-    [state]
-  )
+        lastRotationDirection: rotationDirection || prev.lastRotationDirection,
+      }
+    })
+  }, [])
 
   const attemptLock = useCallback((): AttemptResult => {
     if (state.isOpened) {
@@ -156,10 +166,16 @@ export function usePuzzleState() {
       lastRotationDirection: null,
     }
 
+    immediatelySavedStateRef.current = newState
     setState(newState)
 
-    // Save immediately (bypass throttle for important state changes)
-    setSubGameSave(SAVE_KEY, newState)
+    // Cancel the older delayed snapshot, then serialize this milestone behind
+    // any storage write that has already started so the milestone wins.
+    if (saveThrottleRef.current) {
+      clearTimeout(saveThrottleRef.current)
+      saveThrottleRef.current = null
+    }
+    void enqueueSave(newState)
 
     return isLastStep
       ? {
@@ -172,7 +188,7 @@ export function usePuzzleState() {
           message: 'Click… Tumblers set.',
           type: 'step_locked',
         }
-  }, [state])
+  }, [enqueueSave, state])
 
   // Cleanup on unmount
   useEffect(() => {
