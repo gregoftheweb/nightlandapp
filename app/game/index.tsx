@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { View, StyleSheet, Dimensions, Pressable } from 'react-native'
+import { View, StyleSheet, Pressable, useWindowDimensions } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
 import { PositionDisplay } from '../../components/PositionDisplay'
 import { useGameActions, useGameState } from '../../context/GameContext'
-import GameBoard, {
-  VIEWPORT_ROWS,
-  VIEWPORT_COLS,
-  CELL_SIZE,
-  type GameBoardState,
-} from '../../components/GameBoard'
+import GameBoard, { CELL_SIZE, type GameBoardState } from '../../components/GameBoard'
 import PlayerHUD from '../../components/PlayerHUD'
 import Settings from '../../components/Settings'
 import Inventory from '../../components/Inventory'
@@ -31,9 +27,7 @@ import {
   checkCombatEnd,
 } from '../../modules/combat'
 import { enterSubGame } from '../../modules/subGames'
-
-// Constants
-const { width, height } = Dimensions.get('window')
+import { calculateGameViewport } from '../../modules/viewport'
 
 type Direction = 'up' | 'down' | 'left' | 'right' | 'stay' | null
 
@@ -45,6 +39,12 @@ export default function Game() {
   const [targetId, setTargetId] = useState<string | undefined>()
   const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
   const router = useRouter()
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions()
+  const safeAreaInsets = useSafeAreaInsets()
+  const viewport = useMemo(
+    () => calculateGameViewport(windowWidth, windowHeight, safeAreaInsets),
+    [windowHeight, windowWidth, safeAreaInsets]
+  )
 
   // Generate unique instance ID for this component
   const instanceId = useRef(`Game-${Math.random().toString(36).substr(2, 9)}`)
@@ -155,12 +155,12 @@ export default function Game() {
     () =>
       calculateCameraOffset(
         state.player.position,
-        VIEWPORT_COLS,
-        VIEWPORT_ROWS,
+        viewport.cols,
+        viewport.rows,
         state.gridWidth,
         state.gridHeight
       ),
-    [state.player.position, state.gridWidth, state.gridHeight]
+    [state.player.position, state.gridWidth, state.gridHeight, viewport.cols, viewport.rows]
   )
 
   // Audio management
@@ -196,17 +196,24 @@ export default function Game() {
   // Tap position calculation
   const calculateTapPosition = useCallback(
     (pageX: number, pageY: number) => {
-      const gridLeft = (width - VIEWPORT_COLS * CELL_SIZE) / 2
-      const gridTop = (height - VIEWPORT_ROWS * CELL_SIZE) / 2
-      const rawCol = (pageX - gridLeft) / CELL_SIZE + cameraOffset.offsetX
-      const rawRow = (pageY - gridTop) / CELL_SIZE + cameraOffset.offsetY
+      const rawCol = (pageX - viewport.left) / CELL_SIZE + cameraOffset.offsetX
+      const rawRow = (pageY - viewport.top) / CELL_SIZE + cameraOffset.offsetY
 
       return {
         tapCol: Math.floor(rawCol),
         tapRow: Math.floor(rawRow),
       }
     },
-    [cameraOffset.offsetX, cameraOffset.offsetY]
+    [cameraOffset.offsetX, cameraOffset.offsetY, viewport.left, viewport.top]
+  )
+
+  const isTapInViewport = useCallback(
+    (x: number, y: number) =>
+      x >= viewport.left &&
+      x < viewport.left + viewport.width &&
+      y >= viewport.top &&
+      y < viewport.top + viewport.height,
+    [viewport.height, viewport.left, viewport.top, viewport.width]
   )
 
   // Movement direction calculation
@@ -451,7 +458,11 @@ export default function Game() {
       if (isOverlayVisible) return
 
       const { pageX, pageY } = event.nativeEvent
-      if (pageY > height - UI_CONSTANTS.HUD_HEIGHT) return
+      if (
+        pageY > windowHeight - safeAreaInsets.bottom - UI_CONSTANTS.HUD_HEIGHT ||
+        !isTapInViewport(pageX, pageY)
+      )
+        return
 
       const { tapCol, tapRow } = calculateTapPosition(pageX, pageY)
 
@@ -502,6 +513,9 @@ export default function Game() {
       getMovementDirectionFromTap,
       performMove,
       dispatch,
+      isTapInViewport,
+      safeAreaInsets.bottom,
+      windowHeight,
     ]
   )
 
@@ -582,7 +596,11 @@ export default function Game() {
       if (state.inCombat || isOverlayVisible) return
 
       const { pageX, pageY } = event.nativeEvent
-      if (pageY > height - UI_CONSTANTS.HUD_HEIGHT) return
+      if (
+        pageY > windowHeight - safeAreaInsets.bottom - UI_CONSTANTS.HUD_HEIGHT ||
+        !isTapInViewport(pageX, pageY)
+      )
+        return
 
       const { tapCol, tapRow } = calculateTapPosition(pageX, pageY)
 
@@ -645,6 +663,9 @@ export default function Game() {
       state,
       isOverlayVisible,
       calculateTapPosition,
+      isTapInViewport,
+      safeAreaInsets.bottom,
+      windowHeight,
       getMovementDirectionFromTap,
       startLongPressInterval,
       showPlayerInfo,
@@ -985,6 +1006,8 @@ export default function Game() {
       // Get tap coordinates
       const { locationX, locationY } = event.nativeEvent
 
+      if (!isTapInViewport(locationX, locationY)) return
+
       // Convert to world coordinates
       const { tapCol, tapRow } = calculateTapPosition(locationX, locationY)
 
@@ -1003,7 +1026,7 @@ export default function Game() {
         },
       })
     },
-    [state.player.isJauntArmed, calculateTapPosition, dispatch]
+    [state.player.isJauntArmed, calculateTapPosition, dispatch, isTapInViewport]
   )
 
   const handleTurnPress = useCallback(() => {
@@ -1084,6 +1107,7 @@ export default function Game() {
       <View style={styles.gameContainer}>
         <GameBoard
           state={boardState}
+          viewport={viewport}
           cameraOffset={cameraOffset}
           onPlayerTap={handlePlayerTap}
           onMonsterTap={handleMonsterTap}

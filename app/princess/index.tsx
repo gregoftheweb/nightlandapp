@@ -1,10 +1,8 @@
 // app/princess/index.tsx
 import React from 'react'
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function PrincessScreen() {
   const router = useRouter()
@@ -41,7 +39,7 @@ export default function PrincessScreen() {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    width: SCREEN_WIDTH,
+    width: '100%',
     height: '100%',
   },
   container: {

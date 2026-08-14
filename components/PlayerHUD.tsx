@@ -4,7 +4,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   Image,
   NativeSyntheticEvent,

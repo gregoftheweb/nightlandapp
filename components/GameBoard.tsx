@@ -1,6 +1,6 @@
 // components/GameBoard.tsx
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { View, Image, StyleSheet, Dimensions, ImageSourcePropType } from 'react-native'
+import { View, Image, StyleSheet, ImageSourcePropType } from 'react-native'
 import type {
   Monster,
   LevelObjectInstance,
@@ -17,14 +17,9 @@ import deadChristosIMG from '@assets/images/ui/dialogs/deadChristos.webp'
 import Projectile from './Projectile'
 import TeleportFlash from './effects/TeleportFlash'
 import { enterSubGame } from '@modules/subGames'
+import { GAME_CELL_SIZE, type GameViewport } from '@modules/viewport'
 
-const { width, height } = Dimensions.get('window')
-
-export const CELL_SIZE = 32
-const VIEWPORT_COLS = Math.floor(width / CELL_SIZE)
-const VIEWPORT_ROWS = Math.floor(height / CELL_SIZE)
-
-export { VIEWPORT_ROWS, VIEWPORT_COLS }
+export const CELL_SIZE = GAME_CELL_SIZE
 
 // Background tile configuration
 const BACKGROUND_TILE_SIZE = 320
@@ -55,6 +50,7 @@ export type GameBoardState = Pick<
 
 interface GameBoardProps {
   state: GameBoardState
+  viewport: GameViewport
   cameraOffset: { offsetX: number; offsetY: number }
   onPlayerTap?: () => void
   onMonsterTap?: (monster: Monster) => void
@@ -80,6 +76,7 @@ interface GameBoardProps {
 
 function GameBoard({
   state,
+  viewport,
   cameraOffset,
   onPlayerTap,
   onMonsterTap,
@@ -390,19 +387,19 @@ function GameBoard({
   // recreate or reconcile the grid itself.
   const renderGridLines = useMemo(() => {
     const lines: React.ReactNode[] = []
-    for (let row = 0; row <= VIEWPORT_ROWS; row++) {
+    for (let row = 0; row <= viewport.rows; row++) {
       lines.push(
         <View key={`grid-row-${row}`} style={[styles.gridRow, { top: row * CELL_SIZE }]} />
       )
     }
-    for (let col = 0; col <= VIEWPORT_COLS; col++) {
+    for (let col = 0; col <= viewport.cols; col++) {
       lines.push(
         <View key={`grid-col-${col}`} style={[styles.gridColumn, { left: col * CELL_SIZE }]} />
       )
     }
 
     return lines
-  }, [])
+  }, [viewport.cols, viewport.rows])
 
   // Only the handful of occupied cells move as the camera changes.
   const renderGridHighlights = useMemo(() => {
@@ -413,9 +410,9 @@ function GameBoard({
       const screenCol = monster.position.col - cameraOffset.offsetX
       if (
         screenRow < 0 ||
-        screenRow >= VIEWPORT_ROWS ||
+        screenRow >= viewport.rows ||
         screenCol < 0 ||
-        screenCol >= VIEWPORT_COLS
+        screenCol >= viewport.cols
       ) {
         return
       }
@@ -437,9 +434,9 @@ function GameBoard({
       const screenCol = playerPosition.col - cameraOffset.offsetX
       if (
         screenRow >= 0 &&
-        screenRow < VIEWPORT_ROWS &&
+        screenRow < viewport.rows &&
         screenCol >= 0 &&
-        screenCol < VIEWPORT_COLS
+        screenCol < viewport.cols
       ) {
         highlights.push(
           <View
@@ -463,6 +460,8 @@ function GameBoard({
     cameraOffset.offsetX,
     state.player?.position,
     state.player?.hideActive,
+    viewport.cols,
+    viewport.rows,
   ])
 
   const renderCombatMonsters = useMemo(() => {
@@ -476,7 +475,7 @@ function GameBoard({
         const screenCol = monster.position.col - cameraOffset.offsetX
 
         const inView =
-          screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS
+          screenRow >= 0 && screenRow < viewport.rows && screenCol >= 0 && screenCol < viewport.cols
         if (!inView) return null
 
         const isTargeted = state.targetedMonsterId === monster.id
@@ -515,6 +514,8 @@ function GameBoard({
     state.targetedMonsterId,
     cameraOffset.offsetY,
     cameraOffset.offsetX,
+    viewport.cols,
+    viewport.rows,
   ])
 
   const renderPlayer = useMemo(() => {
@@ -525,7 +526,7 @@ function GameBoard({
     const screenCol = pos.col - cameraOffset.offsetX
 
     const inView =
-      screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS
+      screenRow >= 0 && screenRow < viewport.rows && screenCol >= 0 && screenCol < viewport.cols
     if (!inView) return null
 
     return (
@@ -548,7 +549,13 @@ function GameBoard({
         />
       </View>
     )
-  }, [state.player?.position, cameraOffset.offsetY, cameraOffset.offsetX])
+  }, [
+    state.player?.position,
+    cameraOffset.offsetY,
+    cameraOffset.offsetX,
+    viewport.cols,
+    viewport.rows,
+  ])
 
   const renderMonsters = useMemo(() => {
     if (activeMonsters.length === 0) return []
@@ -561,7 +568,7 @@ function GameBoard({
         const screenCol = monster.position.col - cameraOffset.offsetX
 
         const inView =
-          screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS
+          screenRow >= 0 && screenRow < viewport.rows && screenCol >= 0 && screenCol < viewport.cols
         if (!inView) return null
 
         const isTargeted = state.targetedMonsterId === monster.id
@@ -594,7 +601,14 @@ function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [activeMonsters, state.targetedMonsterId, cameraOffset.offsetY, cameraOffset.offsetX])
+  }, [
+    activeMonsters,
+    state.targetedMonsterId,
+    cameraOffset.offsetY,
+    cameraOffset.offsetX,
+    viewport.cols,
+    viewport.rows,
+  ])
 
   const renderGreatPowers = useMemo(() => {
     if (levelGreatPowers.length === 0) return []
@@ -611,9 +625,9 @@ function GameBoard({
 
         const inView =
           screenRow + gpHeight > 0 &&
-          screenRow < VIEWPORT_ROWS &&
+          screenRow < viewport.rows &&
           screenCol + gpWidth > 0 &&
-          screenCol < VIEWPORT_COLS
+          screenCol < viewport.cols
         if (!inView) return null
 
         return (
@@ -642,7 +656,7 @@ function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [levelGreatPowers, cameraOffset.offsetY, cameraOffset.offsetX])
+  }, [levelGreatPowers, cameraOffset.offsetY, cameraOffset.offsetX, viewport.cols, viewport.rows])
 
   const renderItems = useMemo(() => {
     if (items.length === 0) return []
@@ -655,7 +669,7 @@ function GameBoard({
         const screenCol = item.position.col - cameraOffset.offsetX
 
         const inView =
-          screenRow >= 0 && screenRow < VIEWPORT_ROWS && screenCol >= 0 && screenCol < VIEWPORT_COLS
+          screenRow >= 0 && screenRow < viewport.rows && screenCol >= 0 && screenCol < viewport.cols
         if (!inView) return null
 
         return (
@@ -686,7 +700,7 @@ function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [items, cameraOffset.offsetY, cameraOffset.offsetX])
+  }, [items, cameraOffset.offsetY, cameraOffset.offsetX, viewport.cols, viewport.rows])
 
   const renderBuildings = useMemo(() => {
     if (!level || levelObjects.length === 0) return []
@@ -703,9 +717,9 @@ function GameBoard({
 
         const inView =
           screenRow + objHeight > 0 &&
-          screenRow < VIEWPORT_ROWS &&
+          screenRow < viewport.rows &&
           screenCol + objWidth > 0 &&
-          screenCol < VIEWPORT_COLS
+          screenCol < viewport.cols
         if (!inView) return null
 
         const rotation = obj.rotation ?? 0
@@ -736,7 +750,14 @@ function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [level, levelObjects, cameraOffset.offsetY, cameraOffset.offsetX])
+  }, [
+    level,
+    levelObjects,
+    cameraOffset.offsetY,
+    cameraOffset.offsetX,
+    viewport.cols,
+    viewport.rows,
+  ])
 
   const renderNonCollisionObjects = useMemo(() => {
     if (nonCollisionObjects.length === 0) return []
@@ -753,9 +774,9 @@ function GameBoard({
 
       const inView =
         screenRow + objHeight > 0 &&
-        screenRow < VIEWPORT_ROWS &&
+        screenRow < viewport.rows &&
         screenCol + objWidth > 0 &&
-        screenCol < VIEWPORT_COLS
+        screenCol < viewport.cols
       if (!inView) return
 
       const hasCollisionMask = !!(obj.collisionMask && obj.collisionMask.length > 0)
@@ -811,7 +832,13 @@ function GameBoard({
     })
 
     return elements
-  }, [nonCollisionObjects, cameraOffset.offsetY, cameraOffset.offsetX])
+  }, [
+    nonCollisionObjects,
+    cameraOffset.offsetY,
+    cameraOffset.offsetX,
+    viewport.cols,
+    viewport.rows,
+  ])
 
   // Render active projectiles
   const renderProjectiles = useMemo(() => {
@@ -896,8 +923,8 @@ function GameBoard({
 
   // Tiled background
   const tiledBackground = useMemo(() => {
-    const cols = Math.ceil(width / SCALED_TILE_SIZE) + 2
-    const rows = Math.ceil(height / SCALED_TILE_SIZE) + 2
+    const cols = Math.ceil(viewport.width / SCALED_TILE_SIZE) + 2
+    const rows = Math.ceil(viewport.height / SCALED_TILE_SIZE) + 2
     const rawX =
       (((cameraOffset.offsetX * CELL_SIZE) % SCALED_TILE_SIZE) + SCALED_TILE_SIZE) %
       SCALED_TILE_SIZE
@@ -929,7 +956,7 @@ function GameBoard({
       }
     }
     return tiles
-  }, [cameraOffset.offsetX, cameraOffset.offsetY])
+  }, [cameraOffset.offsetX, cameraOffset.offsetY, viewport.height, viewport.width])
 
   const safeEmptyBoard = useMemo(() => {
     // If level or objects are missing, render an empty board (but DO NOT early return before hooks)
@@ -939,14 +966,24 @@ function GameBoard({
   }, [level, levelObjects])
 
   return (
-    <View style={styles.gridContainer}>
+    <View
+      style={[
+        styles.gridContainer,
+        {
+          left: viewport.left,
+          top: viewport.top,
+          width: viewport.width,
+          height: viewport.height,
+        },
+      ]}
+    >
       {/* Tiled Background */}
-      <View style={styles.backgroundContainer} pointerEvents="none">
+      <View style={styles.fillContainer} pointerEvents="none">
         {tiledBackground}
       </View>
 
       {/* Game Content */}
-      <View style={styles.gameContent}>
+      <View style={styles.fillContainer}>
         {safeEmptyBoard ? null : (
           <>
             <View style={styles.gridLayer} pointerEvents="none">
@@ -1013,22 +1050,11 @@ const getItemImage = (item: Item) => {
 
 const styles = StyleSheet.create({
   gridContainer: {
-    width,
-    height,
-    position: 'relative',
+    position: 'absolute',
     overflow: 'hidden',
   },
-  backgroundContainer: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    width,
-    height,
-  },
-  gameContent: {
-    width,
-    height,
-    position: 'relative',
+  fillContainer: {
+    ...StyleSheet.absoluteFillObject,
   },
   gridLayer: {
     ...StyleSheet.absoluteFillObject,
@@ -1038,15 +1064,15 @@ const styles = StyleSheet.create({
   gridRow: {
     position: 'absolute',
     left: 0,
-    width,
+    right: 0,
     height: 0.5,
     backgroundColor: 'rgba(17, 17, 17, 0.3)',
   },
   gridColumn: {
     position: 'absolute',
     top: 0,
+    bottom: 0,
     width: 0.5,
-    height,
     backgroundColor: 'rgba(17, 17, 17, 0.3)',
   },
   cellHighlight: {

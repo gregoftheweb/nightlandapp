@@ -1,13 +1,11 @@
 // app/death/index.tsx
 import React from 'react'
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
 import { useGameContext } from '@context/GameContext'
 import { clearAllSubGameSaves } from '../sub-games/_shared/persistence'
 import { invalidateAutoSaveAndDeleteCurrentGame } from '@modules/autoSave'
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function DeathScreen() {
   const router = useRouter()
@@ -93,7 +91,7 @@ export default function DeathScreen() {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    width: SCREEN_WIDTH,
+    width: '100%',
     height: '100%',
   },
   container: {
