@@ -6,6 +6,7 @@ import React, {
   useReducer,
   useState,
   useEffect,
+  useLayoutEffect,
   useRef,
   useCallback,
   useMemo,
@@ -24,6 +25,7 @@ export type GameDispatch = React.Dispatch<GameAction>
 
 interface GameActionsContextType {
   dispatch: GameDispatch
+  hydrateGameState: (state: GameState) => Promise<void>
   setOverlay: (overlay: any) => void
   signalRpgResume: () => void
 }
@@ -51,6 +53,46 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
 
   // Track if game over save deletion has been triggered to avoid multiple calls
   const gameOverDeleteTriggeredRef = useRef<boolean>(false)
+  const committedStateRef = useRef(state)
+  const pendingHydrationRef = useRef<{
+    state: GameState
+    resolve: () => void
+    reject: (error: Error) => void
+  } | null>(null)
+  committedStateRef.current = state
+
+  const hydrateGameState = useCallback((nextState: GameState): Promise<void> => {
+    if (committedStateRef.current === nextState) return Promise.resolve()
+
+    if (pendingHydrationRef.current) {
+      return Promise.reject(new Error('A game-state hydration is already in progress'))
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      pendingHydrationRef.current = { state: nextState, resolve, reject }
+      dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: nextState } })
+    })
+  }, [])
+
+  // Resolve only after React has committed the exact state supplied to the
+  // reducer. Callers can then navigate without relying on an arbitrary delay.
+  useLayoutEffect(() => {
+    const pending = pendingHydrationRef.current
+    if (pending?.state === state) {
+      pendingHydrationRef.current = null
+      pending.resolve()
+    }
+  }, [state])
+
+  useEffect(
+    () => () => {
+      pendingHydrationRef.current?.reject(
+        new Error('GameProvider unmounted before hydration committed')
+      )
+      pendingHydrationRef.current = null
+    },
+    []
+  )
 
   const setOverlay = useCallback((overlay: any) => console.log('Overlay:', overlay), [])
 
@@ -65,8 +107,8 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
   }, [])
 
   const actions = useMemo(
-    () => ({ dispatch, setOverlay, signalRpgResume }),
-    [dispatch, setOverlay, signalRpgResume]
+    () => ({ dispatch, hydrateGameState, setOverlay, signalRpgResume }),
+    [dispatch, hydrateGameState, setOverlay, signalRpgResume]
   )
 
   // Autosave effect - triggers save when important state changes
