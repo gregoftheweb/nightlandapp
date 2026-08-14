@@ -16,8 +16,8 @@ import { GameState } from '../config/types'
 import { requestAutoSave, getStateSaveFingerprint } from '../modules/autoSave'
 import { deleteCurrentGame } from '../modules/saveGame'
 
-type GameAction = Parameters<typeof reducer>[1]
-type GameDispatch = React.Dispatch<GameAction>
+export type GameAction = Parameters<typeof reducer>[1]
+export type GameDispatch = React.Dispatch<GameAction>
 
 interface GameActionsContextType {
   dispatch: GameDispatch
@@ -36,10 +36,7 @@ interface GameProviderProps {
 
 export const GameProvider = ({ children, initialGameState }: GameProviderProps) => {
   const initialState = useMemo(
-    () =>
-      initialGameState
-        ? deserializeGameState(initialGameState)
-        : createInitialGameState(),
+    () => (initialGameState ? deserializeGameState(initialGameState) : createInitialGameState()),
     [initialGameState]
   )
 

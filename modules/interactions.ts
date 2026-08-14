@@ -171,11 +171,7 @@ export const checkObjectInteractions = (
   })
 
   // Check non-collision objects (now using spatial grid!)
-  const nearbyNonCollisionObjects = spatialGrid.getNearbyByType(
-    playerPos,
-    'nonCollisionObject',
-    0
-  )
+  const nearbyNonCollisionObjects = spatialGrid.getNearbyByType(playerPos, 'nonCollisionObject', 0)
 
   const collidingNonCollisionObject = nearbyNonCollisionObjects.find((entity) => {
     // The grid entity position already represents the mask tile position

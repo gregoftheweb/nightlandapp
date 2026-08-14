@@ -469,4 +469,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default PlayerHUD
+export default React.memo(PlayerHUD)

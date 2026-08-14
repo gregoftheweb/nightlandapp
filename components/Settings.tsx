@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 import { audioManager } from '../modules/audioManager'
 import { settingsManager } from '../modules/settingsManager'
-import { useGameContext } from '../context/GameContext'
+import type { GameState } from '@config/types'
 
 const { width, height } = Dimensions.get('window')
 
@@ -22,6 +22,7 @@ type TabType = 'settings' | 'status'
 interface SettingsProps {
   visible: boolean
   onClose: () => void
+  subGamesCompleted: GameState['subGamesCompleted']
 }
 
 interface ToggleProps {
@@ -75,11 +76,10 @@ function ModernToggle({ value, onToggle, label }: ToggleProps) {
   )
 }
 
-export default function Settings({ visible, onClose }: SettingsProps) {
+function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(audioManager.getIsEnabled())
   const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
   const [activeTab, setActiveTab] = useState<TabType>('settings')
-  const { state } = useGameContext()
 
   // Puzzle name mapping for friendly display
   const PUZZLE_NAMES: Record<string, string> = {
@@ -91,13 +91,13 @@ export default function Settings({ visible, onClose }: SettingsProps) {
 
   // Get completed puzzles from state.subGamesCompleted
   // Filter out effect flags (they contain ':' and have format "puzzle-name:effect-name")
-  const completedPuzzles = Object.keys(state.subGamesCompleted || {})
+  const completedPuzzles = Object.keys(subGamesCompleted || {})
     .filter((key) => {
       // Main puzzle keys don't contain colons; effect flags do (e.g., "hermit-hollow:unlock_hide_ability")
       // This approach is safe because all current puzzle IDs use hyphens, not colons
       return !key.includes(':')
     })
-    .filter((key) => state.subGamesCompleted?.[key] === true)
+    .filter((key) => subGamesCompleted?.[key] === true)
     .map((key) => PUZZLE_NAMES[key] || key) // Map to friendly names, fallback to key if not found
 
   // Update local state when modal becomes visible
@@ -207,6 +207,8 @@ export default function Settings({ visible, onClose }: SettingsProps) {
     </Modal>
   )
 }
+
+export default React.memo(Settings, (previous, next) => !previous.visible && !next.visible)
 
 const styles = StyleSheet.create({
   overlay: {

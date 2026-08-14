@@ -1,13 +1,6 @@
 // app/sub-games/deep-silo/switch-animation.tsx
 import React, { useEffect, useRef, useState } from 'react'
-import {
-  View,
-  StyleSheet,
-  Image,
-  LayoutChangeEvent,
-  Animated,
-  Easing,
-} from 'react-native'
+import { View, StyleSheet, Image, LayoutChangeEvent, Animated, Easing } from 'react-native'
 import { useRouter } from 'expo-router'
 
 const frames = [
@@ -165,9 +158,12 @@ export default function SwitchAnimation() {
       playPowerOnFx()
     }, FRAME_1_HOLD_MS + FRAME_2_HOLD_MS)
 
-    const t3 = setTimeout(() => {
-      router.replace('/sub-games/deep-silo/screen8' as any)
-    }, FRAME_1_HOLD_MS + FRAME_2_HOLD_MS + FRAME_3_HOLD_MS)
+    const t3 = setTimeout(
+      () => {
+        router.replace('/sub-games/deep-silo/screen8' as any)
+      },
+      FRAME_1_HOLD_MS + FRAME_2_HOLD_MS + FRAME_3_HOLD_MS
+    )
 
     timersRef.current.push(t1, t2, t3)
   }, [containerSize, router])
@@ -190,11 +186,7 @@ export default function SwitchAnimation() {
 
           <Animated.View
             pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFillObject,
-              styles.flashOverlay,
-              { opacity: flashOpacity },
-            ]}
+            style={[StyleSheet.absoluteFillObject, styles.flashOverlay, { opacity: flashOpacity }]}
           />
         </Animated.View>
       )}
