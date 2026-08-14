@@ -42,7 +42,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [x] P0 — Death/reset deletion races queued or in-flight autosaves
 - [x] P0 — Safe-dial milestone saves can be overwritten by delayed older saves
 - [x] P1 — Waypoint saves use an unprotected multi-step transaction
-- [ ] P1 — Replace fixed-delay state/navigation synchronization
+- [x] P1 — Replace fixed-delay state/navigation synchronization
 - [ ] P1 — Correct callbacks that read stale closures
 - [ ] P2 — Give timer-driven battle and navigation code explicit lifecycle ownership
 - [ ] P2 — Keep audio flags synchronized with native playback state
@@ -166,6 +166,12 @@ Serialize waypoint mutations with a module-level promise queue/mutex. Re-check b
 Relevant code: `modules/saveGame.ts:178-242`, `app/sub-games/hermit-hollow/main.tsx:144-177`, and `app/sub-games/jaunt-cave/screen3.tsx:62-104`.
 
 ### P1 — A fixed 50 ms delay is used as state/navigation synchronization
+
+**Completed:** `GameProvider` now exposes `hydrateGameState`, which resolves only from a layout
+effect after React commits the exact state passed to the reducer. Current-save and waypoint loading
+both await that handshake before navigation, and transition controls reject duplicate input while a
+load is active. Tests verify both the provider commit contract and that navigation remains blocked
+until commit confirmation.
 
 The Continue flow dispatches hydration, sleeps for 50 ms, and navigates. React does not guarantee that an arbitrary timeout represents a committed provider update, and behavior can differ under device load. The waypoint flow does not use the same delay, which demonstrates that the contract is unclear.
 

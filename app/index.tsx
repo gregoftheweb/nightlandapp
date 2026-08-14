@@ -30,12 +30,26 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function SplashScreen() {
   const router = useRouter()
-  const { dispatch } = useGameActions()
+  const { dispatch, hydrateGameState } = useGameActions()
 
   const [hasCurrentSave, setHasCurrentSave] = React.useState(false)
   const [waypointSaves, setWaypointSaves] = React.useState<WaypointSaveMetadata[]>([])
   const [showWaypointModal, setShowWaypointModal] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(true)
+  const [isTransitioning, setIsTransitioning] = React.useState(false)
+  const transitionInProgressRef = React.useRef(false)
+
+  const beginTransition = () => {
+    if (transitionInProgressRef.current) return false
+    transitionInProgressRef.current = true
+    setIsTransitioning(true)
+    return true
+  }
+
+  const endTransition = () => {
+    transitionInProgressRef.current = false
+    setIsTransitioning(false)
+  }
 
   // Check for saves on mount
   React.useEffect(() => {
@@ -61,6 +75,8 @@ export default function SplashScreen() {
   }
 
   const handleNewGame = async () => {
+    if (!beginTransition()) return
+
     try {
       // Reset game state to initial state
       dispatch({ type: 'RESET_GAME' })
@@ -75,10 +91,14 @@ export default function SplashScreen() {
       router.replace('/princess')
     } catch (error) {
       console.error('[SplashScreen] Failed to start new game:', error)
+    } finally {
+      endTransition()
     }
   }
 
   const handleContinue = async () => {
+    if (!beginTransition()) return
+
     try {
       console.log('[SplashScreen] ===== LOADING CURRENT GAME =====')
       const snapshot = await loadCurrentGame()
@@ -105,22 +125,22 @@ export default function SplashScreen() {
       console.log('[SplashScreen] Loaded state player HP:', loadedState.player?.currentHP)
       console.log('[SplashScreen] Loaded state moveCount:', loadedState.moveCount)
 
-      dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: loadedState } })
-      console.log('[SplashScreen] HYDRATE_GAME_STATE dispatched')
-
-      // Wait for React to process the state update before navigating
-      // This ensures the Game component mounts with the hydrated state
-      await new Promise((resolve) => setTimeout(resolve, 50))
+      await hydrateGameState(loadedState)
+      console.log('[SplashScreen] HYDRATE_GAME_STATE committed')
 
       // Navigate to game
       router.replace('/game')
       console.log('[SplashScreen] Navigated to /game')
     } catch (error) {
       console.error('[SplashScreen] Failed to load current game:', error)
+    } finally {
+      endTransition()
     }
   }
 
   const handleLoadWaypoint = async (waypointId: string) => {
+    if (!beginTransition()) return
+
     try {
       const snapshot = await loadWaypoint(waypointId)
       if (!snapshot) {
@@ -130,7 +150,7 @@ export default function SplashScreen() {
 
       // Hydrate game state from snapshot
       const loadedState = fromSnapshot(snapshot)
-      dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: loadedState } })
+      await hydrateGameState(loadedState)
 
       // Only delete current save after successful load and hydration
       await invalidateAutoSaveAndDeleteCurrentGame()
@@ -140,6 +160,8 @@ export default function SplashScreen() {
       router.replace('/game')
     } catch (error) {
       console.error('[SplashScreen] Failed to load waypoint:', error)
+    } finally {
+      endTransition()
     }
   }
 
@@ -159,14 +181,18 @@ export default function SplashScreen() {
           <ActivityIndicator size="large" color="red" />
         ) : (
           <View style={styles.buttonsContainer}>
-            <TouchableOpacity style={styles.button} onPress={handleNewGame}>
+            <TouchableOpacity
+              style={[styles.button, isTransitioning && styles.buttonDisabled]}
+              onPress={handleNewGame}
+              disabled={isTransitioning}
+            >
               <Text style={styles.buttonText}>New</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, !hasCurrentSave && styles.buttonDisabled]}
+              style={[styles.button, (!hasCurrentSave || isTransitioning) && styles.buttonDisabled]}
               onPress={handleContinue}
-              disabled={!hasCurrentSave}
+              disabled={!hasCurrentSave || isTransitioning}
             >
               <Text style={[styles.buttonText, !hasCurrentSave && styles.buttonTextDisabled]}>
                 Current
@@ -174,9 +200,12 @@ export default function SplashScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, waypointSaves.length === 0 && styles.buttonDisabled]}
+              style={[
+                styles.button,
+                (waypointSaves.length === 0 || isTransitioning) && styles.buttonDisabled,
+              ]}
               onPress={() => setShowWaypointModal(true)}
-              disabled={waypointSaves.length === 0}
+              disabled={waypointSaves.length === 0 || isTransitioning}
             >
               <Text
                 style={[styles.buttonText, waypointSaves.length === 0 && styles.buttonTextDisabled]}
@@ -212,8 +241,9 @@ export default function SplashScreen() {
                     )}
                   </View>
                   <TouchableOpacity
-                    style={styles.loadButton}
+                    style={[styles.loadButton, isTransitioning && styles.buttonDisabled]}
                     onPress={() => handleLoadWaypoint(save.id)}
+                    disabled={isTransitioning}
                   >
                     <Text style={styles.loadButtonText}>Load</Text>
                   </TouchableOpacity>
