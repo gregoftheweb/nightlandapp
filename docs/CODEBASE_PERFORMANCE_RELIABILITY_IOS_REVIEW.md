@@ -38,7 +38,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [ ] P2 — Avoid serializing and logging more than necessary on frequent state changes
 - [ ] P2 — Reduce packaged assets and remove editor/source artifacts
 - [ ] P2 — Remove unused root initialization
-- [ ] P0 — Autosave captures the first state in a throttle window, not the latest
+- [x] P0 — Autosave captures the first state in a throttle window, not the latest
 - [ ] P0 — Death/reset deletion races queued or in-flight autosaves
 - [ ] P0 — Safe-dial milestone saves can be overwritten by delayed older saves
 - [ ] P1 — Waypoint saves use an unprotected multi-step transaction
@@ -104,6 +104,11 @@ Relevant code: `app/_layout.tsx:7` and `app/_layout.tsx:32-36`.
 ## Race conditions and tricky correctness sections
 
 ### P0 — Autosave captures the first state in a throttle window, not the latest
+
+**Completed:** The autosave controller retains the latest requested state, atomically consumes it
+when the throttle expires, and schedules another trailing save when newer state arrives during an
+active write. Forced saves wait for an active write to preserve ordering. Fake-timer regression tests
+cover rapid requests within one throttle window and requests made while storage is unresolved.
 
 `requestAutoSave(state)` schedules a timeout whose closure retains that call's `state`. Later requests merely set `pendingSave = true` and return while the timeout exists. When the timeout fires, it passes the original state to `performAutoSave`.
 
