@@ -47,7 +47,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [ ] P2 — Give timer-driven battle and navigation code explicit lifecycle ownership
 - [ ] P2 — Keep audio flags synchronized with native playback state
 - [x] P1 — Make viewport dimensions react to size and safe-area changes
-- [ ] P1 — Apply safe areas consistently
+- [x] P1 — Apply safe areas consistently
 - [ ] P1 — Protect game transitions from iOS back-swipe gestures
 - [x] P1 — Restore type-checking and automated validation gates
 - [ ] P2 — Explicitly gate Android-only native calls
@@ -219,13 +219,15 @@ Use `useWindowDimensions()` at the screen boundary and derive rows, columns, cam
 
 Relevant code: `components/GameBoard.tsx:21-27`, `app/game/index.tsx:36` and `:199-210`, plus module-level dimensions in `components/Settings.tsx`, `components/Inventory.tsx`, `app/index.tsx`, `app/princess/index.tsx`, and `app/death/index.tsx`.
 
-Completed: the gameplay screen now derives a shared whole-cell viewport from `useWindowDimensions()` and the current safe-area insets. Camera bounds, entity culling, grid/background rendering, projectile placement, and tap/long-press/Jaunt coordinate conversion all consume that geometry and update together after rotation or window resizing. Touches in safe-area margins and beneath the HUD are excluded from world hit-testing. Inventory and Settings modal sizes now update with the window, and the splash, princess, and death backgrounds no longer retain module-load widths. Pure geometry tests cover portrait and landscape safe-area layouts.
+**Completed**: the gameplay screen now derives a shared whole-cell viewport from `useWindowDimensions()` and the current safe-area insets. Camera bounds, entity culling, grid/background rendering, projectile placement, and tap/long-press/Jaunt coordinate conversion all consume that geometry and update together after rotation or window resizing. Touches in safe-area margins and beneath the HUD are excluded from world hit-testing. Inventory and Settings modal sizes now update with the window, and the splash, princess, and death backgrounds no longer retain module-load widths. Pure geometry tests cover portrait and landscape safe-area layouts.
 
 ### P1 — Safe areas are inconsistently applied
 
 The app installs `SafeAreaProvider`, and `PlayerHUD`/`BottomActionBar` use insets, but several absolute/fixed layouts do not. The status bar is hidden, but iOS still has physical cutouts, rounded corners, the Dynamic Island, and the home indicator. Fixed bottom values/padding can either waste space or place buttons in the gesture region. `CombatDialog` uses a fixed `top: 80`; death and sub-game success screens use fixed bottom padding.
 
 Audit every interactive screen on at least a notched iPhone, a smaller iPhone, and iPad. Apply safe-area insets at the screen shell and let shared components consume them consistently. Test larger accessibility text sizes because several dialog/HUD regions use fixed widths and heights.
+
+**Completed**: a shared `SafeAreaContent` shell now keeps interactive content inside all four system insets while allowing image backgrounds to remain edge-to-edge. The shared sub-game background applies that shell across the sub-game routes, and `BottomActionBar` relies on the shell instead of adding a second bottom inset. Splash, princess, death, inventory, settings, information dialogs, and sub-game modal portals use the same policy. The gameplay coordinate display follows the live top/right insets, while the board viewport and HUD retain their dedicated safe-area geometry.
 
 ### P1 — iOS back-swipe gestures can bypass intended game transitions
 
@@ -290,7 +292,7 @@ The repository's `test` script uses watch mode. Add CI-friendly scripts such as 
 ### Phase 2 — Make layout portable before iOS testing
 
 1. [x] Derive the board from live window and safe-area dimensions.
-2. [ ] Apply consistent safe-area shells to all screens and bottom controls.
+2. [x] Apply consistent safe-area shells to all screens and bottom controls.
 3. [ ] Define per-route iOS gesture policy.
 4. [ ] Gate Android native calls and test audio/haptics/interruption behavior.
 

@@ -3,6 +3,7 @@ import React from 'react'
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 export default function PrincessScreen() {
   const router = useRouter()
@@ -19,7 +20,7 @@ export default function PrincessScreen() {
       resizeMode="cover"
       style={styles.backgroundImage}
     >
-      <View style={styles.container}>
+      <SafeAreaContent style={styles.container}>
         <View style={styles.textContainer}>
           <Text style={styles.text}>{SPLASH_STRINGS.princessScreen.text}</Text>
         </View>
@@ -31,7 +32,7 @@ export default function PrincessScreen() {
             <Text style={styles.buttonText}>{SPLASH_STRINGS.princessScreen.buttonText}</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaContent>
     </ImageBackground>
   )
 }
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     alignItems: 'center',
-    paddingBottom: 60,
+    paddingBottom: 20,
   },
   button: {
     backgroundColor: 'transparent',

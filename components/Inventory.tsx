@@ -13,6 +13,7 @@ import {
 import { GameState, Item } from '@config/types'
 import type { GameDispatch } from '../context/GameContext'
 import { applyItem, canUseItem } from '@modules/effects' // <-- renamed from useItem
+import { SafeAreaContent } from './SafeAreaContent'
 
 type TabType = 'items' | 'weapons'
 
@@ -198,7 +199,7 @@ function Inventory({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay} onTouchStart={(event) => event.stopPropagation()}>
+      <SafeAreaContent style={styles.overlay} onTouchStart={(event) => event.stopPropagation()}>
         <View style={[styles.inventoryContainer, { width: width * 0.8, height: height * 0.6 }]}>
           <View style={styles.header}>
             <Text style={styles.title}>Inventory</Text>
@@ -250,7 +251,7 @@ function Inventory({
             </ScrollView>
           </View>
         </View>
-      </View>
+      </SafeAreaContent>
     </Modal>
   )
 }

@@ -14,8 +14,8 @@ import {
 import { useRouter } from 'expo-router'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
-import { subGameTheme } from '../_shared/subGameTheme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { subGameTheme } from '../_shared/subGameTheme'
 import {
   GRID_RECT,
   generateTilesFromGridRect,
@@ -47,7 +47,7 @@ export default function TesseractScreen2() {
 
   const H_PADDING = 10
   const IMAGE_AR = 1024 / 972 // ~1.053
-  const boardWidth = screenWidth - H_PADDING * 2
+  const boardWidth = screenWidth - insets.left - insets.right - H_PADDING * 2
   const boardHeight = boardWidth / IMAGE_AR
 
   // Image and tile state
@@ -329,7 +329,7 @@ export default function TesseractScreen2() {
   return (
     <BackgroundImage>
       <View style={styles.container}>
-        <View style={[styles.contentArea, { paddingTop: insets.top + 20 }]}>
+        <View style={styles.contentArea}>
           <View style={styles.boardContainer}>
             <Image
               source={puzzleBoard}
@@ -476,6 +476,7 @@ const styles = StyleSheet.create({
   },
   contentArea: {
     flex: 1,
+    paddingTop: 20,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 10,

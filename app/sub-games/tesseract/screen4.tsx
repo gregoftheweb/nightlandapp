@@ -10,6 +10,7 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { collectible } from '@config/objects'
 import { Item } from '@config/types'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 const bgScreen4 = require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen4.webp')
 
@@ -146,7 +147,7 @@ export default function TesseractScreen4() {
             animationType="fade"
             onRequestClose={() => setShowScrollModal(false)}
           >
-            <View style={styles.modalOverlay}>
+            <SafeAreaContent style={styles.modalOverlay}>
               <View style={styles.modalContainer}>
                 <Text style={styles.modalTitle}>Message from Persius</Text>
                 <Text style={styles.modalText}>{PERSIUS_SCROLL_TEXT}</Text>
@@ -158,7 +159,7 @@ export default function TesseractScreen4() {
                   <Text style={styles.modalButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </SafeAreaContent>
           </Modal>
         )}
       </View>

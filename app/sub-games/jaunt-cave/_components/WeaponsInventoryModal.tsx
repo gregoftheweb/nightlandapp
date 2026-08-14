@@ -5,6 +5,7 @@ import React from 'react'
 import { View, Text, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native'
 import { subGameTheme } from '../../_shared/subGameTheme'
 import { Item } from '@config/types'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 interface WeaponsInventoryModalProps {
   visible: boolean
@@ -27,7 +28,7 @@ export function WeaponsInventoryModal({
 }: WeaponsInventoryModalProps) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <SafeAreaContent style={styles.overlay}>
         <View style={styles.modalContainer}>
           <View style={styles.header}>
             <Text style={styles.title}>Weapons</Text>
@@ -73,7 +74,7 @@ export function WeaponsInventoryModal({
             )}
           </ScrollView>
         </View>
-      </View>
+      </SafeAreaContent>
     </Modal>
   )
 }

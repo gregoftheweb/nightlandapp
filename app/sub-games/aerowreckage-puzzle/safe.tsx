@@ -11,6 +11,7 @@ import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { AttemptResult } from './types'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const bgPuzzle = require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe2.webp')
 
@@ -18,6 +19,7 @@ export default function AeroWreckageSafe() {
   const router = useRouter()
   const { state, updateAngle, attemptLock } = usePuzzleState()
   const { width, height } = useWindowDimensions()
+  const insets = useSafeAreaInsets()
 
   const [modalVisible, setModalVisible] = useState(false)
   const [attemptResult, setAttemptResult] = useState<AttemptResult | null>(null)
@@ -92,7 +94,10 @@ export default function AeroWreckageSafe() {
    * - Clamp so it never gets absurdly huge on tablets or too tiny on small phones.
    */
   const dialScale = useMemo(() => {
-    const shortest = Math.min(width, height)
+    const shortest = Math.min(
+      width - insets.left - insets.right,
+      height - insets.top - insets.bottom
+    )
 
     // Target: dial uses ~70% of shortest dimension; clamp to avoid extremes.
     const targetDialPx = Math.max(240, Math.min(380, shortest * 0.7))
@@ -103,7 +108,7 @@ export default function AeroWreckageSafe() {
     const scale = targetDialPx / base
 
     return Math.max(0.72, Math.min(1.0, scale))
-  }, [width, height])
+  }, [height, insets.bottom, insets.left, insets.right, insets.top, width])
 
   return (
     <BackgroundImage source={bgPuzzle}>

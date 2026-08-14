@@ -6,19 +6,21 @@ import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
 import { useGameContext } from '@context/GameContext'
 import { clearAllSubGameSaves } from '../sub-games/_shared/persistence'
 import { invalidateAutoSaveAndDeleteCurrentGame } from '@modules/autoSave'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 export default function DeathScreen() {
   const router = useRouter()
-  const { state, dispatch } = useGameContext()
+  const { state } = useGameContext()
 
   // Generate unique instance ID for this component
   const instanceId = React.useRef(`DeathScreen-${Math.random().toString(36).substr(2, 9)}`)
 
   // Log component lifecycle
   React.useEffect(() => {
-    console.log(`☠️☠️☠️ [${instanceId.current}] DeathScreen component MOUNTED`)
+    const id = instanceId.current
+    console.log(`☠️☠️☠️ [${id}] DeathScreen component MOUNTED`)
     return () => {
-      console.log(`☠️☠️☠️ [${instanceId.current}] DeathScreen component UNMOUNTED`)
+      console.log(`☠️☠️☠️ [${id}] DeathScreen component UNMOUNTED`)
     }
   }, [])
 
@@ -68,7 +70,7 @@ export default function DeathScreen() {
       resizeMode="cover"
       style={styles.backgroundImage}
     >
-      <View style={styles.container}>
+      <SafeAreaContent style={styles.container}>
         <View style={styles.textContainer}>
           <Text style={styles.title}>{SPLASH_STRINGS.deathScreen.title}</Text>
           <Text style={styles.text}>
@@ -83,7 +85,7 @@ export default function DeathScreen() {
             <Text style={styles.buttonText}>{SPLASH_STRINGS.deathScreen.buttonText}</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaContent>
     </ImageBackground>
   )
 }
@@ -96,9 +98,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    justifyContent: 'space-between',
     padding: 20,
-    paddingTop: 40, // Fixed top padding to prevent layout shift
-    paddingBottom: 80, // Fixed bottom padding for button area
   },
   textContainer: {
     borderWidth: 2,
@@ -120,11 +121,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Gabrielle',
   },
   overlay: {
-    position: 'absolute',
-    bottom: 80,
-    left: 0,
-    right: 0,
     alignItems: 'center',
+    paddingBottom: 20,
   },
   button: {
     backgroundColor: 'transparent',

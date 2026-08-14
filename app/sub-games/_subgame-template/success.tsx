@@ -8,6 +8,7 @@ import { useGameContext } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 // TODO: Replace with your sub-game's background image
 const bgSuccess = require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen4.webp')
@@ -127,7 +128,7 @@ export default function SubGameTemplateSuccess() {
             animationType="fade"
             onRequestClose={() => setShowRewardModal(false)}
           >
-            <View style={styles.modalOverlay}>
+            <SafeAreaContent style={styles.modalOverlay}>
               <View style={styles.modalContainer}>
                 <Text style={styles.modalTitle}>Reward Claimed!</Text>
                 {/* TODO: Replace with your reward description */}
@@ -142,7 +143,7 @@ export default function SubGameTemplateSuccess() {
                   <Text style={styles.modalButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </SafeAreaContent>
           </Modal>
         )}
       </View>

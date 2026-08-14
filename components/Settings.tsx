@@ -14,6 +14,7 @@ import {
 import { audioManager } from '../modules/audioManager'
 import { settingsManager } from '../modules/settingsManager'
 import type { GameState } from '@config/types'
+import { SafeAreaContent } from './SafeAreaContent'
 
 type TabType = 'settings' | 'status'
 
@@ -125,7 +126,7 @@ function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
 
   return (
     <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay} onTouchStart={(event) => event.stopPropagation()}>
+      <SafeAreaContent style={styles.overlay} onTouchStart={(event) => event.stopPropagation()}>
         <View style={[styles.settingsContainer, { width: width * 0.8, height: height * 0.6 }]}>
           <View style={styles.header}>
             <Text style={styles.title}>{activeTab === 'settings' ? 'Settings' : 'Status'}</Text>
@@ -202,7 +203,7 @@ function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
             )}
           </View>
         </View>
-      </View>
+      </SafeAreaContent>
     </Modal>
   )
 }

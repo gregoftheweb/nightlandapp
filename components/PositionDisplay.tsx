@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Level } from '@config/types' // import your Level type
 
 interface PositionDisplayProps {
@@ -8,12 +9,14 @@ interface PositionDisplayProps {
 }
 
 export const PositionDisplay: React.FC<PositionDisplayProps> = ({ position, level }) => {
+  const insets = useSafeAreaInsets()
+
   if (!position || !level) {
     return null // or render "Loading..."
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { top: insets.top + 8, right: insets.right + 10 }]}>
       <Text style={styles.text}>
         {level.name || level.id} {'\n'}({position.row},{position.col})
       </Text>
@@ -24,8 +27,6 @@ export const PositionDisplay: React.FC<PositionDisplayProps> = ({ position, leve
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 33,
-    right: 10,
     backgroundColor: 'rgba(0,0,0,0.5)', // semi-transparent background
     paddingHorizontal: 8,
     paddingVertical: 4,
