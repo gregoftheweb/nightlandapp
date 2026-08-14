@@ -9,6 +9,7 @@ import { GameProvider } from '../context/GameContext'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { audioManager } from '../modules/audioManager'
 import { settingsManager } from '../modules/settingsManager'
+import { IOS_BACK_GESTURE_ROUTES } from '../config/routeGesturePolicy'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -121,7 +122,10 @@ export default function Layout() {
           <Stack
             screenOptions={{
               headerShown: false,
-              gestureEnabled: true,
+              // iOS edge-swipe is opt-in per route below. Android retains the
+              // existing navigator behavior; gestureEnabled is iOS-specific in
+              // the native stack, but this keeps the platform intent explicit.
+              gestureEnabled: Platform.OS !== 'ios',
               statusBarHidden: true,
             }}
           >
@@ -134,6 +138,9 @@ export default function Layout() {
                 statusBarHidden: true,
               }}
             />
+            {IOS_BACK_GESTURE_ROUTES.map((routeName) => (
+              <Stack.Screen key={routeName} name={routeName} options={{ gestureEnabled: true }} />
+            ))}
           </Stack>
         </GameProvider>
       </View>

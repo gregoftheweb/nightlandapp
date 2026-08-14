@@ -48,7 +48,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [ ] P2 — Keep audio flags synchronized with native playback state
 - [x] P1 — Make viewport dimensions react to size and safe-area changes
 - [x] P1 — Apply safe areas consistently
-- [ ] P1 — Protect game transitions from iOS back-swipe gestures
+- [x] P1 — Protect game transitions from iOS back-swipe gestures
 - [x] P1 — Restore type-checking and automated validation gates
 - [ ] P2 — Explicitly gate Android-only native calls
 - [ ] P2 — Validate assets, fonts, shadows, and haptics on real iOS hardware
@@ -237,6 +237,8 @@ Define navigation policy per flow. Disable gestures on battle, death, loading, t
 
 Relevant configuration: `app/_layout.tsx:120-137` and the sub-game routes.
 
+**Completed**: iOS edge-swipe navigation is now fail-closed at the root navigator. It is explicitly enabled only for informational exploration routes where it is equivalent to the screen's visible Back action (the Aerowreckage cockpit views and Deep Silo screens 2–8). Gameplay, death, redirect/entry, battle, timed transition, puzzle resolution, persistence, and completion routes remain protected. Android retains its existing navigator behavior. The allowlist is centralized and regression-tested, including a test that unknown future routes default to protected.
+
 ### P1 — The project does not currently type-check cleanly
 
 The current TypeScript run reports errors including unsupported `foregroundFit` props in two live screens:
@@ -293,7 +295,7 @@ The repository's `test` script uses watch mode. Add CI-friendly scripts such as 
 
 1. [x] Derive the board from live window and safe-area dimensions.
 2. [x] Apply consistent safe-area shells to all screens and bottom controls.
-3. [ ] Define per-route iOS gesture policy.
+3. [x] Define per-route iOS gesture policy.
 4. [ ] Gate Android native calls and test audio/haptics/interruption behavior.
 
 ### Phase 3 — Measure and optimize rendering/package size
