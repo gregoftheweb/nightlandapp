@@ -16,8 +16,8 @@ import { GameState } from '@config/types'
 import { saveCurrentGame } from './saveGame'
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null
-let isSaving = false
-let pendingSave = false
+let activeSave: Promise<void> | null = null
+let latestPendingState: GameState | null = null
 
 const SAVE_THROTTLE_MS = 2000 // Save at most once per 2 seconds
 
@@ -28,8 +28,9 @@ const SAVE_THROTTLE_MS = 2000 // Save at most once per 2 seconds
  * @param state - The current game state
  */
 export function requestAutoSave(state: GameState): void {
-  // Mark that we have a pending save
-  pendingSave = true
+  // Always replace the pending snapshot so the trailing save reflects the
+  // newest state observed during the throttle window.
+  latestPendingState = state
 
   if (__DEV__) {
     console.log(
@@ -40,20 +41,34 @@ export function requestAutoSave(state: GameState): void {
     )
   }
 
-  // If already scheduled, do nothing (the pending flag will trigger a save when the timeout fires)
-  if (saveTimeout !== null) {
-    return
-  }
+  schedulePendingSave()
+}
 
-  // Schedule save
+function schedulePendingSave(): void {
+  // The active write drains any newer state in its finally block.
+  if (saveTimeout !== null || activeSave !== null || latestPendingState === null) return
+
   saveTimeout = setTimeout(() => {
     saveTimeout = null
-
-    // Only save if we have pending changes and not currently saving
-    if (pendingSave && !isSaving) {
-      performAutoSave(state)
-    }
+    void drainPendingSave()
   }, SAVE_THROTTLE_MS)
+}
+
+async function drainPendingSave(): Promise<void> {
+  if (activeSave !== null || latestPendingState === null) return
+
+  const state = latestPendingState
+  latestPendingState = null
+  activeSave = performAutoSave(state)
+
+  try {
+    await activeSave
+  } finally {
+    activeSave = null
+    // A request may have arrived while AsyncStorage was writing. Give that
+    // latest snapshot its own trailing throttle window instead of dropping it.
+    schedulePendingSave()
+  }
 }
 
 /**
@@ -69,7 +84,18 @@ export async function forceAutoSave(state: GameState): Promise<void> {
     saveTimeout = null
   }
 
-  await performAutoSave(state)
+  latestPendingState = state
+
+  // Preserve write ordering when a throttled save is already in flight.
+  if (activeSave !== null) await activeSave
+
+  // The completed write may have scheduled the pending state for later. A
+  // forced save consumes it now, so remove that trailing timer.
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+    saveTimeout = null
+  }
+  await drainPendingSave()
 }
 
 /**
@@ -93,20 +119,7 @@ async function performAutoSave(state: GameState): Promise<void> {
     return
   }
 
-  // Prevent overlapping saves
-  if (isSaving) {
-    if (__DEV__) {
-      console.log('[AutoSave] Save already in progress, queuing...')
-    }
-    // Re-queue the save request
-    requestAutoSave(state)
-    return
-  }
-
   try {
-    isSaving = true
-    pendingSave = false
-
     await saveCurrentGame(state)
 
     if (__DEV__) {
@@ -114,8 +127,6 @@ async function performAutoSave(state: GameState): Promise<void> {
     }
   } catch (error) {
     console.error('[AutoSave] Failed to autosave:', error)
-  } finally {
-    isSaving = false
   }
 }
 
@@ -128,7 +139,7 @@ export function cancelAutoSave(): void {
     clearTimeout(saveTimeout)
     saveTimeout = null
   }
-  pendingSave = false
+  latestPendingState = null
 }
 
 /**
