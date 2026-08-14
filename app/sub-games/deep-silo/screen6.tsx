@@ -84,11 +84,7 @@ export default function DeepSiloScreen6() {
                 <Text style={styles.buttonText}>Go to control panel</Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity
-                style={styles.button}
-                onPress={handleReadNote}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={styles.button} onPress={handleReadNote} activeOpacity={0.7}>
                 <Text style={styles.buttonText}>Read note</Text>
               </TouchableOpacity>
             )}
@@ -97,12 +93,7 @@ export default function DeepSiloScreen6() {
 
         {/* Note Modal */}
         {showNoteModal && (
-          <Modal
-            visible
-            transparent={true}
-            animationType="fade"
-            onRequestClose={handleCloseNote}
-          >
+          <Modal visible transparent={true} animationType="fade" onRequestClose={handleCloseNote}>
             <View style={styles.modalOverlay}>
               <View style={styles.modalContainer}>
                 <Text style={styles.modalTitle}>Persius Note 2</Text>

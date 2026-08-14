@@ -10,8 +10,8 @@ import {
   NativeTouchEvent,
   ScrollView,
 } from 'react-native'
-import { Item } from '@config/types'
-import { useGameContext } from '../context/GameContext'
+import { GameState, Item } from '@config/types'
+import type { GameDispatch } from '../context/GameContext'
 import { applyItem, canUseItem } from '@modules/effects' // <-- renamed from useItem
 
 const { width, height } = Dimensions.get('window')
@@ -22,12 +22,28 @@ interface InventoryProps {
   visible: boolean
   onClose: () => void
   inventory: Item[]
+  playerPosition: GameState['player']['position']
+  rangedWeaponInventoryIds: GameState['player']['rangedWeaponInventoryIds']
+  equippedRangedWeaponId: GameState['player']['equippedRangedWeaponId']
+  weapons: GameState['weapons']
+  dispatch: GameDispatch
+  getGameState: () => GameState
   showDialog?: (message: string, duration?: number) => void
 }
 
-export default function Inventory({ visible, onClose, inventory, showDialog }: InventoryProps) {
+function Inventory({
+  visible,
+  onClose,
+  inventory,
+  playerPosition,
+  rangedWeaponInventoryIds,
+  equippedRangedWeaponId,
+  weapons,
+  dispatch,
+  getGameState,
+  showDialog,
+}: InventoryProps) {
   const [activeTab, setActiveTab] = useState<TabType>('items')
-  const { state, dispatch } = useGameContext()
 
   const handleClosePress = useCallback(
     (event: NativeSyntheticEvent<NativeTouchEvent>) => {
@@ -45,11 +61,11 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
         type: 'DROP_ITEM',
         payload: {
           item,
-          position: { ...state.player.position },
+          position: { ...playerPosition },
         },
       })
     },
-    [dispatch, state.player.position]
+    [dispatch, playerPosition]
   )
 
   const handleUse = useCallback(
@@ -64,7 +80,7 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
 
       // Use the item through the unified effects system
       // NOTE: applyItem is a normal function; it is NOT a React hook
-      const result = applyItem(item, state, dispatch, showDialog)
+      const result = applyItem(item, getGameState(), dispatch, showDialog)
 
       if (result.success) {
         if (result.consumeItem) {
@@ -78,7 +94,7 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
         showDialog?.(result.message, 2000)
       }
     },
-    [dispatch, showDialog, state]
+    [dispatch, getGameState, showDialog]
   )
 
   const handleEquip = useCallback((item: Item) => {
@@ -98,16 +114,16 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
   )
 
   const rangedWeapons = useMemo(() => {
-    const rangedWeaponIds = state.player.rangedWeaponInventoryIds || []
-    return state.weapons.filter(
+    const rangedWeaponIds = rangedWeaponInventoryIds || []
+    return weapons.filter(
       (weapon) =>
         weapon.weaponType === 'ranged' && weapon.id != null && rangedWeaponIds.includes(weapon.id)
     )
-  }, [state.player.rangedWeaponInventoryIds, state.weapons])
+  }, [rangedWeaponInventoryIds, weapons])
 
   const renderWeaponRow = useCallback(
     (weapon: Item, index: number) => {
-      const isEquipped = weapon.id === state.player.equippedRangedWeaponId
+      const isEquipped = weapon.id === equippedRangedWeaponId
 
       return (
         <View key={`${weapon.id}_${index}`} style={styles.inventoryItem}>
@@ -129,7 +145,7 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
         </View>
       )
     },
-    [handleEquipRangedWeapon, state.player.equippedRangedWeaponId]
+    [equippedRangedWeaponId, handleEquipRangedWeapon]
   )
 
   const renderInventoryItem = useCallback(
@@ -239,6 +255,8 @@ export default function Inventory({ visible, onClose, inventory, showDialog }: I
     </Modal>
   )
 }
+
+export default React.memo(Inventory, (previous, next) => !previous.visible && !next.visible)
 
 const styles = StyleSheet.create({
   overlay: {

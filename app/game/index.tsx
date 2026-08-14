@@ -4,7 +4,12 @@ import { useRouter } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
 import { PositionDisplay } from '../../components/PositionDisplay'
 import { useGameActions, useGameState } from '../../context/GameContext'
-import GameBoard, { VIEWPORT_ROWS, VIEWPORT_COLS, CELL_SIZE } from '../../components/GameBoard'
+import GameBoard, {
+  VIEWPORT_ROWS,
+  VIEWPORT_COLS,
+  CELL_SIZE,
+  type GameBoardState,
+} from '../../components/GameBoard'
 import PlayerHUD from '../../components/PlayerHUD'
 import Settings from '../../components/Settings'
 import Inventory from '../../components/Inventory'
@@ -106,6 +111,47 @@ export default function Game() {
   useEffect(() => {
     stateRef.current = state
   }, [state])
+
+  const getGameState = useCallback(() => stateRef.current, [])
+
+  // Keep the expensive board behind a narrow identity boundary. State used only
+  // by menus, saving, or other screens no longer invalidates the board tree.
+  const boardState = useMemo<GameBoardState>(
+    () => ({
+      activeMonsters: state.activeMonsters,
+      activeProjectiles: state.activeProjectiles,
+      activeTeleportFlashes: state.activeTeleportFlashes,
+      attackSlots: state.attackSlots,
+      combatLog: state.combatLog,
+      gameOver: state.gameOver,
+      gameOverMessage: state.gameOverMessage,
+      inCombat: state.inCombat,
+      items: state.items,
+      level: state.level,
+      nonCollisionObjects: state.nonCollisionObjects,
+      player: state.player,
+      rangedAttackMode: state.rangedAttackMode,
+      suppressDeathDialog: state.suppressDeathDialog,
+      targetedMonsterId: state.targetedMonsterId,
+    }),
+    [
+      state.activeMonsters,
+      state.activeProjectiles,
+      state.activeTeleportFlashes,
+      state.attackSlots,
+      state.combatLog,
+      state.gameOver,
+      state.gameOverMessage,
+      state.inCombat,
+      state.items,
+      state.level,
+      state.nonCollisionObjects,
+      state.player,
+      state.rangedAttackMode,
+      state.suppressDeathDialog,
+      state.targetedMonsterId,
+    ]
+  )
 
   // Memoized camera offset calculation
   const cameraOffset = useMemo(
@@ -1043,7 +1089,7 @@ export default function Game() {
     >
       <View style={styles.gameContainer}>
         <GameBoard
-          state={state}
+          state={boardState}
           cameraOffset={cameraOffset}
           onPlayerTap={handlePlayerTap}
           onMonsterTap={handleMonsterTap}
@@ -1082,11 +1128,21 @@ export default function Game() {
           isJauntArmed={state.player.isJauntArmed}
           inCombat={state.inCombat}
         />
-        <Settings visible={settingsVisible} onClose={handleCloseSettings} />
+        <Settings
+          visible={settingsVisible}
+          onClose={handleCloseSettings}
+          subGamesCompleted={state.subGamesCompleted}
+        />
         <Inventory
           visible={inventoryVisible}
           onClose={handleCloseInventory}
           inventory={state.player.inventory}
+          playerPosition={state.player.position}
+          rangedWeaponInventoryIds={state.player.rangedWeaponInventoryIds}
+          equippedRangedWeaponId={state.player.equippedRangedWeaponId}
+          weapons={state.weapons}
+          dispatch={dispatch}
+          getGameState={getGameState}
           showDialog={showDialog}
         />
       </View>

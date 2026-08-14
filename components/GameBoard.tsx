@@ -30,9 +30,29 @@ export { VIEWPORT_ROWS, VIEWPORT_COLS }
 const BACKGROUND_TILE_SIZE = 320
 const BACKGROUND_SCALE = CELL_SIZE / 32
 const SCALED_TILE_SIZE = BACKGROUND_TILE_SIZE * BACKGROUND_SCALE
+const EMPTY_ARRAY: never[] = []
+
+export type GameBoardState = Pick<
+  GameState,
+  | 'activeMonsters'
+  | 'activeProjectiles'
+  | 'activeTeleportFlashes'
+  | 'attackSlots'
+  | 'combatLog'
+  | 'gameOver'
+  | 'gameOverMessage'
+  | 'inCombat'
+  | 'items'
+  | 'level'
+  | 'nonCollisionObjects'
+  | 'player'
+  | 'rangedAttackMode'
+  | 'suppressDeathDialog'
+  | 'targetedMonsterId'
+>
 
 interface GameBoardProps {
-  state: GameState
+  state: GameBoardState
   cameraOffset: { offsetX: number; offsetY: number }
   onPlayerTap?: () => void
   onMonsterTap?: (monster: Monster) => void
@@ -56,7 +76,7 @@ interface GameBoardProps {
   onCloseInfoRef?: React.MutableRefObject<(() => void) | null>
 }
 
-export default function GameBoard({
+function GameBoard({
   state,
   cameraOffset,
   onPlayerTap,
@@ -111,65 +131,15 @@ export default function GameBoard({
 
   // ---- Defensive fallbacks (NO early returns before hooks) ----
   const level = state.level
-  const levelObjects = level?.objects ?? []
-  const activeMonsters = state.activeMonsters ?? []
-  const levelGreatPowers = level?.greatPowers ?? []
-  const items = state.items ?? []
-  const combatLog = state.combatLog ?? []
-  const attackSlots = state.attackSlots ?? []
-  const nonCollisionObjects = state.nonCollisionObjects ?? []
-  const activeProjectiles = state.activeProjectiles ?? []
-  const activeTeleportFlashes = state.activeTeleportFlashes ?? []
-
-  // Memoized entity position maps for O(1) lookups (perf: replaces linear scans)
-  const monsterPositionMap = useMemo(() => {
-    const map = new Map<string, Monster>()
-    activeMonsters.forEach((m) => {
-      if (m.position && !m.inCombatSlot) {
-        map.set(`${m.position.row}-${m.position.col}`, m)
-      }
-    })
-    return map
-  }, [activeMonsters])
-
-  const greatPowerPositionMap = useMemo(() => {
-    const map = new Map<string, GreatPower>()
-    levelGreatPowers.forEach((gp) => {
-      if (gp.position) {
-        map.set(`${gp.position.row}-${gp.position.col}`, gp)
-      }
-    })
-    return map
-  }, [levelGreatPowers])
-
-  const itemPositionMap = useMemo(() => {
-    const map = new Map<string, Item>()
-    items.forEach((item) => {
-      if (item.active && item.position) {
-        map.set(`${item.position.row}-${item.position.col}`, item)
-      }
-    })
-    return map
-  }, [items])
-
-  // Fast position finders using maps (perf: O(1) vs O(n))
-  const findMonsterAtPosition = useCallback(
-    (worldRow: number, worldCol: number): Monster | undefined =>
-      monsterPositionMap.get(`${worldRow}-${worldCol}`),
-    [monsterPositionMap]
-  )
-
-  const findGreatPowerAtPosition = useCallback(
-    (worldRow: number, worldCol: number): GreatPower | undefined =>
-      greatPowerPositionMap.get(`${worldRow}-${worldCol}`),
-    [greatPowerPositionMap]
-  )
-
-  const findItemAtPosition = useCallback(
-    (worldRow: number, worldCol: number): Item | undefined =>
-      itemPositionMap.get(`${worldRow}-${worldCol}`),
-    [itemPositionMap]
-  )
+  const levelObjects = level?.objects ?? EMPTY_ARRAY
+  const activeMonsters = state.activeMonsters ?? EMPTY_ARRAY
+  const levelGreatPowers = level?.greatPowers ?? EMPTY_ARRAY
+  const items = state.items ?? EMPTY_ARRAY
+  const combatLog = state.combatLog ?? EMPTY_ARRAY
+  const attackSlots = state.attackSlots ?? EMPTY_ARRAY
+  const nonCollisionObjects = state.nonCollisionObjects ?? EMPTY_ARRAY
+  const activeProjectiles = state.activeProjectiles ?? EMPTY_ARRAY
+  const activeTeleportFlashes = state.activeTeleportFlashes ?? EMPTY_ARRAY
 
   // Memoized showInfo
   const showInfo = useCallback(
@@ -414,60 +384,83 @@ export default function GameBoard({
     setCombatInfoVisible(false)
   }, [])
 
-  // ---- Memoized grid cells (always computed; returns [] if level missing) ----
-  const renderGridCells = useMemo(() => {
-    if (!level) return []
+  // The line geometry never changes for this viewport, so movement does not
+  // recreate or reconcile the grid itself.
+  const renderGridLines = useMemo(() => {
+    const lines: React.ReactNode[] = []
+    for (let row = 0; row <= VIEWPORT_ROWS; row++) {
+      lines.push(
+        <View key={`grid-row-${row}`} style={[styles.gridRow, { top: row * CELL_SIZE }]} />
+      )
+    }
+    for (let col = 0; col <= VIEWPORT_COLS; col++) {
+      lines.push(
+        <View key={`grid-col-${col}`} style={[styles.gridColumn, { left: col * CELL_SIZE }]} />
+      )
+    }
 
-    const tiles: React.ReactNode[] = []
-    for (let row = 0; row < VIEWPORT_ROWS; row++) {
-      for (let col = 0; col < VIEWPORT_COLS; col++) {
-        const worldRow = row + cameraOffset.offsetY
-        const worldCol = col + cameraOffset.offsetX
+    return lines
+  }, [])
 
-        const isPlayer =
-          !!state.player?.position &&
-          worldRow === state.player.position.row &&
-          worldCol === state.player.position.col
+  // Only the handful of occupied cells move as the camera changes.
+  const renderGridHighlights = useMemo(() => {
+    const highlights: React.ReactNode[] = []
+    activeMonsters.forEach((monster) => {
+      if (!monster.position || monster.inCombatSlot) return
+      const screenRow = monster.position.row - cameraOffset.offsetY
+      const screenCol = monster.position.col - cameraOffset.offsetX
+      if (
+        screenRow < 0 ||
+        screenRow >= VIEWPORT_ROWS ||
+        screenCol < 0 ||
+        screenCol >= VIEWPORT_COLS
+      ) {
+        return
+      }
+      highlights.push(
+        <View
+          key={`grid-highlight-monster-${monster.id}`}
+          style={[
+            styles.cellHighlight,
+            styles.monsterCellHighlight,
+            { left: screenCol * CELL_SIZE, top: screenRow * CELL_SIZE },
+          ]}
+        />
+      )
+    })
 
-        const monsterAtPosition = findMonsterAtPosition(worldRow, worldCol)
-        const greatPowerAtPosition = findGreatPowerAtPosition(worldRow, worldCol)
-
-        tiles.push(
+    const playerPosition = state.player?.position
+    if (playerPosition) {
+      const screenRow = playerPosition.row - cameraOffset.offsetY
+      const screenCol = playerPosition.col - cameraOffset.offsetX
+      if (
+        screenRow >= 0 &&
+        screenRow < VIEWPORT_ROWS &&
+        screenCol >= 0 &&
+        screenCol < VIEWPORT_COLS
+      ) {
+        highlights.push(
           <View
-            key={`cell-${worldRow}-${worldCol}`}
+            key="grid-highlight-player"
             style={[
-              styles.cell,
-              {
-                left: col * CELL_SIZE,
-                top: row * CELL_SIZE,
-                borderColor: getCellBorderColor(
-                  isPlayer,
-                  monsterAtPosition,
-                  greatPowerAtPosition,
-                  !!state.inCombat,
-                  !!state.player?.hideActive
-                ),
-                backgroundColor: getCellBackgroundColor(
-                  isPlayer,
-                  monsterAtPosition,
-                  greatPowerAtPosition,
-                  !!state.inCombat
-                ),
-              },
+              styles.cellHighlight,
+              state.player.hideActive
+                ? styles.hiddenPlayerCellHighlight
+                : styles.playerCellHighlight,
+              { left: screenCol * CELL_SIZE, top: screenRow * CELL_SIZE },
             ]}
           />
         )
       }
     }
-    return tiles
+
+    return highlights
   }, [
-    level,
+    activeMonsters,
     cameraOffset.offsetY,
     cameraOffset.offsetX,
     state.player?.position,
-    state.inCombat,
-    findMonsterAtPosition,
-    findGreatPowerAtPosition,
+    state.player?.hideActive,
   ])
 
   const renderCombatMonsters = useMemo(() => {
@@ -861,7 +854,6 @@ export default function GameBoard({
 
   // Memoized grid render
   const renderGrid = useMemo(() => {
-    const gridCells = renderGridCells
     const allEntities = [
       ...renderNonCollisionObjects,
       ...renderBuildings,
@@ -889,9 +881,8 @@ export default function GameBoard({
       })
     }
 
-    return [...gridCells, ...allEntities]
+    return allEntities
   }, [
-    renderGridCells,
     renderNonCollisionObjects,
     renderBuildings,
     renderMonsters,
@@ -953,7 +944,17 @@ export default function GameBoard({
       </View>
 
       {/* Game Content */}
-      <View style={styles.gameContent}>{safeEmptyBoard ? null : renderGrid}</View>
+      <View style={styles.gameContent}>
+        {safeEmptyBoard ? null : (
+          <>
+            <View style={styles.gridLayer} pointerEvents="none">
+              {renderGridLines}
+              {renderGridHighlights}
+            </View>
+            {renderGrid}
+          </>
+        )}
+      </View>
 
       {/* Projectiles */}
       {renderProjectiles}
@@ -991,31 +992,9 @@ export default function GameBoard({
   )
 }
 
+export default React.memo(GameBoard)
+
 // Utility functions
-const getCellBackgroundColor = (
-  isPlayer: boolean,
-  hasMonster: Monster | undefined,
-  _hasGreatPower: GreatPower | undefined,
-  _inCombat: boolean
-) => {
-  if (isPlayer) return 'rgba(45, 81, 105, 0.4)'
-  if (hasMonster) return 'rgba(88, 57, 57, 0.4)'
-  return 'rgba(17, 17, 17, 0.3)'
-}
-
-const getCellBorderColor = (
-  isPlayer: boolean,
-  hasMonster: Monster | undefined,
-  _hasGreatPower: GreatPower | undefined,
-  _inCombat: boolean,
-  hideActive: boolean
-) => {
-  if (isPlayer && hideActive) return '#00aa00' // Green when hide is active
-  if (isPlayer) return 'rgba(84, 124, 255, 0.7)'
-  if (hasMonster) return 'rgba(255, 8, 8, 0.6)'
-  return 'rgba(17, 17, 17, 0.3)'
-}
-
 const getMonsterImage = (monster: Monster) => {
   return monster.image || require('@assets/images/sprites/monsters/abhuman.webp')
 }
@@ -1049,12 +1028,42 @@ const styles = StyleSheet.create({
     height,
     position: 'relative',
   },
-  cell: {
+  gridLayer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(17, 17, 17, 0.3)',
+    zIndex: 0,
+  },
+  gridRow: {
+    position: 'absolute',
+    left: 0,
+    width,
+    height: 0.5,
+    backgroundColor: 'rgba(17, 17, 17, 0.3)',
+  },
+  gridColumn: {
+    position: 'absolute',
+    top: 0,
+    width: 0.5,
+    height,
+    backgroundColor: 'rgba(17, 17, 17, 0.3)',
+  },
+  cellHighlight: {
     width: CELL_SIZE,
     height: CELL_SIZE,
     position: 'absolute',
     borderWidth: 0.5,
-    borderColor: 'rgba(8, 8, 8, 0.3)',
+  },
+  monsterCellHighlight: {
+    borderColor: 'rgba(255, 8, 8, 0.6)',
+    backgroundColor: 'rgba(88, 57, 57, 0.4)',
+  },
+  playerCellHighlight: {
+    borderColor: 'rgba(84, 124, 255, 0.7)',
+    backgroundColor: 'rgba(45, 81, 105, 0.4)',
+  },
+  hiddenPlayerCellHighlight: {
+    borderColor: '#00aa00',
+    backgroundColor: 'rgba(45, 81, 105, 0.4)',
   },
   character: {
     width: CELL_SIZE * 0.8,

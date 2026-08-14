@@ -32,7 +32,11 @@ export default function DeepSiloScreen1() {
             <TouchableOpacity style={styles.button} onPress={handleReturn} activeOpacity={0.7}>
               <Text style={styles.buttonText}>Return to the surface</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.downButton]} onPress={handleDown} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={[styles.button, styles.downButton]}
+              onPress={handleDown}
+              activeOpacity={0.7}
+            >
               <Text style={styles.buttonText}>Down further</Text>
             </TouchableOpacity>
           </View>
