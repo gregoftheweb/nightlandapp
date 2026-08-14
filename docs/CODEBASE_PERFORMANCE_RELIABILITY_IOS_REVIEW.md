@@ -39,7 +39,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [ ] P2 — Reduce packaged assets and remove editor/source artifacts
 - [ ] P2 — Remove unused root initialization
 - [x] P0 — Autosave captures the first state in a throttle window, not the latest
-- [ ] P0 — Death/reset deletion races queued or in-flight autosaves
+- [x] P0 — Death/reset deletion races queued or in-flight autosaves
 - [ ] P0 — Safe-dial milestone saves can be overwritten by delayed older saves
 - [ ] P1 — Waypoint saves use an unprotected multi-step transaction
 - [ ] P1 — Replace fixed-delay state/navigation synchronization
@@ -119,6 +119,11 @@ Fix by storing `latestPendingState` (or, better, a snapshot/revision) at module/
 Relevant code: `modules/autoSave.ts:18-56`.
 
 ### P0 — Death/reset deletion races queued or in-flight autosaves
+
+**Completed:** Current-save deletion is now one autosave-controller operation that cancels queued
+state, waits for any non-cancellable AsyncStorage write already in progress, and deletes only after
+that write settles. Death, restart/new-game, and waypoint-load flows all use this ordered boundary.
+Regression tests verify both queued cancellation and write-before-delete ordering.
 
 The game-over effect calls `deleteCurrentGame`, but it never calls `cancelAutoSave`; `cancelAutoSave` has no callers. A queued callback may hold a pre-death state for which `gameOver` is false. It can run after deletion and recreate the current save. Cancellation alone does not stop a write already awaiting `AsyncStorage.setItem`.
 

@@ -17,12 +17,12 @@ import { useGameActions } from '@context/GameContext'
 import {
   hasCurrentGame,
   loadCurrentGame,
-  deleteCurrentGame,
   listWaypointSaves,
   loadWaypoint,
   WaypointSaveMetadata,
   debugInspectCurrentSave,
 } from '@modules/saveGame'
+import { invalidateAutoSaveAndDeleteCurrentGame } from '@modules/autoSave'
 import { fromSnapshot } from '@modules/gameState'
 import { clearAllSubGameSaves } from './sub-games/_shared/persistence'
 
@@ -69,7 +69,7 @@ export default function SplashScreen() {
       await clearAllSubGameSaves()
 
       // Delete current save
-      await deleteCurrentGame()
+      await invalidateAutoSaveAndDeleteCurrentGame()
 
       // Navigate to princess intro (standard new game flow)
       router.replace('/princess')
@@ -133,7 +133,7 @@ export default function SplashScreen() {
       dispatch({ type: 'HYDRATE_GAME_STATE', payload: { state: loadedState } })
 
       // Only delete current save after successful load and hydration
-      await deleteCurrentGame()
+      await invalidateAutoSaveAndDeleteCurrentGame()
 
       // Close modal and navigate to game
       setShowWaypointModal(false)

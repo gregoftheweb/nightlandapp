@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router'
 import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
 import { useGameContext } from '@context/GameContext'
 import { clearAllSubGameSaves } from '../sub-games/_shared/persistence'
-import { deleteCurrentGame } from '@modules/saveGame'
+import { invalidateAutoSaveAndDeleteCurrentGame } from '@modules/autoSave'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -44,7 +44,7 @@ export default function DeathScreen() {
       await clearAllSubGameSaves()
 
       // Delete current game autosave (death deletes autosave, but NOT waypoint saves)
-      await deleteCurrentGame()
+      await invalidateAutoSaveAndDeleteCurrentGame()
 
       // Navigate to load screen (splash screen with New | Current | Saved options)
       // Use replace to prevent back navigation to death screen
