@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   TouchableOpacity,
   Modal,
   NativeSyntheticEvent,
@@ -13,8 +13,6 @@ import {
 import { GameState, Item } from '@config/types'
 import type { GameDispatch } from '../context/GameContext'
 import { applyItem, canUseItem } from '@modules/effects' // <-- renamed from useItem
-
-const { width, height } = Dimensions.get('window')
 
 type TabType = 'items' | 'weapons'
 
@@ -43,6 +41,7 @@ function Inventory({
   getGameState,
   showDialog,
 }: InventoryProps) {
+  const { width, height } = useWindowDimensions()
   const [activeTab, setActiveTab] = useState<TabType>('items')
 
   const handleClosePress = useCallback(
@@ -200,7 +199,7 @@ function Inventory({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay} onTouchStart={(event) => event.stopPropagation()}>
-        <View style={styles.inventoryContainer}>
+        <View style={[styles.inventoryContainer, { width: width * 0.8, height: height * 0.6 }]}>
           <View style={styles.header}>
             <Text style={styles.title}>Inventory</Text>
             <TouchableOpacity
@@ -266,8 +265,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inventoryContainer: {
-    width: width * 0.8,
-    height: height * 0.6,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderRadius: 8,
     borderWidth: 3,

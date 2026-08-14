@@ -46,7 +46,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [x] P1 — Correct callbacks that read stale closures
 - [ ] P2 — Give timer-driven battle and navigation code explicit lifecycle ownership
 - [ ] P2 — Keep audio flags synchronized with native playback state
-- [ ] P1 — Make viewport dimensions react to size and safe-area changes
+- [x] P1 — Make viewport dimensions react to size and safe-area changes
 - [ ] P1 — Apply safe areas consistently
 - [ ] P1 — Protect game transitions from iOS back-swipe gestures
 - [x] P1 — Restore type-checking and automated validation gates
@@ -219,6 +219,8 @@ Use `useWindowDimensions()` at the screen boundary and derive rows, columns, cam
 
 Relevant code: `components/GameBoard.tsx:21-27`, `app/game/index.tsx:36` and `:199-210`, plus module-level dimensions in `components/Settings.tsx`, `components/Inventory.tsx`, `app/index.tsx`, `app/princess/index.tsx`, and `app/death/index.tsx`.
 
+Completed: the gameplay screen now derives a shared whole-cell viewport from `useWindowDimensions()` and the current safe-area insets. Camera bounds, entity culling, grid/background rendering, projectile placement, and tap/long-press/Jaunt coordinate conversion all consume that geometry and update together after rotation or window resizing. Touches in safe-area margins and beneath the HUD are excluded from world hit-testing. Inventory and Settings modal sizes now update with the window, and the splash, princess, and death backgrounds no longer retain module-load widths. Pure geometry tests cover portrait and landscape safe-area layouts.
+
 ### P1 — Safe areas are inconsistently applied
 
 The app installs `SafeAreaProvider`, and `PlayerHUD`/`BottomActionBar` use insets, but several absolute/fixed layouts do not. The status bar is hidden, but iOS still has physical cutouts, rounded corners, the Dynamic Island, and the home indicator. Fixed bottom values/padding can either waste space or place buttons in the gesture region. `CombatDialog` uses a fixed `top: 80`; death and sub-game success screens use fixed bottom padding.
@@ -280,24 +282,24 @@ The repository's `test` script uses watch mode. Add CI-friendly scripts such as 
 
 ### Phase 1 — Protect player data and establish trustworthy checks
 
-1. Replace autosave booleans with a latest-state/revision queue and persistence generation token.
-2. Make death/reset/load invalidate queued and in-flight current-save operations.
-3. Serialize safe-dial and waypoint persistence; add fake-timer/concurrency tests.
-4. Fix live TypeScript errors, hook dependency correctness, and the Jest environment.
+1. [x] Replace autosave booleans with a latest-state/revision queue and persistence generation token.
+2. [x] Make death/reset/load invalidate queued and in-flight current-save operations.
+3. [x] Serialize safe-dial and waypoint persistence; add fake-timer/concurrency tests.
+4. [x] Fix live TypeScript errors, hook dependency correctness, and the Jest environment.
 
 ### Phase 2 — Make layout portable before iOS testing
 
-1. Derive the board from live container dimensions.
-2. Apply consistent safe-area shells to all screens and bottom controls.
-3. Define per-route iOS gesture policy.
-4. Gate Android native calls and test audio/haptics/interruption behavior.
+1. [x] Derive the board from live window and safe-area dimensions.
+2. [ ] Apply consistent safe-area shells to all screens and bottom controls.
+3. [ ] Define per-route iOS gesture policy.
+4. [ ] Gate Android native calls and test audio/haptics/interruption behavior.
 
 ### Phase 3 — Measure and optimize rendering/package size
 
-1. Capture release-build frame profiles and React render counts.
-2. Remove per-cell board views or move the grid to a single rendered layer.
-3. Split/cull board layers based on measured cost.
-4. Audit release assets and remove/convert oversized or non-runtime files.
+1. [ ] Capture release-build frame profiles and React render counts.
+2. [x] Remove per-cell board views or move the grid to a single rendered layer.
+3. [ ] Split/cull board layers based on measured cost.
+4. [ ] Audit release assets and remove/convert oversized or non-runtime files.
 
 ## Suggested iOS test matrix
 

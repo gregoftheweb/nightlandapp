@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   TouchableOpacity,
   Modal,
   NativeSyntheticEvent,
@@ -14,8 +14,6 @@ import {
 import { audioManager } from '../modules/audioManager'
 import { settingsManager } from '../modules/settingsManager'
 import type { GameState } from '@config/types'
-
-const { width, height } = Dimensions.get('window')
 
 type TabType = 'settings' | 'status'
 
@@ -77,6 +75,7 @@ function ModernToggle({ value, onToggle, label }: ToggleProps) {
 }
 
 function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
+  const { width, height } = useWindowDimensions()
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(audioManager.getIsEnabled())
   const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
   const [activeTab, setActiveTab] = useState<TabType>('settings')
@@ -127,7 +126,7 @@ function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
   return (
     <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay} onTouchStart={(event) => event.stopPropagation()}>
-        <View style={styles.settingsContainer}>
+        <View style={[styles.settingsContainer, { width: width * 0.8, height: height * 0.6 }]}>
           <View style={styles.header}>
             <Text style={styles.title}>{activeTab === 'settings' ? 'Settings' : 'Status'}</Text>
             <TouchableOpacity
@@ -218,8 +217,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingsContainer: {
-    width: width * 0.8,
-    height: height * 0.6,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderRadius: 8,
     borderWidth: 3,

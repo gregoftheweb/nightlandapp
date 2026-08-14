@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
-  Dimensions,
   Modal,
   ScrollView,
   ActivityIndicator,
@@ -25,8 +24,6 @@ import {
 import { invalidateAutoSaveAndDeleteCurrentGame } from '@modules/autoSave'
 import { fromSnapshot } from '@modules/gameState'
 import { clearAllSubGameSaves } from './sub-games/_shared/persistence'
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function SplashScreen() {
   const router = useRouter()
@@ -267,7 +264,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    width: SCREEN_WIDTH,
+    width: '100%',
     height: '100%',
   },
   overlay: {
