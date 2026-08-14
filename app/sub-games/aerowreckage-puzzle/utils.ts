@@ -46,6 +46,20 @@ export function numberToAngle(
 }
 
 /**
+ * Return the number that reaches a fixed pointer after one physical dial step.
+ * The labels increase clockwise around the face, so rotating the face clockwise
+ * moves the previous (lower) number under the pointer.
+ */
+export function stepDialNumber(
+  current: number,
+  direction: DialDirection,
+  totalNumbers: number = PUZZLE_CONFIG.totalNumbers
+): number {
+  const delta = direction === 'CW' ? -1 : 1
+  return (current + delta + totalNumbers) % totalNumbers
+}
+
+/**
  * Determine rotation direction from angle delta
  * @param angleDelta - Change in angle (current - previous)
  * @returns 'CW' for clockwise, 'CCW' for counter-clockwise, or null if no rotation
@@ -63,10 +77,10 @@ export function getRotationDirection(angleDelta: number): DialDirection | null {
     normalizedDelta += 2 * Math.PI
   }
 
-  // In standard math coordinates (Y-axis points DOWN on screen):
-  // Positive angle delta = clockwise rotation (numbers increasing visually clockwise)
-  // Negative angle delta = counter-clockwise rotation (numbers decreasing visually counter-clockwise)
-  return normalizedDelta > 0 ? 'CW' : 'CCW'
+  // currentAngle represents the number under a fixed pointer, not the face's
+  // physical rotation. As the face turns clockwise that selected number falls;
+  // as it turns counter-clockwise the selected number rises.
+  return normalizedDelta < 0 ? 'CW' : 'CCW'
 }
 
 /**

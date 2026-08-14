@@ -130,9 +130,10 @@ cockpit-closeup.tsx      ↓           ↓
 #### Screen [B]: Safe Puzzle (safe.tsx)
 
 - **Background**: `aerowreck-safe2.png`
-- **Interactive**: Rotatable dial with 3-step combination (L-28, R-15, L-7)
+- **Interactive**: Button-controlled dial with 3-step combination (CCW-28, CW-15, CCW-7)
 - **Buttons**:
-  - "Try Combination" → Attempt to unlock
+  - Direction buttons → Rotate one number at a time
+  - Center number → Attempt to set the active tumbler
   - "Leave Without Unlocking" → Exit to RPG
 - **Auto-navigation**: Navigates to Screen [C] on successful unlock
 
@@ -148,22 +149,25 @@ cockpit-closeup.tsx      ↓           ↓
 
 ### 1. Tactile Dial UI
 
-- **Gesture Control**: Uses `PanResponder` for smooth, touch-based rotation
-- **Visual Feedback**: Rotating pointer and number display
+- **Button Control**: Dedicated clockwise and counter-clockwise controls move one number per tap
+- **Physical Direction**: Clockwise face rotation selects the previous number at the fixed pointer;
+  counter-clockwise rotation selects the next number
+- **Visual Feedback**: The numbered face rotates continuously through the 39/0 boundary
 - **Art-Deco Styling**: Dark theme with brass/gold accents, geometric patterns
 - **Pure View-Based**: No external image assets required
 
 ### 2. Code Sequence Mechanism
 
-- **Three-Step Combination**: Left-28, Right-15, Left-7
-- **Direction Changes**: Requires alternating rotation directions (L-R-L)
+- **Three-Step Combination**: Counter-clockwise 28, clockwise 15, counter-clockwise 7
+- **Direction Changes**: Requires alternating physical rotation directions (CCW-CW-CCW)
 - **Tolerance System**: Must be within ±0.5 numbers of target
 
-### 3. Dwell Time Requirement
+### 3. Tumbler Locking
 
-- **Lock Timer**: 400ms pause required on each target number
-- **Visual Indicator**: Center hub changes color during dwell
-- **Cancellation**: Moving away from target cancels the lock attempt
+- **Explicit Attempt**: Tap the center number to set the active tumbler
+- **Validation**: The selected number and most recent physical direction must both match
+- **Milestone Persistence**: Successful tumbler locks bypass the debounce and are serialized after
+  any older write
 
 ### 4. Progress Feedback
 
@@ -176,8 +180,7 @@ cockpit-closeup.tsx      ↓           ↓
 
 Uses `expo-haptics` for tactile responses:
 
-- **Light Impact**: When dial crosses number boundaries (tick sound)
-- **Medium Impact**: When a step successfully locks
+- **Heavy Impact**: When a step successfully locks
 - **Error Notification**: When rotating in wrong direction
 - **Success Pattern**: When safe opens
 
@@ -194,8 +197,8 @@ Saves to AsyncStorage:
 ### 7. Validation Logic
 
 - **Direction Tracking**: Monitors clockwise (R) vs counter-clockwise (L) rotation
-- **Step Requirements**: Each step validates direction + target number + dwell time
-- **Failure Handling**: Wrong direction triggers haptic error and cancels dwell
+- **Step Requirements**: Each step validates physical direction and target number
+- **Failure Handling**: Wrong direction or number triggers haptic error and a targeted hint
 - **Sequential Progress**: Must complete steps in order
 
 ## Configuration
@@ -206,9 +209,9 @@ Edit `config.ts` to customize:
 export const PUZZLE_CONFIG: PuzzleConfig = {
   totalNumbers: 40, // Numbers on dial (0-39)
   codeSteps: [
-    { direction: 'L', target: 28, dwellMs: 400 },
-    { direction: 'R', target: 15, dwellMs: 400 },
-    { direction: 'L', target: 7, dwellMs: 400 },
+    { direction: 'CCW', target: 28, dwellMs: 400 },
+    { direction: 'CW', target: 15, dwellMs: 400 },
+    { direction: 'CCW', target: 7, dwellMs: 400 },
   ],
   tolerance: 0.5, // Allowed deviation from target
   tickStepSize: 1, // Haptic tick every N numbers

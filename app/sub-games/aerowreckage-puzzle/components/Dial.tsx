@@ -1,8 +1,8 @@
 // app/sub-games/aerowreckage-puzzle/components/Dial.tsx
 // Safe dial with button-based rotation - One tap = one number step
 // NEW INTERACTION MODEL:
-// - Left button (Clockwise) increments dial number by +1
-// - Right button (Counter-Clockwise) decrements dial number by -1
+// - Left button turns the dial clockwise and moves to the previous number
+// - Right button turns the dial counter-clockwise and moves to the next number
 // - Tapping center number attempts to lock that number in the combination
 // - No drag/swipe gestures on the dial face
 
@@ -19,7 +19,8 @@ import {
 } from 'react-native'
 import { PUZZLE_CONFIG } from '../config'
 import { THEME } from '../theme'
-import { formatDialNumber } from '../utils'
+import { formatDialNumber, numberToAngle, stepDialNumber } from '../utils'
+import { DialDirection } from '../types'
 
 const CENTER_SIZE = 60
 const NUMBER_MARKERS = 12 // Major number markers around the dial
@@ -28,12 +29,9 @@ const DIAL_ORIENTATION_OFFSET = -Math.PI / 2 // -90 degrees to align number 0 at
 const TICK_ANIMATION_DURATION = 150 // ms - duration for dial to animate to next tick position
 
 const TAU = 2 * Math.PI
+const MAX_ANIMATED_TURNS = 100
 
-// IMPORTANT: React Native's rotate direction + our number->angle mapping
-// are currently opposite. We flip ONLY the DISPLAY angle so that
-// number changes and visible dial rotation align.
-const numberToLogicalAngle = (n: number) => (n / PUZZLE_CONFIG.totalNumbers) * TAU
-const numberToDisplayAngle = (n: number) => -numberToLogicalAngle(n) + DIAL_ORIENTATION_OFFSET
+const numberToDisplayAngle = (n: number) => -numberToAngle(n) + DIAL_ORIENTATION_OFFSET
 
 // Button images
 const clockwiseButtonImage = require('@assets/images/ui/icons/safe-dial-Clockwise.webp')
@@ -57,13 +55,12 @@ const getDialSize = (width: number, height: number) => {
 }
 
 interface DialProps {
-  currentAngle: number
   currentNumber: number
-  onAngleChange: (angle: number) => void
+  onAngleChange: (angle: number, direction: DialDirection) => void
   onCenterTap: () => void
 }
 
-export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }: DialProps) {
+export function Dial({ currentNumber, onAngleChange, onCenterTap }: DialProps) {
   const [dimensions, setDimensions] = useState(() => {
     const window = Dimensions.get('window')
     return { width: window.width, height: window.height }
@@ -83,30 +80,33 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
   const displayAngleAnimated = useRef(
     new Animated.Value(numberToDisplayAngle(currentNumber))
   ).current
+  const displayAngleRef = useRef(numberToDisplayAngle(currentNumber))
+  const pendingNumberRef = useRef<number | null>(null)
 
   // Sync with parent's currentNumber when it changes externally (e.g., on load)
   useEffect(() => {
-    // Immediately update display angle when externally changed (e.g., on load)
-    displayAngleAnimated.setValue(numberToDisplayAngle(currentNumber))
+    // Button presses already animate continuously (including across 39 ↔ 0).
+    // Only snap when state changes externally, such as restoring a save.
+    if (pendingNumberRef.current === currentNumber) {
+      pendingNumberRef.current = null
+      return
+    }
+
+    const restoredAngle = numberToDisplayAngle(currentNumber)
+    displayAngleRef.current = restoredAngle
+    displayAngleAnimated.setValue(restoredAngle)
   }, [currentNumber, displayAngleAnimated])
 
-  /// In THIS puzzle, you want the number changes to match the *visible* dial motion.
-  // We'll keep logicalAngle (for game logic) but flip displayAngle (for animation).
-
-  const rotateClockwiseOneStep = () => {
+  const rotateOneStep = (direction: DialDirection) => {
     const total = PUZZLE_CONFIG.totalNumbers
+    const newNumber = stepDialNumber(currentNumber, direction, total)
+    pendingNumberRef.current = newNumber
+    onAngleChange(numberToAngle(newNumber), direction)
 
-    // Decide what "clockwise button" should DO numerically.
-    // If you want CW button to increment, keep this.
-    let newNumber = currentNumber + 1
-    if (newNumber >= total) newNumber = 0
-
-    // Logical angle used by the puzzle logic (do NOT negate)
-    const logicalAngle = numberToLogicalAngle(newNumber)
-    onAngleChange(logicalAngle)
-
-    // Display angle used for the on-screen rotation (negated to align direction)
-    const targetDisplayAngle = numberToDisplayAngle(newNumber)
+    const displayStep = TAU / total
+    const targetDisplayAngle =
+      displayAngleRef.current + (direction === 'CW' ? displayStep : -displayStep)
+    displayAngleRef.current = targetDisplayAngle
 
     Animated.timing(displayAngleAnimated, {
       toValue: targetDisplayAngle,
@@ -115,24 +115,8 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
     }).start()
   }
 
-  const rotateCounterClockwiseOneStep = () => {
-    const total = PUZZLE_CONFIG.totalNumbers
-
-    // If you want CCW button to decrement, keep this.
-    let newNumber = currentNumber - 1
-    if (newNumber < 0) newNumber = total - 1
-
-    const logicalAngle = numberToLogicalAngle(newNumber)
-    onAngleChange(logicalAngle)
-
-    const targetDisplayAngle = numberToDisplayAngle(newNumber)
-
-    Animated.timing(displayAngleAnimated, {
-      toValue: targetDisplayAngle,
-      duration: TICK_ANIMATION_DURATION,
-      useNativeDriver: true,
-    }).start()
-  }
+  const rotateClockwiseOneStep = () => rotateOneStep('CW')
+  const rotateCounterClockwiseOneStep = () => rotateOneStep('CCW')
 
   const tryCurrentNumber = () => {
     onCenterTap()
@@ -140,8 +124,8 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
 
   // Rotation for display - use animated value for smooth transitions
   const rotationInterpolated = displayAngleAnimated.interpolate({
-    inputRange: [-TAU, TAU],
-    outputRange: ['-360deg', '360deg'],
+    inputRange: [-TAU * MAX_ANIMATED_TURNS, TAU * MAX_ANIMATED_TURNS],
+    outputRange: ['-36000deg', '36000deg'],
   })
 
   // Generate number markers around the dial
@@ -170,8 +154,8 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
               { rotate: `${-angle}deg` },
               {
                 rotate: displayAngleAnimated.interpolate({
-                  inputRange: [-TAU, TAU],
-                  outputRange: ['360deg', '-360deg'],
+                  inputRange: [-TAU * MAX_ANIMATED_TURNS, TAU * MAX_ANIMATED_TURNS],
+                  outputRange: ['36000deg', '-36000deg'],
                 }),
               },
             ],
@@ -194,7 +178,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
           pressed && styles.controlButtonPressed,
         ]}
         accessibilityLabel="Rotate dial clockwise"
-        accessibilityHint="Increments the dial number by 1"
+        accessibilityHint="Moves the fixed pointer to the previous number"
       >
         <Image source={clockwiseButtonImage} style={styles.controlButtonImage} />
       </Pressable>
@@ -263,7 +247,7 @@ export function Dial({ currentAngle, currentNumber, onAngleChange, onCenterTap }
           pressed && styles.controlButtonPressed,
         ]}
         accessibilityLabel="Rotate dial counter-clockwise"
-        accessibilityHint="Decrements the dial number by 1"
+        accessibilityHint="Moves the fixed pointer to the next number"
       >
         <Image source={counterClockwiseButtonImage} style={styles.controlButtonImage} />
       </Pressable>

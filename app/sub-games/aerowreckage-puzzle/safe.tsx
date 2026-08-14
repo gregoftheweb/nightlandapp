@@ -1,6 +1,6 @@
 // app/sub-games/aerowreckage-puzzle/safe.tsx
 // Screen [B]: Safe cracking puzzle screen
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, StyleSheet, TouchableOpacity, Text, useWindowDimensions } from 'react-native'
 import { useRouter } from 'expo-router'
 import { usePuzzleState } from './hooks/usePuzzleState'
@@ -26,13 +26,13 @@ export default function AeroWreckageSafe() {
   const didNavigateRef = useRef(false)
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const goToSuccessOnce = () => {
+  const goToSuccessOnce = useCallback(() => {
     if (didNavigateRef.current) return
     didNavigateRef.current = true
 
     if (__DEV__) console.log('[AeroWreckageSafe] Navigating to success (once)')
     router.replace('/sub-games/aerowreckage-puzzle/success' as any)
-  }
+  }, [router])
 
   useEffect(() => {
     return () => {
@@ -53,7 +53,7 @@ export default function AeroWreckageSafe() {
       }
       goToSuccessOnce()
     }
-  }, [state.isOpened])
+  }, [goToSuccessOnce, state.isOpened])
 
   const handleLeaveWithoutUnlocking = () => {
     if (__DEV__) console.log('[AeroWreckageSafe] Player leaving without unlocking')
@@ -116,6 +116,12 @@ export default function AeroWreckageSafe() {
               stepHistory={state.stepHistory}
               isOpened={state.isOpened}
             />
+            {!state.isOpened && (
+              <Text style={styles.dialInstruction}>
+                Turn the dial in the direction shown, then tap the center number to set each
+                tumbler.
+              </Text>
+            )}
           </View>
 
           {/* Dial Centered + Responsive Scale */}
@@ -127,7 +133,6 @@ export default function AeroWreckageSafe() {
               ]}
             >
               <Dial
-                currentAngle={state.currentAngle}
                 currentNumber={state.currentNumber}
                 onAngleChange={updateAngle}
                 onCenterTap={handleCenterTap}
@@ -177,6 +182,14 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingHorizontal: 16,
     alignItems: 'center',
+  },
+  dialInstruction: {
+    marginTop: 10,
+    paddingHorizontal: 16,
+    color: subGameTheme.white,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
   },
 
   /**

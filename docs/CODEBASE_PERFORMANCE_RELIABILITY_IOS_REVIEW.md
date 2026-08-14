@@ -40,7 +40,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [ ] P2 — Remove unused root initialization
 - [x] P0 — Autosave captures the first state in a throttle window, not the latest
 - [x] P0 — Death/reset deletion races queued or in-flight autosaves
-- [ ] P0 — Safe-dial milestone saves can be overwritten by delayed older saves
+- [x] P0 — Safe-dial milestone saves can be overwritten by delayed older saves
 - [ ] P1 — Waypoint saves use an unprotected multi-step transaction
 - [ ] P1 — Replace fixed-delay state/navigation synchronization
 - [ ] P1 — Correct callbacks that read stale closures
@@ -138,6 +138,12 @@ Use a persistence generation/session token:
 Relevant code: `context/GameContext.tsx:85-100`, `modules/autoSave.ts:65-132`, `app/index.tsx:63-76`, and `app/death/index.tsx:32-58`.
 
 ### P0 — Safe-dial milestone saves can be overwritten by delayed older saves
+
+**Completed:** Successful tumbler locks now cancel the pending debounce and enter a serialized save
+queue, so any older write finishes before the milestone is persisted. Reset also drains the queue
+before clearing storage. Regression tests cover both a still-delayed snapshot and an older write
+already in flight. The accompanying dial review corrected physical CW/CCW behavior, made animation
+continuous across 39/0, clarified the on-screen instructions, and added direction/control tests.
 
 The safe-dial hook debounces ordinary state saves for 250 ms, then performs an unawaited immediate save when a tumbler locks. A previously scheduled timer is not cleared in `attemptLock`. AsyncStorage writes have no revision check, so the older delayed write can finish after the milestone write and overwrite it. On the final step, `state.isOpened` prevents scheduling a new debounce but does not cancel an existing one, making this especially important.
 
