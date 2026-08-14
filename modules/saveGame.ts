@@ -20,6 +20,19 @@ const CURRENT_GAME_KEY = 'nightland:save:current:v1'
 const WAYPOINT_INDEX_KEY = 'nightland:save:waypoints:index:v1'
 const WAYPOINT_ITEM_PREFIX = 'nightland:save:waypoint:v1:'
 
+// AsyncStorage has no transaction primitive. Serialize every waypoint index
+// mutation so each read-modify-write sequence observes the prior commit.
+let waypointMutationQueue: Promise<void> = Promise.resolve()
+
+function enqueueWaypointMutation<T>(mutation: () => Promise<T>): Promise<T> {
+  const result = waypointMutationQueue.then(mutation, mutation)
+  waypointMutationQueue = result.then(
+    () => undefined,
+    () => undefined
+  )
+  return result
+}
+
 // ===== TYPES =====
 
 export interface SavedGameV1 {
@@ -176,11 +189,18 @@ export async function hasCurrentGame(): Promise<boolean> {
  * Returns the ID of the created waypoint.
  */
 export async function saveWaypoint(state: GameState, waypointName: string): Promise<string> {
+  return enqueueWaypointMutation(() => saveWaypointTransaction(state, waypointName))
+}
+
+async function saveWaypointTransaction(state: GameState, waypointName: string): Promise<string> {
+  let newWaypointKey: string | null = null
+
   try {
     const snapshot = toSnapshot(state)
 
-    // Check for ALL existing waypoints with the same name and delete them
-    const index = await loadWaypointIndex()
+    // Re-check uniqueness inside the mutation queue. Callers may have passed a
+    // stale UI-level "already created" check before reaching this boundary.
+    const index = await loadWaypointIndex(true)
     const existingWaypoints = index.filter((item) => item.name === waypointName)
 
     if (existingWaypoints.length > 0) {
@@ -191,18 +211,8 @@ export async function saveWaypoint(state: GameState, waypointName: string): Prom
         )
       }
 
-      // Delete ALL old waypoint data
-      for (const waypoint of existingWaypoints) {
-        const oldWaypointKey = WAYPOINT_ITEM_PREFIX + waypoint.id
-        await AsyncStorage.removeItem(oldWaypointKey)
-        if (__DEV__) {
-          console.log('[SaveGame] Deleted waypoint ID:', waypoint.id)
-        }
-      }
-
-      // Remove ALL from index (we'll add the new one below)
-      const filteredIndex = index.filter((item) => item.name !== waypointName)
-      await saveWaypointIndex(filteredIndex)
+      // Superseded records remain valid until the replacement is fully
+      // written and its index commit succeeds.
     }
 
     // Generate unique ID using timestamp and high-precision random
@@ -227,13 +237,24 @@ export async function saveWaypoint(state: GameState, waypointName: string): Prom
     }
 
     // Save the waypoint data
-    const waypointKey = WAYPOINT_ITEM_PREFIX + id
-    await AsyncStorage.setItem(waypointKey, JSON.stringify(record))
+    newWaypointKey = WAYPOINT_ITEM_PREFIX + id
+    await AsyncStorage.setItem(newWaypointKey, JSON.stringify(record))
 
-    // Update index with new waypoint
-    const updatedIndex = await loadWaypointIndex()
-    updatedIndex.push(metadata)
+    // Commit one index derived from the read performed inside this transaction.
+    const updatedIndex = [...index.filter((item) => item.name !== waypointName), metadata]
     await saveWaypointIndex(updatedIndex)
+
+    // The committed index now points at the replacement. Old records are
+    // unreachable and can be cleaned up without risking loss of the waypoint.
+    for (const waypoint of existingWaypoints) {
+      const oldWaypointKey = WAYPOINT_ITEM_PREFIX + waypoint.id
+      try {
+        await AsyncStorage.removeItem(oldWaypointKey)
+        if (__DEV__) console.log('[SaveGame] Deleted waypoint ID:', waypoint.id)
+      } catch (cleanupError) {
+        console.error('[SaveGame] Failed to clean up superseded waypoint:', cleanupError)
+      }
+    }
 
     if (__DEV__) {
       console.log('[SaveGame] Waypoint saved:', waypointName, 'ID:', id)
@@ -241,6 +262,15 @@ export async function saveWaypoint(state: GameState, waypointName: string): Prom
 
     return id
   } catch (error) {
+    // If the index was not committed, preserve the previously indexed save and
+    // best-effort remove the unreferenced replacement record.
+    if (newWaypointKey) {
+      try {
+        await AsyncStorage.removeItem(newWaypointKey)
+      } catch (cleanupError) {
+        console.error('[SaveGame] Failed to clean up uncommitted waypoint:', cleanupError)
+      }
+    }
     console.error('[SaveGame] Failed to save waypoint:', error)
     throw error
   }
@@ -296,15 +326,19 @@ export async function listWaypointSaves(): Promise<WaypointSaveMetadata[]> {
  * Delete a waypoint save by ID.
  */
 export async function deleteWaypoint(id: string): Promise<void> {
-  try {
-    // Delete the waypoint data
-    const waypointKey = WAYPOINT_ITEM_PREFIX + id
-    await AsyncStorage.removeItem(waypointKey)
+  return enqueueWaypointMutation(() => deleteWaypointTransaction(id))
+}
 
-    // Update index
-    const index = await loadWaypointIndex()
+async function deleteWaypointTransaction(id: string): Promise<void> {
+  try {
+    const index = await loadWaypointIndex(true)
     const newIndex = index.filter((item) => item.id !== id)
     await saveWaypointIndex(newIndex)
+
+    // Commit the index first. A failed cleanup leaves only an unreachable
+    // record instead of an index entry that points to missing data.
+    const waypointKey = WAYPOINT_ITEM_PREFIX + id
+    await AsyncStorage.removeItem(waypointKey)
 
     if (__DEV__) {
       console.log('[SaveGame] Waypoint deleted:', id)
@@ -319,17 +353,20 @@ export async function deleteWaypoint(id: string): Promise<void> {
  * Utility function, not exposed in UI.
  */
 export async function deleteAllWaypointSaves(): Promise<void> {
-  try {
-    const index = await loadWaypointIndex()
+  return enqueueWaypointMutation(deleteAllWaypointSavesTransaction)
+}
 
-    // Delete all waypoint items
+async function deleteAllWaypointSavesTransaction(): Promise<void> {
+  try {
+    const index = await loadWaypointIndex(true)
+
+    // Make every record unreachable before best-effort cleanup.
+    await saveWaypointIndex([])
+
     for (const item of index) {
       const waypointKey = WAYPOINT_ITEM_PREFIX + item.id
       await AsyncStorage.removeItem(waypointKey)
     }
-
-    // Clear index
-    await saveWaypointIndex([])
 
     if (__DEV__) {
       console.log('[SaveGame] All waypoint saves deleted')
@@ -384,7 +421,7 @@ export async function debugInspectCurrentSave(): Promise<void> {
  * Load the waypoint index.
  * Returns empty array if no index exists.
  */
-async function loadWaypointIndex(): Promise<WaypointSaveMetadata[]> {
+async function loadWaypointIndex(strict = false): Promise<WaypointSaveMetadata[]> {
   try {
     const data = await AsyncStorage.getItem(WAYPOINT_INDEX_KEY)
     if (!data) {
@@ -393,6 +430,7 @@ async function loadWaypointIndex(): Promise<WaypointSaveMetadata[]> {
     return JSON.parse(data)
   } catch (error) {
     console.error('[SaveGame] Failed to load waypoint index:', error)
+    if (strict) throw error
     return []
   }
 }
