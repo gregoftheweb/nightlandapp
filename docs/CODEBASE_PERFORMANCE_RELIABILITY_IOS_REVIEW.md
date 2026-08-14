@@ -51,6 +51,9 @@ Relevant code: `components/GameBoard.tsx:21-32`, `components/GameBoard.tsx:131-1
 
 ### P1 — Stabilize fallback identities so existing memoization actually holds
 
+**Status: completed.** `GameBoard` now uses a frozen module-level empty-array singleton for absent
+collections, and the grid-highlight memo tracks `state.player?.hideActive`.
+
 In `GameBoard`, expressions such as `state.activeMonsters ?? []` and `state.level?.objects ?? []` create a new empty array on each render when data is absent. ESLint correctly reports that these can invalidate multiple `useMemo`/`useEffect` dependencies. A module-level frozen `EMPTY_ARRAY`, or defaults guaranteed by the state model, would preserve identity.
 
 Also add the missing `state.player?.hideActive` dependency to the grid-cell memo. Its absence is primarily a correctness bug—the cell appearance can remain stale—but correcting the component boundaries will make dependency management less fragile.
