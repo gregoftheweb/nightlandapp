@@ -31,6 +31,28 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 | P2       | Timer-driven sub-game state machines             | Navigation or state updates after transitions; difficult timing bugs      | Medium-high              |
 | P2       | Audio lifecycle and app interruption handling    | Incorrect playback flags after interruptions/backgrounding                | Medium                   |
 
+## Progress checklist
+
+- [x] P1 — Render the board as a viewport, not a large React element tree
+- [x] P1 — Stabilize fallback identities so existing memoization actually holds
+- [ ] P2 — Avoid serializing and logging more than necessary on frequent state changes
+- [ ] P2 — Reduce packaged assets and remove editor/source artifacts
+- [ ] P2 — Remove unused root initialization
+- [ ] P0 — Autosave captures the first state in a throttle window, not the latest
+- [ ] P0 — Death/reset deletion races queued or in-flight autosaves
+- [ ] P0 — Safe-dial milestone saves can be overwritten by delayed older saves
+- [ ] P1 — Waypoint saves use an unprotected multi-step transaction
+- [ ] P1 — Replace fixed-delay state/navigation synchronization
+- [ ] P1 — Correct callbacks that read stale closures
+- [ ] P2 — Give timer-driven battle and navigation code explicit lifecycle ownership
+- [ ] P2 — Keep audio flags synchronized with native playback state
+- [ ] P1 — Make viewport dimensions react to size and safe-area changes
+- [ ] P1 — Apply safe areas consistently
+- [ ] P1 — Protect game transitions from iOS back-swipe gestures
+- [x] P1 — Restore type-checking and automated validation gates
+- [ ] P2 — Explicitly gate Android-only native calls
+- [ ] P2 — Validate assets, fonts, shadows, and haptics on real iOS hardware
+
 ## Highest-potential performance gains
 
 ### P1 — Render the board as a viewport, not a large React element tree

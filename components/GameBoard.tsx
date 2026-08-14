@@ -30,7 +30,9 @@ export { VIEWPORT_ROWS, VIEWPORT_COLS }
 const BACKGROUND_TILE_SIZE = 320
 const BACKGROUND_SCALE = CELL_SIZE / 32
 const SCALED_TILE_SIZE = BACKGROUND_TILE_SIZE * BACKGROUND_SCALE
-const EMPTY_ARRAY: never[] = []
+// Keep absent collection props referentially stable across renders. Freezing the
+// singleton also prevents one consumer from mutating every fallback collection.
+const EMPTY_ARRAY = Object.freeze([])
 
 export type GameBoardState = Pick<
   GameState,
