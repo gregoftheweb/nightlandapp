@@ -41,7 +41,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [x] P0 — Autosave captures the first state in a throttle window, not the latest
 - [x] P0 — Death/reset deletion races queued or in-flight autosaves
 - [x] P0 — Safe-dial milestone saves can be overwritten by delayed older saves
-- [ ] P1 — Waypoint saves use an unprotected multi-step transaction
+- [x] P1 — Waypoint saves use an unprotected multi-step transaction
 - [ ] P1 — Replace fixed-delay state/navigation synchronization
 - [ ] P1 — Correct callbacks that read stale closures
 - [ ] P2 — Give timer-driven battle and navigation code explicit lifecycle ownership
@@ -152,6 +152,12 @@ Clear the debounce before an immediate save and serialize/revision-stamp writes.
 Relevant code: `app/sub-games/aerowreckage-puzzle/hooks/usePuzzleState.ts:25-57` and `:150-183`.
 
 ### P1 — Waypoint saves use an unprotected multi-step transaction
+
+**Completed:** All waypoint index mutations now run through a module-level promise queue. Saving
+re-checks same-name entries inside that boundary, writes the replacement record first, commits one
+filtered index, and only then removes superseded records. Mutation reads fail closed rather than
+treating an unreadable index as empty. Tests cover concurrent same-name saves, commit ordering, index
+write failure recovery, and index read failure.
 
 `saveWaypoint` reads the index, removes old records, writes a filtered index, writes the new record, reads the index again, then appends metadata. Two invocations for the same waypoint can interleave. Both callers can pass the UI-level “already created” test before either asynchronous save dispatches `SET_WAYPOINT_CREATED`, creating duplicates or losing an index update. A failure between item and index writes also leaves an orphan or missing record.
 
