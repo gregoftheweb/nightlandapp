@@ -11,7 +11,7 @@ export default function HermitHollowIndex() {
       console.log('[HermitHollow] Routing to main screen')
     }
     router.replace('/sub-games/hermit-hollow/main' as any)
-  }, [])
+  }, [router])
 
   return null
 }

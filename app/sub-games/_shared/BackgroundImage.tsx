@@ -34,9 +34,13 @@ export function BackgroundImage({
     setSize({ w: width, h: height })
   }
 
-  const fillLocked = size
-    ? { position: 'absolute' as const, left: 0, top: 0, width: size.w, height: size.h }
-    : styles.fill
+  const fillLocked = useMemo(
+    () =>
+      size
+        ? { position: 'absolute' as const, left: 0, top: 0, width: size.w, height: size.h }
+        : styles.fill,
+    [size]
+  )
 
   /**
    * Foreground ALWAYS full width

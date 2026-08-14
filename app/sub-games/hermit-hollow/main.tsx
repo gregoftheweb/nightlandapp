@@ -204,7 +204,15 @@ export default function HermitHollowMain() {
 
       setAppliedEffectsForNode(currentNodeId)
     }
-  }, [currentNodeId, currentNode, appliedEffectsForNode, dispatch, state, toastOpacity])
+  }, [
+    currentNodeId,
+    currentNode,
+    appliedEffectsForNode,
+    dispatch,
+    isHermitConversationCompleted,
+    state,
+    toastOpacity,
+  ])
 
   const handleChoicePress = (nextNodeId: string) => {
     if (__DEV__) {

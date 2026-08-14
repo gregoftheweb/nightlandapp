@@ -48,35 +48,32 @@ export default function Game() {
 
   // Generate unique instance ID for this component
   const instanceId = useRef(`Game-${Math.random().toString(36).substr(2, 9)}`)
+  const initialStateRef = useRef(state)
 
   // Prevent multiple death navigations from the same instance
   const isNavigatingToDeath = useRef(false)
 
   // Log component lifecycle
   useEffect(() => {
-    console.log(`🎯🎯🎯 [${instanceId.current}] Game component MOUNTED`)
-    console.log(
-      `🎯🎯🎯 [${instanceId.current}] Initial state currentLevelId:`,
-      state.currentLevelId
-    )
-    console.log(
-      `🎯🎯🎯 [${instanceId.current}] Initial state player position:`,
-      state.player?.position
-    )
-    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state player HP:`, state.player?.currentHP)
-    console.log(`🎯🎯🎯 [${instanceId.current}] Initial state moveCount:`, state.moveCount)
+    const id = instanceId.current
+    const initialState = initialStateRef.current
+    console.log(`🎯🎯🎯 [${id}] Game component MOUNTED`)
+    console.log(`🎯🎯🎯 [${id}] Initial state currentLevelId:`, initialState.currentLevelId)
+    console.log(`🎯🎯🎯 [${id}] Initial state player position:`, initialState.player?.position)
+    console.log(`🎯🎯🎯 [${id}] Initial state player HP:`, initialState.player?.currentHP)
+    console.log(`🎯🎯🎯 [${id}] Initial state moveCount:`, initialState.moveCount)
     // Count only actual sub-games (keys without colons are main sub-games)
-    const mainSubGames = Object.keys(state.subGamesCompleted || {}).filter(
+    const mainSubGames = Object.keys(initialState.subGamesCompleted || {}).filter(
       (key) => !key.includes(':')
     )
     console.log(
-      `🎯🎯🎯 [${instanceId.current}] Initial state subGamesCompleted (main):`,
+      `🎯🎯🎯 [${id}] Initial state subGamesCompleted (main):`,
       mainSubGames.length,
       mainSubGames
     )
 
     return () => {
-      console.log(`🎯🎯🎯 [${instanceId.current}] Game component UNMOUNTED`)
+      console.log(`🎯🎯🎯 [${id}] Game component UNMOUNTED`)
       // Reset navigation guard on unmount
       isNavigatingToDeath.current = false
     }
@@ -499,9 +496,6 @@ export default function Game() {
       if (direction) performMove(direction)
     },
     [
-      state.inCombat,
-      state.player.position,
-      state.rangedAttackMode,
       state,
       isOverlayVisible,
       calculateTapPosition,
