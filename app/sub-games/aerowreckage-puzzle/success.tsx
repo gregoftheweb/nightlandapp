@@ -1,7 +1,7 @@
 // app/sub-games/aerowreckage-puzzle/success.tsx
 // Screen [C]: Success screen after opening the safe
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutChangeEvent } from 'react-native'
 import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
 import { Asset } from 'expo-asset'
@@ -10,7 +10,7 @@ import { exitSubGame } from '@modules/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { subGameTheme } from '../_shared/subGameTheme'
 //import { usePuzzleState } from './hooks/usePuzzleState'
-import { LayoutChangeEvent } from 'react-native'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 const bgSuccess = require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe3.webp')
 const LAZER_PISTOL_WEAPON_ID = 'weapon-lazer-pistol-001'
@@ -170,7 +170,7 @@ export default function AeroWreckageSuccess() {
               animationType="fade"
               onRequestClose={() => setShowAcquiredModal(false)}
             >
-              <View style={styles.modalOverlay}>
+              <SafeAreaContent style={styles.modalOverlay}>
                 <View style={styles.modalContainer}>
                   <Text style={styles.modalTitle}>Lazer Pistol acquired!</Text>
                   <Text style={styles.modalText}>
@@ -184,7 +184,7 @@ export default function AeroWreckageSuccess() {
                     <Text style={styles.modalButtonText}>OK</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
+              </SafeAreaContent>
             </Modal>
           )}
         </View>

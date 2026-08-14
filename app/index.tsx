@@ -24,6 +24,7 @@ import {
 import { invalidateAutoSaveAndDeleteCurrentGame } from '@modules/autoSave'
 import { fromSnapshot } from '@modules/gameState'
 import { clearAllSubGameSaves } from './sub-games/_shared/persistence'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 export default function SplashScreen() {
   const router = useRouter()
@@ -173,7 +174,7 @@ export default function SplashScreen() {
       resizeMode="cover"
       style={styles.backgroundImage}
     >
-      <View style={styles.overlay}>
+      <SafeAreaContent style={styles.overlay}>
         {isLoading ? (
           <ActivityIndicator size="large" color="red" />
         ) : (
@@ -212,7 +213,7 @@ export default function SplashScreen() {
             </TouchableOpacity>
           </View>
         )}
-      </View>
+      </SafeAreaContent>
 
       {/* Waypoint Saves Modal */}
       <Modal
@@ -221,7 +222,7 @@ export default function SplashScreen() {
         animationType="fade"
         onRequestClose={() => setShowWaypointModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <SafeAreaContent style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Waypoint Saves</Text>
 
@@ -255,7 +256,7 @@ export default function SplashScreen() {
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </SafeAreaContent>
       </Modal>
     </ImageBackground>
   )

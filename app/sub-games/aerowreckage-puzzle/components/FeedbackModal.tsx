@@ -5,6 +5,7 @@ import React from 'react'
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native'
 import { THEME } from '../theme'
 import { subGameTheme } from '../../_shared/subGameTheme'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 interface FeedbackModalProps {
   visible: boolean
@@ -26,21 +27,23 @@ export function FeedbackModal({ visible, type, message, hint, onDismiss }: Feedb
 
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onDismiss}>
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onDismiss}>
-        <View style={styles.modalContainer}>
-          <View style={[styles.modal, isSuccess && styles.modalSuccess]}>
-            <Text style={[styles.message, isSuccess && styles.messageSuccess]}>{message}</Text>
-            {hint && <Text style={styles.hint}>{hint}</Text>}
-            <TouchableOpacity
-              style={[styles.button, isSuccess && styles.buttonSuccess]}
-              onPress={onDismiss}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.buttonText}>OK</Text>
-            </TouchableOpacity>
+      <SafeAreaContent>
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onDismiss}>
+          <View style={styles.modalContainer}>
+            <View style={[styles.modal, isSuccess && styles.modalSuccess]}>
+              <Text style={[styles.message, isSuccess && styles.messageSuccess]}>{message}</Text>
+              {hint && <Text style={styles.hint}>{hint}</Text>}
+              <TouchableOpacity
+                style={[styles.button, isSuccess && styles.buttonSuccess]}
+                onPress={onDismiss}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.buttonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </SafeAreaContent>
     </Modal>
   )
 }

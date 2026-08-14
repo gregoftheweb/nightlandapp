@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { View, Image, StyleSheet, ImageSourcePropType, LayoutChangeEvent } from 'react-native'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 const puzzleBackground = require('@assets/images/backgrounds/subgames/sub-game-background.webp')
 
@@ -154,7 +155,9 @@ export function BackgroundImage({
       <View style={[styles.overlay, { backgroundColor: `rgba(0,0,0,${overlayOpacity})` }]} />
 
       {/* Game content */}
-      <View style={[styles.contentContainer, contentContainerStyle]}>{children}</View>
+      <SafeAreaContent style={[styles.contentContainer, contentContainerStyle]}>
+        {children}
+      </SafeAreaContent>
     </View>
   )
 }

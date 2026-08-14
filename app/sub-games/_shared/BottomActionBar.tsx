@@ -3,7 +3,6 @@
 
 import React from 'react'
 import { View, StyleSheet, ViewStyle } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 interface BottomActionBarProps {
   children: React.ReactNode
@@ -20,18 +19,13 @@ interface BottomActionBarProps {
  * - For stacked layout, pass buttons directly
  */
 export function BottomActionBar({ children, style }: BottomActionBarProps) {
-  const insets = useSafeAreaInsets()
-
-  return (
-    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 16) }, style]}>
-      {children}
-    </View>
-  )
+  return <View style={[styles.container, style]}>{children}</View>
 }
 
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     paddingTop: 12,
+    paddingBottom: 16,
   },
 })

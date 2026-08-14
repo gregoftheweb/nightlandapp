@@ -11,6 +11,7 @@ import {
   Image,
   ImageSourcePropType,
 } from 'react-native'
+import { SafeAreaContent } from './SafeAreaContent'
 
 interface InfoBoxProps {
   visible: boolean
@@ -87,7 +88,7 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
 
   return (
     <Modal transparent={true} visible={isModalVisible} animationType="none">
-      <View style={styles.overlay}>
+      <SafeAreaContent style={styles.overlay}>
         <Animated.View style={[styles.infoBox, { opacity }]}>
           <View style={styles.header}>
             <Text style={styles.name}>{name}</Text>
@@ -114,7 +115,7 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
             </TouchableOpacity>
           )}
         </Animated.View>
-      </View>
+      </SafeAreaContent>
     </Modal>
   )
 }

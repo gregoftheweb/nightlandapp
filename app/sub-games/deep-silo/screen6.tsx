@@ -9,6 +9,7 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { collectible } from '@config/objects'
 import { Item } from '@config/types'
+import { SafeAreaContent } from '@components/SafeAreaContent'
 
 const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6.png')
 
@@ -94,7 +95,7 @@ export default function DeepSiloScreen6() {
         {/* Note Modal */}
         {showNoteModal && (
           <Modal visible transparent={true} animationType="fade" onRequestClose={handleCloseNote}>
-            <View style={styles.modalOverlay}>
+            <SafeAreaContent style={styles.modalOverlay}>
               <View style={styles.modalContainer}>
                 <Text style={styles.modalTitle}>Persius Note 2</Text>
                 <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={true}>
@@ -108,7 +109,7 @@ export default function DeepSiloScreen6() {
                   <Text style={styles.modalButtonText}>Close</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </SafeAreaContent>
           </Modal>
         )}
       </View>
