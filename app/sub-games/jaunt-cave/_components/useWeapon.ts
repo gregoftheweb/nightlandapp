@@ -223,6 +223,10 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
       getDaemonState,
       getCurrentDaemonPosition,
       projectileDuration,
+      getEquippedWeaponDamage,
+      gameState.player.equippedRangedWeaponId,
+      gameState.weapons,
+      onDaemonHit,
     ]
   )
 

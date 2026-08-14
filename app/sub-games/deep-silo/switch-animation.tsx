@@ -1,5 +1,5 @@
 // app/sub-games/deep-silo/switch-animation.tsx
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { View, StyleSheet, Image, LayoutChangeEvent, Animated, Easing } from 'react-native'
 import { useRouter } from 'expo-router'
 
@@ -56,7 +56,7 @@ export default function SwitchAnimation() {
       })()
     : null
 
-  const playPowerOnFx = () => {
+  const playPowerOnFx = useCallback(() => {
     flashOpacity.setValue(0)
     shakeX.setValue(0)
     shakeY.setValue(0)
@@ -131,7 +131,7 @@ export default function SwitchAnimation() {
         }),
       ]),
     ]).start()
-  }
+  }, [flashOpacity, shakeX, shakeY])
 
   useEffect(() => {
     return () => {
@@ -166,7 +166,7 @@ export default function SwitchAnimation() {
     )
 
     timersRef.current.push(t1, t2, t3)
-  }, [containerSize, router])
+  }, [containerSize, playPowerOnFx, router])
 
   return (
     <View style={styles.container} onLayout={onLayout}>

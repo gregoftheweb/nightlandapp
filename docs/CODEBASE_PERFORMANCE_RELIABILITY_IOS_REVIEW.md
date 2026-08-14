@@ -43,7 +43,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [x] P0 — Safe-dial milestone saves can be overwritten by delayed older saves
 - [x] P1 — Waypoint saves use an unprotected multi-step transaction
 - [x] P1 — Replace fixed-delay state/navigation synchronization
-- [ ] P1 — Correct callbacks that read stale closures
+- [x] P1 — Correct callbacks that read stale closures
 - [ ] P2 — Give timer-driven battle and navigation code explicit lifecycle ownership
 - [ ] P2 — Keep audio flags synchronized with native playback state
 - [ ] P1 — Make viewport dimensions react to size and safe-area changes
@@ -184,6 +184,8 @@ Relevant code: `app/index.tsx:79-141`.
 ESLint identifies missing hook dependencies in the safe puzzle, hermit completion flow, deep-silo animation, `CombatDialog`, and especially `useWeapon`. The `useWeapon` callback performs damage using equipped-weapon data and callbacks omitted from its dependency list. That can apply damage using an old weapon after equipment changes.
 
 Treat hook dependency warnings in gameplay code as correctness failures. Prefer functional state updates or “latest value” refs only where a stable callback is genuinely required, and document that choice. Do not suppress dependencies merely to reduce renders.
+
+Completed: gameplay hook dependencies now track the values they read. In particular, Jaunt Cave projectile resolution uses the current equipped weapon, damage calculation, and hit callback; a regression test covers switching to the laser pistol before firing. Combat-dialog message processing and shared background geometry are memoized, the Deep Silo animation callback is stable, and the Hermit Hollow completion and route-navigation effects declare their inputs. Mount-only diagnostics explicitly snapshot their initial values instead of retaining accidental closures. The gameplay scope now passes ESLint's `react-hooks/exhaustive-deps` rule without warnings.
 
 ### P2 — Timer-driven battle and navigation code needs explicit lifecycle ownership
 

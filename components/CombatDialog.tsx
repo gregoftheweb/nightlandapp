@@ -1,11 +1,26 @@
 // components/CombatDialog.tsx
-import React, { useEffect, useState, useRef } from 'react'
-import { View, Text, StyleSheet, Animated } from 'react-native'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
+import { Text, StyleSheet, Animated } from 'react-native'
 
 interface CombatDialogProps {
   visible: boolean
   messages: string[] // Array of combat messages for the current round
   onClose?: () => void
+}
+
+function processRoundMessages(messages: string[]): string[] {
+  if (messages.length === 0) return []
+
+  let christosActionIndex = -1
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].toLowerCase().includes('christos')) {
+      christosActionIndex = i
+      break
+    }
+  }
+
+  if (christosActionIndex === -1) return messages.slice(-5)
+  return messages.slice(christosActionIndex, christosActionIndex + 5)
 }
 
 export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, onClose }) => {
@@ -14,33 +29,7 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
   const [displayedMessages, setDisplayedMessages] = useState<string[]>([]) // Track displayed messages to clear on hide
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Process messages to show one complete combat round
-  // Christos's action should be at the top, followed by monster responses
-  const processRoundMessages = (messages: string[]): string[] => {
-    if (messages.length === 0) return []
-
-    // Find the last Christos action (player turn)
-    let christosActionIndex = -1
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].toLowerCase().includes('christos')) {
-        christosActionIndex = i
-        break
-      }
-    }
-
-    if (christosActionIndex === -1) {
-      // No Christos action found, show last 5 messages
-      return messages.slice(-5)
-    }
-
-    // Get Christos action and all messages after it (monster responses in this round)
-    const roundMessages = messages.slice(christosActionIndex)
-
-    // Limit to max 5 messages (1 Christos + up to 4 monster responses)
-    return roundMessages.slice(0, 5)
-  }
-
-  const displayMessages = processRoundMessages(messages)
+  const displayMessages = useMemo(() => processRoundMessages(messages), [messages])
 
   useEffect(() => {
     if (visible && messages.length > 0) {
@@ -101,7 +90,7 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
         timerRef.current = null
       }
     }
-  }, [visible, messages, opacity, onClose]) // Removed displayMessages from dependencies
+  }, [displayMessages, visible, messages.length, opacity, onClose])
 
   if (!isVisible || messages.length === 0) {
     return null

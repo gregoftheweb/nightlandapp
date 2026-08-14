@@ -11,7 +11,7 @@ export default function DeepSiloIndex() {
       console.log('[DeepSilo] Routing to screen 1')
     }
     router.replace('/sub-games/deep-silo/screen1' as any)
-  }, [])
+  }, [router])
 
   return null
 }

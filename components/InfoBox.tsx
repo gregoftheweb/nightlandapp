@@ -39,9 +39,10 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
 
   // Log component lifecycle
   React.useEffect(() => {
-    console.log(`📦📦📦 [${instanceId.current}] InfoBox component MOUNTED`)
+    const id = instanceId.current
+    console.log(`📦📦📦 [${id}] InfoBox component MOUNTED`)
     return () => {
-      console.log(`📦📦📦 [${instanceId.current}] InfoBox component UNMOUNTED`)
+      console.log(`📦📦📦 [${id}] InfoBox component UNMOUNTED`)
     }
   }, [])
 
