@@ -71,7 +71,7 @@
     "jest-expo": "~54.0.11",
     "metro": "^0.87.0",
     "prettier": "^3.9.6",
-    "react-test-renderer": "19.2.8",
+    "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"
   },
   "overrides": {
