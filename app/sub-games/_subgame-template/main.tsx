@@ -3,32 +3,24 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
-import { exitSubGame } from '@modules/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
+import { useSubGameLifecycle } from '../_shared/lifecycle'
+import { lifecycleConfig } from './lifecycleConfig'
 
 // TODO: Replace with your sub-game's background image
 const bgMain = require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen1.webp')
 
-// TODO: Change this to your sub-game's name (use kebab-case, e.g., 'my-puzzle')
-const SUB_GAME_NAME = '_subgame-template'
-
 export default function SubGameTemplateMain() {
   const router = useRouter()
+  const lifecycle = useSubGameLifecycle(lifecycleConfig)
 
   const handleLeaveWithoutExploring = () => {
-    if (__DEV__) {
-      console.log(`[${SUB_GAME_NAME}] Leaving without exploring`)
-    }
-    exitSubGame({ completed: false })
+    void lifecycle.failSubGame()
   }
 
   const handleStartPuzzle = () => {
-    if (__DEV__) {
-      console.log(`[${SUB_GAME_NAME}] Starting puzzle`)
-    }
-    // TODO: Update route to match your sub-game folder name
     router.push('/sub-games/_subgame-template/puzzle' as any)
   }
 

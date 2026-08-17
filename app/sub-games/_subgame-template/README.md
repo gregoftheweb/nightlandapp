@@ -1,254 +1,124 @@
-# Sub-Game Template
+# Lifecycle-Enforced Sub-Game Template
 
-This directory contains a minimal, copy-pasteable template for creating new sub-games in the Night Land RPG.
+This directory is the minimal working reference for
+`docs/SUBGAME_LIFECYCLE_CONTRACT.md`. It is not sufficient to copy screens and manually reproduce
+completion logic: every sub-game must declare a typed lifecycle config and use
+`useSubGameLifecycle` for completion, failure, revisit routing, progress, rewards, waypoints, and RPG
+return.
 
-## Quick Start
+## Reference flow
 
-To create a new sub-game from this template:
-
-1. **Copy the entire `_subgame-template` directory** to a new folder with your sub-game's name:
-
-   ```bash
-   cp -r app/sub-games/_subgame-template app/sub-games/my-new-puzzle
-   ```
-
-2. **Follow the rename checklist below** to customize the template for your sub-game.
-
-3. **Implement your puzzle logic** in the placeholder areas marked with `TODO` comments.
-
-4. **Register your sub-game** in the game (see "Registering Your Sub-Game" section).
-
----
-
-## Rename Checklist
-
-When cloning this template, you **must** rename/replace the following:
-
-### 1. Folder Name
-
-- **Current**: `_subgame-template`
-- **Action**: Rename to your sub-game name in kebab-case (e.g., `crystal-maze`, `ancient-library`)
-
-### 2. Sub-Game Name Constant
-
-In all `.tsx` files (`index.tsx`, `main.tsx`, `puzzle.tsx`, `success.tsx`):
-
-- **Find**: `const SUB_GAME_NAME = '_subgame-template'`
-- **Replace with**: Your sub-game name in kebab-case (e.g., `'crystal-maze'`)
-- **Used in**: Logging and completion tracking
-
-### 3. Route Paths
-
-In all navigation calls (`router.replace`, `router.push`):
-
-- **Find**: `/sub-games/_subgame-template/...`
-- **Replace with**: `/sub-games/your-subgame-name/...`
-- **Files to update**:
-  - `index.tsx` (line 12): `router.replace('/sub-games/YOUR-NAME/main' as any)`
-  - `main.tsx` (line 32): `router.push('/sub-games/YOUR-NAME/puzzle' as any)`
-  - `puzzle.tsx` (line 38): `router.push('/sub-games/YOUR-NAME/success' as any)`
-
-### 4. Background Images
-
-Replace the placeholder image `require()` statements with your own assets:
-
-- **main.tsx** (line 11): `const bgMain = require('@/assets/images/YOUR-IMAGE.png')`
-- **puzzle.tsx** (line 11): `const bgPuzzle = require('@/assets/images/YOUR-IMAGE.png')`
-- **success.tsx** (line 13): `const bgSuccess = require('@/assets/images/YOUR-IMAGE.png')`
-
-Add your background images to `/assets/images/` before updating these paths.
-
-### 5. Reward Item ID
-
-In `success.tsx`:
-
-- **Find** (line 18): `const REWARD_ITEM_ID = 'template-reward-item'`
-- **Replace with**: Your unique reward item ID (e.g., `'crystal-shard'`, `'ancient-tome'`)
-
-### 6. Reward Grant Logic
-
-In `success.tsx` (lines 28-60):
-
-- Uncomment and customize the reward dispatch logic
-- Choose the appropriate action type:
-  - `ADD_TO_INVENTORY` for collectibles/items
-  - `ADD_RANGED_WEAPON` for ranged weapons
-  - `ADD_MELEE_WEAPON` for melee weapons (check existing patterns)
-- Define your reward item properties (name, description, effects, etc.)
-
-### 7. Placeholder Text
-
-Replace all TODO placeholder content:
-
-- **main.tsx** (line 40): Intro text describing the sub-game scenario
-- **puzzle.tsx** (lines 44-48): Puzzle UI and interaction logic
-- **success.tsx** (lines 101, 104): Success message and reward description
-
----
-
-## File Structure
-
-```
-_subgame-template/
-├── index.tsx       # Entry point - routes to main screen
-├── main.tsx        # Screen 1: Intro/starting screen
-├── puzzle.tsx      # Screen 2: Puzzle/gameplay screen
-├── success.tsx     # Screen 3: Success/reward screen
-└── README.md       # This file
+```text
+index -> main -> puzzle -> success -> RPG
+           |        |
+           +--------+---- safe failure -> RPG
 ```
 
-### Screen Flow
+- `lifecycleConfig.ts` contains the complete declaration.
+- `index.tsx` calls `resolveEntryRoute()` so completed entry follows the declared revisit policy.
+- `main.tsx` and `puzzle.tsx` call `failSubGame()` for the declared safe exit.
+- `success.tsx` calls `completeSubGame()` exactly at the declared completion event.
+- The shared controller commits completion/reward/waypoint state before signaling and exiting.
 
-```
-index.tsx → main.tsx → puzzle.tsx → success.tsx → exit
-     ↓          ↓          ↓            ↓
-  (routes)  (start or  (solve or   (claim reward
-            leave)      give up)    & return)
-```
+The example uses a `one-off` shape, local-only progress, no reward, no waypoint, safe failure, and a
+success-screen revisit. It is intentionally simple but fully functional.
 
----
+## Creating a sub-game
 
-## Registering Your Sub-Game
+1. Copy this directory and rename it to the stable kebab-case sub-game ID.
+2. Update every field in `lifecycleConfig.ts`. Do not leave a lifecycle decision implicit.
+3. Update the module-level routes and assets in the screens.
+4. Implement the shape mechanic. Reuse an established shape rather than copying its logic when one
+   exists.
+5. Register the ID and entry route in `config/subGames.ts`.
+6. Add shape-specific tests plus the lifecycle cases listed in the contract document.
 
-After creating your sub-game, you need to register it so players can access it from the main game:
+The config object must remain module-level and stable. Constructing it inside a component is rejected
+because it would reset the controller's one-call guards on every render.
 
-### 1. Add to a Level Object
+## Shared lifecycle API
 
-Edit the level configuration where you want the sub-game to appear (e.g., `/config/objects.ts` or level-specific configs):
-
-```typescript
-{
-  id: 'building-my-puzzle',
-  name: 'Mysterious Structure',
-  description: 'An ancient structure that beckons exploration...',
-  // ... other object properties ...
-  subGame: {
-    subGameName: 'my-new-puzzle',  // Your folder name
-    ctaLabel: 'Investigate',       // Button text in InfoBox
-    requiresPlayerOnObject: true   // Player must be standing on object
-  }
-}
+```ts
+const lifecycle = useSubGameLifecycle<MyProgress>(lifecycleConfig)
 ```
 
-### 2. Object Interaction
+### `completeSubGame(): Promise<void>`
 
-When the player interacts with this object, the game will:
+The controller performs the success transaction in this order:
 
-1. Show an InfoBox with the description and CTA button
-2. When clicked, call `enterSubGame('my-new-puzzle')`
-3. Navigate to `/sub-games/my-new-puzzle/index.tsx`
+1. dispatches `SET_SUB_GAME_COMPLETED` if needed;
+2. grants the configured reward if durable state does not already contain it;
+3. derives an updated state snapshot and creates the configured waypoint once;
+4. dispatches the persistent waypoint marker;
+5. clears AsyncStorage progress when `clearOnCompletion` is true;
+6. calls `signalRpgResume()` and `exitSubGame({ completed: true })`.
 
----
+Concurrent or repeated calls through the same controller share one operation and cannot duplicate
+the reward or waypoint. Durable inventory/weapon/reward and waypoint markers protect remounts.
 
-## Golden Path Lifecycle
+Reward IDs resolve against repository data:
 
-This template follows the established sub-game lifecycle pattern:
+- `item`: a `collectible` entry whose `id` or `shortName` matches;
+- `weapon`: an item in the current game state's weapon catalog;
+- `effect` or `ability`: an effect-system type ID.
 
-### Entry
+The controller also writes a durable namespaced reward flag. Unknown IDs fail loudly rather than
+silently recording an ungranted reward.
 
-1. Player interacts with a game object that has a `subGame` property
-2. `enterSubGame(subGameName)` is called from GameBoard/InfoBox
-3. Routes to `/sub-games/{subGameName}/index.tsx`
-4. Index routes to the main screen
+### `failSubGame(): Promise<void>`
 
-### During Gameplay
+- `safe`: signals RPG resume and exits with `{ completed: false }`; it never grants completion or a
+  reward.
+- `death`: dispatches `GAME_OVER`; it does not perform a normal RPG resume/exit.
 
-- Use `router.push()` for forward navigation between screens
-- Access `useGameContext()` for shared game state
-- Use `BackgroundImage` and `BottomActionBar` components for consistent UI
+The contract has no death-copy fields, so the shared controller uses a generic message based on the
+sub-game ID. A future schema revision is required if an instance needs controller-owned custom death
+copy; a one-off may still show a narrative failure screen before invoking the declared death action.
 
-### Exit
+### Revisit routing
 
-1. Call `dispatch({ type: 'SET_SUB_GAME_COMPLETED', payload: { subGameName, completed: true/false } })`
-2. Call `signalRpgResume()` to trigger RPG refresh
-3. Call `exitSubGame({ completed: boolean })` to navigate back to `/game`
-4. **Never** use `router.back()` - always use `exitSubGame()`
+`resolveEntryRoute()` returns:
 
----
+| Policy             | Resolution                                                                        |
+| ------------------ | --------------------------------------------------------------------------------- |
+| `restart`          | declared `entryRoute`                                                             |
+| `resume`           | declared `entryRoute` (the entry loads progress or selects a deterministic state) |
+| `success-screen`   | `success` sibling of the entry route                                              |
+| `aftermath-screen` | `aftermath` sibling of the entry route                                            |
+| `unavailable`      | `null`                                                                            |
 
-## Shared Components
+The contract does not contain explicit success/aftermath route fields, so these sibling names are a
+required convention. An unavailable entry must handle `null` by blocking entry or performing a
+normal non-completion return. It must not invoke a `death` failure merely because the completed game
+is unavailable.
 
-The template uses these shared components from `/app/sub-games/_shared/`:
+### Progress methods
 
-- **BackgroundImage**: Handles background image rendering with proper sizing
-- **BottomActionBar**: Consistent bottom action bar with safe area insets
-- **subGameTheme**: Shared color scheme (red, blue, black)
+The controller exposes `loadProgress`, `saveProgress`, and `clearProgress`.
 
-Import them like this:
+- For `local-only`, load returns `null` and save/clear are no-ops.
+- For `async-storage`, the methods use `_shared/persistence` with the declared key and version.
+- A load with a different schema version returns `null` rather than interpreting incompatible data.
+- Completion automatically clears progress when `clearOnCompletion` is true.
 
-```typescript
-import { BackgroundImage } from '../_shared/BackgroundImage'
-import { BottomActionBar } from '../_shared/BottomActionBar'
-import { subGameTheme } from '../_shared/subGameTheme'
-```
+Screens own the timing of mechanic-specific saves because the lifecycle config cannot know when
+progress changes. They must use these controller methods rather than importing persistence helpers
+directly.
 
----
+## Navigation rule
 
-## Development Tips
+Do not use `router.back()` or raw navigation to `/game` for the **RPG exit path**. Always use
+`completeSubGame()` or `failSubGame()` so the declared lifecycle runs.
 
-### Logging
+Internal sub-game navigation may use `router.push()`, `router.replace()`, or `router.back()` as
+appropriate.
 
-- Always wrap `console.log` in `if (__DEV__)` checks
-- Use descriptive prefixes: `[YourSubGameName] Message`
+## Before considering a clone complete
 
-### Navigation
-
-- Use absolute paths: `/sub-games/your-name/screen`
-- Always use `router.replace()` for index routing
-- Use `router.push()` for forward navigation within the sub-game
-- Use `exitSubGame()` to return to the main game
-
-### State Management
-
-- Access global game state via `useGameContext()`
-- Dispatch actions to update inventory, completion status, etc.
-- Local screen state can use `useState()` as needed
-
-### Testing
-
-1. Add your sub-game to a test object in a level
-2. Run the app and navigate to that object
-3. Test the full flow: enter → solve → claim reward → exit
-4. Verify completion state persists (check `state.subGamesCompleted`)
-
----
-
-## Common Pitfalls
-
-1. **Forgetting to update route paths** - Search for `_subgame-template` in all files
-2. **Not wrapping logs in `__DEV__`** - Production builds will have noisy logs
-3. **Using `router.back()`** - Always use `exitSubGame()` instead
-4. **Not calling `signalRpgResume()`** - RPG won't know to refresh when you return
-5. **Typos in `SUB_GAME_NAME`** - Must match your folder name exactly
-
----
-
-## Need Help?
-
-- Check existing sub-games for examples: `aerowreckage-puzzle`, `tesseract`
-- Review `/modules/subGames.ts` for helper functions
-- See `SUBGAME_FEATURE_README.md` for architecture details
-- Look at `/app/sub-games/_shared/` for shared components
-
----
-
-## Example: Cloning for a New Sub-Game
-
-```bash
-# 1. Copy the template
-cp -r app/sub-games/_subgame-template app/sub-games/crystal-maze
-
-# 2. Update all files
-# - Replace '_subgame-template' with 'crystal-maze'
-# - Replace route paths
-# - Update background image requires
-# - Implement puzzle logic
-
-# 3. Add to a level object in config
-# - Add subGame property with subGameName: 'crystal-maze'
-
-# 4. Test in-game
-npm start
-```
-
-Happy puzzle building! 🎮
+- The config satisfies every field in `SubGameLifecycleConfig`.
+- The declared completion event is the only success call site.
+- Failure follows the declared safe/death branch.
+- Completed entry follows the declared revisit policy.
+- Rewards and waypoints survive repeated presses and remounts without duplication.
+- Progress behavior matches `local-only` or `async-storage` explicitly.
+- Normal exits always go through the lifecycle controller.

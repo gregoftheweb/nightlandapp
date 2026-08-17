@@ -3,36 +3,26 @@
 import React, { useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
-import { exitSubGame } from '@modules/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
+import { useSubGameLifecycle } from '../_shared/lifecycle'
+import { lifecycleConfig } from './lifecycleConfig'
 
 // TODO: Replace with your sub-game's background image
 const bgPuzzle = require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen3.webp')
 
-// TODO: Change this to your sub-game's name (use kebab-case, e.g., 'my-puzzle')
-const SUB_GAME_NAME = '_subgame-template'
-
 export default function SubGameTemplatePuzzle() {
   const router = useRouter()
+  const lifecycle = useSubGameLifecycle(lifecycleConfig)
   const [puzzleState, setPuzzleState] = useState<'idle' | 'solving' | 'solved'>('idle')
 
   const handleGiveUp = () => {
-    if (__DEV__) {
-      console.log(`[${SUB_GAME_NAME}] Giving up on puzzle`)
-    }
-    exitSubGame({ completed: false })
+    void lifecycle.failSubGame()
   }
 
   const handleSolvePuzzle = () => {
-    if (__DEV__) {
-      console.log(`[${SUB_GAME_NAME}] Puzzle solved!`)
-    }
-    // TODO: Implement your puzzle logic here
     setPuzzleState('solved')
-    // Navigate to success screen
-    // TODO: Update route to match your sub-game folder name
     router.push('/sub-games/_subgame-template/success' as any)
   }
 
