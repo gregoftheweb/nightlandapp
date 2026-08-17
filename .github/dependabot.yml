@@ -21,6 +21,27 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # PINNED TO EXPO SDK 54 — phone is constrained to Expo Go 54.
+      # These packages use Expo's SDK-aligned versioning, so any major-version
+      # jump (e.g. 15.x -> 57.x) is actually an SDK jump, not a normal semver
+      # bump, and will break Expo Go compatibility on this phone.
+      # REMOVE THIS ENTIRE IGNORE BLOCK once the phone/SDK moves to 57+,
+      # then let Dependabot resume proposing updates for these normally.
+      - dependency-name: 'expo-blur'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'expo-font'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'expo-symbols'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'expo-haptics'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'expo-system-ui'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'eslint-config-expo'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-native-gesture-handler'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: /
