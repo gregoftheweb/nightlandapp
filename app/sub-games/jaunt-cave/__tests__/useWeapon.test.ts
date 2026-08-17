@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native'
+import { AppState, type AppStateStatus } from 'react-native'
 import { Item } from '@config/types'
 import { getInitialState } from '@modules/gameState'
 import { DaemonState } from '../_components/useBattleState'
@@ -21,8 +22,17 @@ const makeWeapon = (id: string): Item => ({
 })
 
 describe('useWeapon', () => {
+  const initialAppState = AppState.currentState
+  let appStateListener: ((state: AppStateStatus) => void) | undefined
+
   beforeEach(() => {
     jest.useFakeTimers()
+    AppState.currentState = 'active'
+    appStateListener = undefined
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, listener) => {
+      appStateListener = listener
+      return { remove: jest.fn() }
+    })
   })
 
   afterEach(() => {
@@ -30,6 +40,8 @@ describe('useWeapon', () => {
       jest.runOnlyPendingTimers()
     })
     jest.useRealTimers()
+    jest.restoreAllMocks()
+    AppState.currentState = initialAppState
   })
 
   it('uses the latest equipped weapon and hit callback when the projectile lands', () => {
@@ -74,5 +86,40 @@ describe('useWeapon', () => {
 
     expect(latestHitHandler).toHaveBeenCalledWith(30)
     expect(oldHitHandler).not.toHaveBeenCalled()
+  })
+
+  it('invalidates an in-flight projectile when the app backgrounds', () => {
+    const weapon = makeWeapon(STANDARD_WEAPON_ID)
+    const state = getInitialState('1')
+    const onDaemonHit = jest.fn()
+    const { result } = renderHook(() =>
+      useWeapon({
+        gameState: {
+          ...state,
+          weapons: [weapon],
+          player: {
+            ...state.player,
+            equippedRangedWeaponId: STANDARD_WEAPON_ID,
+            rangedWeaponInventoryIds: [STANDARD_WEAPON_ID],
+          },
+        },
+        dispatch: jest.fn(),
+        arenaSize: { width: 100, height: 100 },
+        onSetFeedback: jest.fn(),
+        onFireProjectile: jest.fn(),
+        getDaemonState: () => DaemonState.LANDED,
+        getCurrentDaemonPosition: () => 'left',
+        projectileDuration: 100,
+        getEquippedWeaponDamage: () => ({ min: 10, max: 10 }),
+        onDaemonHit,
+      })
+    )
+
+    act(() => result.current.handleZapTargetPress('left'))
+    act(() => appStateListener?.('background'))
+    act(() => jest.advanceTimersByTime(100))
+
+    expect(onDaemonHit).not.toHaveBeenCalled()
+    expect(result.current.hitIndicator).toBeNull()
   })
 })

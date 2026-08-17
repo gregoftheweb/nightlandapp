@@ -2,6 +2,7 @@
 // Custom hook for managing weapon actions and interactions
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { AppState, type AppStateStatus } from 'react-native'
 import { Item, GameState } from '@config/types'
 import { DaemonState } from './useBattleState'
 import { HIT_INDICATOR_CONFIG } from './HitIndicator'
@@ -16,7 +17,7 @@ const LASER_PISTOL_ID = 'weapon-lazer-pistol-001'
 // Values are percentages (0.0 to 1.0) of arena width/height
 // Adjust these values to fine-tune where projectiles hit
 // They are initially set to match daemon spawn positions but can be adjusted as needed
-export const ZAP_TARGETS = {
+const ZAP_TARGETS = {
   left: { x: 0.2, y: 0.335 }, // Left target position (moved up from 0.37)
   center: { x: 0.5, y: 0.345 }, // Center target position (moved up from 0.38)
   right: { x: 0.8, y: 0.345 }, // Right target position (moved up from 0.38)
@@ -37,6 +38,7 @@ export interface UseWeaponProps {
   projectileDuration: number // Duration of projectile flight
   getEquippedWeaponDamage: () => { min: number; max: number } | null
   onDaemonHit: (damage: number) => void // Callback to apply damage to daemon
+  isFocused?: boolean
 }
 
 export interface UseWeaponReturn {
@@ -50,7 +52,6 @@ export interface UseWeaponReturn {
   handleOpenInventory: () => void
   handleCloseInventory: () => void
   handleSelectWeapon: (weapon: Item) => void
-  closeZapMenu: () => void
   hitIndicator: { position: { x: number; y: number }; type: 'hit' | 'block' } | null
 }
 
@@ -66,6 +67,7 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     projectileDuration,
     getEquippedWeaponDamage,
     onDaemonHit,
+    isFocused = true,
   } = props
 
   // Inventory modal state
@@ -74,6 +76,36 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
   // Zap menu state
   const [isZapMenuOpen, setIsZapMenuOpen] = useState(false)
   const zapMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scheduledTimersRef = useRef(new Set<ReturnType<typeof setTimeout>>())
+  const generationRef = useRef(0)
+  const mountedRef = useRef(true)
+  const focusedRef = useRef(isFocused)
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState ?? 'active')
+
+  const clearScheduledWork = useCallback(() => {
+    generationRef.current += 1
+    for (const timer of scheduledTimersRef.current) clearTimeout(timer)
+    scheduledTimersRef.current.clear()
+    zapMenuTimerRef.current = null
+  }, [])
+
+  const schedule = useCallback((callback: () => void, delay: number) => {
+    const generation = generationRef.current
+    const timer = setTimeout(() => {
+      scheduledTimersRef.current.delete(timer)
+      if (
+        generation !== generationRef.current ||
+        !mountedRef.current ||
+        !focusedRef.current ||
+        appStateRef.current !== 'active'
+      ) {
+        return
+      }
+      callback()
+    }, delay)
+    scheduledTimersRef.current.add(timer)
+    return timer
+  }, [])
 
   // Hit indicator state
   const [hitIndicator, setHitIndicator] = useState<{
@@ -135,10 +167,11 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
       // Clear any existing timer
       if (zapMenuTimerRef.current) {
         clearTimeout(zapMenuTimerRef.current)
+        scheduledTimersRef.current.delete(zapMenuTimerRef.current)
       }
 
       // Auto-close zap menu after ~1s
-      zapMenuTimerRef.current = setTimeout(() => {
+      zapMenuTimerRef.current = schedule(() => {
         setIsZapMenuOpen(false)
         zapMenuTimerRef.current = null
       }, 1000)
@@ -158,7 +191,7 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
         onFireProjectile({ x: startX, y: startY }, { x: endX, y: endY }, boltColor)
 
         // After projectile flight completes, show hit indicator
-        setTimeout(() => {
+        schedule(() => {
           // Determine if this is a hit or block
           const daemonState = getDaemonState()
           const daemonPosition = getCurrentDaemonPosition()
@@ -205,7 +238,7 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
           }
 
           // Clear indicator after its animation finishes
-          setTimeout(() => {
+          schedule(() => {
             setHitIndicator(null)
           }, HIT_INDICATOR_CONFIG.DURATION + HIT_INDICATOR_CONFIG.FADE_OUT_DURATION)
         }, projectileDuration)
@@ -227,6 +260,7 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
       gameState.player.equippedRangedWeaponId,
       gameState.weapons,
       onDaemonHit,
+      schedule,
     ]
   )
 
@@ -260,20 +294,36 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     [dispatch]
   )
 
-  // Close zap menu method (for external control, e.g., when blocking)
-  const closeZapMenu = useCallback(() => {
-    setIsZapMenuOpen(false)
-  }, [])
-
-  // Cleanup zap menu timer on unmount
   useEffect(() => {
-    return () => {
-      if (zapMenuTimerRef.current) {
-        clearTimeout(zapMenuTimerRef.current)
-        zapMenuTimerRef.current = null
-      }
+    focusedRef.current = isFocused
+    if (!isFocused) {
+      clearScheduledWork()
+      setIsZapMenuOpen(false)
+      setHitIndicator(null)
     }
-  }, [])
+  }, [clearScheduledWork, isFocused])
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      const wasActive = appStateRef.current === 'active'
+      appStateRef.current = nextState
+      if (wasActive && nextState !== 'active') {
+        clearScheduledWork()
+        setIsZapMenuOpen(false)
+        setHitIndicator(null)
+      }
+    })
+    return () => subscription.remove()
+  }, [clearScheduledWork])
+
+  // Invalidate every delayed weapon callback on unmount.
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      clearScheduledWork()
+    }
+  }, [clearScheduledWork])
 
   return {
     showInventory,
@@ -286,7 +336,6 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     handleOpenInventory,
     handleCloseInventory,
     handleSelectWeapon,
-    closeZapMenu,
     hitIndicator,
   }
 }
