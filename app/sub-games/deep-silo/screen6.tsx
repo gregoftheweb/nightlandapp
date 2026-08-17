@@ -11,7 +11,7 @@ import { collectible } from '@config/objects'
 import { Item } from '@config/types'
 import { SafeAreaContent } from '@components/SafeAreaContent'
 
-const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6.png')
+const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6.webp')
 
 const PERSIUS_NOTE_2_ID = 'persius-note-2'
 

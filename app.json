@@ -41,7 +41,15 @@
     "experiments": {
       "typedRoutes": true
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "assets/fonts/*.ttf",
+      "assets/fonts/*.otf",
+      "assets/images/**/*.png",
+      "assets/images/**/*.jpg",
+      "assets/images/**/*.jpeg",
+      "assets/images/**/*.webp",
+      "assets/sounds/*.mp3"
+    ],
     "extra": {
       "router": {},
       "eas": {
