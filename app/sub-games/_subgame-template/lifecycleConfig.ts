@@ -8,7 +8,7 @@ export const lifecycleConfig = {
     event: 'Player confirms Return to the Night Land on the success screen',
     idempotent: true,
   },
-  failureExit: 'safe',
+  failure: { exit: 'safe' },
   waypoint: { createsWaypoint: false },
   revisit: 'success-screen',
   progress: { mode: 'local-only' },

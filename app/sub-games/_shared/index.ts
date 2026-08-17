@@ -4,6 +4,7 @@
 export * from './types'
 export * from './persistence'
 export * from './lifecycle'
+export * from './word-grid'
 export { ReadableTextBox } from './ReadableTextBox'
 export { BackgroundImage } from './BackgroundImage'
 export { BottomActionBar } from './BottomActionBar'

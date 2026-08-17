@@ -56,6 +56,12 @@ The controller performs the success transaction in this order:
 Concurrent or repeated calls through the same controller share one operation and cannot duplicate
 the reward or waypoint. Durable inventory/weapon/reward and waypoint markers protect remounts.
 
+### `grantReward(): Promise<void>`
+
+Grants only the declared reward, using the same durable idempotency checks as completion. Use this
+when `reward.grantEvent` occurs before the completion event, such as entering a success screen.
+`completeSubGame()` always calls it again as a safety net and will not duplicate the grant.
+
 Reward IDs resolve against repository data:
 
 - `item`: a `collectible` entry whose `id` or `shortName` matches;
@@ -69,11 +75,11 @@ silently recording an ungranted reward.
 
 - `safe`: signals RPG resume and exits with `{ completed: false }`; it never grants completion or a
   reward.
-- `death`: dispatches `GAME_OVER`; it does not perform a normal RPG resume/exit.
+- `death`: dispatches `GAME_OVER` with the declared message, required killer name, and dialog policy,
+  then enters the declared death route; it does not perform a normal RPG resume/exit.
 
-The contract has no death-copy fields, so the shared controller uses a generic message based on the
-sub-game ID. A future schema revision is required if an instance needs controller-owned custom death
-copy; a one-off may still show a narrative failure screen before invoking the declared death action.
+Death copy belongs in the lifecycle declaration so generic shapes can preserve instance-specific
+failure presentation without dispatching their own `GAME_OVER` action.
 
 ### Revisit routing
 
