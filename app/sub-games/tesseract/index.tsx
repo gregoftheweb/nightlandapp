@@ -1,6 +1,6 @@
 // app/sub-games/tesseract/index.tsx
 // Main entry point for the tesseract sub-game - routes to main screen
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'expo-router'
 import { useGameContext } from '@context/GameContext'
 

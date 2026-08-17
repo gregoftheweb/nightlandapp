@@ -2,7 +2,6 @@
 // Screen 3: Success screen after completing the puzzle
 import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
-import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
 import { useGameContext } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
@@ -20,7 +19,6 @@ const SUB_GAME_NAME = '_subgame-template'
 const REWARD_ITEM_ID = 'template-reward-item'
 
 export default function SubGameTemplateSuccess() {
-  const router = useRouter()
   const { state, dispatch, signalRpgResume } = useGameContext()
   const [showRewardModal, setShowRewardModal] = useState(false)
 

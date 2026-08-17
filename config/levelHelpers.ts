@@ -29,6 +29,7 @@ import {
 } from './objects'
 import { getGreatPowerTemplate } from './monsters'
 import { getSubGameDefinition, SubGameId } from './subGames'
+import { hydrateGreatPower } from '@modules/hydration'
 
 /**
  * Create a level with smart defaults and optional biome preset.
@@ -417,10 +418,6 @@ export function createGreatPowerInstance(
   if (!template) {
     throw new Error(`GreatPower template ${shortName} not found`)
   }
-
-  // For now, we still need to import and use hydration to maintain compatibility
-  // TODO: Move hydration to runtime and make this a pure config builder
-  const { hydrateGreatPower } = require('@modules/hydration')
 
   // Determine initial HP - support both legacy hp and currentHP in overrides
   const initialHP = overrides.currentHP ?? (overrides as any).hp ?? template.maxHP

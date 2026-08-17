@@ -1,6 +1,5 @@
 // config/player.ts
 import { Player } from './types'
-import { weapons } from './objects'
 import christosIMG from '@assets/images/sprites/characters/christos.webp'
 
 export const playerConfig: Player = {

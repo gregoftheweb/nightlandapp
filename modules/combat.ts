@@ -561,7 +561,6 @@ export const executeRangedAttack = (
     return null
   }
 
-  const player = state.player
   const weaponName = getEquippedRangedWeaponName(state)
   const projectileColor = getEquippedRangedWeaponProjectileColor(state)
   const projectileStyle = getEquippedRangedWeaponProjectileStyle(state)

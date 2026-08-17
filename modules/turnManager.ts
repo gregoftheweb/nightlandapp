@@ -1,5 +1,5 @@
 // modules/turnManager.ts - Clean turn-based game flow orchestration
-import { GameState, Position, Monster, MonsterInstance } from '../config/types'
+import { GameState, Monster, MonsterInstance } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
 import { hydrateMonster } from './hydration'
 import { handleMoveMonsters } from './monsterUtils'

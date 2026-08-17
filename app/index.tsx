@@ -10,8 +10,6 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { useRouter } from 'expo-router'
-import { STRINGS } from '../assets/copy/strings'
-import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
 import { useGameActions } from '@context/GameContext'
 import {
   hasCurrentGame,

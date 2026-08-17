@@ -2,7 +2,6 @@
 // Screen [C]: Success screen after opening the safe
 import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutChangeEvent } from 'react-native'
-import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
 import { Asset } from 'expo-asset'
 import { useGameContext } from '@context/GameContext'
@@ -16,7 +15,6 @@ const bgSuccess = require('@assets/images/backgrounds/subgames/aerowreckage/aero
 const LAZER_PISTOL_WEAPON_ID = 'weapon-lazer-pistol-001'
 
 export default function AeroWreckageSuccess() {
-  const router = useRouter()
   const { state, dispatch, signalRpgResume } = useGameContext()
   //const { resetPuzzle } = usePuzzleState()
 

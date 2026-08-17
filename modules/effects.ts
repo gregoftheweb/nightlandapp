@@ -403,7 +403,7 @@ const executeSwarmEffect: EffectHandler<'swarm'> = (effect, context) => {
  * Used by: Great Powers (Watchers, House of Silence, etc.)
  */
 const executeSoulsuckEffect: EffectHandler<'soulsuck'> = (effect, context) => {
-  const { state, dispatch } = context
+  const { dispatch } = context
 
   logIfDev('💀 Executing soulsuck effect - player soul consumed!')
 
@@ -617,6 +617,8 @@ const EFFECT_HANDLERS: {
  * @returns EffectResult with success status and message
  */
 const dispatchEffect = (effect: Effect, context: EffectContext): EffectResult => {
+  const effectType = effect.type
+
   switch (effect.type) {
     case 'heal': {
       const handler = EFFECT_HANDLERS.heal
@@ -662,7 +664,8 @@ const dispatchEffect = (effect: Effect, context: EffectContext): EffectResult =>
     default:
       // Exhaustiveness check - TypeScript will error if we miss a case
       const _exhaustive: never = effect
-      return unknownEffectResult('unknown')
+      void _exhaustive
+      return unknownEffectResult(effectType)
   }
 }
 

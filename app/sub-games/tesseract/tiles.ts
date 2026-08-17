@@ -120,8 +120,6 @@ export function generateTilesFromGridRect(
   // Generate tiles row by row
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      const tileIndex = row * cols + col
-
       // Calculate normalized coordinates
       const left = gridRect.left + col * tileW + gapN
       const top = gridRect.top + row * tileH + gapN

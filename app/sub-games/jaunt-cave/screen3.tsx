@@ -2,7 +2,6 @@
 // Screen 3: Victory screen for the jaunt-cave sub-game
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
 import { useGameContext } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
@@ -16,7 +15,6 @@ const SUB_GAME_ID = 'jaunt-cave'
 const WAYPOINT_NAME = 'jaunt-cave'
 
 export default function JauntCaveScreen3() {
-  const router = useRouter()
   const { state, dispatch, signalRpgResume } = useGameContext()
 
   // Check if this is a return visit (jaunt-cave already completed)

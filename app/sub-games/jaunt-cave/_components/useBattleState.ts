@@ -65,7 +65,6 @@ export interface UseBattleStateReturn {
 export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn {
   const {
     initialDaemonHP = 100,
-    maxDaemonHP = 100,
     onDaemonHit,
     onDaemonMiss,
     shakeAnim,
