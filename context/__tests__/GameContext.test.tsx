@@ -5,7 +5,7 @@ import { getInitialState } from '../../modules/gameState'
 import { GameProvider, useGameActions, useGameState } from '../GameContext'
 
 jest.mock('../../modules/autoSave', () => ({
-  getStateSaveFingerprint: jest.fn(() => 'test-fingerprint'),
+  hasSaveRelevantChanges: jest.fn(() => true),
   invalidateAutoSaveAndDeleteCurrentGame: jest.fn(() => Promise.resolve()),
   requestAutoSave: jest.fn(),
 }))

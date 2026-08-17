@@ -35,7 +35,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 
 - [x] P1 — Render the board as a viewport, not a large React element tree
 - [x] P1 — Stabilize fallback identities so existing memoization actually holds
-- [ ] P2 — Avoid serializing and logging more than necessary on frequent state changes
+- [x] P2 — Avoid serializing and logging more than necessary on frequent state changes
 - [ ] P2 — Reduce packaged assets and remove editor/source artifacts
 - [x] P2 — Remove unused root initialization
 - [x] P0 — Autosave captures the first state in a throttle window, not the latest
@@ -86,6 +86,11 @@ Every reducer update makes the `GameProvider` compute a JSON fingerprint. The se
 Use a monotonic persistence revision/dirty counter changed by save-relevant reducer actions, or compare selected primitives without `JSON.stringify`. Gate all verbose logs consistently behind a dedicated debug flag, not only `__DEV__`.
 
 Relevant code: `context/GameContext.tsx:72-83`, `modules/autoSave.ts:139-152`, and `modules/saveGame.ts:40-71`.
+
+**Completed**: autosave triggering now performs fixed-cost comparisons of the same selected
+primitive fields and immutable map references instead of serializing them on every reducer update.
+All informational tracing in the autosave and save-game modules uses one default-off
+`DEBUG_PERSISTENCE` flag; persistence warnings and errors remain visible.
 
 ### P2 — Reduce packaged assets and remove editor/source artifacts
 

@@ -1,6 +1,7 @@
 import { getInitialState } from '../gameState'
 import {
   cancelAutoSave,
+  hasSaveRelevantChanges,
   invalidateAutoSaveAndDeleteCurrentGame,
   requestAutoSave,
 } from '../autoSave'
@@ -23,6 +24,53 @@ const flushPromises = async () => {
   await Promise.resolve()
   await Promise.resolve()
 }
+
+describe('autosave change detection', () => {
+  test('detects the initial state and save-relevant primitive changes', () => {
+    const state = getInitialState('1')
+
+    expect(hasSaveRelevantChanges(null, state)).toBe(true)
+    expect(hasSaveRelevantChanges(state, { ...state, moveCount: state.moveCount + 1 })).toBe(true)
+    expect(
+      hasSaveRelevantChanges(state, {
+        ...state,
+        player: {
+          ...state.player,
+          position: { ...state.player.position, row: state.player.position.row - 1 },
+        },
+      })
+    ).toBe(true)
+  })
+
+  test('uses fixed-cost reference checks for growing persistence maps', () => {
+    const state = getInitialState('1')
+
+    expect(
+      hasSaveRelevantChanges(state, {
+        ...state,
+        subGamesCompleted: { ...state.subGamesCompleted, tesseract: true },
+      })
+    ).toBe(true)
+    expect(
+      hasSaveRelevantChanges(state, {
+        ...state,
+        waypointSavesCreated: { ...state.waypointSavesCreated, hermit: true },
+      })
+    ).toBe(true)
+  })
+
+  test('ignores unrelated state and equivalent position-object changes', () => {
+    const state = getInitialState('1')
+
+    expect(
+      hasSaveRelevantChanges(state, {
+        ...state,
+        combatLog: [...state.combatLog],
+        player: { ...state.player, position: { ...state.player.position } },
+      })
+    ).toBe(false)
+  })
+})
 
 describe('autosave throttling', () => {
   beforeEach(() => {
