@@ -44,7 +44,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [x] P1 — Waypoint saves use an unprotected multi-step transaction
 - [x] P1 — Replace fixed-delay state/navigation synchronization
 - [x] P1 — Correct callbacks that read stale closures
-- [ ] P2 — Give timer-driven battle and navigation code explicit lifecycle ownership
+- [x] P2 — Give timer-driven battle and navigation code explicit lifecycle ownership
 - [ ] P2 — Keep audio flags synchronized with native playback state
 - [x] P1 — Make viewport dimensions react to size and safe-area changes
 - [x] P1 — Apply safe areas consistently
@@ -208,6 +208,13 @@ Recommended hardening:
 - Use fake-timer tests for unmount, backgrounding, simultaneous lethal hits, block boundaries, and double taps.
 
 Relevant code: `app/sub-games/jaunt-cave/_components/useBattleState.ts` and `useWeapon.ts`.
+
+**Completed**: the Jaunt Cave battle now uses an explicit reducer-backed sequence with one
+cancellable scheduled transition. Lifecycle generations invalidate delayed battle and weapon work
+on blur, background, and unmount. Refocus begins a fresh RESTING interval while preserving HP, and
+terminal arbitration permits exactly one player-death or daemon-death navigation. Fake-timer tests
+lock the original uninterrupted timing and cover lifecycle interruption, lethal trades, block
+boundaries, and rapid input.
 
 ### P2 — Audio flags can diverge from native playback state
 

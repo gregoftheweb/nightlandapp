@@ -1,24 +1,13 @@
-// app/sub-games/jaunt-cave/_components/useBattleState.ts
-// Custom hook for managing battle state machine logic and daemon AI behavior
-
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Animated } from 'react-native'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { Animated, AppState, type AppStateStatus } from 'react-native'
 import { DaemonState, PositionKey } from './DaemonSprite'
 
-// Re-export DaemonState for use in other modules
 export { DaemonState }
 
-// Combat helpers
-const rollToHit = (): boolean => {
-  return Math.random() < 0.8 // 80% hit chance
-}
+const rollToHit = (): boolean => Math.random() < 0.8
+const rollDamage = (): number => Math.floor(Math.random() * 16) + 10
 
-const rollDamage = (): number => {
-  return Math.floor(Math.random() * 16) + 10 // 10-25 inclusive
-}
-
-// Timing constants (in milliseconds)
-const TIMINGS = {
+export const BATTLE_TIMINGS = {
   RESTING_MIN: 3000,
   RESTING_MAX: 7000,
   PREP1: 500,
@@ -26,11 +15,87 @@ const TIMINGS = {
   LANDED: 800,
   ATTACK: 750,
   TRANSITION_TO_RESTING: 400,
-  // 900ms ensures shield circles remain visible for the full attack overlay (750ms) + a small buffer (150ms)
-  // This prevents the shield from disappearing before the attack animation completes
   BLOCK_SHIELD_VISUAL_DURATION: 900,
-  // Delay before navigating to victory screen when daemon dies
   DAEMON_DEATH_NAVIGATION_DELAY: 400,
+} as const
+
+type TerminalState = 'none' | 'player-dead' | 'daemon-dead'
+type ScheduledTransition =
+  | 'enter-prep1'
+  | 'enter-prep2'
+  | 'teleport'
+  | 'finish-attack'
+  | 'hide-block-shield'
+  | 'finish-landed'
+  | 'finish-crossfade'
+  | 'navigate-player-death'
+  | 'navigate-daemon-death'
+
+interface BattleViewState {
+  daemonState: DaemonState
+  currentPosition: PositionKey
+  attackDirection: 'left' | 'right'
+  previousState: DaemonState
+  isCrossfading: boolean
+  daemonHP: number
+  isBlockActive: boolean
+}
+
+type BattleViewAction =
+  | { type: 'RESET_CYCLE' }
+  | { type: 'SET_PHASE'; phase: DaemonState }
+  | {
+      type: 'START_ATTACK'
+      position: PositionKey
+      direction: 'left' | 'right'
+      blockActive: boolean
+    }
+  | { type: 'LAND'; position?: PositionKey }
+  | { type: 'START_CROSSFADE' }
+  | { type: 'END_CROSSFADE' }
+  | { type: 'SET_BLOCK_ACTIVE'; active: boolean }
+  | { type: 'DAMAGE_DAEMON'; hp: number }
+
+const reduceBattleView = (state: BattleViewState, action: BattleViewAction): BattleViewState => {
+  switch (action.type) {
+    case 'RESET_CYCLE':
+      return {
+        ...state,
+        daemonState: DaemonState.RESTING,
+        previousState: state.daemonState,
+        isCrossfading: false,
+        isBlockActive: false,
+      }
+    case 'SET_PHASE':
+      return { ...state, daemonState: action.phase }
+    case 'START_ATTACK':
+      return {
+        ...state,
+        daemonState: DaemonState.ATTACKING,
+        currentPosition: action.position,
+        attackDirection: action.direction,
+        isBlockActive: action.blockActive,
+      }
+    case 'LAND':
+      return {
+        ...state,
+        daemonState: DaemonState.LANDED,
+        currentPosition: action.position ?? state.currentPosition,
+      }
+    case 'START_CROSSFADE':
+      return {
+        ...state,
+        previousState: DaemonState.LANDED,
+        daemonState: DaemonState.RESTING,
+        isCrossfading: true,
+      }
+    case 'END_CROSSFADE':
+      return { ...state, isCrossfading: false }
+    case 'SET_BLOCK_ACTIVE':
+      return { ...state, isBlockActive: action.active }
+    case 'DAMAGE_DAEMON':
+      return { ...state, daemonHP: action.hp }
+  }
 }
 
 export interface UseBattleStateProps {
@@ -38,12 +103,11 @@ export interface UseBattleStateProps {
   maxDaemonHP?: number
   onDaemonHit?: () => void
   onDaemonMiss?: () => void
-  // Animation refs passed in from parent
   shakeAnim: Animated.Value
-  // Game context
   dispatch: any
   currentPlayerHP: number
   router: any
+  isFocused?: boolean
 }
 
 export interface UseBattleStateReturn {
@@ -57,91 +121,89 @@ export interface UseBattleStateReturn {
   isVulnerable: boolean
   isAttacking: boolean
   applyPlayerDamage: (damage: number) => void
-  canBlockNow: boolean // True only during PREP2 state
-  isBlockActive: boolean // True if player has active block
-  activateBlock: () => 'success' | 'too_early' | 'too_late' // Called when player presses Block button
+  isBlockActive: boolean
+  activateBlock: () => 'success' | 'too_early' | 'too_late'
 }
 
-export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn {
-  const {
-    initialDaemonHP = 100,
-    onDaemonHit,
-    onDaemonMiss,
-    shakeAnim,
-    dispatch,
-    currentPlayerHP,
-    router,
-  } = props
+export function useBattleState({
+  initialDaemonHP = 100,
+  onDaemonHit,
+  onDaemonMiss,
+  shakeAnim,
+  dispatch,
+  currentPlayerHP,
+  router,
+  isFocused = true,
+}: UseBattleStateProps): UseBattleStateReturn {
+  const [view, viewDispatch] = useReducer(reduceBattleView, {
+    daemonState: DaemonState.RESTING,
+    currentPosition: 'center',
+    attackDirection: 'left',
+    previousState: DaemonState.RESTING,
+    isCrossfading: false,
+    daemonHP: initialDaemonHP,
+    isBlockActive: false,
+  })
 
-  // Daemon state
-  const [daemonState, setDaemonState] = useState<DaemonState>(DaemonState.RESTING)
-  const [currentPosition, setCurrentPosition] = useState<PositionKey>('center')
-  const [attackDirection, setAttackDirection] = useState<'left' | 'right'>('left')
-  const [previousState, setPreviousState] = useState<DaemonState>(DaemonState.RESTING)
-  const [isCrossfading, setIsCrossfading] = useState(false)
-  const [daemonHP, setDaemonHP] = useState(initialDaemonHP)
-
-  // Block state
-  const [isBlockActive, setIsBlockActive] = useState(false)
-  const blockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  /**
-   * Tracks whether a block has been armed during PREP2 phase.
-   * - Set to true when player presses Block during PREP2 (activateBlock)
-   * - Consumed (set to false) when attack starts or when cycle ends without attack
-   * - Allows block to be "prepared" in PREP2 and consumed when attack actually occurs
-   */
-  const blockArmedRef = useRef(false)
-
-  /**
-   * Tracks whether the current attack was successfully blocked.
-   * - Set to true when armed block is consumed at attack start
-   * - Checked by applyDaemonDamage to prevent damage
-   * - Cleared (set to false) after damage prevention logic runs
-   */
-  const attackWasBlockedRef = useRef(false)
-
-  /**
-   * Statistics for block usage.
-   * - blocksWithoutAttack: Counts blocks armed in PREP2 but wasted (no attack occurred)
-   */
-  const blockStatsRef = useRef({ blocksWithoutAttack: 0 })
-
-  // Single timer ref - THIS IS CRITICAL
-  const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const deathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const daemonDeathNavigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const generationRef = useRef(0)
+  const mountedRef = useRef(true)
+  const focusedRef = useRef(isFocused)
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState ?? 'active')
+  const runningRef = useRef(false)
+  const terminalRef = useRef<TerminalState>('none')
   const lastPositionRef = useRef<PositionKey>('center')
-  const isRunningRef = useRef(false)
-  const daemonDeadRef = useRef(false)
+  const cycleRef = useRef({ willAttack: false, nextPosition: 'center' as PositionKey })
+  const blockArmedRef = useRef(false)
+  const attackWasBlockedRef = useRef(false)
+  const blockActiveRef = useRef(false)
+  const currentHPRef = useRef(currentPlayerHP)
+  const daemonHPRef = useRef(initialDaemonHP)
+  const transitionRef = useRef<(transition: ScheduledTransition) => void>(() => undefined)
+  const startCycleRef = useRef<() => void>(() => undefined)
 
-  // Track current HP in a ref to avoid stale state reads
-  // This prevents HP from appearing to increase when multiple attacks happen before re-render
-  const currentHPRef = useRef<number>(currentPlayerHP)
-
-  // Computed values
-  const isVulnerable = daemonState === DaemonState.LANDED
-  const isAttacking = daemonState === DaemonState.ATTACKING
-  const canBlockNow = daemonState === DaemonState.PREP2
-
-  // Clear any existing timer - SINGLE SOURCE OF TRUTH
-  const clearTimer = useCallback(() => {
-    if (animationTimerRef.current) {
-      clearTimeout(animationTimerRef.current)
-      animationTimerRef.current = null
+  const clearScheduledTransition = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
     }
   }, [])
 
-  // Get random position (avoiding back-to-back repeats)
+  const lifecycleIsActive = useCallback(
+    () => mountedRef.current && focusedRef.current && appStateRef.current === 'active',
+    []
+  )
+
+  const schedule = useCallback(
+    (transition: ScheduledTransition, delay: number) => {
+      clearScheduledTransition()
+      const generation = generationRef.current
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null
+        if (generation !== generationRef.current || !lifecycleIsActive()) return
+        transitionRef.current(transition)
+      }, delay)
+    },
+    [clearScheduledTransition, lifecycleIsActive]
+  )
+
+  const stopForLifecycleChange = useCallback(() => {
+    generationRef.current += 1
+    runningRef.current = false
+    clearScheduledTransition()
+    blockArmedRef.current = false
+    attackWasBlockedRef.current = false
+    blockActiveRef.current = false
+  }, [clearScheduledTransition])
+
   const getNextPosition = useCallback((): PositionKey => {
     const positions: PositionKey[] = ['left', 'center', 'right']
-    const available = positions.filter((p) => p !== lastPositionRef.current)
+    const available = positions.filter((position) => position !== lastPositionRef.current)
     const next = available[Math.floor(Math.random() * available.length)]
     lastPositionRef.current = next
     return next
   }, [])
 
-  // Shake effect for attack
   const triggerShake = useCallback(() => {
     Animated.sequence([
       Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
@@ -151,290 +213,211 @@ export function useBattleState(props: UseBattleStateProps): UseBattleStateReturn
     ]).start()
   }, [shakeAnim])
 
-  // Apply damage and handle death
-  const applyDaemonDamage = useCallback(() => {
-    // Check if attack was blocked (armed block consumed during attack start)
+  const applyDaemonAttackRef = useRef<() => boolean>(() => false)
+  applyDaemonAttackRef.current = () => {
+    if (terminalRef.current !== 'none') return false
+
     if (attackWasBlockedRef.current) {
-      if (__DEV__) {
-        console.log('[useBattleState] Attack blocked! No damage taken.')
-      }
-      // Clear the blocked flag
       attackWasBlockedRef.current = false
-      // Skip damage application
-      return
+      return false
     }
 
-    const hit = rollToHit()
+    if (!rollToHit()) return false
 
-    if (hit) {
-      const damage = rollDamage()
-      // Read from ref to get the actual current HP (not stale state)
-      // This prevents HP from appearing to increase when multiple attacks happen before re-render
-      const currentHP = currentHPRef.current
-      const newHP = Math.max(0, currentHP - damage)
+    const newHP = Math.max(0, currentHPRef.current - rollDamage())
+    currentHPRef.current = newHP
+    dispatch({ type: 'UPDATE_PLAYER', payload: { updates: { currentHP: newHP } } })
 
-      // Update ref immediately to prevent race conditions
-      currentHPRef.current = newHP
+    if (newHP > 0) return false
 
-      // Apply damage to Christos
-      dispatch({
-        type: 'UPDATE_PLAYER',
-        payload: { updates: { currentHP: newHP } },
-      })
-
-      // Check for death
-      if (newHP <= 0) {
-        // Dispatch GAME_OVER action immediately
-        dispatch({
-          type: 'GAME_OVER',
-          payload: {
-            message: 'Christos was killed by the Jaunt Daemon.',
-            killerName: 'Jaunt Daemon',
-            suppressDeathDialog: true,
-          },
-        })
-
-        // Delay navigation to death screen until after attack animation completes
-        // This allows the attack overlay to display for its full duration (750ms)
-        deathNavigationTimerRef.current = setTimeout(() => {
-          router.replace('/sub-games/jaunt-cave/screen4' as any)
-        }, TIMINGS.ATTACK)
-      }
-    }
-  }, [dispatch, router])
-
-  // Apply player damage to daemon
-  const applyPlayerDamage = useCallback((damage: number) => {
-    // Early return if daemon is already dead
-    if (daemonDeadRef.current) return
-
-    setDaemonHP((prevHP) => {
-      const newHP = Math.max(0, prevHP - damage)
-      if (__DEV__) {
-        console.log('[useBattleState] Daemon took', damage, 'damage. HP:', prevHP, '->', newHP)
-      }
-      return newHP
+    terminalRef.current = 'player-dead'
+    dispatch({
+      type: 'GAME_OVER',
+      payload: {
+        message: 'Christos was killed by the Jaunt Daemon.',
+        killerName: 'Jaunt Daemon',
+        suppressDeathDialog: true,
+      },
     })
-  }, [])
+    return true
+  }
 
-  // Activate block shield
+  const startCycle = useCallback(() => {
+    if (!lifecycleIsActive() || terminalRef.current !== 'none' || runningRef.current) return
+
+    runningRef.current = true
+    cycleRef.current = {
+      willAttack: Math.random() < 0.6,
+      nextPosition: getNextPosition(),
+    }
+    viewDispatch({ type: 'RESET_CYCLE' })
+    const restingTime =
+      BATTLE_TIMINGS.RESTING_MIN +
+      Math.random() * (BATTLE_TIMINGS.RESTING_MAX - BATTLE_TIMINGS.RESTING_MIN)
+    schedule('enter-prep1', restingTime)
+  }, [getNextPosition, lifecycleIsActive, schedule])
+  startCycleRef.current = startCycle
+
+  transitionRef.current = (transition) => {
+    switch (transition) {
+      case 'enter-prep1':
+        viewDispatch({ type: 'SET_PHASE', phase: DaemonState.PREP1 })
+        schedule('enter-prep2', BATTLE_TIMINGS.PREP1)
+        return
+      case 'enter-prep2':
+        viewDispatch({ type: 'SET_PHASE', phase: DaemonState.PREP2 })
+        schedule('teleport', BATTLE_TIMINGS.PREP2)
+        return
+      case 'teleport': {
+        const { willAttack, nextPosition } = cycleRef.current
+        if (!willAttack) {
+          blockArmedRef.current = false
+          viewDispatch({ type: 'LAND', position: nextPosition })
+          schedule('finish-landed', BATTLE_TIMINGS.LANDED)
+          return
+        }
+
+        const blocked = blockArmedRef.current
+        blockArmedRef.current = false
+        attackWasBlockedRef.current = blocked
+        blockActiveRef.current = blocked
+        viewDispatch({
+          type: 'START_ATTACK',
+          position: nextPosition,
+          direction: Math.random() < 0.5 ? 'left' : 'right',
+          blockActive: blocked,
+        })
+        triggerShake()
+        schedule('finish-attack', BATTLE_TIMINGS.ATTACK)
+        return
+      }
+      case 'finish-attack': {
+        const playerDied = applyDaemonAttackRef.current()
+        viewDispatch({ type: 'LAND' })
+        if (playerDied) {
+          schedule('navigate-player-death', BATTLE_TIMINGS.ATTACK)
+        } else if (blockActiveRef.current) {
+          schedule(
+            'hide-block-shield',
+            BATTLE_TIMINGS.BLOCK_SHIELD_VISUAL_DURATION - BATTLE_TIMINGS.ATTACK
+          )
+        } else {
+          schedule('finish-landed', BATTLE_TIMINGS.LANDED)
+        }
+        return
+      }
+      case 'hide-block-shield':
+        blockActiveRef.current = false
+        viewDispatch({ type: 'SET_BLOCK_ACTIVE', active: false })
+        schedule(
+          'finish-landed',
+          BATTLE_TIMINGS.LANDED -
+            (BATTLE_TIMINGS.BLOCK_SHIELD_VISUAL_DURATION - BATTLE_TIMINGS.ATTACK)
+        )
+        return
+      case 'finish-landed':
+        viewDispatch({ type: 'START_CROSSFADE' })
+        schedule('finish-crossfade', BATTLE_TIMINGS.TRANSITION_TO_RESTING)
+        return
+      case 'finish-crossfade':
+        viewDispatch({ type: 'END_CROSSFADE' })
+        runningRef.current = false
+        startCycleRef.current()
+        return
+      case 'navigate-player-death':
+        router.replace('/sub-games/jaunt-cave/screen4' as any)
+        return
+      case 'navigate-daemon-death':
+        router.replace('/sub-games/jaunt-cave/screen3')
+    }
+  }
+
+  const resumeBattle = useCallback(() => {
+    if (!lifecycleIsActive() || runningRef.current) return
+    if (terminalRef.current === 'player-dead') {
+      schedule('navigate-player-death', BATTLE_TIMINGS.ATTACK)
+    } else if (terminalRef.current === 'daemon-dead') {
+      schedule('navigate-daemon-death', BATTLE_TIMINGS.DAEMON_DEATH_NAVIGATION_DELAY)
+    } else {
+      viewDispatch({ type: 'RESET_CYCLE' })
+      startCycleRef.current()
+    }
+  }, [lifecycleIsActive, schedule])
+
+  const applyPlayerDamage = useCallback(
+    (damage: number) => {
+      if (terminalRef.current !== 'none' || !lifecycleIsActive()) return
+
+      const newHP = Math.max(0, daemonHPRef.current - damage)
+      daemonHPRef.current = newHP
+      viewDispatch({ type: 'DAMAGE_DAEMON', hp: newHP })
+
+      if (newHP > 0) return
+
+      terminalRef.current = 'daemon-dead'
+      runningRef.current = false
+      clearScheduledTransition()
+      schedule('navigate-daemon-death', BATTLE_TIMINGS.DAEMON_DEATH_NAVIGATION_DELAY)
+    },
+    [clearScheduledTransition, lifecycleIsActive, schedule]
+  )
+
   const activateBlock = useCallback((): 'success' | 'too_early' | 'too_late' => {
-    // Check if block timing is correct (must be PREP2)
-    if (daemonState === DaemonState.PREP2) {
-      // SUCCESS - arm block (will be consumed if attack happens)
+    if (view.daemonState === DaemonState.PREP2 && terminalRef.current === 'none') {
       blockArmedRef.current = true
-
-      if (__DEV__) {
-        console.log('[useBattleState] Block armed successfully in PREP2!')
-      }
-
       return 'success'
-    } else if (daemonState === DaemonState.RESTING || daemonState === DaemonState.PREP1) {
-      // TOO EARLY
-      if (__DEV__) {
-        console.log('[useBattleState] Block too early. State:', daemonState)
-      }
+    }
+    if (view.daemonState === DaemonState.RESTING || view.daemonState === DaemonState.PREP1) {
       return 'too_early'
-    } else {
-      // TOO LATE (LANDED or ATTACKING)
-      if (__DEV__) {
-        console.log('[useBattleState] Block too late. State:', daemonState)
-      }
-      return 'too_late'
     }
-  }, [daemonState])
+    return 'too_late'
+  }, [view.daemonState])
 
-  // THE STATE MACHINE - Single orchestrator
-  const runAnimationCycle = useCallback(() => {
-    // Early return if daemon is dead
-    if (daemonDeadRef.current) return
-
-    // Prevent multiple simultaneous loops
-    if (isRunningRef.current) {
-      return
-    }
-    isRunningRef.current = true
-
-    const executeSequence = () => {
-      clearTimer() // Clear before setting new timer
-
-      // Decide if this cycle includes an attack
-      const willAttack = Math.random() < 0.6 // 60% chance to attack
-      const nextPosition = getNextPosition()
-
-      // STATE 1: RESTING
-      setDaemonState(DaemonState.RESTING)
-
-      const restingTime =
-        TIMINGS.RESTING_MIN + Math.random() * (TIMINGS.RESTING_MAX - TIMINGS.RESTING_MIN)
-
-      animationTimerRef.current = setTimeout(() => {
-        // STATE 2: PREP1 (charging up in current position - don't move yet!)
-        setDaemonState(DaemonState.PREP1)
-
-        animationTimerRef.current = setTimeout(() => {
-          // STATE 3: PREP2 (still charging in current position - don't move yet!)
-          setDaemonState(DaemonState.PREP2)
-
-          animationTimerRef.current = setTimeout(() => {
-            // >>> TELEPORT NOW! Move to new position <<<
-            setCurrentPosition(nextPosition)
-
-            if (willAttack) {
-              // ATTACK SEQUENCE (daemon appears at new position with attack overlay)
-              setAttackDirection(Math.random() < 0.5 ? 'left' : 'right')
-              setDaemonState(DaemonState.ATTACKING)
-              triggerShake()
-
-              // Consume an armed block (armed only in PREP2) for this incoming attack
-              if (blockArmedRef.current) {
-                blockArmedRef.current = false
-                attackWasBlockedRef.current = true
-
-                // Force shield to be visible DURING the attack overlay
-                setIsBlockActive(true)
-                if (blockTimerRef.current) clearTimeout(blockTimerRef.current)
-                blockTimerRef.current = setTimeout(() => {
-                  setIsBlockActive(false)
-                  blockTimerRef.current = null
-                }, TIMINGS.BLOCK_SHIELD_VISUAL_DURATION)
-
-                if (__DEV__)
-                  console.log('[useBattleState] 🛡 Armed block CONSUMED for incoming attack')
-              }
-
-              animationTimerRef.current = setTimeout(() => {
-                // Apply damage after attack animation completes (more realistic)
-                applyDaemonDamage()
-
-                // STATE 4: LANDED (after attack, already at new position)
-                setDaemonState(DaemonState.LANDED)
-
-                animationTimerRef.current = setTimeout(() => {
-                  // Back to RESTING with crossfade
-                  setPreviousState(DaemonState.LANDED)
-                  setIsCrossfading(true)
-                  setDaemonState(DaemonState.RESTING)
-
-                  // Wait for crossfade to complete before next cycle
-                  animationTimerRef.current = setTimeout(() => {
-                    setIsCrossfading(false)
-                    executeSequence()
-                  }, TIMINGS.TRANSITION_TO_RESTING)
-                }, TIMINGS.LANDED)
-              }, TIMINGS.ATTACK)
-            } else {
-              // NO ATTACK - daemon appears at new position in landed state
-              setDaemonState(DaemonState.LANDED)
-
-              // Clear wasted armed block if player blocked but no attack occurred
-              if (blockArmedRef.current) {
-                blockArmedRef.current = false
-                blockStatsRef.current.blocksWithoutAttack++
-                if (__DEV__) console.log('[useBattleState] 🫗 Block armed but no attack (wasted)')
-              }
-
-              animationTimerRef.current = setTimeout(() => {
-                // Back to RESTING with crossfade
-                setPreviousState(DaemonState.LANDED)
-                setIsCrossfading(true)
-                setDaemonState(DaemonState.RESTING)
-
-                // Wait for crossfade to complete before next cycle
-                animationTimerRef.current = setTimeout(() => {
-                  setIsCrossfading(false)
-                  executeSequence()
-                }, TIMINGS.TRANSITION_TO_RESTING)
-              }, TIMINGS.LANDED)
-            }
-          }, TIMINGS.PREP2)
-        }, TIMINGS.PREP1)
-      }, restingTime)
-    }
-
-    executeSequence()
-  }, [clearTimer, getNextPosition, triggerShake, applyDaemonDamage])
-
-  // Handle tap on daemon
   const handleDaemonTap = useCallback(() => {
-    if (daemonState === DaemonState.LANDED) {
-      // HIT!
-      onDaemonHit?.()
-      // Could add hit feedback animation here
-    } else {
-      // MISS
-      onDaemonMiss?.()
-      // Could add miss feedback animation here
-    }
-  }, [daemonState, onDaemonHit, onDaemonMiss])
+    if (view.daemonState === DaemonState.LANDED) onDaemonHit?.()
+    else onDaemonMiss?.()
+  }, [onDaemonHit, onDaemonMiss, view.daemonState])
 
-  // Keep HP ref in sync with state
   useEffect(() => {
     currentHPRef.current = currentPlayerHP
   }, [currentPlayerHP])
 
-  // Watch daemon HP and trigger navigation when daemon dies
   useEffect(() => {
-    if (daemonHP <= 0 && !daemonDeadRef.current) {
-      daemonDeadRef.current = true
-
-      // Stop the animation cycle
-      isRunningRef.current = false
-      // Clear any pending animation timers
-      clearTimer()
-
-      daemonDeathNavigationTimerRef.current = setTimeout(() => {
-        router.replace('/sub-games/jaunt-cave/screen3')
-      }, TIMINGS.DAEMON_DEATH_NAVIGATION_DELAY)
-    }
-
-    // Cleanup: clear daemon death navigation timer on unmount or daemonHP change
+    mountedRef.current = true
     return () => {
-      if (daemonDeathNavigationTimerRef.current) {
-        clearTimeout(daemonDeathNavigationTimerRef.current)
-        daemonDeathNavigationTimerRef.current = null
-      }
+      mountedRef.current = false
+      stopForLifecycleChange()
     }
-  }, [daemonHP, router, clearTimer])
+  }, [stopForLifecycleChange])
 
-  // Start the loop on mount, cleanup on unmount
   useEffect(() => {
-    runAnimationCycle()
+    focusedRef.current = isFocused
+    if (!isFocused) stopForLifecycleChange()
+    else resumeBattle()
+  }, [isFocused, resumeBattle, stopForLifecycleChange])
 
-    return () => {
-      isRunningRef.current = false
-      clearTimer()
-      // Clear death navigation timer if component unmounts
-      if (deathNavigationTimerRef.current) {
-        clearTimeout(deathNavigationTimerRef.current)
-        deathNavigationTimerRef.current = null
-      }
-      // Clear daemon death navigation timer if component unmounts
-      if (daemonDeathNavigationTimerRef.current) {
-        clearTimeout(daemonDeathNavigationTimerRef.current)
-        daemonDeathNavigationTimerRef.current = null
-      }
-      // Clear block timer if component unmounts
-      if (blockTimerRef.current) {
-        clearTimeout(blockTimerRef.current)
-        blockTimerRef.current = null
-      }
-    }
-  }, [runAnimationCycle, clearTimer])
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      const wasActive = appStateRef.current === 'active'
+      appStateRef.current = nextState
+      if (wasActive && nextState !== 'active') stopForLifecycleChange()
+      else if (!wasActive && nextState === 'active') resumeBattle()
+    })
+    return () => subscription.remove()
+  }, [resumeBattle, stopForLifecycleChange])
 
   return {
-    daemonState,
-    currentPosition,
-    attackDirection,
-    previousState,
-    isCrossfading,
-    daemonHP,
+    daemonState: view.daemonState,
+    currentPosition: view.currentPosition,
+    attackDirection: view.attackDirection,
+    previousState: view.previousState,
+    isCrossfading: view.isCrossfading,
+    daemonHP: view.daemonHP,
     handleDaemonTap,
-    isVulnerable,
-    isAttacking,
+    isVulnerable: view.daemonState === DaemonState.LANDED,
+    isAttacking: view.daemonState === DaemonState.ATTACKING,
     applyPlayerDamage,
-    canBlockNow,
-    isBlockActive,
+    isBlockActive: view.isBlockActive,
     activateBlock,
   }
 }

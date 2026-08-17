@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { View, StyleSheet, Animated } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useIsFocused } from '@react-navigation/native'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { useGameContext } from '@context/GameContext'
@@ -13,7 +14,7 @@ import { ProjectileEffect } from './_components/ProjectileEffect'
 import { HitIndicator } from './_components/HitIndicator'
 import { BlockShield } from './_components/BlockShield'
 import { useBattleState } from './_components/useBattleState'
-import { useWeapon, ZAP_TARGETS } from './_components/useWeapon'
+import { useWeapon } from './_components/useWeapon'
 import { useArenaLayout } from './_components/useArenaLayout'
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen2.webp')
@@ -59,6 +60,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   onDaemonMiss,
 }) => {
   const router = useRouter()
+  const isFocused = useIsFocused()
 
   // Game context - provides global game state and dispatch for updates
   const { state, dispatch } = useGameContext()
@@ -82,10 +84,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
   // Feedback message state - displays temporary battle feedback to player
   const [feedbackText, setFeedbackText] = useState<string | null>(null)
-
-  // Debug target visualization state
-  // Note: setShowDebugTargets available for runtime toggling if needed
-  const [showDebugTargets, setShowDebugTargets] = useState(__DEV__)
 
   // Projectile animation state - tracks start and end positions for projectile effects
   const [projectileFrom, setProjectileFrom] = useState<{ x: number; y: number } | null>(null)
@@ -118,6 +116,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     dispatch,
     currentPlayerHP: state.player.currentHP,
     router,
+    isFocused,
   })
 
   const {
@@ -130,17 +129,14 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     handleDaemonTap,
     isVulnerable,
     isAttacking,
-    canBlockNow,
     isBlockActive,
-    activateBlock,
   } = battleState
 
   // Arena layout and positioning - calculates daemon position and arena dimensions
-  const { arenaSize, bgRect, daemonX, daemonY, handleArenaLayout, getSpawnPosition } =
-    useArenaLayout({
-      backgroundImage: BACKGROUND,
-      currentPosition,
-    })
+  const { arenaSize, bgRect, daemonX, daemonY, handleArenaLayout } = useArenaLayout({
+    backgroundImage: BACKGROUND,
+    currentPosition,
+  })
 
   // Helper function to get equipped weapon damage
   const getEquippedWeaponDamage = useCallback(() => {
@@ -165,7 +161,6 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     handleOpenInventory,
     handleCloseInventory,
     handleSelectWeapon,
-    closeZapMenu,
     hitIndicator,
   } = useWeapon({
     gameState: state,
@@ -181,6 +176,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     getEquippedWeaponDamage,
     onDaemonHit: battleState.applyPlayerDamage,
     projectileDuration: PROJECTILE_DURATION,
+    isFocused,
   })
 
   const adjustedHitPos =
