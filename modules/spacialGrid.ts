@@ -1,7 +1,6 @@
 // /modules/spacialgrid.ts
 import {
   Position,
-  GameObject,
   Monster,
   Item,
   LevelObjectInstance,

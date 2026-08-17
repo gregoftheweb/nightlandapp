@@ -3,15 +3,14 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@assets/*": ["assets/*"],
-      "@modules/*": ["modules/*"],
-      "@components/*": ["components/*"],
-      "@config/*": ["config/*"],
-      "@context/*": ["context/*"],
-      "@hooks/*": ["hooks/*"]
+      "@assets/*": ["./assets/*"],
+      "@modules/*": ["./modules/*"],
+      "@components/*": ["./components/*"],
+      "@config/*": ["./config/*"],
+      "@context/*": ["./context/*"],
+      "@hooks/*": ["./hooks/*"]
     }
   },
   "include": [

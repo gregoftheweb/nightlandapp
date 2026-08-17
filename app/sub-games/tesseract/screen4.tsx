@@ -2,7 +2,6 @@
 // Screen 4: Success screen for the tesseract sub-game
 import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
-import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
 import { useGameContext } from '@context/GameContext'
 import { BackgroundImage } from '../_shared/BackgroundImage'
@@ -29,7 +28,6 @@ I must.
 — Persius`
 
 export default function TesseractScreen4() {
-  const router = useRouter()
   const { state, dispatch, signalRpgResume } = useGameContext()
   const [showScrollModal, setShowScrollModal] = useState(false)
 

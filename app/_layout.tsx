@@ -2,9 +2,7 @@ import { Stack } from 'expo-router'
 import { View, StyleSheet, StatusBar, Platform } from 'react-native'
 import { useFonts } from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen'
-import * as NavigationBar from 'expo-navigation-bar'
-import { useEffect, useCallback, useState } from 'react'
-import { createInitialGameState, serializeGameState } from '../modules/gameState'
+import { useEffect, useCallback } from 'react'
 import { GameProvider } from '../context/GameContext'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { audioManager } from '../modules/audioManager'
@@ -28,12 +26,6 @@ export default function Layout() {
     ThankYou: require('../assets/fonts/ThankYou.otf'),
     //BilboSwashCaps-Regular
     Bilbo: require('../assets/fonts/BilboSwashCaps-Regular.ttf'),
-  })
-
-  const [gameState] = useState(() => {
-    const gs = createInitialGameState()
-    // console.log("Initial game state:", gs);
-    return gs
   })
 
   const onLayoutRootView = useCallback(async () => {
@@ -82,17 +74,21 @@ export default function Layout() {
 
   // Android immersive mode and status bar handling
   useEffect(() => {
-    const setupNavigationBar = async () => {
-      try {
-        await NavigationBar.setVisibilityAsync('hidden') // Hides nav buttons
-        await NavigationBar.setBehaviorAsync('overlay-swipe') // Swipe up to show
-        // Log to confirm navigation bar setup
-        console.log('Navigation bar set to hidden with overlay-swipe')
-      } catch (e) {
-        console.warn('NavigationBar control not supported:', e)
-      }
+    if (Platform.OS !== 'android') {
+      return
     }
-    setupNavigationBar()
+
+    const setupNavigationBar = async () => {
+      const NavigationBar = await import('expo-navigation-bar')
+      await NavigationBar.setVisibilityAsync('hidden') // Hides nav buttons
+      await NavigationBar.setBehaviorAsync('overlay-swipe') // Swipe up to show
+      // Log to confirm navigation bar setup
+      console.log('Navigation bar set to hidden with overlay-swipe')
+    }
+
+    setupNavigationBar().catch((error) => {
+      console.error('Failed to configure Android navigation bar:', error)
+    })
   }, [])
 
   // Ensure status bar is hidden on mount
@@ -114,8 +110,10 @@ export default function Layout() {
         {/* Ensure status bar is hidden */}
         <StatusBar
           hidden={true}
-          translucent={true} // Android: ensures status bar doesn't affect layout
-          backgroundColor="transparent" // Android: prevents color artifacts
+          {...(Platform.OS === 'android' && {
+            translucent: true, // Ensures status bar doesn't affect layout
+            backgroundColor: 'transparent', // Prevents color artifacts
+          })}
         />
 
         <GameProvider>

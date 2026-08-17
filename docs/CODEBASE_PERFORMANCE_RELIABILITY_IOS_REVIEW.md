@@ -37,7 +37,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [x] P1 — Stabilize fallback identities so existing memoization actually holds
 - [ ] P2 — Avoid serializing and logging more than necessary on frequent state changes
 - [ ] P2 — Reduce packaged assets and remove editor/source artifacts
-- [ ] P2 — Remove unused root initialization
+- [x] P2 — Remove unused root initialization
 - [x] P0 — Autosave captures the first state in a throttle window, not the latest
 - [x] P0 — Death/reset deletion races queued or in-flight autosaves
 - [x] P0 — Safe-dial milestone saves can be overwritten by delayed older saves
@@ -50,7 +50,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [x] P1 — Apply safe areas consistently
 - [x] P1 — Protect game transitions from iOS back-swipe gestures
 - [x] P1 — Restore type-checking and automated validation gates
-- [ ] P2 — Explicitly gate Android-only native calls
+- [x] P2 — Explicitly gate Android-only native calls
 - [ ] P2 — Validate assets, fonts, shadows, and haptics on real iOS hardware
 
 ## Highest-potential performance gains
@@ -100,6 +100,9 @@ Relevant configuration: `app.json`.
 `app/_layout.tsx` creates and retains an initial game state that is never supplied to `GameProvider`; the provider creates another initial state. Remove the unused `gameState` and `serializeGameState` import. The one-time cost is smaller than board rendering, but it is unnecessary startup work and adds ambiguity about which state is authoritative.
 
 Relevant code: `app/_layout.tsx:7` and `app/_layout.tsx:32-36`.
+
+**Completed**: the unused root-level state creation and its game-state imports were removed. The
+`GameProvider` remains the single owner of initial game-state creation.
 
 ## Race conditions and tricky correctness sections
 
@@ -254,6 +257,11 @@ It also reports a missing `@testing-library/react-hooks` dependency and stale te
 
 Relevant code: `app/_layout.tsx:82-104`.
 
+**Completed**: the root layout now returns before loading `expo-navigation-bar` on non-Android
+platforms. Android loads the module dynamically and retains its hidden, overlay-swipe navigation bar;
+the Android-only `StatusBar` presentation props are also conditionally applied. Cross-platform status
+bar hiding remains unchanged, and iOS no longer invokes or emits unsupported-navigation-bar warnings.
+
 ### P2 — Validate assets, fonts, shadows, and haptics on real iOS hardware
 
 These APIs are cross-platform but do not look or feel identical:
@@ -296,7 +304,7 @@ The repository's `test` script uses watch mode. Add CI-friendly scripts such as 
 1. [x] Derive the board from live window and safe-area dimensions.
 2. [x] Apply consistent safe-area shells to all screens and bottom controls.
 3. [x] Define per-route iOS gesture policy.
-4. [ ] Gate Android native calls and test audio/haptics/interruption behavior.
+4. [ ] Test audio/haptics/interruption behavior. Android native calls are now explicitly gated.
 
 ### Phase 3 — Measure and optimize rendering/package size
 

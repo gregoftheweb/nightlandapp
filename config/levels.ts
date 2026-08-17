@@ -6,15 +6,7 @@
  * Uses helper functions and type-safe IDs for improved maintainability.
  */
 
-import {
-  Level,
-  Position,
-  LevelObjectInstance,
-  GreatPower,
-  Item,
-  NonCollisionObject,
-  GreatPowerInstance,
-} from './types'
+import { Level } from './types'
 import { LevelId } from './levelTypes'
 import {
   loadSpawnTable,

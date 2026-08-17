@@ -181,7 +181,6 @@ export function validateHermitDialogue(nodes: DialogueNode[]) {
   const seen = new Set<string>()
   for (const node of nodes) {
     if (seen.has(node.id)) {
-      // eslint-disable-next-line no-console
       console.warn(`[HERMIT_DIALOGUE] Duplicate node id: ${node.id}`)
     }
     seen.add(node.id)

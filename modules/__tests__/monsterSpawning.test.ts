@@ -7,7 +7,7 @@
  * - Spawn behavior is unchanged (rates, distance, slotting)
  */
 import { checkMonsterSpawn, getSpawnPosition } from '../monsterUtils'
-import { GameState, Monster, MonsterSpawnConfig, Level } from '../../config/types'
+import { GameState, Monster, Level } from '../../config/types'
 import { getLevel } from '../../config/levels'
 
 // Mock dispatch for capturing spawned monsters

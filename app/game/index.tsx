@@ -328,7 +328,6 @@ export default function Game() {
   const showPlayerInfo = useCallback(() => {
     if (!showInfoRef.current) return
     const player = state.player
-    const weaponInfo = player.weapons?.length ? ` | Weapon: ${player.weapons[0].id}` : ''
     showInfoRef.current(
       player.name || 'Christos',
       `${

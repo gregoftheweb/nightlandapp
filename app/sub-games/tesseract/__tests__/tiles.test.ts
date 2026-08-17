@@ -1,11 +1,5 @@
 // app/sub-games/tesseract/__tests__/tiles.test.ts
-import {
-  GRID_RECT,
-  generateTilesFromGridRect,
-  tilesToPixelCoords,
-  getTileAtPoint,
-  type Tile,
-} from '../tiles'
+import { GRID_RECT, generateTilesFromGridRect, tilesToPixelCoords, getTileAtPoint } from '../tiles'
 
 describe('Tesseract Tiles', () => {
   describe('GRID_RECT', () => {
