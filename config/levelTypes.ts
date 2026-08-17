@@ -43,11 +43,7 @@ export type MusicTrackId = 'nightland_ambient' | 'watching_grounds' | 'combat_th
  * Spawn tables normalize common spawn configurations across levels.
  */
 export type SpawnTableId =
-  | 'wasteland_common'
-  | 'wasteland_rare'
-  | 'wasteland_boss'
-  | 'grounds_common'
-  | 'grounds_rare'
+  'wasteland_common' | 'wasteland_rare' | 'wasteland_boss' | 'grounds_common' | 'grounds_rare'
 
 /**
  * Level configuration with stronger typing.

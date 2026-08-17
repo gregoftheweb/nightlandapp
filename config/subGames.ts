@@ -21,11 +21,7 @@ import deepSiloIMG from '@assets/images/sprites/buildings/silo.webp'
  * These match the directory names under /app/sub-games/
  */
 export type SubGameId =
-  | 'aerowreckage-puzzle'
-  | 'deep-silo'
-  | 'hermit-hollow'
-  | 'jaunt-cave'
-  | 'tesseract'
+  'aerowreckage-puzzle' | 'deep-silo' | 'hermit-hollow' | 'jaunt-cave' | 'tesseract'
 
 /**
  * Sub-game definition containing metadata and routing information

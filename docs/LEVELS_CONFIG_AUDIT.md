@@ -229,11 +229,7 @@ export type MusicTrackId = 'nightland_ambient' | 'watching_grounds' | 'combat_th
 
 // Spawn table IDs for reusable encounter groups
 export type SpawnTableId =
-  | 'wasteland_common'
-  | 'wasteland_rare'
-  | 'wasteland_boss'
-  | 'grounds_common'
-  | 'grounds_rare'
+  'wasteland_common' | 'wasteland_rare' | 'wasteland_boss' | 'grounds_common' | 'grounds_rare'
 
 // Level configuration with stronger types
 export interface LevelConfig extends Omit<Level, 'id'> {

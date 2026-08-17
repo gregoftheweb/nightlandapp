@@ -29,12 +29,8 @@ export type LevelId = '1' | '2' | '3' // Add "3"
 ```typescript
 // config/levels.ts
 export const levels: Record<LevelId, Level> = {
-  '1': {
-    /* ... */
-  },
-  '2': {
-    /* ... */
-  },
+  '1': {/* ... */},
+  '2': {/* ... */},
 
   // Add new level
   '3': {
@@ -99,9 +95,7 @@ export type SpawnTableId =
 
 // 2. Define the spawn config
 export const SPAWN_TABLES: Record<SpawnTableId, SpawnConfig[]> = {
-  wasteland_common: [
-    /* ... */
-  ],
+  wasteland_common: [/* ... */],
 
   forest_common: [
     { monsterShortName: 'cursed_tree', spawnRate: 0.05, maxInstances: 4 },
@@ -148,12 +142,8 @@ export type BiomeId = 'dark_wastes' | 'cursed_forest' | 'frozen_wastes' // NEW
 
 // config/levelPresets.ts
 export const BIOME_PRESETS: Record<BiomeId, BiomePreset> = {
-  dark_wastes: {
-    /* ... */
-  },
-  cursed_forest: {
-    /* ... */
-  },
+  dark_wastes: {/* ... */},
+  cursed_forest: {/* ... */},
 
   frozen_wastes: {
     ambientLight: 0.25,
@@ -226,11 +216,7 @@ LIGHTING_VALUES = {
 
 ```typescript
 type SpawnTableId =
-  | 'wasteland_common'
-  | 'wasteland_rare'
-  | 'wasteland_boss'
-  | 'grounds_common'
-  | 'grounds_rare'
+  'wasteland_common' | 'wasteland_rare' | 'wasteland_boss' | 'grounds_common' | 'grounds_rare'
 ```
 
 ---

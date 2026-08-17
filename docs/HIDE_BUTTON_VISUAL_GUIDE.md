@@ -138,11 +138,12 @@ Turn 50: ██████████  (10 charge - FULL)
 ```
 
 **Comparison:**
-| Metric | Before | After |
-|--------|--------|-------|
-| Turns per charge | 3 | 5 ✨ |
-| Full recharge time | 30 turns | 50 turns |
-| Recharge speed | Fast | Slower (more strategic) |
+
+| Metric             | Before   | After                   |
+| ------------------ | -------- | ----------------------- |
+| Turns per charge   | 3        | 5 ✨                    |
+| Full recharge time | 30 turns | 50 turns                |
+| Recharge speed     | Fast     | Slower (more strategic) |
 
 ---
 
