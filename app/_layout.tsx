@@ -11,6 +11,19 @@ import { IOS_BACK_GESTURE_ROUTES } from '../config/routeGesturePolicy'
 
 SplashScreen.preventAutoHideAsync()
 
+let pendingAudioCleanup: Promise<void> = Promise.resolve()
+
+export function waitForAudioCleanup(): Promise<void> {
+  return pendingAudioCleanup
+}
+
+export function beginAudioCleanup(): Promise<void> {
+  pendingAudioCleanup = audioManager.cleanup().catch((error) => {
+    console.error('Failed to clean up audio system:', error)
+  })
+  return pendingAudioCleanup
+}
+
 export default function Layout() {
   const [fontsLoaded] = useFonts({
     Gabrielle: require('../assets/fonts/Gabrielle.ttf'),
@@ -40,21 +53,29 @@ export default function Layout() {
 
   // Initialize audio system
   useEffect(() => {
+    let cancelled = false
+
     const initAudio = async () => {
       try {
+        await waitForAudioCleanup()
+        if (cancelled) return
+
         await audioManager.initializeAudio()
+        if (cancelled) return
+
         await audioManager.loadBackgroundMusic()
-        console.log('Audio system initialized')
+        if (!cancelled) console.log('Audio system initialized')
       } catch (error) {
         console.error('Failed to initialize audio system:', error)
       }
     }
 
-    initAudio()
+    void initAudio()
 
     // Cleanup on unmount
     return () => {
-      audioManager.cleanup()
+      cancelled = true
+      void beginAudioCleanup()
     }
   }, [])
 

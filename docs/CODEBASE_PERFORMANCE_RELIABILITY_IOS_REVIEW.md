@@ -45,7 +45,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [x] P1 — Replace fixed-delay state/navigation synchronization
 - [x] P1 — Correct callbacks that read stale closures
 - [x] P2 — Give timer-driven battle and navigation code explicit lifecycle ownership
-- [ ] P2 — Keep audio flags synchronized with native playback state
+- [x] P2 — Keep audio flags synchronized with native playback state
 - [x] P1 — Make viewport dimensions react to size and safe-area changes
 - [x] P1 — Apply safe areas consistently
 - [x] P1 — Protect game transitions from iOS back-swipe gestures
@@ -229,6 +229,13 @@ boundaries, and rapid input.
 Use playback status as the source of truth, handle app foreground/background and interruptions, and make load/unload operations generation-safe. The explicit `playsInSilentModeIOS: true` is a product choice: verify that playing ambient audio despite the iPhone silent switch is desired.
 
 Relevant code: `modules/audioManager.ts` and `app/_layout.tsx:48-66`.
+
+**Completed**: Expo AV playback-status callbacks are now the source of truth for whether music is
+actually playing. Playback intent is retained across app backgrounding and native interruptions,
+with automatic recovery when the app is active, and generation guards prevent stale load/unload
+completion from replacing newer audio state. Root unmount cleanup is tracked to completion and a
+later mount waits for it before initializing audio again. Silent-switch playback remains enabled as
+the existing product behavior.
 
 ## iOS testing risks and readiness work
 
