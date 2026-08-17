@@ -39,19 +39,27 @@ const mockedUseGameActions = jest.mocked(useGameActions)
 const mockedLoadCurrentGame = jest.mocked(loadCurrentGame)
 const mockedFromSnapshot = jest.mocked(fromSnapshot)
 
+const createDeferred = <T,>() => {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  const promise = new Promise<T>((promiseResolve) => {
+    resolve = promiseResolve
+  })
+
+  return { promise, resolve }
+}
+
 describe('SplashScreen hydration navigation', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
   test('navigates only after context confirms the loaded state committed', async () => {
-    let confirmCommit!: () => void
-    const hydrateGameState = jest.fn(
-      () =>
-        new Promise<void>((resolve) => {
-          confirmCommit = resolve
-        })
-    )
+    const hydrationCommit = createDeferred<void>()
+    const gameNavigation = createDeferred<void>()
+    const hydrateGameState = jest.fn(() => hydrationCommit.promise)
+    mockReplace.mockImplementation((route) => {
+      if (route === '/game') gameNavigation.resolve()
+    })
     mockedUseGameActions.mockReturnValue({
       dispatch: jest.fn(),
       hydrateGameState,
@@ -70,8 +78,13 @@ describe('SplashScreen hydration navigation', () => {
     expect(mockedLoadCurrentGame).toHaveBeenCalledTimes(1)
     expect(mockReplace).not.toHaveBeenCalledWith('/game')
 
-    await act(async () => confirmCommit())
+    await act(async () => {
+      hydrationCommit.resolve()
+      await gameNavigation.promise
+      // Flush handleContinue's finally block after router.replace returns.
+      await Promise.resolve()
+    })
 
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/game'))
+    expect(mockReplace).toHaveBeenCalledWith('/game')
   })
 })
