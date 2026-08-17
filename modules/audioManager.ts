@@ -1,9 +1,4 @@
-import {
-  Audio,
-  InterruptionModeAndroid,
-  InterruptionModeIOS,
-  type AVPlaybackStatus,
-} from 'expo-av'
+import { Audio, InterruptionModeAndroid, InterruptionModeIOS, type AVPlaybackStatus } from 'expo-av'
 import { AppState, type AppStateStatus, type NativeEventSubscription } from 'react-native'
 
 import { gameConfig } from '../config/gameConfig'
