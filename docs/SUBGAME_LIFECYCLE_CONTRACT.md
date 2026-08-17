@@ -17,7 +17,15 @@ field and decision must remain represented.
 ```ts
 type SubGameShape = 'dialogue' | 'dial-lock' | 'word-grid' | 'exploration-sequence' | 'one-off'
 
-type FailureExit = 'death' | 'safe'
+type FailurePolicy =
+  | { exit: 'safe' }
+  | {
+      exit: 'death'
+      message: string
+      killerName: string
+      suppressDeathDialog: boolean
+      deathRoute: string
+    }
 
 type RevisitPolicy = 'restart' | 'resume' | 'success-screen' | 'aftermath-screen' | 'unavailable'
 
@@ -40,7 +48,7 @@ interface SubGameLifecycleContract {
     idempotent: true
   }
 
-  failureExit: FailureExit
+  failure: FailurePolicy
 
   waypoint:
     | { createsWaypoint: false }
@@ -105,12 +113,14 @@ state safely, but must not repeat rewards, waypoints, or other one-time effects.
 
 Every game declares exactly one policy, even if its mechanic has no ordinary failure state:
 
-- `death`: failure dispatches `GAME_OVER` and enters the global death flow.
-- `safe`: failure or abandonment returns to the RPG without killing the player and without marking
+- `{ exit: 'death', ... }`: failure dispatches `GAME_OVER` with the declared `message`, required
+  `killerName`, and `suppressDeathDialog`, then enters the declared `deathRoute`.
+- `{ exit: 'safe' }`: failure or abandonment returns to the RPG without killing the player and without marking
   completion.
 
 `N/A`, omission, and implicit behavior are not allowed. A dialogue with no losing branch declares
-`safe` because leaving it incomplete is non-lethal.
+`{ exit: 'safe' }` because leaving it incomplete is non-lethal. Every death declaration requires a
+human-readable killer name; the sub-game ID is not an acceptable fallback.
 
 Internal retreat to an earlier sub-game screen is not a failure exit.
 
@@ -158,6 +168,10 @@ Every grant must be idempotent. The implementation must check durable state—su
 an unlocked ability, or a completion/reward flag—rather than relying only on component-local state.
 Opening a success screen twice must not duplicate a reward.
 
+If `reward.grantEvent` occurs before completion, the screen calls the lifecycle controller's
+`grantReward()` action at that event. `completeSubGame()` calls the same action as a safety net, so
+completion cannot omit or duplicate the reward.
+
 ### 8. Return signal
 
 Any path that returns normally to the RPG must:
@@ -175,13 +189,13 @@ global death flow instead of performing a normal RPG resume.
 These are migration targets based on current behavior. “Action required” identifies behavior that
 must be decided or aligned before the declaration can be enforced.
 
-| Game          | Identity                                                                     | Completion event                                                  | Failure                                                            | Waypoint                                                                                                   | Revisit                                                                                     | Progress                                                                                     | Reward                                                                                            | Return                                                                                               |
-| ------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Hermit Hollow | `hermit-hollow`; `dialogue`; `/sub-games/hermit-hollow/main`                 | Entering `silence_end` applies `hermit_enters_trance`; idempotent | `safe` (the previous “N/A” maps to the required non-lethal policy) | Yes; one-time `hermit-hollow waypoint` snapshot containing all dialogue flags and the hide unlock          | `resume` at the deterministic terminal/end node                                             | `local-only` for the dialogue path                                                           | Ability/effect `unlock_hide_ability`; durable ability check required                              | End-state exit calls resume signal and `exitSubGame`                                                 |
-| Jaunt Cave    | `jaunt-cave`; `one-off`; `/sub-games/jaunt-cave/main`                        | Player confirms return from victory screen; idempotent            | `death` through `GAME_OVER`                                        | Yes; one-time `jaunt-cave` snapshot containing completion, Jaunt unlock, charges, and related player state | `aftermath-screen`                                                                          | `local-only`; battle restarts after remount before completion                                | Ability `jaunt`; grant on confirmed victory, idempotent via completion/ability state              | Victory/aftermath exits use resume signal and `exitSubGame`; death uses death flow                   |
-| Tesseract     | `tesseract`; `word-grid`; `/sub-games/tesseract/main`                        | Player confirms return from success screen; idempotent            | `death` through `GAME_OVER`                                        | No; Tesseract and all future `word-grid` instances declare `createsWaypoint: false`                        | `success-screen`                                                                            | `local-only`; selected letters reset on remount                                              | Item `persius-scroll`; grant once using inventory ID                                              | Success exit calls resume signal and `exitSubGame`; death uses death flow                            |
-| Aero-Wreckage | `aerowreckage-puzzle`; `dial-lock`; `/sub-games/aerowreckage-puzzle/entry`   | Player confirms Return to Quest on success screen; idempotent     | `safe`                                                             | No                                                                                                         | `resume`: re-enter at entry, with saved dial/open state restored when the puzzle is reached | `async-storage`; key `aerowreckage-puzzle`, version 1; decide whether to clear on completion | Weapon `weapon-lazer-pistol-001`; grant once using ranged inventory ID                            | Incomplete exit and success exit use `exitSubGame`; verify every normal exit also signals RPG resume |
-| Deep Silo     | `deep-silo`; proposed `exploration-sequence`; `/sub-games/deep-silo/screen1` | **Undeclared**                                                    | **Must choose `safe` or `death`**                                  | **Undeclared**                                                                                             | **Undeclared**                                                                              | Currently effectively `local-only`, but this must become an intentional declaration          | Item `persius-note-2` is idempotent by inventory ID; final encounter reward/outcome is undeclared | **Incomplete:** power-restored screen has no completion-and-return path                              |
+| Game          | Identity                                                                     | Completion event                                                  | Failure                                                                        | Waypoint                                                                                                   | Revisit                                                                                     | Progress                                                                                     | Reward                                                                                            | Return                                                                                               |
+| ------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Hermit Hollow | `hermit-hollow`; `dialogue`; `/sub-games/hermit-hollow/main`                 | Entering `silence_end` applies `hermit_enters_trance`; idempotent | `{ exit: 'safe' }` (the previous “N/A” maps to the required non-lethal policy) | Yes; one-time `hermit-hollow waypoint` snapshot containing all dialogue flags and the hide unlock          | `resume` at the deterministic terminal/end node                                             | `local-only` for the dialogue path                                                           | Ability/effect `unlock_hide_ability`; durable ability check required                              | End-state exit calls resume signal and `exitSubGame`                                                 |
+| Jaunt Cave    | `jaunt-cave`; `one-off`; `/sub-games/jaunt-cave/main`                        | Player confirms return from victory screen; idempotent            | Death; killer `Jaunt Daemon`; instance death copy and route required           | Yes; one-time `jaunt-cave` snapshot containing completion, Jaunt unlock, charges, and related player state | `aftermath-screen`                                                                          | `local-only`; battle restarts after remount before completion                                | Ability `jaunt`; grant on confirmed victory, idempotent via completion/ability state              | Victory/aftermath exits use resume signal and `exitSubGame`; death uses death flow                   |
+| Tesseract     | `tesseract`; `word-grid`; `/sub-games/tesseract/main`                        | Player confirms return from success screen; idempotent            | Death; killer `Ancient Evil`; suppress dialog; route `/death`                  | No; Tesseract and all future `word-grid` instances declare `createsWaypoint: false`                        | `success-screen`                                                                            | `local-only`; selected letters reset on remount                                              | Item `persius-scroll`; grant once using inventory ID                                              | Success exit calls resume signal and `exitSubGame`; death uses death flow                            |
+| Aero-Wreckage | `aerowreckage-puzzle`; `dial-lock`; `/sub-games/aerowreckage-puzzle/entry`   | Player confirms Return to Quest on success screen; idempotent     | `{ exit: 'safe' }`                                                             | No                                                                                                         | `resume`: re-enter at entry, with saved dial/open state restored when the puzzle is reached | `async-storage`; key `aerowreckage-puzzle`, version 1; decide whether to clear on completion | Weapon `weapon-lazer-pistol-001`; grant once using ranged inventory ID                            | Incomplete exit and success exit use `exitSubGame`; verify every normal exit also signals RPG resume |
+| Deep Silo     | `deep-silo`; proposed `exploration-sequence`; `/sub-games/deep-silo/screen1` | **Undeclared**                                                    | **Must choose `safe` or `death`**                                              | **Undeclared**                                                                                             | **Undeclared**                                                                              | Currently effectively `local-only`, but this must become an intentional declaration          | Item `persius-note-2` is idempotent by inventory ID; final encounter reward/outcome is undeclared | **Incomplete:** power-restored screen has no completion-and-return path                              |
 
 Deep Silo is not contract-compliant and should be finished using this contract. Its completion event,
 failure policy, waypoint decision, revisit behavior, final reward/outcome, and normal return path must

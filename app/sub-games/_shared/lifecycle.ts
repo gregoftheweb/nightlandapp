@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react'
+import { router } from 'expo-router'
 
 import { collectible } from '@config/objects'
 import type { Effect, GameState, Item } from '@config/types'
@@ -13,7 +14,15 @@ import { clearSubGameSave, getSubGameSave, setSubGameSave } from './persistence'
 export type SubGameShape =
   'dialogue' | 'dial-lock' | 'word-grid' | 'exploration-sequence' | 'one-off'
 
-export type SubGameFailureExit = 'death' | 'safe'
+export type SubGameFailurePolicy =
+  | { exit: 'safe' }
+  | {
+      exit: 'death'
+      message: string
+      killerName: string
+      suppressDeathDialog: boolean
+      deathRoute: string
+    }
 
 export type SubGameRevisitPolicy =
   'restart' | 'resume' | 'success-screen' | 'aftermath-screen' | 'unavailable'
@@ -44,7 +53,7 @@ export interface SubGameLifecycleConfig {
     event: string
     idempotent: true
   }
-  failureExit: SubGameFailureExit
+  failure: SubGameFailurePolicy
   waypoint:
     | { createsWaypoint: false }
     | {
@@ -63,6 +72,7 @@ export interface SubGameLifecycleConfig {
 }
 
 export interface SubGameLifecycleController<TProgress = unknown> {
+  grantReward: () => Promise<void>
   completeSubGame: () => Promise<void>
   failSubGame: () => Promise<void>
   isCompleted: () => boolean
@@ -81,6 +91,7 @@ export interface LifecycleDependencies {
   getProgress: typeof getSubGameSave
   setProgress: typeof setSubGameSave
   clearProgress: typeof clearSubGameSave
+  navigateToDeath: (route: string) => void
 }
 
 const rewardFlag = (config: SubGameLifecycleConfig): string =>
@@ -213,6 +224,9 @@ export function createSubGameLifecycleController<TProgress = unknown>(
   dependencies: LifecycleDependencies
 ): SubGameLifecycleController<TProgress> {
   let completionInFlight: Promise<void> | null = null
+  let rewardInFlight: Promise<void> | null = null
+  let grantedRewardActions: Parameters<GameDispatch>[0][] = []
+  let rewardCommitted = false
   let completionCommitted = false
   let failureCommitted = false
 
@@ -246,13 +260,40 @@ export function createSubGameLifecycleController<TProgress = unknown>(
 
     clearProgress,
 
+    grantReward: () => {
+      if (rewardCommitted) return Promise.resolve()
+      if (rewardInFlight) return rewardInFlight
+
+      rewardInFlight = Promise.resolve().then(() => {
+        const state = dependencies.getState()
+        grantedRewardActions = rewardActions(state, config)
+        applyAndDispatch(state, dependencies.dispatch, grantedRewardActions)
+        rewardCommitted = true
+      })
+
+      return rewardInFlight.finally(() => {
+        rewardInFlight = null
+      })
+    },
+
     completeSubGame: () => {
       if (completionCommitted) return Promise.resolve()
       if (completionInFlight) return completionInFlight
 
       completionInFlight = (async () => {
+        await controller.grantReward()
         let snapshot = dependencies.getState()
         const actions: Parameters<GameDispatch>[0][] = []
+
+        if (
+          config.reward.kind !== 'none' &&
+          snapshot.subGamesCompleted?.[rewardFlag(config)] !== true
+        ) {
+          snapshot = grantedRewardActions.reduce(
+            (nextState, action) => reducer(nextState, action),
+            snapshot
+          )
+        }
 
         if (snapshot.subGamesCompleted?.[config.id] !== true) {
           actions.push({
@@ -260,7 +301,6 @@ export function createSubGameLifecycleController<TProgress = unknown>(
             payload: { subGameName: config.id, completed: true },
           })
         }
-        actions.push(...rewardActions(snapshot, config))
         snapshot = applyAndDispatch(snapshot, dependencies.dispatch, actions)
 
         if (
@@ -294,15 +334,16 @@ export function createSubGameLifecycleController<TProgress = unknown>(
       if (failureCommitted || completionCommitted) return
       failureCommitted = true
 
-      if (config.failureExit === 'death') {
+      if (config.failure.exit === 'death') {
         dependencies.dispatch({
           type: 'GAME_OVER',
           payload: {
-            message: `Christos failed the ${config.id} encounter.`,
-            killerName: config.id,
-            suppressDeathDialog: false,
+            message: config.failure.message,
+            killerName: config.failure.killerName,
+            suppressDeathDialog: config.failure.suppressDeathDialog,
           },
         })
+        dependencies.navigateToDeath(config.failure.deathRoute)
         return
       }
 
@@ -337,6 +378,7 @@ export function useSubGameLifecycle<TProgress = unknown>(
     getProgress: getSubGameSave,
     setProgress: setSubGameSave,
     clearProgress: clearSubGameSave,
+    navigateToDeath: (route) => router.replace(route as never),
   })
 
   return useMemo(() => controllerRef.current!, [])

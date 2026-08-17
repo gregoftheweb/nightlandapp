@@ -17,7 +17,7 @@ const baseConfig = {
   shape: 'one-off',
   entryRoute: '/sub-games/test-encounter/main',
   completion: { event: 'Player confirms success', idempotent: true },
-  failureExit: 'safe',
+  failure: { exit: 'safe' },
   waypoint: { createsWaypoint: false },
   revisit: 'restart',
   progress: { mode: 'local-only' },
@@ -33,6 +33,7 @@ function makeHarness(config: SubGameLifecycleConfig) {
   const getProgress = jest.fn().mockResolvedValue(null)
   const setProgress = jest.fn().mockResolvedValue(undefined)
   const clearProgress = jest.fn().mockResolvedValue(undefined)
+  const navigateToDeath = jest.fn()
   const dispatch = jest.fn((action) => {
     state = reducer(state, action)
   })
@@ -46,6 +47,7 @@ function makeHarness(config: SubGameLifecycleConfig) {
     getProgress,
     setProgress,
     clearProgress,
+    navigateToDeath,
   }
 
   return {
@@ -58,6 +60,7 @@ function makeHarness(config: SubGameLifecycleConfig) {
     getProgress,
     setProgress,
     clearProgress,
+    navigateToDeath,
   }
 }
 
@@ -80,6 +83,7 @@ describe('sub-game lifecycle controller', () => {
     } satisfies SubGameLifecycleConfig
     const harness = makeHarness(config)
 
+    await Promise.all([harness.controller.grantReward(), harness.controller.grantReward()])
     await Promise.all([harness.controller.completeSubGame(), harness.controller.completeSubGame()])
     await harness.controller.completeSubGame()
 
@@ -113,7 +117,16 @@ describe('sub-game lifecycle controller', () => {
   })
 
   it('death failure dispatches GAME_OVER without a normal RPG return', async () => {
-    const config = { ...baseConfig, failureExit: 'death' } satisfies SubGameLifecycleConfig
+    const config = {
+      ...baseConfig,
+      failure: {
+        exit: 'death',
+        message: 'The test horror prevailed.',
+        killerName: 'Test Horror',
+        suppressDeathDialog: true,
+        deathRoute: '/death',
+      },
+    } satisfies SubGameLifecycleConfig
     const harness = makeHarness(config)
 
     await harness.controller.failSubGame()
@@ -122,6 +135,7 @@ describe('sub-game lifecycle controller', () => {
     expect(harness.getState().gameOver).toBe(true)
     expect(harness.signalRpgResume).not.toHaveBeenCalled()
     expect(harness.exit).not.toHaveBeenCalled()
+    expect(harness.navigateToDeath).toHaveBeenCalledWith('/death')
   })
 
   it('uses declared AsyncStorage settings and clears progress on completion', async () => {
