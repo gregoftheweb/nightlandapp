@@ -4,9 +4,9 @@ import { View, StyleSheet, Image, LayoutChangeEvent, Animated, Easing } from 're
 import { useRouter } from 'expo-router'
 
 const frames = [
-  require('@assets/images/backgrounds/subgames/deep-silo/silo-power-switch1.png'),
-  require('@assets/images/backgrounds/subgames/deep-silo/silo-power-switch2.png'),
-  require('@assets/images/backgrounds/subgames/deep-silo/silo-power-switch3.png'),
+  require('@assets/images/backgrounds/subgames/deep-silo/silo-power-switch1.webp'),
+  require('@assets/images/backgrounds/subgames/deep-silo/silo-power-switch2.webp'),
+  require('@assets/images/backgrounds/subgames/deep-silo/silo-power-switch3.webp'),
 ]
 
 const IMG_W = 1024

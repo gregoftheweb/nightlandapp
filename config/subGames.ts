@@ -96,7 +96,7 @@ export const SUB_GAMES: Record<SubGameId, SubGameDefinition> = {
     title: 'Deep Silo',
     description:
       'A massive silo rises from the Night Land, its dark interior an unknown descent into the deep.',
-    introBackgroundImage: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen1.png'),
+    introBackgroundImage: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen1.webp'),
     entrance: {
       shortName: 'deepSilo',
       category: 'building',

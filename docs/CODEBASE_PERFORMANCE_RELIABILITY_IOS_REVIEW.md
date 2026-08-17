@@ -36,7 +36,7 @@ The most serious current finding is the autosave lifecycle. A throttled callback
 - [x] P1 — Render the board as a viewport, not a large React element tree
 - [x] P1 — Stabilize fallback identities so existing memoization actually holds
 - [x] P2 — Avoid serializing and logging more than necessary on frequent state changes
-- [ ] P2 — Reduce packaged assets and remove editor/source artifacts
+- [x] P2 — Reduce packaged assets and remove editor/source artifacts
 - [x] P2 — Remove unused root initialization
 - [x] P0 — Autosave captures the first state in a throttle window, not the latest
 - [x] P0 — Death/reset deletion races queued or in-flight autosaves
@@ -99,6 +99,12 @@ The assets directory is approximately **51 MB**. It contains many 2–3 MB PNG b
 Convert remaining large PNG runtime backgrounds to appropriately sized WebP/AVIF where Expo target support permits, remove editor files from bundle patterns, deduplicate superseded assets, and verify actual release IPA/APK contents before estimating the gain.
 
 Relevant configuration: `app.json`.
+
+**Completed**: the Krita autosave and 23 positively unreferenced source/export assets were removed.
+Editor-native formats are now ignored, and Expo bundle patterns allow only runtime font, image, and
+audio extensions. The 11 used Deep Silo PNG backgrounds were replaced with reviewed quality-80 WebP
+exports, while the original PNGs were archived outside the app repository. Production iOS exports
+resolved the resulting runtime asset set.
 
 ### P2 — Remove unused root initialization
 

@@ -7,7 +7,7 @@ import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 
-const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen4.png')
+const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen4.webp')
 
 export default function DeepSiloScreen4() {
   const router = useRouter()

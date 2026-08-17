@@ -9,6 +9,18 @@ package.json.working
 *.blech2
 package-lock.json
 
+# Editor-native source and autosave files (runtime exports belong in assets/)
+*.kra
+*.psd
+*.psb
+*.ai
+*.xcf
+*.ora
+*.blend
+*.aup
+*.aup3
+*.autosave
+
 
 # dependencies
 node_modules/
