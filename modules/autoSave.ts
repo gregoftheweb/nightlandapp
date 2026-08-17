@@ -14,6 +14,7 @@
 
 import { GameState } from '@config/types'
 import { deleteCurrentGame, saveCurrentGame } from './saveGame'
+import { DEBUG_PERSISTENCE } from './persistenceDebug'
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null
 let activeSave: Promise<void> | null = null
@@ -32,7 +33,7 @@ export function requestAutoSave(state: GameState): void {
   // newest state observed during the throttle window.
   latestPendingState = state
 
-  if (__DEV__) {
+  if (DEBUG_PERSISTENCE) {
     console.log(
       '[AutoSave] Save requested, moveCount:',
       state.moveCount,
@@ -104,7 +105,7 @@ export async function forceAutoSave(state: GameState): Promise<void> {
 async function performAutoSave(state: GameState): Promise<void> {
   // Don't save if already dead
   if (state.gameOver) {
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[AutoSave] Skipping autosave - player is dead')
     }
     return
@@ -113,7 +114,7 @@ async function performAutoSave(state: GameState): Promise<void> {
   // Don't save initial state (moveCount=0 means no gameplay has happened yet)
   // This prevents saving a fresh state that would be useless on load
   if (state.moveCount === 0) {
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[AutoSave] Skipping autosave - no gameplay yet (moveCount=0)')
     }
     return
@@ -122,7 +123,7 @@ async function performAutoSave(state: GameState): Promise<void> {
   try {
     await saveCurrentGame(state)
 
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[AutoSave] Game autosaved successfully')
     }
   } catch (error) {
@@ -158,22 +159,27 @@ export async function invalidateAutoSaveAndDeleteCurrentGame(): Promise<void> {
 }
 
 /**
- * Generate a compact fingerprint of game state for change detection.
- * Returns a string that changes when important game state changes.
- * This is used to trigger autosaves only when meaningful changes occur.
+ * Compare only the fields that historically participated in the autosave
+ * fingerprint. Reducers replace the two map fields immutably, so reference
+ * comparison keeps this check constant-time as those maps grow.
  */
-export function getStateSaveFingerprint(state: GameState): string {
-  // Include only the fields that should trigger a save when they change
-  return JSON.stringify({
-    level: state.currentLevelId,
-    pos: state.player.position,
-    hp: state.player.currentHP,
-    inv: state.player.inventory.length,
-    wpn: state.player.weapons.length,
-    moves: state.moveCount,
-    subGames: state.subGamesCompleted,
-    waypoints: state.waypointSavesCreated,
-    kills: state.monstersKilled,
-    combat: state.inCombat,
-  })
+export function hasSaveRelevantChanges(
+  previousState: GameState | null,
+  currentState: GameState
+): boolean {
+  if (previousState === null) return true
+
+  return (
+    previousState.currentLevelId !== currentState.currentLevelId ||
+    previousState.player.position.row !== currentState.player.position.row ||
+    previousState.player.position.col !== currentState.player.position.col ||
+    previousState.player.currentHP !== currentState.player.currentHP ||
+    previousState.player.inventory.length !== currentState.player.inventory.length ||
+    previousState.player.weapons.length !== currentState.player.weapons.length ||
+    previousState.moveCount !== currentState.moveCount ||
+    previousState.subGamesCompleted !== currentState.subGamesCompleted ||
+    previousState.waypointSavesCreated !== currentState.waypointSavesCreated ||
+    previousState.monstersKilled !== currentState.monstersKilled ||
+    previousState.inCombat !== currentState.inCombat
+  )
 }

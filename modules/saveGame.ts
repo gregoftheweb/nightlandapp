@@ -14,6 +14,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { GameState, GameSnapshot } from '@config/types'
 import { toSnapshot } from './gameState'
+import { DEBUG_PERSISTENCE } from './persistenceDebug'
 
 // ===== STORAGE KEYS =====
 const CURRENT_GAME_KEY = 'nightland:save:current:v1'
@@ -71,7 +72,7 @@ export async function saveCurrentGame(state: GameState): Promise<void> {
       savedAt: new Date().toISOString(),
     }
 
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[SaveGame] === SAVING CURRENT GAME ===')
       console.log('[SaveGame] State currentLevelId:', state.currentLevelId)
       console.log('[SaveGame] State player position:', state.player?.position)
@@ -87,7 +88,7 @@ export async function saveCurrentGame(state: GameState): Promise<void> {
     }
 
     await AsyncStorage.setItem(CURRENT_GAME_KEY, JSON.stringify(savedGame))
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[SaveGame] Current game saved successfully')
     }
   } catch (error) {
@@ -104,7 +105,7 @@ export async function loadCurrentGame(): Promise<GameSnapshot | null> {
   try {
     const data = await AsyncStorage.getItem(CURRENT_GAME_KEY)
     if (!data) {
-      if (__DEV__) {
+      if (DEBUG_PERSISTENCE) {
         console.log('[SaveGame] No current game save found')
       }
       return null
@@ -118,7 +119,7 @@ export async function loadCurrentGame(): Promise<GameSnapshot | null> {
       return null
     }
 
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[SaveGame] === LOADING CURRENT GAME ===')
       console.log('[SaveGame] Save version:', savedGame.version)
       console.log('[SaveGame] Saved at:', savedGame.savedAt)
@@ -158,7 +159,7 @@ export async function loadCurrentGame(): Promise<GameSnapshot | null> {
 export async function deleteCurrentGame(): Promise<void> {
   try {
     await AsyncStorage.removeItem(CURRENT_GAME_KEY)
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[SaveGame] Current game deleted')
     }
   } catch (error) {
@@ -204,7 +205,7 @@ async function saveWaypointTransaction(state: GameState, waypointName: string): 
     const existingWaypoints = index.filter((item) => item.name === waypointName)
 
     if (existingWaypoints.length > 0) {
-      if (__DEV__) {
+      if (DEBUG_PERSISTENCE) {
         console.log(
           `[SaveGame] Replacing ${existingWaypoints.length} existing waypoint(s):`,
           waypointName
@@ -250,13 +251,13 @@ async function saveWaypointTransaction(state: GameState, waypointName: string): 
       const oldWaypointKey = WAYPOINT_ITEM_PREFIX + waypoint.id
       try {
         await AsyncStorage.removeItem(oldWaypointKey)
-        if (__DEV__) console.log('[SaveGame] Deleted waypoint ID:', waypoint.id)
+        if (DEBUG_PERSISTENCE) console.log('[SaveGame] Deleted waypoint ID:', waypoint.id)
       } catch (cleanupError) {
         console.error('[SaveGame] Failed to clean up superseded waypoint:', cleanupError)
       }
     }
 
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[SaveGame] Waypoint saved:', waypointName, 'ID:', id)
     }
 
@@ -292,7 +293,7 @@ export async function loadWaypoint(id: string): Promise<GameSnapshot | null> {
 
     const record: WaypointSaveRecord = JSON.parse(data)
 
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[SaveGame] Waypoint loaded:', record.name, 'ID:', id)
     }
 
@@ -311,7 +312,7 @@ export async function listWaypointSaves(): Promise<WaypointSaveMetadata[]> {
   try {
     const index = await loadWaypointIndex()
 
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[SaveGame] Listed', index.length, 'waypoint saves')
     }
 
@@ -340,7 +341,7 @@ async function deleteWaypointTransaction(id: string): Promise<void> {
     const waypointKey = WAYPOINT_ITEM_PREFIX + id
     await AsyncStorage.removeItem(waypointKey)
 
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[SaveGame] Waypoint deleted:', id)
     }
   } catch (error) {
@@ -368,7 +369,7 @@ async function deleteAllWaypointSavesTransaction(): Promise<void> {
       await AsyncStorage.removeItem(waypointKey)
     }
 
-    if (__DEV__) {
+    if (DEBUG_PERSISTENCE) {
       console.log('[SaveGame] All waypoint saves deleted')
     }
   } catch (error) {
@@ -378,10 +379,10 @@ async function deleteAllWaypointSavesTransaction(): Promise<void> {
 
 /**
  * Debug utility to inspect current save in AsyncStorage.
- * Only available in development mode.
+ * Runs only when verbose persistence diagnostics are explicitly enabled.
  */
 export async function debugInspectCurrentSave(): Promise<void> {
-  if (!__DEV__) return
+  if (!DEBUG_PERSISTENCE) return
 
   try {
     console.log('[SaveGame] ===== DEBUG INSPECT CURRENT SAVE =====')

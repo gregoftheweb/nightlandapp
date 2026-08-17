@@ -16,7 +16,7 @@ import { reducer } from '../state/reducer'
 import { GameState } from '../config/types'
 import {
   requestAutoSave,
-  getStateSaveFingerprint,
+  hasSaveRelevantChanges,
   invalidateAutoSaveAndDeleteCurrentGame,
 } from '../modules/autoSave'
 
@@ -48,8 +48,9 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
   const [state, dispatch] = useReducer(reducer, initialState)
   const [rpgResumeNonce, setRpgResumeNonce] = useState(0)
 
-  // Autosave controller - tracks state fingerprint to trigger saves
-  const lastSaveFingerprintRef = useRef<string>('')
+  // Retain the last state submitted to autosave for constant-time comparison
+  // of the specific fields that historically made up the save fingerprint.
+  const lastAutoSaveStateRef = useRef<GameState | null>(null)
 
   // Track if game over save deletion has been triggered to avoid multiple calls
   const gameOverDeleteTriggeredRef = useRef<boolean>(false)
@@ -113,11 +114,8 @@ export const GameProvider = ({ children, initialGameState }: GameProviderProps) 
 
   // Autosave effect - triggers save when important state changes
   useEffect(() => {
-    const currentFingerprint = getStateSaveFingerprint(state)
-
-    // Only trigger autosave if fingerprint changed
-    if (currentFingerprint !== lastSaveFingerprintRef.current) {
-      lastSaveFingerprintRef.current = currentFingerprint
+    if (hasSaveRelevantChanges(lastAutoSaveStateRef.current, state)) {
+      lastAutoSaveStateRef.current = state
 
       // Request autosave (throttled)
       requestAutoSave(state)
