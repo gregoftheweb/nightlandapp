@@ -14,7 +14,8 @@ index -> main -> puzzle -> success -> RPG
            +--------+---- safe failure -> RPG
 ```
 
-- `lifecycleConfig.ts` contains the complete declaration.
+- `lifecycleConfig.ts` contains the stable `instanceId`; the complete instance and lifecycle
+  declaration lives in `config/subGames.ts`.
 - `index.tsx` calls `resolveEntryRoute()` so completed entry follows the declared revisit policy.
 - `main.tsx` and `puzzle.tsx` call `failSubGame()` for the declared safe exit.
 - `success.tsx` calls `completeSubGame()` exactly at the declared completion event.
@@ -25,21 +26,21 @@ success-screen revisit. It is intentionally simple but fully functional.
 
 ## Creating a sub-game
 
-1. Copy this directory and rename it to the stable kebab-case sub-game ID.
-2. Update every field in `lifecycleConfig.ts`. Do not leave a lifecycle decision implicit.
+1. Copy this directory and give the placed encounter a stable kebab-case `instanceId`.
+2. Update `SUB_GAME_INSTANCE_ID` in `lifecycleConfig.ts`.
 3. Update the module-level routes and assets in the screens.
 4. Implement the shape mechanic. Reuse an established shape rather than copying its logic when one
    exists.
-5. Register the ID and entry route in `config/subGames.ts`.
+5. Register the instance ID, shape ID, entry route, and complete lifecycle policy in
+   `config/subGames.ts`. Do not leave a lifecycle decision implicit.
 6. Add shape-specific tests plus the lifecycle cases listed in the contract document.
 
-The config object must remain module-level and stable. Constructing it inside a component is rejected
-because it would reset the controller's one-call guards on every render.
+The instance ID must remain stable while a lifecycle controller is mounted.
 
 ## Shared lifecycle API
 
 ```ts
-const lifecycle = useSubGameLifecycle<MyProgress>(lifecycleConfig)
+const lifecycle = useSubGameLifecycle<MyProgress>(SUB_GAME_INSTANCE_ID)
 ```
 
 ### `completeSubGame(): Promise<void>`

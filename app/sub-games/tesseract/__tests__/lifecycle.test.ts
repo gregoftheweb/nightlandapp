@@ -31,7 +31,7 @@ function makeTesseractLifecycle() {
   }
 
   return {
-    controller: createSubGameLifecycleController(tesseractWordGridConfig, dependencies),
+    controller: createSubGameLifecycleController(tesseractWordGridConfig.instanceId, dependencies),
     getState: () => state,
     dispatch,
     signalRpgResume,
@@ -48,14 +48,14 @@ describe('Tesseract lifecycle instance', () => {
     expect(
       harness.getState().player.inventory.filter((item) => item.id === 'persius-scroll')
     ).toHaveLength(1)
-    expect(harness.getState().subGamesCompleted?.tesseract).not.toBe(true)
+    expect(harness.getState().subGamesCompleted?.['tesseract-crypt-01']).not.toBe(true)
 
     await Promise.all([harness.controller.completeSubGame(), harness.controller.completeSubGame()])
 
     expect(
       harness.getState().player.inventory.filter((item) => item.id === 'persius-scroll')
     ).toHaveLength(1)
-    expect(harness.getState().subGamesCompleted?.tesseract).toBe(true)
+    expect(harness.getState().subGamesCompleted?.['tesseract-crypt-01']).toBe(true)
     expect(harness.signalRpgResume).toHaveBeenCalledTimes(1)
     expect(harness.exit).toHaveBeenCalledTimes(1)
   })
@@ -83,7 +83,7 @@ describe('Tesseract lifecycle instance', () => {
 
     harness.dispatch({
       type: 'SET_SUB_GAME_COMPLETED',
-      payload: { subGameName: 'tesseract', completed: true },
+      payload: { subGameName: 'tesseract-crypt-01', completed: true },
     })
     expect(harness.controller.resolveEntryRoute()).toBe('/sub-games/tesseract/success')
   })

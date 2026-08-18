@@ -7,14 +7,14 @@ import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { useSubGameLifecycle } from '../_shared/lifecycle'
-import { lifecycleConfig } from './lifecycleConfig'
+import { SUB_GAME_INSTANCE_ID } from './lifecycleConfig'
 
 // TODO: Replace with your sub-game's background image
 const bgPuzzle = require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen3.webp')
 
 export default function SubGameTemplatePuzzle() {
   const router = useRouter()
-  const lifecycle = useSubGameLifecycle(lifecycleConfig)
+  const lifecycle = useSubGameLifecycle(SUB_GAME_INSTANCE_ID)
   const [puzzleState, setPuzzleState] = useState<'idle' | 'solving' | 'solved'>('idle')
 
   const handleGiveUp = () => {

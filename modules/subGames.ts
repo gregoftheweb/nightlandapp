@@ -3,23 +3,23 @@
 
 import { router } from 'expo-router'
 import { SubGameResult } from '@config/types'
-import { SubGameId, getSubGameDefinition } from '@config/subGames'
+import { getSubGameDefinition } from '@config/subGames'
 import { logIfDev } from './utils'
 
 /**
  * Enter a sub-game by navigating to its intro route from the registry
- * @param subGameId - The sub-game identifier (e.g., 'tesseract', 'hermit-hollow')
+ * @param instanceId - Stable registered encounter identifier (e.g., 'tesseract-crypt-01')
  * @param context - Optional context data (e.g., objectId)
  */
-export function enterSubGame(subGameId: SubGameId, context?: { objectId?: string }) {
-  logIfDev(`🎯 Entering sub-game: ${subGameId}`, context)
+export function enterSubGame(instanceId: string, context?: { objectId?: string }) {
+  logIfDev(`🎯 Entering sub-game instance: ${instanceId}`, context)
 
   // Get the sub-game definition from the registry
-  const definition = getSubGameDefinition(subGameId)
+  const definition = getSubGameDefinition(instanceId)
 
   // Navigate to the sub-game's intro route
   // Use replace to prevent navigation stack buildup when entering/exiting sub-games
-  router.replace(definition.introRoute as any)
+  router.replace(definition.entryRoute as any)
 }
 
 /**

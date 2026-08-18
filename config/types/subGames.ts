@@ -3,10 +3,50 @@ import { Effect } from './effects'
 import { ObjectCategory } from './primitives'
 
 export interface SubGameLaunch {
-  subGameName: string // maps to /sub-games/<subGameName>
   ctaLabel: string // label for InfoBox button
   requiresPlayerOnObject?: boolean // default true
-  subGameId?: string // Optional: sub-game identifier for registry lookup
+  instanceId: string // Stable placed-encounter identifier in the sub-game registry
+}
+
+export type SubGameShapeId = 'dialogue' | 'word-grid' | 'one-off'
+
+export type SubGameFailurePolicy =
+  | { exit: 'safe' }
+  | {
+      exit: 'death'
+      message: string
+      killerName: string
+      suppressDeathDialog: boolean
+      deathRoute: string
+    }
+
+export type SubGameRevisitPolicy =
+  'restart' | 'resume' | 'success-screen' | 'aftermath-screen' | 'unavailable'
+
+export type SubGameProgressConfig =
+  | { mode: 'local-only' }
+  | { mode: 'async-storage'; saveKey: string; version: number; clearOnCompletion: boolean }
+
+export type SubGameRewardConfig =
+  | { kind: 'none' }
+  | {
+      kind: 'item' | 'weapon' | 'effect' | 'ability'
+      id: string
+      grantEvent: string
+      idempotent: true
+    }
+
+/** Lifecycle policy only. Instance identity and routing live in the registry. */
+export interface SubGameLifecycleConfig {
+  completion: { event: string; idempotent: true }
+  failure: SubGameFailurePolicy
+  waypoint:
+    | { createsWaypoint: false }
+    | { createsWaypoint: true; waypointName: string; snapshot: string; idempotent: true }
+  revisit: SubGameRevisitPolicy
+  progress: SubGameProgressConfig
+  reward: SubGameRewardConfig
+  returnToRpg: { signalRpgResume: true; exitSubGame: true }
 }
 
 export interface SubGameResult<TData = unknown> {

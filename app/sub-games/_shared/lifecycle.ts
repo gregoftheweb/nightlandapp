@@ -10,66 +10,8 @@ import { exitSubGame } from '@modules/subGames'
 import { reducer } from '../../../state/reducer'
 
 import { clearSubGameSave, getSubGameSave, setSubGameSave } from './persistence'
-
-export type SubGameShape =
-  'dialogue' | 'dial-lock' | 'word-grid' | 'exploration-sequence' | 'one-off'
-
-export type SubGameFailurePolicy =
-  | { exit: 'safe' }
-  | {
-      exit: 'death'
-      message: string
-      killerName: string
-      suppressDeathDialog: boolean
-      deathRoute: string
-    }
-
-export type SubGameRevisitPolicy =
-  'restart' | 'resume' | 'success-screen' | 'aftermath-screen' | 'unavailable'
-
-export type SubGameProgressConfig =
-  | { mode: 'local-only' }
-  | {
-      mode: 'async-storage'
-      saveKey: string
-      version: number
-      clearOnCompletion: boolean
-    }
-
-export type SubGameRewardConfig =
-  | { kind: 'none' }
-  | {
-      kind: 'item' | 'weapon' | 'effect' | 'ability'
-      id: string
-      grantEvent: string
-      idempotent: true
-    }
-
-export interface SubGameLifecycleConfig {
-  id: string
-  shape: SubGameShape
-  entryRoute: string
-  completion: {
-    event: string
-    idempotent: true
-  }
-  failure: SubGameFailurePolicy
-  waypoint:
-    | { createsWaypoint: false }
-    | {
-        createsWaypoint: true
-        waypointName: string
-        snapshot: string
-        idempotent: true
-      }
-  revisit: SubGameRevisitPolicy
-  progress: SubGameProgressConfig
-  reward: SubGameRewardConfig
-  returnToRpg: {
-    signalRpgResume: true
-    exitSubGame: true
-  }
-}
+import { getSubGameDefinition, type SubGameInstanceDefinition } from '@config/subGames'
+export type { SubGameLifecycleConfig } from '@config/types/subGames'
 
 export interface SubGameLifecycleController<TProgress = unknown> {
   grantReward: () => Promise<void>
@@ -94,8 +36,8 @@ export interface LifecycleDependencies {
   navigateToDeath: (route: string) => void
 }
 
-const rewardFlag = (config: SubGameLifecycleConfig): string =>
-  `${config.id}:reward:${config.reward.kind === 'none' ? 'none' : config.reward.id}`
+const rewardFlag = (instance: SubGameInstanceDefinition): string =>
+  `${instance.instanceId}:reward:${instance.lifecycle.reward.kind === 'none' ? 'none' : instance.lifecycle.reward.id}`
 
 function routeDirectory(entryRoute: string): string {
   const slash = entryRoute.lastIndexOf('/')
@@ -103,28 +45,28 @@ function routeDirectory(entryRoute: string): string {
 }
 
 export function resolveSubGameEntryRoute(
-  config: SubGameLifecycleConfig,
+  instance: SubGameInstanceDefinition,
   completed: boolean
 ): string | null {
-  if (!completed) return config.entryRoute
+  if (!completed) return instance.entryRoute
 
-  switch (config.revisit) {
+  switch (instance.lifecycle.revisit) {
     case 'restart':
     case 'resume':
-      return config.entryRoute
+      return instance.entryRoute
     case 'success-screen':
-      return `${routeDirectory(config.entryRoute)}/success`
+      return `${routeDirectory(instance.entryRoute)}/success`
     case 'aftermath-screen':
-      return `${routeDirectory(config.entryRoute)}/aftermath`
+      return `${routeDirectory(instance.entryRoute)}/aftermath`
     case 'unavailable':
       return null
   }
 }
 
-function hasDurableReward(state: GameState, config: SubGameLifecycleConfig): boolean {
-  const reward = config.reward
+function hasDurableReward(state: GameState, instance: SubGameInstanceDefinition): boolean {
+  const reward = instance.lifecycle.reward
   if (reward.kind === 'none') return true
-  if (state.subGamesCompleted?.[rewardFlag(config)] === true) return true
+  if (state.subGamesCompleted?.[rewardFlag(instance)] === true) return true
 
   if (reward.kind === 'item') {
     return state.player.inventory.some((item) => item.id === reward.id)
@@ -168,10 +110,10 @@ function findItemReward(id: string): Item {
 
 function rewardActions(
   state: GameState,
-  config: SubGameLifecycleConfig
+  instance: SubGameInstanceDefinition
 ): Parameters<GameDispatch>[0][] {
-  const reward = config.reward
-  if (reward.kind === 'none' || hasDurableReward(state, config)) return []
+  const reward = instance.lifecycle.reward
+  if (reward.kind === 'none' || hasDurableReward(state, instance)) return []
 
   const actions: Parameters<GameDispatch>[0][] = []
 
@@ -191,7 +133,7 @@ function rewardActions(
       state,
       dispatch: (action) => actions.push(action),
       sourceType: 'system',
-      sourceId: config.id,
+      sourceId: instance.instanceId,
       trigger: 'onInteract',
     })
     if (!result.success) {
@@ -203,7 +145,7 @@ function rewardActions(
 
   actions.push({
     type: 'SET_SUB_GAME_COMPLETED',
-    payload: { subGameName: rewardFlag(config), completed: true },
+    payload: { subGameName: rewardFlag(instance), completed: true },
   })
   return actions
 }
@@ -220,9 +162,12 @@ function applyAndDispatch(
 }
 
 export function createSubGameLifecycleController<TProgress = unknown>(
-  config: SubGameLifecycleConfig,
-  dependencies: LifecycleDependencies
+  instanceId: string,
+  dependencies: LifecycleDependencies,
+  resolveInstance: (instanceId: string) => SubGameInstanceDefinition = getSubGameDefinition
 ): SubGameLifecycleController<TProgress> {
+  const instance = resolveInstance(instanceId)
+  const config = instance.lifecycle
   let completionInFlight: Promise<void> | null = null
   let rewardInFlight: Promise<void> | null = null
   let grantedRewardActions: Parameters<GameDispatch>[0][] = []
@@ -238,12 +183,14 @@ export function createSubGameLifecycleController<TProgress = unknown>(
 
   const controller: SubGameLifecycleController<TProgress> = {
     isCompleted: () =>
-      completionCommitted || dependencies.getState().subGamesCompleted?.[config.id] === true,
+      completionCommitted ||
+      dependencies.getState().subGamesCompleted?.[instance.instanceId] === true,
 
     resolveEntryRoute: () =>
       resolveSubGameEntryRoute(
-        config,
-        completionCommitted || dependencies.getState().subGamesCompleted?.[config.id] === true
+        instance,
+        completionCommitted ||
+          dependencies.getState().subGamesCompleted?.[instance.instanceId] === true
       ),
 
     loadProgress: async () => {
@@ -266,7 +213,7 @@ export function createSubGameLifecycleController<TProgress = unknown>(
 
       rewardInFlight = Promise.resolve().then(() => {
         const state = dependencies.getState()
-        grantedRewardActions = rewardActions(state, config)
+        grantedRewardActions = rewardActions(state, instance)
         applyAndDispatch(state, dependencies.dispatch, grantedRewardActions)
         rewardCommitted = true
       })
@@ -287,7 +234,7 @@ export function createSubGameLifecycleController<TProgress = unknown>(
 
         if (
           config.reward.kind !== 'none' &&
-          snapshot.subGamesCompleted?.[rewardFlag(config)] !== true
+          snapshot.subGamesCompleted?.[rewardFlag(instance)] !== true
         ) {
           snapshot = grantedRewardActions.reduce(
             (nextState, action) => reducer(nextState, action),
@@ -295,10 +242,10 @@ export function createSubGameLifecycleController<TProgress = unknown>(
           )
         }
 
-        if (snapshot.subGamesCompleted?.[config.id] !== true) {
+        if (snapshot.subGamesCompleted?.[instance.instanceId] !== true) {
           actions.push({
             type: 'SET_SUB_GAME_COMPLETED',
-            payload: { subGameName: config.id, completed: true },
+            payload: { subGameName: instance.instanceId, completed: true },
           })
         }
         snapshot = applyAndDispatch(snapshot, dependencies.dispatch, actions)
@@ -356,20 +303,20 @@ export function createSubGameLifecycleController<TProgress = unknown>(
 }
 
 export function useSubGameLifecycle<TProgress = unknown>(
-  config: SubGameLifecycleConfig
+  instanceId: string
 ): SubGameLifecycleController<TProgress> {
   const { state, dispatch, signalRpgResume } = useGameContext()
   const stateRef = useRef(state)
   stateRef.current = state
 
   const controllerRef = useRef<SubGameLifecycleController<TProgress> | null>(null)
-  const configRef = useRef(config)
+  const instanceIdRef = useRef(instanceId)
 
-  if (configRef.current !== config) {
-    throw new Error('Sub-game lifecycle config must have a stable module-level identity')
+  if (instanceIdRef.current !== instanceId) {
+    throw new Error('Sub-game lifecycle instanceId must remain stable for a mounted controller')
   }
 
-  controllerRef.current ??= createSubGameLifecycleController<TProgress>(config, {
+  controllerRef.current ??= createSubGameLifecycleController<TProgress>(instanceId, {
     getState: () => stateRef.current,
     dispatch,
     signalRpgResume,

@@ -35,7 +35,7 @@ const HORIZONTAL_PADDING = 10
 
 export function WordGridEntry({ config }: { config: WordGridConfig }) {
   const router = useRouter()
-  const lifecycle = useSubGameLifecycle(config)
+  const lifecycle = useSubGameLifecycle(config.instanceId)
 
   useEffect(() => {
     const route = lifecycle.resolveEntryRoute()
@@ -47,15 +47,15 @@ export function WordGridEntry({ config }: { config: WordGridConfig }) {
 
 export function WordGridIntroScreen({ config }: { config: WordGridConfig }) {
   const router = useRouter()
-  const lifecycle = useSubGameLifecycle(config)
+  const lifecycle = useSubGameLifecycle(config.instanceId)
 
   useEffect(() => {
     if (!lifecycle.isCompleted()) return
     const revisitRoute = lifecycle.resolveEntryRoute()
-    if (revisitRoute && revisitRoute !== config.entryRoute) {
+    if (revisitRoute && revisitRoute !== '/sub-games/tesseract/main') {
       router.replace(revisitRoute as never)
     }
-  }, [config.entryRoute, lifecycle, router])
+  }, [lifecycle, router])
 
   if (lifecycle.isCompleted()) return null
 
@@ -320,7 +320,7 @@ export function WordGridPuzzleScreen({ config }: { config: WordGridConfig }) {
 }
 
 export function WordGridFailureScreen({ config }: { config: WordGridConfig }) {
-  const lifecycle = useSubGameLifecycle(config)
+  const lifecycle = useSubGameLifecycle(config.instanceId)
 
   return (
     <>
@@ -349,7 +349,7 @@ export function WordGridFailureScreen({ config }: { config: WordGridConfig }) {
 }
 
 export function WordGridSuccessScreen({ config }: { config: WordGridConfig }) {
-  const lifecycle = useSubGameLifecycle(config)
+  const lifecycle = useSubGameLifecycle(config.instanceId)
   const [showRewardModal, setShowRewardModal] = useState(false)
   const isReturnVisit = lifecycle.isCompleted()
 

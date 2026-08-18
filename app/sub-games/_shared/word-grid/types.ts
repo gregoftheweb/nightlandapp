@@ -1,7 +1,5 @@
 import type { ImageSourcePropType } from 'react-native'
 
-import type { SubGameLifecycleConfig } from '../lifecycle'
-
 export interface GridRect {
   left: number
   top: number
@@ -53,9 +51,8 @@ export interface WordGridPresentation {
   }
 }
 
-export interface WordGridConfig extends SubGameLifecycleConfig {
-  shape: 'word-grid'
-  waypoint: { createsWaypoint: false }
+export interface WordGridConfig {
+  instanceId: string
   boardAsset: ImageSourcePropType
   intrinsicSize: { width: number; height: number }
   gridRect: GridRect

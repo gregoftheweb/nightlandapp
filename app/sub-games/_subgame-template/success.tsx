@@ -5,12 +5,12 @@ import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { useSubGameLifecycle } from '../_shared/lifecycle'
 import { subGameTheme } from '../_shared/subGameTheme'
-import { lifecycleConfig } from './lifecycleConfig'
+import { SUB_GAME_INSTANCE_ID } from './lifecycleConfig'
 
 const bgSuccess = require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen4.webp')
 
 export default function SubGameTemplateSuccess() {
-  const lifecycle = useSubGameLifecycle(lifecycleConfig)
+  const lifecycle = useSubGameLifecycle(SUB_GAME_INSTANCE_ID)
 
   return (
     <BackgroundImage source={bgSuccess}>
