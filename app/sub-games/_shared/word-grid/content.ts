@@ -1,13 +1,6 @@
 import type { ImageSourcePropType } from 'react-native'
 
-import type { EncounterPlacementPolicy } from '@config/types/encounters'
 import type { SubGameLifecycleConfig } from '@config/types/subGames'
-
-export interface EncounterManifest {
-  manifestId: string
-  version: number
-  instances: WordGridManifestEntry[]
-}
 
 export type WordGridCompletionTrigger = 'success-confirmed'
 export type WordGridRewardTrigger = 'success-screen-entered' | 'success-confirmed'
@@ -27,7 +20,7 @@ export interface WordGridLifecycleConfig extends Omit<
       }
 }
 
-export interface WordGridManifestContent {
+export interface WordGridContentDetails {
   assetId: string
   gridRect: { xPct: number; yPct: number; widthPct: number; heightPct: number }
   rows: number
@@ -37,7 +30,7 @@ export interface WordGridManifestContent {
   targetSequence: string
 }
 
-export interface WordGridPresentationManifest {
+export interface WordGridPresentationContent {
   intro: { assetId: string; leaveLabel: string; startLabel: string }
   puzzle: {
     leaveLabel: string
@@ -68,19 +61,19 @@ export interface WordGridPresentationManifest {
   }
 }
 
-export interface WordGridManifestEntry {
+export interface WordGridEncounterContent {
   instanceId: string
   shapeId: 'word-grid'
-  placementPolicy: EncounterPlacementPolicy
   metadata: {
     title: string
     description: string
     entranceAssetId: string
+    entranceFootprint: { width: number; height: number }
     ctaLabel: string
   }
-  content: WordGridManifestContent
+  content: WordGridContentDetails
   lifecycle: WordGridLifecycleConfig
-  presentation: WordGridPresentationManifest
+  presentation: WordGridPresentationContent
 }
 
 export interface WordGridAssetDefinition {

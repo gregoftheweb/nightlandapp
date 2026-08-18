@@ -25,8 +25,6 @@ export interface SubGameInstanceDefinition {
   shapeId: SubGameShapeId
   entryRoute: string
   lifecycle: SubGameLifecycleConfig
-  /** Transitional until Tesseract moves to the manifest in a later task. */
-  placementPolicy?: 'generated' | 'fixed'
   title: string
   description: string
   introBackgroundImage: ImageSourcePropType
@@ -74,7 +72,6 @@ const definitions: SubGameInstanceDefinition[] = [
   {
     instanceId: 'aerowreckage-puzzle',
     shapeId: 'one-off',
-    placementPolicy: 'fixed',
     entryRoute: '/sub-games/aerowreckage-puzzle/entry',
     lifecycle: {
       completion: {
@@ -118,7 +115,6 @@ const definitions: SubGameInstanceDefinition[] = [
   {
     instanceId: 'deep-silo',
     shapeId: 'one-off',
-    placementPolicy: 'fixed',
     entryRoute: '/sub-games/deep-silo/screen1',
     lifecycle: {
       completion: { event: 'Not yet implemented; Deep Silo is unfinished', idempotent: true },
@@ -149,7 +145,6 @@ const definitions: SubGameInstanceDefinition[] = [
   {
     instanceId: 'hermit-hollow',
     shapeId: 'dialogue',
-    placementPolicy: 'fixed',
     entryRoute: '/sub-games/hermit-hollow/main',
     lifecycle: {
       completion: { event: 'Entering silence_end applies hermit_enters_trance', idempotent: true },
@@ -190,7 +185,6 @@ const definitions: SubGameInstanceDefinition[] = [
   {
     instanceId: 'jaunt-cave',
     shapeId: 'one-off',
-    placementPolicy: 'fixed',
     entryRoute: '/sub-games/jaunt-cave/main',
     lifecycle: {
       completion: { event: 'Player confirms return from the victory screen', idempotent: true },

@@ -1,3 +1,15 @@
+> **SUPERSEDED — DO NOT IMPLEMENT AGAINST THIS DOCUMENT.**
+> This spec has been fully superseded by three documents in docs/:
+>
+> - `ENCOUNTER_CONTENT_PATTERN.md` — the generic shape-agnostic contract
+> - `WORD_GRID_ENCOUNTER_CONTENT_SPEC.md` — word-grid's specific content schema
+> - `GAMEBOARD_MANIFEST_SPEC.md` — placement, catalogs, and the real manifest
+>
+> This file is kept for historical context only. In particular, its
+> `placementPolicy` concept and its "EncounterManifest" naming for per-shape
+> content are incorrect and were removed in the superseding documents — do not
+> reintroduce either.
+
 # Encounter Manifest & Layout Generation — Requirements Spec (v4)
 
 **Status:** Implementation-ready

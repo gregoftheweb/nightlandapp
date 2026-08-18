@@ -1,6 +1,5 @@
 import type { SubGameInstanceDefinition } from '../subGames'
 
-export type EncounterPlacementPolicy = 'generated' | 'fixed'
 export type RewardKind = 'item' | 'weapon' | 'effect' | 'ability'
 
 export interface EncounterInstanceRoutes {

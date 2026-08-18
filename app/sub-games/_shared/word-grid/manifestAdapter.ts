@@ -11,12 +11,7 @@ import type { SubGameLifecycleConfig } from '@config/types/subGames'
 import { weaponsCatalog } from '@config/weapons'
 
 import type { WordGridConfig } from './types'
-import type {
-  EncounterManifest,
-  WordGridLifecycleConfig,
-  WordGridManifestEntry,
-  WordGridPresentationManifest,
-} from './manifestTypes'
+import type { WordGridEncounterContent } from './content'
 import { WORD_GRID_ASSETS, type WordGridAssetCatalog } from './assetCatalog'
 
 const INSTANCE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -31,23 +26,11 @@ const REVISIT_POLICIES = new Set([
 const REWARD_KINDS = new Set<RewardKind>(['item', 'weapon', 'effect', 'ability'])
 const WORD_GRID_EFFECT_REWARDS = new Set(['hide', 'soulsuck'])
 const WORD_GRID_ABILITY_REWARDS = new Set(['unlock_hide_ability', 'jaunt'])
-const DEFAULT_HARDCODED_INSTANCE_IDS = new Set([
-  'jaunt-cave',
-  'deep-silo',
-  'hermit-hollow',
-  'aerowreckage-puzzle',
-])
-
 type UnknownRecord = Record<string, unknown>
 
 export interface WordGridAdapterOptions {
   assets?: WordGridAssetCatalog
   validateReward?: (id: string, kind: RewardKind) => boolean
-}
-
-export interface WordGridManifestValidationOptions extends WordGridAdapterOptions {
-  reservedInstanceIds?: ReadonlySet<string>
-  fixedPlacementInstanceIds?: ReadonlySet<string>
 }
 
 const isRecord = (value: unknown): value is UnknownRecord =>
@@ -340,7 +323,7 @@ function validatePresentation(value: unknown, errors: ValidationError[]): void {
   }
 }
 
-function referencedAssetIds(entry: UnknownRecord): Array<{ path: string; value: unknown }> {
+function referencedAssetIds(entry: UnknownRecord): { path: string; value: unknown }[] {
   const metadata = isRecord(entry.metadata) ? entry.metadata : {}
   const content = isRecord(entry.content) ? entry.content : {}
   const presentation = isRecord(entry.presentation) ? entry.presentation : {}
@@ -395,15 +378,6 @@ export function createWordGridShapeAdapter(
       if (entry.shapeId !== 'word-grid') {
         addError(errors, 'unknown-shape-id', 'shapeId', "shapeId must be 'word-grid'")
       }
-      if (entry.placementPolicy !== 'generated' && entry.placementPolicy !== 'fixed') {
-        addError(
-          errors,
-          'invalid-placement-policy',
-          'placementPolicy',
-          'placementPolicy must be generated or fixed'
-        )
-      }
-
       const metadata = isRecord(entry.metadata) ? entry.metadata : null
       if (!metadata) {
         addError(errors, 'invalid-metadata', 'metadata', 'metadata must be an object')
@@ -416,6 +390,21 @@ export function createWordGridShapeAdapter(
           'invalid-metadata-description'
         )
         validateRequiredText(metadata.entranceAssetId, 'metadata.entranceAssetId', errors)
+        const entranceFootprint = metadata.entranceFootprint
+        if (
+          !isRecord(entranceFootprint) ||
+          !isFiniteNumber(entranceFootprint.width) ||
+          !isFiniteNumber(entranceFootprint.height) ||
+          entranceFootprint.width <= 0 ||
+          entranceFootprint.height <= 0
+        ) {
+          addError(
+            errors,
+            'invalid-entrance-footprint',
+            'metadata.entranceFootprint',
+            'entranceFootprint must have positive finite width and height'
+          )
+        }
         validateRequiredText(metadata.ctaLabel, 'metadata.ctaLabel', errors)
       }
 
@@ -562,7 +551,7 @@ export function createWordGridShapeAdapter(
 
       if (errors.length > 0) return { success: false, errors }
 
-      const typedEntry = entry as unknown as WordGridManifestEntry
+      const typedEntry = entry as unknown as WordGridEncounterContent
       const boardAsset = assets[typedEntry.content.assetId]
       const introAsset = assets[typedEntry.presentation.intro.assetId]
       const failureAsset = assets[typedEntry.presentation.failure.assetId]
@@ -619,7 +608,6 @@ export function createWordGridShapeAdapter(
           definition: {
             instanceId: typedEntry.instanceId,
             shapeId: 'word-grid',
-            placementPolicy: typedEntry.placementPolicy,
             entryRoute: routes.entry,
             lifecycle: typedEntry.lifecycle as SubGameLifecycleConfig,
             title: typedEntry.metadata.title,
@@ -635,91 +623,11 @@ export function createWordGridShapeAdapter(
   return adapter
 }
 
-export function validateWordGridManifest(
-  manifest: unknown,
-  options: WordGridManifestValidationOptions = {}
-): ValidationResult<ParsedEncounter<WordGridConfig>[]> {
-  const errors: ValidationError[] = []
-  if (!isRecord(manifest)) {
-    return {
-      success: false,
-      errors: [{ code: 'invalid-manifest', path: '', message: 'Manifest must be an object' }],
-    }
-  }
-
-  validateRequiredText(manifest.manifestId, 'manifestId', errors, 'invalid-manifest-id')
-  if (!Number.isInteger(manifest.version) || (manifest.version as number) <= 0) {
-    addError(
-      errors,
-      'invalid-manifest-version',
-      'version',
-      'Manifest version must be a positive integer'
-    )
-  }
-  if (!Array.isArray(manifest.instances) || manifest.instances.length === 0) {
-    addError(errors, 'empty-manifest', 'instances', 'Manifest must contain at least one instance')
-    return { success: false, errors }
-  }
-
-  const adapter = createWordGridShapeAdapter(options)
-  const reservedInstanceIds = options.reservedInstanceIds ?? DEFAULT_HARDCODED_INSTANCE_IDS
-  const parsed: ParsedEncounter<WordGridConfig>[] = []
-  const seen = new Set<string>()
-
-  manifest.instances.forEach((entry, index) => {
-    const prefix = `instances[${index}]`
-    const record = isRecord(entry) ? entry : null
-    const instanceId = record && typeof record.instanceId === 'string' ? record.instanceId : ''
-    if (instanceId && seen.has(instanceId)) {
-      addError(
-        errors,
-        'duplicate-instance-id',
-        `${prefix}.instanceId`,
-        `Duplicate manifest instanceId '${instanceId}'`
-      )
-    }
-    if (instanceId) seen.add(instanceId)
-    if (instanceId && reservedInstanceIds.has(instanceId)) {
-      addError(
-        errors,
-        'hardcoded-instance-collision',
-        `${prefix}.instanceId`,
-        `Manifest instanceId '${instanceId}' collides with a hardcoded encounter`
-      )
-    }
-    if (
-      record?.placementPolicy === 'fixed' &&
-      !options.fixedPlacementInstanceIds?.has(instanceId)
-    ) {
-      addError(
-        errors,
-        'missing-fixed-placement',
-        `${prefix}.placementPolicy`,
-        `Fixed manifest instance '${instanceId}' has no supplied level placement`
-      )
-    }
-    if (
-      record?.placementPolicy === 'generated' &&
-      options.fixedPlacementInstanceIds?.has(instanceId)
-    ) {
-      addError(
-        errors,
-        'generated-instance-has-fixed-placement',
-        `${prefix}.placementPolicy`,
-        `Generated manifest instance '${instanceId}' must not have a fixed level placement`
-      )
-    }
-
-    const result = adapter.parse(entry)
-    if (result.success) parsed.push(result.value)
-    else {
-      errors.push(...result.errors.map((error) => ({ ...error, path: `${prefix}.${error.path}` })))
-    }
-  })
-
-  return errors.length > 0 ? { success: false, errors } : { success: true, value: parsed }
+export function validateWordGridContent(
+  content: unknown,
+  options: WordGridAdapterOptions = {}
+): ValidationResult<ParsedEncounter<WordGridConfig>> {
+  return createWordGridShapeAdapter(options).parse(content)
 }
 
 export const wordGridShapeAdapter = createWordGridShapeAdapter()
-
-export type { EncounterManifest, WordGridLifecycleConfig, WordGridPresentationManifest }

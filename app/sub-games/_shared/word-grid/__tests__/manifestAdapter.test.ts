@@ -1,10 +1,6 @@
 import { createWordGridAssetCatalog, type WordGridAssetCatalog } from '../assetCatalog'
-import { createWordGridShapeAdapter, validateWordGridManifest } from '../manifestAdapter'
-import {
-  VALID_WORD_GRID_ENTRY,
-  VALID_WORD_GRID_MANIFEST,
-  invalidManifestFixtures,
-} from '../__fixtures__/manifestFixtures'
+import { createWordGridShapeAdapter, validateWordGridContent } from '../manifestAdapter'
+import { VALID_WORD_GRID_CONTENT, invalidContentFixtures } from '../__fixtures__/manifestFixtures'
 
 const assetRegistrations = ['board', 'entrance', 'intro', 'failure', 'success'].map(
   (assetId, index) => ({
@@ -18,24 +14,19 @@ const builtAssets = createWordGridAssetCatalog(assetRegistrations)
 if (!builtAssets.success) throw new Error('Fixture asset catalog must be valid')
 const assets: WordGridAssetCatalog = builtAssets.value
 
-const baseOptions = {
-  assets,
-  reservedInstanceIds: new Set(['jaunt-cave', 'deep-silo', 'hermit-hollow', 'aerowreckage-puzzle']),
-}
+const baseOptions = { assets }
 
-describe('word-grid manifest schema and adapter', () => {
+describe('word-grid content schema and adapter', () => {
   it('parses a complete valid fixture into registry and renderer configurations', () => {
-    const result = validateWordGridManifest(VALID_WORD_GRID_MANIFEST, baseOptions)
+    const result = validateWordGridContent(VALID_WORD_GRID_CONTENT, baseOptions)
     expect(result.success).toBe(true)
     if (!result.success) return
 
-    expect(result.value).toHaveLength(1)
-    const parsed = result.value[0]
+    const parsed = result.value
     expect(parsed.definition).toEqual(
       expect.objectContaining({
         instanceId: 'fixture-grid-01',
         shapeId: 'word-grid',
-        placementPolicy: 'generated',
         entryRoute: '/sub-games/word-grid/fixture-grid-01',
         title: 'Fixture Grid',
       })
@@ -44,7 +35,7 @@ describe('word-grid manifest schema and adapter', () => {
     expect(parsed.shapeConfig.gridRect).toEqual({ left: 0.1, top: 0.1, right: 0.9, bottom: 0.9 })
     expect(parsed.shapeConfig.presentation.intro.backgroundAsset).toBe(3)
     expect(parsed.shapeConfig.tapFeedback).toEqual(
-      VALID_WORD_GRID_ENTRY.presentation.puzzle.tapFeedback
+      VALID_WORD_GRID_CONTENT.presentation.puzzle.tapFeedback
     )
   })
 
@@ -66,12 +57,12 @@ describe('word-grid manifest schema and adapter', () => {
   })
 
   it('collects all errors from an entry instead of stopping at the first', () => {
-    const invalid = invalidManifestFixtures.invalidRows.make() as Record<string, any>
-    invalid.instances[0].metadata.title = ''
-    invalid.instances[0].content.targetSequence = 'night'
-    invalid.instances[0].content.assetId = 'missing'
+    const invalid = invalidContentFixtures.invalidRows.make() as Record<string, any>
+    invalid.metadata.title = ''
+    invalid.content.targetSequence = 'night'
+    invalid.content.assetId = 'missing'
 
-    const result = validateWordGridManifest(invalid, baseOptions)
+    const result = validateWordGridContent(invalid, baseOptions)
     expect(result.success).toBe(false)
     if (result.success) return
     expect(result.errors.map(({ code }) => code)).toEqual(
@@ -84,14 +75,10 @@ describe('word-grid manifest schema and adapter', () => {
     )
   })
 
-  it.each(Object.entries(invalidManifestFixtures))(
+  it.each(Object.entries(invalidContentFixtures))(
     'rejects the %s fixture with its specific validation error',
-    (name, fixture) => {
-      const options =
-        name === 'generatedHasFixedPlacement'
-          ? { ...baseOptions, fixedPlacementInstanceIds: new Set(['fixture-grid-01']) }
-          : baseOptions
-      const result = validateWordGridManifest(fixture.make(), options)
+    (_name, fixture) => {
+      const result = validateWordGridContent(fixture.make(), baseOptions)
       expect(result.success).toBe(false)
       if (result.success) return
       expect(result.errors.map(({ code }) => code)).toContain(fixture.expectedCode)

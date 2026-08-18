@@ -1,6 +1,6 @@
 import type { ValidationResult } from '@config/types/encounters'
 
-import type { WordGridAssetDefinition, WordGridAssetRegistration } from './manifestTypes'
+import type { WordGridAssetDefinition, WordGridAssetRegistration } from './content'
 
 export type WordGridAssetCatalog = Readonly<Record<string, WordGridAssetDefinition>>
 

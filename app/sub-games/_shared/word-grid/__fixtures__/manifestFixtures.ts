@@ -1,13 +1,13 @@
-import type { EncounterManifest, WordGridManifestEntry } from '../manifestTypes'
+import type { WordGridEncounterContent } from '../content'
 
-export const VALID_WORD_GRID_ENTRY: WordGridManifestEntry = {
+export const VALID_WORD_GRID_CONTENT: WordGridEncounterContent = {
   instanceId: 'fixture-grid-01',
   shapeId: 'word-grid',
-  placementPolicy: 'generated',
   metadata: {
     title: 'Fixture Grid',
     description: 'A valid word-grid fixture.',
     entranceAssetId: 'entrance',
+    entranceFootprint: { width: 4, height: 4 },
     ctaLabel: 'Investigate',
   },
   content: {
@@ -74,251 +74,121 @@ export const VALID_WORD_GRID_ENTRY: WordGridManifestEntry = {
   },
 }
 
-export const VALID_WORD_GRID_MANIFEST: EncounterManifest = {
-  manifestId: 'fixture-word-grids',
-  version: 1,
-  instances: [VALID_WORD_GRID_ENTRY],
+export function cloneContent(): Record<string, any> {
+  return JSON.parse(JSON.stringify(VALID_WORD_GRID_CONTENT))
 }
 
-export function cloneManifest(): Record<string, any> {
-  return JSON.parse(JSON.stringify(VALID_WORD_GRID_MANIFEST))
-}
+const mutate =
+  (change: (content: Record<string, any>) => void): (() => unknown) =>
+  () => {
+    const content = cloneContent()
+    change(content)
+    return content
+  }
 
-export const invalidManifestFixtures: Record<
-  string,
-  { expectedCode: string; make: () => unknown }
-> = {
-  mismatchedRows: {
-    expectedCode: 'invalid-grid-dimensions',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.rows = 3
-      return manifest
+export const invalidContentFixtures: Record<string, { expectedCode: string; make: () => unknown }> =
+  {
+    mismatchedRows: {
+      expectedCode: 'invalid-grid-dimensions',
+      make: mutate((entry) => (entry.content.rows = 3)),
     },
-  },
-  mismatchedColumns: {
-    expectedCode: 'invalid-grid-dimensions',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.columns = 4
-      return manifest
+    mismatchedColumns: {
+      expectedCode: 'invalid-grid-dimensions',
+      make: mutate((entry) => (entry.content.columns = 4)),
     },
-  },
-  invalidCell: {
-    expectedCode: 'invalid-grid-letter',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.letters[0][0] = '<'
-      return manifest
+    invalidCell: {
+      expectedCode: 'invalid-grid-letter',
+      make: mutate((entry) => (entry.content.letters[0][0] = '<')),
     },
-  },
-  invalidGridRect: {
-    expectedCode: 'invalid-grid-rect',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.gridRect.widthPct = 2
-      return manifest
+    invalidGridRect: {
+      expectedCode: 'invalid-grid-rect',
+      make: mutate((entry) => (entry.content.gridRect.widthPct = 2)),
     },
-  },
-  emptyTarget: {
-    expectedCode: 'empty-target-sequence',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.targetSequence = ''
-      return manifest
+    emptyTarget: {
+      expectedCode: 'empty-target-sequence',
+      make: mutate((entry) => (entry.content.targetSequence = '')),
     },
-  },
-  invalidTargetCharacters: {
-    expectedCode: 'invalid-target-sequence',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.targetSequence = 'Night!'
-      return manifest
+    invalidTargetCharacters: {
+      expectedCode: 'invalid-target-sequence',
+      make: mutate((entry) => (entry.content.targetSequence = 'Night!')),
     },
-  },
-  insufficientDistinctLetters: {
-    expectedCode: 'unsolvable-target',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.targetSequence = 'NII'
-      return manifest
+    insufficientDistinctLetters: {
+      expectedCode: 'unsolvable-target',
+      make: mutate((entry) => (entry.content.targetSequence = 'NII')),
     },
-  },
-  unknownBoardAsset: {
-    expectedCode: 'unknown-asset-id',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.assetId = 'missing'
-      return manifest
+    unknownBoardAsset: {
+      expectedCode: 'unknown-asset-id',
+      make: mutate((entry) => (entry.content.assetId = 'missing')),
     },
-  },
-  unknownEntranceAsset: {
-    expectedCode: 'unknown-asset-id',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].metadata.entranceAssetId = 'missing'
-      return manifest
+    unknownEntranceAsset: {
+      expectedCode: 'unknown-asset-id',
+      make: mutate((entry) => (entry.metadata.entranceAssetId = 'missing')),
     },
-  },
-  unknownPresentationAsset: {
-    expectedCode: 'unknown-asset-id',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].presentation.success.assetId = 'missing'
-      return manifest
+    unknownPresentationAsset: {
+      expectedCode: 'unknown-asset-id',
+      make: mutate((entry) => (entry.presentation.success.assetId = 'missing')),
     },
-  },
-  missingLifecycleField: {
-    expectedCode: 'missing-lifecycle-field',
-    make: () => {
-      const manifest = cloneManifest()
-      delete manifest.instances[0].lifecycle.failure
-      return manifest
+    invalidEntranceFootprint: {
+      expectedCode: 'invalid-entrance-footprint',
+      make: mutate((entry) => (entry.metadata.entranceFootprint.width = 0)),
     },
-  },
-  wrongCompletionTrigger: {
-    expectedCode: 'invalid-completion-trigger',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].lifecycle.completion.event = 'screen-mounted'
-      return manifest
+    missingLifecycleField: {
+      expectedCode: 'missing-lifecycle-field',
+      make: mutate((entry) => delete entry.lifecycle.failure),
     },
-  },
-  wrongSaveKey: {
-    expectedCode: 'invalid-save-key',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].lifecycle.progress = {
-        mode: 'async-storage',
-        saveKey: 'copied-key',
-        version: 1,
-        clearOnCompletion: true,
-      }
-      return manifest
+    wrongCompletionTrigger: {
+      expectedCode: 'invalid-completion-trigger',
+      make: mutate((entry) => (entry.lifecycle.completion.event = 'screen-mounted')),
     },
-  },
-  unknownReward: {
-    expectedCode: 'unknown-reward-id',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].lifecycle.reward.id = 'missing-item'
-      return manifest
+    wrongSaveKey: {
+      expectedCode: 'invalid-save-key',
+      make: mutate((entry) => {
+        entry.lifecycle.progress = {
+          mode: 'async-storage',
+          saveKey: 'copied-key',
+          version: 1,
+          clearOnCompletion: true,
+        }
+      }),
     },
-  },
-  unsupportedRewardKind: {
-    expectedCode: 'unsupported-reward-kind',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].lifecycle.reward.kind = 'currency'
-      return manifest
+    unknownReward: {
+      expectedCode: 'unknown-reward-id',
+      make: mutate((entry) => (entry.lifecycle.reward.id = 'missing-item')),
     },
-  },
-  duplicateInstanceId: {
-    expectedCode: 'duplicate-instance-id',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances.push(JSON.parse(JSON.stringify(manifest.instances[0])))
-      return manifest
+    unsupportedRewardKind: {
+      expectedCode: 'unsupported-reward-kind',
+      make: mutate((entry) => (entry.lifecycle.reward.kind = 'currency')),
     },
-  },
-  hardcodedCollision: {
-    expectedCode: 'hardcoded-instance-collision',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].instanceId = 'jaunt-cave'
-      return manifest
+    invalidRows: {
+      expectedCode: 'invalid-grid-size',
+      make: mutate((entry) => (entry.content.rows = 0)),
     },
-  },
-  invalidPlacementPolicy: {
-    expectedCode: 'invalid-placement-policy',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].placementPolicy = 'sometimes'
-      return manifest
+    invalidColumns: {
+      expectedCode: 'invalid-grid-size',
+      make: mutate((entry) => (entry.content.columns = 1.5)),
     },
-  },
-  missingFixedPlacement: {
-    expectedCode: 'missing-fixed-placement',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].placementPolicy = 'fixed'
-      return manifest
+    invalidGap: {
+      expectedCode: 'invalid-gap',
+      make: mutate((entry) => (entry.content.gapPct = -1)),
     },
-  },
-  generatedHasFixedPlacement: {
-    expectedCode: 'generated-instance-has-fixed-placement',
-    make: cloneManifest,
-  },
-  emptyManifest: {
-    expectedCode: 'empty-manifest',
-    make: () => ({ manifestId: 'empty', version: 1, instances: [] }),
-  },
-  invalidVersion: {
-    expectedCode: 'invalid-manifest-version',
-    make: () => ({ ...cloneManifest(), version: 0 }),
-  },
-  invalidRows: {
-    expectedCode: 'invalid-grid-size',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.rows = 0
-      return manifest
+    emptyTitle: {
+      expectedCode: 'invalid-metadata-title',
+      make: mutate((entry) => (entry.metadata.title = ' ')),
     },
-  },
-  invalidColumns: {
-    expectedCode: 'invalid-grid-size',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.columns = 1.5
-      return manifest
+    emptyDescription: {
+      expectedCode: 'invalid-metadata-description',
+      make: mutate((entry) => (entry.metadata.description = '')),
     },
-  },
-  invalidGap: {
-    expectedCode: 'invalid-gap',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].content.gapPct = -1
-      return manifest
+    invalidShape: {
+      expectedCode: 'unknown-shape-id',
+      make: mutate((entry) => (entry.shapeId = 'dialogue')),
     },
-  },
-  emptyTitle: {
-    expectedCode: 'invalid-metadata-title',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].metadata.title = ' '
-      return manifest
+    invalidInstanceId: {
+      expectedCode: 'invalid-instance-id',
+      make: mutate((entry) => (entry.instanceId = 'Bad ID')),
     },
-  },
-  emptyDescription: {
-    expectedCode: 'invalid-metadata-description',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].metadata.description = ''
-      return manifest
+    missingPresentationField: {
+      expectedCode: 'missing-presentation-field',
+      make: mutate((entry) => delete entry.presentation.failure),
     },
-  },
-  invalidShape: {
-    expectedCode: 'unknown-shape-id',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].shapeId = 'dialogue'
-      return manifest
-    },
-  },
-  invalidInstanceId: {
-    expectedCode: 'invalid-instance-id',
-    make: () => {
-      const manifest = cloneManifest()
-      manifest.instances[0].instanceId = 'Bad ID'
-      return manifest
-    },
-  },
-  missingPresentationField: {
-    expectedCode: 'missing-presentation-field',
-    make: () => {
-      const manifest = cloneManifest()
-      delete manifest.instances[0].presentation.failure
-      return manifest
-    },
-  },
-}
+  }
