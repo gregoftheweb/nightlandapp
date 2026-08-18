@@ -7,15 +7,13 @@ import {
   type LifecycleDependencies,
   type SubGameLifecycleConfig,
 } from '../lifecycle'
+import type { SubGameInstanceDefinition } from '@config/subGames'
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock')
 )
 
 const baseConfig = {
-  id: 'test-encounter',
-  shape: 'one-off',
-  entryRoute: '/sub-games/test-encounter/main',
   completion: { event: 'Player confirms success', idempotent: true },
   failure: { exit: 'safe' },
   waypoint: { createsWaypoint: false },
@@ -24,6 +22,16 @@ const baseConfig = {
   reward: { kind: 'none' },
   returnToRpg: { signalRpgResume: true, exitSubGame: true },
 } satisfies SubGameLifecycleConfig
+
+const makeInstance = (config: SubGameLifecycleConfig): SubGameInstanceDefinition => ({
+  instanceId: 'test-encounter',
+  shapeId: 'one-off',
+  entryRoute: '/sub-games/test-encounter/main',
+  lifecycle: config,
+  title: 'Test',
+  description: 'Test instance',
+  introBackgroundImage: 0,
+})
 
 function makeHarness(config: SubGameLifecycleConfig) {
   let state = createInitialGameState()
@@ -51,7 +59,9 @@ function makeHarness(config: SubGameLifecycleConfig) {
   }
 
   return {
-    controller: createSubGameLifecycleController(config, dependencies),
+    controller: createSubGameLifecycleController('test-encounter', dependencies, () =>
+      makeInstance(config)
+    ),
     getState: () => state,
     dispatch,
     signalRpgResume,
@@ -110,7 +120,7 @@ describe('sub-game lifecycle controller', () => {
 
     await harness.controller.failSubGame()
 
-    expect(harness.getState().subGamesCompleted?.[baseConfig.id]).not.toBe(true)
+    expect(harness.getState().subGamesCompleted?.['test-encounter']).not.toBe(true)
     expect(harness.dispatch).not.toHaveBeenCalled()
     expect(harness.signalRpgResume).toHaveBeenCalledTimes(1)
     expect(harness.exit).toHaveBeenCalledWith({ completed: false })
@@ -174,11 +184,13 @@ describe('sub-game revisit routing', () => {
     ['unavailable', null],
   ] as const)('resolves %s', (revisit, expected) => {
     const config = { ...baseConfig, revisit } satisfies SubGameLifecycleConfig
-    expect(resolveSubGameEntryRoute(config, true)).toBe(expected)
+    expect(resolveSubGameEntryRoute(makeInstance(config), true)).toBe(expected)
   })
 
   it('always resolves the declared entry route before completion', () => {
     const config = { ...baseConfig, revisit: 'unavailable' } satisfies SubGameLifecycleConfig
-    expect(resolveSubGameEntryRoute(config, false)).toBe(config.entryRoute)
+    expect(resolveSubGameEntryRoute(makeInstance(config), false)).toBe(
+      '/sub-games/test-encounter/main'
+    )
   })
 })

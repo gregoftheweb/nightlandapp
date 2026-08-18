@@ -15,30 +15,7 @@ I must.
 — Persius`
 
 export const tesseractWordGridConfig = {
-  id: 'tesseract',
-  shape: 'word-grid',
-  entryRoute: '/sub-games/tesseract/main',
-  completion: {
-    event: 'Player presses return to the Night Land on the success screen',
-    idempotent: true,
-  },
-  failure: {
-    exit: 'death',
-    message: 'Christos failed to guess the right word.',
-    killerName: 'Ancient Evil',
-    suppressDeathDialog: true,
-    deathRoute: '/death',
-  },
-  waypoint: { createsWaypoint: false },
-  revisit: 'success-screen',
-  progress: { mode: 'local-only' },
-  reward: {
-    kind: 'item',
-    id: 'persius-scroll',
-    grantEvent: 'First entry to the success screen',
-    idempotent: true,
-  },
-  returnToRpg: { signalRpgResume: true, exitSubGame: true },
+  instanceId: 'tesseract-crypt-01',
   boardAsset: require('@assets/images/backgrounds/subgames/tesseract-puzzle-board.webp'),
   intrinsicSize: { width: 1024, height: 972 },
   gridRect: { left: 0.095, top: 0.11, right: 0.9, bottom: 0.87 },

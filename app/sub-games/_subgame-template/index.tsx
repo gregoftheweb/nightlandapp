@@ -3,11 +3,11 @@
 import { useEffect } from 'react'
 import { useRouter } from 'expo-router'
 import { useSubGameLifecycle } from '../_shared'
-import { lifecycleConfig } from './lifecycleConfig'
+import { SUB_GAME_INSTANCE_ID } from './lifecycleConfig'
 
 export default function SubGameTemplateIndex() {
   const router = useRouter()
-  const lifecycle = useSubGameLifecycle(lifecycleConfig)
+  const lifecycle = useSubGameLifecycle(SUB_GAME_INSTANCE_ID)
 
   useEffect(() => {
     const route = lifecycle.resolveEntryRoute()

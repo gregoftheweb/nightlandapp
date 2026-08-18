@@ -7,14 +7,14 @@ import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { useSubGameLifecycle } from '../_shared/lifecycle'
-import { lifecycleConfig } from './lifecycleConfig'
+import { SUB_GAME_INSTANCE_ID } from './lifecycleConfig'
 
 // TODO: Replace with your sub-game's background image
 const bgMain = require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen1.webp')
 
 export default function SubGameTemplateMain() {
   const router = useRouter()
-  const lifecycle = useSubGameLifecycle(lifecycleConfig)
+  const lifecycle = useSubGameLifecycle(SUB_GAME_INSTANCE_ID)
 
   const handleLeaveWithoutExploring = () => {
     void lifecycle.failSubGame()

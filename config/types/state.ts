@@ -67,8 +67,8 @@ export interface GameState {
   lastSaved: Date // Last save timestamp
   playTime: number // Total play time in seconds
   lastAction: string // Last action performed (for debugging)
-  subGamesCompleted?: Record<string, boolean> // Track completed sub-games (tesseract, aerowreck, etc.)
-  waypointSavesCreated?: Record<string, boolean> // Track which waypoint saves have been created (to prevent duplicates)
+  subGamesCompleted?: Record<string, boolean> // Keys are registered instanceIds (plus namespaced effect/reward flags)
+  waypointSavesCreated?: Record<string, boolean> // Lifecycle waypoint markers for instances
 }
 
 /**

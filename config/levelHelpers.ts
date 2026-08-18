@@ -28,7 +28,7 @@ import {
   getNonCollisionTemplate,
 } from './objects'
 import { getGreatPowerTemplate } from './monsters'
-import { getSubGameDefinition, SubGameId } from './subGames'
+import { getSubGameDefinition } from './subGames'
 import { hydrateGreatPower } from '@modules/hydration'
 
 /**
@@ -227,7 +227,7 @@ export function createObjectInstance(
  * pulling entrance definitions from the sub-game registry and merging them
  * with the sub-game's title/description.
  *
- * @param subGameId Sub-game identifier (e.g., 'hermit-hollow')
+ * @param instanceId Stable registered instance identifier (e.g., 'hermit-hollow')
  * @param position Position on the board
  * @param overrides Optional property overrides
  * @returns Complete LevelObjectInstance for the sub-game entrance
@@ -239,20 +239,20 @@ export function createObjectInstance(
  * ```
  */
 export function createSubGameEntranceInstance(
-  subGameId: SubGameId,
+  instanceId: string,
   position: Position,
   overrides: Partial<LevelObjectInstance> = {}
 ): LevelObjectInstance {
-  const subGame = getSubGameDefinition(subGameId)
+  const subGame = getSubGameDefinition(instanceId)
   if (!subGame.entrance) {
-    throw new Error(`Sub-game ${subGameId} does not have an entrance definition`)
+    throw new Error(`Sub-game ${instanceId} does not have an entrance definition`)
   }
 
   const entrance = subGame.entrance
 
   return {
     id: `${entrance.shortName}_${position.row}_${position.col}`,
-    templateId: subGameId, // Use subGameId as templateId for easy lookup
+    templateId: instanceId,
     position,
     active: entrance.active,
     shortName: entrance.shortName,
@@ -267,10 +267,9 @@ export function createSubGameEntranceInstance(
     zIndex: entrance.zIndex,
     effects: entrance.effects,
     subGame: {
-      subGameName: subGameId,
       ctaLabel: entrance.ctaLabel,
       requiresPlayerOnObject: entrance.requiresPlayerOnObject,
-      subGameId: subGameId,
+      instanceId,
     },
     ...overrides,
   }
