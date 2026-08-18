@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   inventoryButtonExpanded: {
     position: 'absolute',
     bottom: 15,
-    right: 122,
+    right: 125,
     zIndex: 20,
   },
 
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   jauntButtonContainer: {
     position: 'absolute',
     bottom: 15,
-    right: 80,
+    right: 75,
     zIndex: 20,
     alignItems: 'center',
   },
