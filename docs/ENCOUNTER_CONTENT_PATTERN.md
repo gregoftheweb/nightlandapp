@@ -36,6 +36,8 @@ interface EncounterInstanceRoutes {
 interface ParsedEncounter<TShapeConfig> {
   definition: SubGameInstanceDefinition // consumed by the existing
   // registry/lifecycle controller
+  // For placeable manifest-authored encounters, definition.entrance
+  // contains the fully validated, asset-resolved board entrance.
   shapeConfig: TShapeConfig // consumed by the shape's own
   // renderer/screens
 }
@@ -62,6 +64,42 @@ interface EncounterShapeAdapter<TRawEntry, TShapeConfig> {
 ```
 
 The lifecycle controller and registry consume `ParsedEncounter.definition` without needing to know which shape (or whether a manifest at all) produced it — this is what keeps gameplay code shape-agnostic.
+
+### Authored board entrance contract
+
+Physical entrance behavior is shape-agnostic. Every manifest-authorable encounter that can be placed on the gameboard declares the following validated entrance data:
+
+```typescript
+interface EncounterEntranceContent {
+  shortName: string
+  category: ObjectCategory
+  assetId: string
+  footprint: { width: number; height: number }
+
+  // Authored initial state. Runtime state may subsequently change without
+  // mutating the content catalog.
+  initialActive: boolean
+
+  zIndex: number
+  effects?: Effect[]
+  ctaLabel: string
+  requiresPlayerOnObject: boolean
+}
+```
+
+These fields describe the entrance object, not its placement. No position, range, slot, or placement policy belongs here.
+
+Each shape adapter resolves `assetId` through that shape's asset catalog and maps the validated entrance into `ParsedEncounter.definition.entrance`:
+
+- `assetId` → `image`
+- `footprint.width` → `width`
+- `footprint.height` → `height`
+- `initialActive` → the runtime entrance's initial `active`
+- all remaining fields are preserved directly
+
+Dynamic object state does not belong in authored content. In particular, current `active` state, effect cooldown timestamps such as `lastTrigger`, position, and placement-specific overrides are runtime/layout state.
+
+Downstream consumers must read the parsed `ParsedEncounter.definition.entrance`; they must not access raw content metadata.
 
 ---
 

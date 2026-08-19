@@ -48,5 +48,35 @@ export function createWordGridAssetCatalog(
     : { success: true, value: Object.freeze(catalog) }
 }
 
-/** Real assets are intentionally added when Tesseract migrates to the manifest. */
-export const WORD_GRID_ASSETS: WordGridAssetCatalog = Object.freeze({})
+const realAssetsResult = createWordGridAssetCatalog([
+  {
+    assetId: 'tesseract-board',
+    image: require('@assets/images/backgrounds/subgames/tesseract-puzzle-board.webp'),
+    // Preserve the calibrated coordinate space used by the current runtime config.
+    intrinsicSize: { width: 1024, height: 972 },
+  },
+  {
+    assetId: 'tesseract-entrance',
+    image: require('@assets/images/sprites/buildings/tesseract-puzzle1.webp'),
+    intrinsicSize: { width: 256, height: 384 },
+  },
+  {
+    assetId: 'tesseract-intro',
+    image: require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen1.webp'),
+    intrinsicSize: { width: 256, height: 384 },
+  },
+  {
+    assetId: 'tesseract-failure',
+    image: require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen3.webp'),
+    intrinsicSize: { width: 256, height: 384 },
+  },
+  {
+    assetId: 'tesseract-success',
+    image: require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen4.webp'),
+    intrinsicSize: { width: 256, height: 384 },
+  },
+])
+
+if (!realAssetsResult.success) throw new Error('The bundled word-grid asset catalog is invalid')
+
+export const WORD_GRID_ASSETS: WordGridAssetCatalog = realAssetsResult.value

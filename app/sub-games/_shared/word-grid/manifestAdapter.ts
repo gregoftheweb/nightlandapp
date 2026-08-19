@@ -26,6 +26,20 @@ const REVISIT_POLICIES = new Set([
 const REWARD_KINDS = new Set<RewardKind>(['item', 'weapon', 'effect', 'ability'])
 const WORD_GRID_EFFECT_REWARDS = new Set(['hide', 'soulsuck'])
 const WORD_GRID_ABILITY_REWARDS = new Set(['unlock_hide_ability', 'jaunt'])
+const ENTRANCE_EFFECT_TYPES = new Set([
+  'heal',
+  'recuperate',
+  'hide',
+  'cloaking',
+  'swarm',
+  'soulsuck',
+  'poison',
+  'showMessage',
+  'unlock_hide_ability',
+  'stun',
+  'teleport',
+  'spawn',
+])
 type UnknownRecord = Record<string, unknown>
 
 export interface WordGridAdapterOptions {
@@ -325,6 +339,7 @@ function validatePresentation(value: unknown, errors: ValidationError[]): void {
 
 function referencedAssetIds(entry: UnknownRecord): { path: string; value: unknown }[] {
   const metadata = isRecord(entry.metadata) ? entry.metadata : {}
+  const entrance = isRecord(metadata.entrance) ? metadata.entrance : {}
   const content = isRecord(entry.content) ? entry.content : {}
   const presentation = isRecord(entry.presentation) ? entry.presentation : {}
   const intro = isRecord(presentation.intro) ? presentation.intro : {}
@@ -332,11 +347,130 @@ function referencedAssetIds(entry: UnknownRecord): { path: string; value: unknow
   const success = isRecord(presentation.success) ? presentation.success : {}
   return [
     { path: 'content.assetId', value: content.assetId },
-    { path: 'metadata.entranceAssetId', value: metadata.entranceAssetId },
+    { path: 'metadata.entrance.assetId', value: entrance.assetId },
     { path: 'presentation.intro.assetId', value: intro.assetId },
     { path: 'presentation.failure.assetId', value: failure.assetId },
     { path: 'presentation.success.assetId', value: success.assetId },
   ]
+}
+
+function validateEntranceEffects(value: unknown, errors: ValidationError[]): void {
+  if (value === undefined) return
+  if (!Array.isArray(value)) {
+    addError(
+      errors,
+      'invalid-entrance-effects',
+      'metadata.entrance.effects',
+      'effects must be an array'
+    )
+    return
+  }
+
+  value.forEach((effect, index) => {
+    const path = `metadata.entrance.effects[${index}]`
+    if (
+      !isRecord(effect) ||
+      typeof effect.type !== 'string' ||
+      !ENTRANCE_EFFECT_TYPES.has(effect.type)
+    ) {
+      addError(
+        errors,
+        'invalid-entrance-effect',
+        path,
+        'Entrance effect must have a supported type'
+      )
+      return
+    }
+
+    if (['heal', 'recuperate', 'poison'].includes(effect.type) && !isFiniteNumber(effect.value)) {
+      addError(
+        errors,
+        'invalid-entrance-effect',
+        `${path}.value`,
+        `${effect.type} requires a finite value`
+      )
+    }
+    if (['cloaking', 'stun'].includes(effect.type) && !isFiniteNumber(effect.duration)) {
+      addError(
+        errors,
+        'invalid-entrance-effect',
+        `${path}.duration`,
+        `${effect.type} requires a finite duration`
+      )
+    }
+    if (effect.type === 'showMessage') {
+      validateRequiredText(effect.message, `${path}.message`, errors, 'invalid-entrance-effect')
+    }
+    if (effect.type === 'swarm' || effect.type === 'spawn') {
+      validateRequiredText(
+        effect.monsterType,
+        `${path}.monsterType`,
+        errors,
+        'invalid-entrance-effect'
+      )
+    }
+    if (
+      effect.type === 'swarm' &&
+      (!isFiniteNumber(effect.count) || !isFiniteNumber(effect.range))
+    ) {
+      addError(errors, 'invalid-entrance-effect', path, 'swarm requires finite count and range')
+    }
+  })
+}
+
+function validateEntrance(value: unknown, errors: ValidationError[]): void {
+  if (!isRecord(value)) {
+    addError(errors, 'invalid-entrance', 'metadata.entrance', 'metadata.entrance must be an object')
+    return
+  }
+
+  validateRequiredText(value.shortName, 'metadata.entrance.shortName', errors)
+  validateRequiredText(value.category, 'metadata.entrance.category', errors)
+  validateRequiredText(value.assetId, 'metadata.entrance.assetId', errors)
+  validateRequiredText(value.ctaLabel, 'metadata.entrance.ctaLabel', errors)
+
+  if (typeof value.initialActive !== 'boolean') {
+    addError(
+      errors,
+      'invalid-entrance-active',
+      'metadata.entrance.initialActive',
+      'initialActive must be a boolean'
+    )
+  }
+  if (!isFiniteNumber(value.zIndex)) {
+    addError(
+      errors,
+      'invalid-entrance-z-index',
+      'metadata.entrance.zIndex',
+      'zIndex must be a finite number'
+    )
+  }
+  if (typeof value.requiresPlayerOnObject !== 'boolean') {
+    addError(
+      errors,
+      'invalid-entrance-launch-policy',
+      'metadata.entrance.requiresPlayerOnObject',
+      'requiresPlayerOnObject must be a boolean'
+    )
+  }
+
+  const footprint = value.footprint
+  if (
+    !isRecord(footprint) ||
+    !isFiniteNumber(footprint.width) ||
+    !isFiniteNumber(footprint.height) ||
+    footprint.width <= 0 ||
+    footprint.height <= 0
+  ) {
+    addError(
+      errors,
+      'invalid-entrance-footprint',
+      'metadata.entrance.footprint',
+      'footprint must have positive finite width and height'
+    )
+  }
+
+  validateEntranceEffects(value.effects, errors)
 }
 
 export function createWordGridShapeAdapter(
@@ -389,23 +523,7 @@ export function createWordGridShapeAdapter(
           errors,
           'invalid-metadata-description'
         )
-        validateRequiredText(metadata.entranceAssetId, 'metadata.entranceAssetId', errors)
-        const entranceFootprint = metadata.entranceFootprint
-        if (
-          !isRecord(entranceFootprint) ||
-          !isFiniteNumber(entranceFootprint.width) ||
-          !isFiniteNumber(entranceFootprint.height) ||
-          entranceFootprint.width <= 0 ||
-          entranceFootprint.height <= 0
-        ) {
-          addError(
-            errors,
-            'invalid-entrance-footprint',
-            'metadata.entranceFootprint',
-            'entranceFootprint must have positive finite width and height'
-          )
-        }
-        validateRequiredText(metadata.ctaLabel, 'metadata.ctaLabel', errors)
+        validateEntrance(metadata.entrance, errors)
       }
 
       const content = isRecord(entry.content) ? entry.content : null
@@ -459,6 +577,35 @@ export function createWordGridShapeAdapter(
         const letters = content.letters
         const rows = content.rows
         const columns = content.columns
+        const nonTargetSymbols = new Set<string>()
+        if (content.nonTargetSymbols !== undefined) {
+          if (!Array.isArray(content.nonTargetSymbols)) {
+            addError(
+              errors,
+              'invalid-non-target-symbol',
+              'content.nonTargetSymbols',
+              'nonTargetSymbols must be an array'
+            )
+          } else {
+            content.nonTargetSymbols.forEach((symbol, index) => {
+              if (
+                typeof symbol !== 'string' ||
+                [...symbol].length !== 1 ||
+                UPPERCASE_ASCII_PATTERN.test(symbol) ||
+                nonTargetSymbols.has(symbol)
+              ) {
+                addError(
+                  errors,
+                  'invalid-non-target-symbol',
+                  `content.nonTargetSymbols[${index}]`,
+                  'Each non-target symbol must be a unique, single, non-A-Z character'
+                )
+              } else {
+                nonTargetSymbols.add(symbol)
+              }
+            })
+          }
+        }
         if (!Array.isArray(letters)) {
           addError(errors, 'invalid-grid-dimensions', 'content.letters', 'letters must be an array')
         } else {
@@ -481,12 +628,15 @@ export function createWordGridShapeAdapter(
               return
             }
             row.forEach((letter, colIndex) => {
-              if (typeof letter !== 'string' || !/^[A-Z]$/.test(letter)) {
+              if (
+                typeof letter !== 'string' ||
+                (!/^[A-Z]$/.test(letter) && !nonTargetSymbols.has(letter))
+              ) {
                 addError(
                   errors,
                   'invalid-grid-letter',
                   `content.letters[${rowIndex}][${colIndex}]`,
-                  'Grid cells must be exactly one uppercase ASCII letter'
+                  'Grid cells must be one uppercase ASCII letter or a declared non-target symbol'
                 )
               }
             })
@@ -552,6 +702,7 @@ export function createWordGridShapeAdapter(
       if (errors.length > 0) return { success: false, errors }
 
       const typedEntry = entry as unknown as WordGridEncounterContent
+      const entranceAsset = assets[typedEntry.metadata.entrance.assetId]
       const boardAsset = assets[typedEntry.content.assetId]
       const introAsset = assets[typedEntry.presentation.intro.assetId]
       const failureAsset = assets[typedEntry.presentation.failure.assetId]
@@ -613,6 +764,18 @@ export function createWordGridShapeAdapter(
             title: typedEntry.metadata.title,
             description: typedEntry.metadata.description,
             introBackgroundImage: introAsset.image,
+            entrance: {
+              shortName: typedEntry.metadata.entrance.shortName,
+              category: typedEntry.metadata.entrance.category,
+              width: typedEntry.metadata.entrance.footprint.width,
+              height: typedEntry.metadata.entrance.footprint.height,
+              image: entranceAsset.image,
+              active: typedEntry.metadata.entrance.initialActive,
+              zIndex: typedEntry.metadata.entrance.zIndex,
+              effects: typedEntry.metadata.entrance.effects,
+              ctaLabel: typedEntry.metadata.entrance.ctaLabel,
+              requiresPlayerOnObject: typedEntry.metadata.entrance.requiresPlayerOnObject,
+            },
           },
           shapeConfig,
         },

@@ -1,7 +1,10 @@
 import { buildParsedCatalog, buildRawCatalog } from '@config/contentCatalog'
+import { SUB_GAMES } from '@config/subGames'
 
 import { createWordGridAssetCatalog } from '../assetCatalog'
+import { parsedWordGridContentResult } from '../contentCatalog'
 import { createWordGridShapeAdapter } from '../manifestAdapter'
+import { tesseractWordGridConfig } from '../../../tesseract/wordGridConfig'
 import {
   cloneContent,
   invalidContentFixtures,
@@ -20,6 +23,64 @@ if (!fixtureAssetsResult.success) throw new Error('Fixture asset catalog must be
 const adapter = createWordGridShapeAdapter({ assets: fixtureAssetsResult.value })
 
 describe('content catalogs', () => {
+  it('parses tesseract-crypt-01 equivalently to the current hardcoded content', () => {
+    expect(parsedWordGridContentResult.success).toBe(true)
+    if (!parsedWordGridContentResult.success) return
+
+    const parsed = parsedWordGridContentResult.value['tesseract-crypt-01']
+    const currentDefinition = SUB_GAMES['tesseract-crypt-01']
+    expect(parsed).toBeDefined()
+
+    const { puzzleRoute, wrongInputOutcome, successOutcome, ...parsedContentConfig } =
+      parsed.shapeConfig
+    const {
+      puzzleRoute: _currentPuzzleRoute,
+      wrongInputOutcome: _currentWrongInputOutcome,
+      successOutcome: _currentSuccessOutcome,
+      ...currentContentConfig
+    } = tesseractWordGridConfig
+
+    expect(parsedContentConfig).toEqual(currentContentConfig)
+    expect(parsed.definition).toEqual(
+      expect.objectContaining({
+        instanceId: currentDefinition.instanceId,
+        shapeId: currentDefinition.shapeId,
+        title: currentDefinition.title,
+        description: currentDefinition.description,
+        introBackgroundImage: currentDefinition.introBackgroundImage,
+      })
+    )
+    expect(parsed.definition.entrance).toEqual(currentDefinition.entrance)
+    expect(parsed.definition.lifecycle.failure).toEqual(currentDefinition.lifecycle.failure)
+    expect(parsed.definition.lifecycle.waypoint).toEqual(currentDefinition.lifecycle.waypoint)
+    expect(parsed.definition.lifecycle.revisit).toBe(currentDefinition.lifecycle.revisit)
+    expect(parsed.definition.lifecycle.progress).toEqual(currentDefinition.lifecycle.progress)
+    expect(parsed.definition.lifecycle.returnToRpg).toEqual(currentDefinition.lifecycle.returnToRpg)
+    expect(parsed.definition.lifecycle.completion).toEqual({
+      event: 'success-confirmed',
+      idempotent: currentDefinition.lifecycle.completion.idempotent,
+    })
+    expect(parsed.definition.lifecycle.reward).toEqual({
+      kind: 'item',
+      id: 'persius-scroll',
+      grantEvent: 'success-screen-entered',
+      idempotent: true,
+    })
+
+    // Tier 1 intentionally produces the future dynamic routes; runtime still uses legacy routes.
+    expect({ puzzleRoute, wrongInputOutcome, successOutcome }).toEqual({
+      puzzleRoute: '/sub-games/word-grid/tesseract-crypt-01/puzzle',
+      wrongInputOutcome: {
+        route: '/sub-games/word-grid/tesseract-crypt-01/failure',
+        delayMs: 500,
+      },
+      successOutcome: {
+        route: '/sub-games/word-grid/tesseract-crypt-01/success',
+        delayMs: 500,
+      },
+    })
+  })
+
   it('builds an immutable parsed catalog from valid raw content', () => {
     const raw = buildRawCatalog([
       { instanceId: VALID_WORD_GRID_CONTENT.instanceId, content: VALID_WORD_GRID_CONTENT },

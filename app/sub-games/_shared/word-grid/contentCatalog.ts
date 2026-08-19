@@ -1,7 +1,8 @@
 import { buildParsedCatalog, buildRawCatalog } from '@config/contentCatalog'
 
 import { VALID_WORD_GRID_CONTENT } from './__fixtures__/manifestFixtures'
-import { createWordGridAssetCatalog } from './assetCatalog'
+import { createWordGridAssetCatalog, WORD_GRID_ASSETS } from './assetCatalog'
+import { tesseractCrypt01Content } from './content/tesseractCrypt01'
 import { createWordGridShapeAdapter } from './manifestAdapter'
 
 const fixtureAssetsResult = createWordGridAssetCatalog(
@@ -21,9 +22,15 @@ const RAW_WORD_GRID_CONTENT = buildRawCatalog([
     instanceId: VALID_WORD_GRID_CONTENT.instanceId,
     content: VALID_WORD_GRID_CONTENT,
   },
+  {
+    instanceId: tesseractCrypt01Content.instanceId,
+    content: tesseractCrypt01Content,
+  },
 ])
 
 export const parsedWordGridContentResult = buildParsedCatalog(
   RAW_WORD_GRID_CONTENT,
-  createWordGridShapeAdapter({ assets: fixtureAssetsResult.value })
+  createWordGridShapeAdapter({
+    assets: Object.freeze({ ...WORD_GRID_ASSETS, ...fixtureAssetsResult.value }),
+  })
 )

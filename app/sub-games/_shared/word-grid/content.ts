@@ -1,5 +1,6 @@
 import type { ImageSourcePropType } from 'react-native'
 
+import type { EncounterEntranceContent } from '@config/types/encounters'
 import type { SubGameLifecycleConfig } from '@config/types/subGames'
 
 export type WordGridCompletionTrigger = 'success-confirmed'
@@ -27,6 +28,8 @@ export interface WordGridContentDetails {
   columns: number
   gapPct: number
   letters: string[][]
+  /** Explicit display/input cells that can never appear in targetSequence. */
+  nonTargetSymbols?: string[]
   targetSequence: string
 }
 
@@ -67,9 +70,7 @@ export interface WordGridEncounterContent {
   metadata: {
     title: string
     description: string
-    entranceAssetId: string
-    entranceFootprint: { width: number; height: number }
-    ctaLabel: string
+    entrance: EncounterEntranceContent
   }
   content: WordGridContentDetails
   lifecycle: WordGridLifecycleConfig
