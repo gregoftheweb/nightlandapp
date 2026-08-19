@@ -228,9 +228,9 @@ interface LayoutEligibleEncounter {
   shapeId: SubGameShapeId
   slot: GameboardSlot
   footprint: { width: number; height: number } // sourced from the
-  // resolved Tier 1
-  // content's
-  // metadata.entranceFootprint
+  // parsed encounter's
+  // definition.entrance
+  // width/height
 }
 
 function generateLayout(

@@ -34,14 +34,7 @@ interface WordGridEncounterContent {
   metadata: {
     title: string
     description: string
-    entranceAssetId: string
-    ctaLabel: string
-    entranceFootprint: { width: number; height: number } // needed by
-    // the layout
-    // generator
-    // for
-    // collision
-    // detection
+    entrance: EncounterEntranceContent
   }
 
   content: WordGridContentDetails
@@ -50,7 +43,11 @@ interface WordGridEncounterContent {
 }
 ```
 
-**Note — `introAssetId` correction:** an earlier draft of this schema included `metadata.introAssetId` while also stating the presentation block was the sole owner of intro/failure/success assets. That was a genuine contradiction, now resolved: **`metadata.introAssetId` does not exist.** The intro screen's asset lives at `presentation.intro.assetId` (§6) — metadata only carries `entranceAssetId` (the board-icon asset shown before entry) plus title/description/CTA/footprint.
+`metadata.entrance` uses the generic `EncounterEntranceContent` contract from `ENCOUNTER_CONTENT_PATTERN.md`. These fields describe the encounter's reusable board-object definition, not where it is placed. Position and other placement rules remain exclusively owned by the gameboard manifest and layout generator.
+
+The word-grid adapter validates the entrance declaration, resolves `entrance.assetId` through the word-grid asset catalog, and emits the resulting `SubGameEntranceDefinition` as `ParsedEncounter.definition.entrance`.
+
+`presentation.intro.assetId` remains the sole owner of the intro-screen asset. `metadata.entrance.assetId` is a different asset: the entrance sprite rendered on the gameboard. The obsolete `metadata.introAssetId` field does not exist.
 
 `wordGridShapeAdapter` implements `EncounterShapeAdapter<RawWordGridEntry, WordGridConfig>` per `ENCOUNTER_CONTENT_PATTERN.md` — see that document for the interface itself.
 
@@ -155,11 +152,11 @@ The adapter's `routes(instanceId)` (defined generically in the pattern doc) retu
 - `letters.length === rows`; every row has exactly `columns` entries; every cell is exactly one uppercase A-Z character
 - `gridRect` values are valid normalized fractions
 - `targetSequence` non-empty, uppercase ASCII only, solvable per §4
-- `assetId` (content) and `entranceAssetId` (metadata) resolve in the word-grid asset catalog (§7); `presentation.intro.assetId`, `presentation.failure.assetId`, `presentation.success.assetId` also resolve there; no duplicate asset-catalog keys
+- `assetId` (content) and `metadata.entrance.assetId` resolve in the word-grid asset catalog (§7); `presentation.intro.assetId`, `presentation.failure.assetId`, `presentation.success.assetId` also resolve there; no duplicate asset-catalog keys
 - `lifecycle` is a complete, valid `WordGridLifecycleConfig`; `saveKey` (if present) matches its canonical form
 - Reward `id` resolves against real catalogs; `kind` is one word-grid supports
 - `rows`/`columns` positive integers; `gapPct` non-negative
-- `metadata.title`/`description` non-empty; `entranceFootprint.width`/`height` positive
+- `metadata.title`/`description` non-empty; the generic `metadata.entrance` declaration is complete and valid, including a positive footprint
 - `presentation.failure.foregroundFit` is exactly `'full-width'` or `'cover'`
 
 ## 10. What's unchanged from the original implementation
@@ -175,7 +172,7 @@ The parser's core logic, grid/lifecycle/reward validation, the solvability check
 5. Delete the stray `EncounterManifest` re-export causing the current lint error.
 6. Remove `metadata.introAssetId` from the schema and any code/fixtures still referencing it (§3).
 7. Restore `foregroundFit`'s typed union (§6) if the current implementation has it as a bare `string`.
-8. Add `entranceFootprint` to `metadata` and to existing fixtures with placeholder dimensions (real dimensions to be filled in during gameboard/layout work).
+8. Add the entrance footprint to `metadata.entrance` and to existing fixtures with placeholder dimensions (real dimensions to be filled in during gameboard/layout work).
 9. Confirm `tsc --noEmit`, `pnpm lint`, and the full test suite are clean, with no change to Tesseract's still-hardcoded runtime behavior.
 
 ---

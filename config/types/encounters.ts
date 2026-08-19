@@ -1,6 +1,20 @@
 import type { SubGameInstanceDefinition } from '../subGames'
+import type { Effect } from './effects'
+import type { ObjectCategory } from './primitives'
 
 export type RewardKind = 'item' | 'weapon' | 'effect' | 'ability'
+
+export interface EncounterEntranceContent {
+  shortName: string
+  category: ObjectCategory
+  assetId: string
+  footprint: { width: number; height: number }
+  initialActive: boolean
+  zIndex: number
+  effects?: Effect[]
+  ctaLabel: string
+  requiresPlayerOnObject: boolean
+}
 
 export interface EncounterInstanceRoutes {
   entry: string

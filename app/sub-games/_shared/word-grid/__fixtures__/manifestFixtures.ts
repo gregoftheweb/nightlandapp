@@ -6,9 +6,17 @@ export const VALID_WORD_GRID_CONTENT: WordGridEncounterContent = {
   metadata: {
     title: 'Fixture Grid',
     description: 'A valid word-grid fixture.',
-    entranceAssetId: 'entrance',
-    entranceFootprint: { width: 4, height: 4 },
-    ctaLabel: 'Investigate',
+    entrance: {
+      shortName: 'fixtureGrid',
+      category: 'building',
+      assetId: 'entrance',
+      footprint: { width: 4, height: 4 },
+      initialActive: true,
+      zIndex: 0,
+      effects: [{ type: 'hide' }],
+      ctaLabel: 'Investigate',
+      requiresPlayerOnObject: true,
+    },
   },
   content: {
     assetId: 'board',
@@ -122,7 +130,7 @@ export const invalidContentFixtures: Record<string, { expectedCode: string; make
     },
     unknownEntranceAsset: {
       expectedCode: 'unknown-asset-id',
-      make: mutate((entry) => (entry.metadata.entranceAssetId = 'missing')),
+      make: mutate((entry) => (entry.metadata.entrance.assetId = 'missing')),
     },
     unknownPresentationAsset: {
       expectedCode: 'unknown-asset-id',
@@ -130,7 +138,15 @@ export const invalidContentFixtures: Record<string, { expectedCode: string; make
     },
     invalidEntranceFootprint: {
       expectedCode: 'invalid-entrance-footprint',
-      make: mutate((entry) => (entry.metadata.entranceFootprint.width = 0)),
+      make: mutate((entry) => (entry.metadata.entrance.footprint.width = 0)),
+    },
+    invalidEntranceActive: {
+      expectedCode: 'invalid-entrance-active',
+      make: mutate((entry) => (entry.metadata.entrance.initialActive = 'yes')),
+    },
+    invalidEntranceEffect: {
+      expectedCode: 'invalid-entrance-effect',
+      make: mutate((entry) => (entry.metadata.entrance.effects = [{ type: 'unknown' }])),
     },
     missingLifecycleField: {
       expectedCode: 'missing-lifecycle-field',
