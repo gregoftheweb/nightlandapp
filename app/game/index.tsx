@@ -27,7 +27,6 @@ import {
 import { audioManager } from '../../modules/audioManager'
 import { settingsManager } from '../../modules/settingsManager'
 import { UI_CONSTANTS, TIMING_CONSTANTS } from '../../constants/Game'
-import { findNearestMonster } from '../../modules/monsterUtils'
 import {
   executeRangedAttack,
   processRangedAttackImpact,
@@ -35,6 +34,10 @@ import {
 } from '../../modules/combat'
 import { enterSubGame } from '../../modules/subGames'
 import { calculateGameViewport } from '../../modules/viewport'
+import {
+  findNearestMonsterInEquippedRangedWeaponRange,
+  isMonsterInEquippedRangedWeaponRange,
+} from '../../modules/weaponStats'
 
 type Direction = 'up' | 'down' | 'left' | 'right' | 'stay' | null
 
@@ -352,6 +355,13 @@ export default function Game() {
       if (!showInfoRef.current) return
       // Don't show info dialog if in ranged attack mode (player is targeting/retargeting)
       if (state.rangedAttackMode) {
+        if (!isMonsterInEquippedRangedWeaponRange(state, monster)) {
+          dispatch({
+            type: 'ADD_COMBAT_LOG',
+            payload: { message: `${monster.name || 'Target'} is out of range.` },
+          })
+          return
+        }
         // In ranged mode, retarget instead
         dispatch({
           type: 'SET_TARGET_MONSTER',
@@ -367,7 +377,7 @@ export default function Game() {
         monsterImage
       )
     },
-    [state.rangedAttackMode, dispatch]
+    [state, dispatch]
   )
 
   const showGreatPowerInfo = useCallback((greatPower: GreatPower) => {
@@ -476,6 +486,13 @@ export default function Game() {
 
         // If tapping on a monster, retarget to it (don't clear mode, don't navigate)
         if (objectAtPoint && objectAtPoint.type === 'monster') {
+          if (!isMonsterInEquippedRangedWeaponRange(state, objectAtPoint.data)) {
+            dispatch({
+              type: 'ADD_COMBAT_LOG',
+              payload: { message: `${objectAtPoint.data.name || 'Target'} is out of range.` },
+            })
+            return
+          }
           if (__DEV__) {
             console.log(
               'Retargeting to monster:',
@@ -545,6 +562,13 @@ export default function Game() {
     (monster: Monster) => {
       // If in ranged attack mode, retarget to the tapped monster
       if (state.rangedAttackMode) {
+        if (!isMonsterInEquippedRangedWeaponRange(state, monster)) {
+          dispatch({
+            type: 'ADD_COMBAT_LOG',
+            payload: { message: `${monster.name || 'Target'} is out of range.` },
+          })
+          return
+        }
         if (__DEV__) {
           console.log('Retargeting to:', monster.name, 'ID:', monster.id)
         }
@@ -563,7 +587,7 @@ export default function Game() {
         setTargetId(monster.id)
       }
     },
-    [state.inCombat, state.rangedAttackMode, dispatch]
+    [state, dispatch]
   )
 
   const handleGreatPowerTap = useCallback((_greatPower: GreatPower) => {}, [])
@@ -798,7 +822,7 @@ export default function Game() {
     if (!state.rangedAttackMode) {
       // Get all living monsters (both active and in attack slots)
       const allMonsters = [...state.activeMonsters, ...state.attackSlots]
-      const nearestMonster = findNearestMonster(state.player.position, allMonsters)
+      const nearestMonster = findNearestMonsterInEquippedRangedWeaponRange(state, allMonsters)
 
       if (!nearestMonster) {
         // No enemies available
@@ -842,7 +866,7 @@ export default function Game() {
         // No target selected (maybe previous target died)
         // Try to auto-target the nearest monster
         const allMonsters = [...state.activeMonsters, ...state.attackSlots]
-        const nearestMonster = findNearestMonster(state.player.position, allMonsters)
+        const nearestMonster = findNearestMonsterInEquippedRangedWeaponRange(state, allMonsters)
 
         if (!nearestMonster) {
           // No enemies available at all

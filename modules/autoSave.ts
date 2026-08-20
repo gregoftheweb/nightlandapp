@@ -176,6 +176,7 @@ export function hasSaveRelevantChanges(
     previousState.player.currentHP !== currentState.player.currentHP ||
     previousState.player.inventory.length !== currentState.player.inventory.length ||
     previousState.player.weapons.length !== currentState.player.weapons.length ||
+    previousState.weaponUpgrades !== currentState.weaponUpgrades ||
     previousState.moveCount !== currentState.moveCount ||
     previousState.subGamesCompleted !== currentState.subGamesCompleted ||
     previousState.waypointSavesCreated !== currentState.waypointSavesCreated ||

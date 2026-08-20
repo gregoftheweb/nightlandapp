@@ -85,6 +85,7 @@ describe('getObjectAtPoint', () => {
       objects: [],
       levels: { '1': mockLevel },
       weapons: [],
+      weaponUpgrades: {},
       monsters: [],
       gridWidth: 400,
       gridHeight: 400,
