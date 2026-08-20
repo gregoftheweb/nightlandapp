@@ -401,9 +401,9 @@ One parser/validator per shape, invoked identically by a Jest/CI test (the real 
 
 1. **Audit and finalize `WordGridPresentationManifest`** against the real screens in `app/sub-games/_shared/word-grid/screens.tsx` and Tesseract's current presentation content. Update this doc's §4.7 with the real, final field list before writing the parser against it.
 2. Implement the word-grid shape adapter (`parse`, `routes`, `validateRewardId`) and the shared validator function (§8.3's full checklist), used by both a Jest test and on-device catalog construction. Test against hand-written fixture manifests — valid and deliberately invalid.
-3. Move Tesseract's existing content into the manifest format, with `placementPolicy: 'fixed'` (its placement is not yet generated). This removes `tesseract-crypt-01` from the hardcoded registry — it now exists only via the manifest. Confirm it plays identically to today's hardcoded version.
+3. Move Tesseract's existing content into the manifest format, with `placementPolicy: 'fixed'` (its placement is not yet generated). This removes `word-tile-crypt-01` from the hardcoded registry — it now exists only via the manifest. Confirm it plays identically to today's hardcoded version.
 4. Build `generateLayout` (§6.3) and placement validation (§6.4). Wire manifest-sourced `'generated'` instances through it into `GameState` + save, including `EncounterCatalogIdentity` persistence and the load-time compatibility check (§7).
-5. Author `tesseract-crypt-02` as a second manifest entry with `placementPolicy: 'generated'` — **the actual proof word-grid is a reusable shape**, and the first real instance to go through the layout generator.
+5. Author `word-tile-crypt-02` as a second manifest entry with `placementPolicy: 'generated'` — **the actual proof word-grid is a reusable shape**, and the first real instance to go through the layout generator.
 6. Author several more instances, including at least one new asset, to stress-test the full authoring workflow.
 7. Only after all of the above: design the real trail/placement algorithm as its own spec, replacing `generateLayout`'s internals only.
 

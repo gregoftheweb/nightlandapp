@@ -1,4 +1,5 @@
 import { parsedWordGridContentResult } from '@/app/sub-games/_shared/word-grid/contentCatalog'
+import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
 import { createSubGameEntranceInstance } from '@config/levelHelpers'
 import { getSubGameDefinition } from '@config/subGames'
 import type {
@@ -320,9 +321,19 @@ export function generateLayout(
 export function placementsToLevelObjects(
   placements: readonly EncounterPlacement[]
 ): LevelObjectInstance[] {
-  return placements.map((placement) =>
-    createSubGameEntranceInstance(placement.instanceId, placement.position, {
-      id: placement.occupancyId,
-    })
-  )
+  return placements.map((placement) => {
+    const slot = GAMEBOARD_MANIFEST.slots.find((candidate) =>
+      candidate.kind === 'scattered-group'
+        ? candidate.instances.includes(placement.instanceId)
+        : candidate.contentRef === placement.instanceId
+    )
+    if (!slot) throw new Error(`No manifest slot found for '${placement.instanceId}'`)
+    const definition = REAL_PARSED_CONTENT_CATALOGS.resolve(slot.shapeId, placement.instanceId)
+    return createSubGameEntranceInstance(
+      placement.instanceId,
+      placement.position,
+      { id: placement.occupancyId },
+      definition
+    )
+  })
 }

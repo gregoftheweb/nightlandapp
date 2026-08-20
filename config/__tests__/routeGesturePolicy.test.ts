@@ -15,9 +15,10 @@ describe('iOS route gesture policy', () => {
     'sub-games/deep-silo/switch-animation',
     'sub-games/hermit-hollow/main',
     'sub-games/jaunt-cave/screen2',
-    'sub-games/tesseract/screen2',
-    'sub-games/tesseract/screen3',
-    'sub-games/tesseract/screen4',
+    'sub-games/word-grid/[instanceId]/puzzle',
+    'sub-games/word-grid/[instanceId]/failure',
+    'sub-games/word-grid/[instanceId]/success',
+    'sub-games/word-grid/[instanceId]/aftermath',
   ])('protects the one-way, timed, battle, or transactional route %s', (routeName) => {
     expect(isIOSBackGestureEnabled(routeName)).toBe(false)
   })

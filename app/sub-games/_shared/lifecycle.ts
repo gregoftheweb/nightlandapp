@@ -55,9 +55,13 @@ export function resolveSubGameEntryRoute(
     case 'resume':
       return instance.entryRoute
     case 'success-screen':
-      return `${routeDirectory(instance.entryRoute)}/success`
+      return instance.shapeId === 'word-grid'
+        ? `${instance.entryRoute}/success`
+        : `${routeDirectory(instance.entryRoute)}/success`
     case 'aftermath-screen':
-      return `${routeDirectory(instance.entryRoute)}/aftermath`
+      return instance.shapeId === 'word-grid'
+        ? `${instance.entryRoute}/aftermath`
+        : `${routeDirectory(instance.entryRoute)}/aftermath`
     case 'unavailable':
       return null
   }
@@ -303,7 +307,8 @@ export function createSubGameLifecycleController<TProgress = unknown>(
 }
 
 export function useSubGameLifecycle<TProgress = unknown>(
-  instanceId: string
+  instanceId: string,
+  resolveInstance: (instanceId: string) => SubGameInstanceDefinition = getSubGameDefinition
 ): SubGameLifecycleController<TProgress> {
   const { state, dispatch, signalRpgResume } = useGameContext()
   const stateRef = useRef(state)
@@ -316,17 +321,21 @@ export function useSubGameLifecycle<TProgress = unknown>(
     throw new Error('Sub-game lifecycle instanceId must remain stable for a mounted controller')
   }
 
-  controllerRef.current ??= createSubGameLifecycleController<TProgress>(instanceId, {
-    getState: () => stateRef.current,
-    dispatch,
-    signalRpgResume,
-    exit: exitSubGame,
-    saveWaypoint,
-    getProgress: getSubGameSave,
-    setProgress: setSubGameSave,
-    clearProgress: clearSubGameSave,
-    navigateToDeath: (route) => router.replace(route as never),
-  })
+  controllerRef.current ??= createSubGameLifecycleController<TProgress>(
+    instanceId,
+    {
+      getState: () => stateRef.current,
+      dispatch,
+      signalRpgResume,
+      exit: exitSubGame,
+      saveWaypoint,
+      getProgress: getSubGameSave,
+      setProgress: setSubGameSave,
+      clearProgress: clearSubGameSave,
+      navigateToDeath: (route) => router.replace(route as never),
+    },
+    resolveInstance
+  )
 
   return useMemo(() => controllerRef.current!, [])
 }

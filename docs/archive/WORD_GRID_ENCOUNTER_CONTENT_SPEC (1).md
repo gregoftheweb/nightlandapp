@@ -28,7 +28,7 @@
 
 ```typescript
 interface WordGridEncounterContent {
-  instanceId: string // stable, kebab-case, e.g. 'tesseract-crypt-02'
+  instanceId: string // stable, kebab-case, e.g. 'word-tile-crypt-02'
   shapeId: 'word-grid'
 
   metadata: {

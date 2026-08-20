@@ -1,10 +1,11 @@
 import { buildParsedCatalog, buildRawCatalog } from '@config/contentCatalog'
-import { SUB_GAMES } from '@config/subGames'
+import { collectible, SALAMANDER_LETTER_TEXT } from '@config/objects'
 
 import { createWordGridAssetCatalog } from '../assetCatalog'
 import { parsedWordGridContentResult } from '../contentCatalog'
 import { createWordGridShapeAdapter } from '../manifestAdapter'
-import { tesseractWordGridConfig } from '../../../tesseract/wordGridConfig'
+import { wordTileCrypt01Content } from '../content/wordTileCrypt01'
+import { wordTileCrypt02Content } from '../content/wordTileCrypt02'
 import {
   cloneContent,
   invalidContentFixtures,
@@ -23,42 +24,93 @@ if (!fixtureAssetsResult.success) throw new Error('Fixture asset catalog must be
 const adapter = createWordGridShapeAdapter({ assets: fixtureAssetsResult.value })
 
 describe('content catalogs', () => {
-  it('parses tesseract-crypt-01 equivalently to the current hardcoded content', () => {
+  it('parses the solvable SALAMANDER encounter with its lifecycle and registered reward', () => {
     expect(parsedWordGridContentResult.success).toBe(true)
     if (!parsedWordGridContentResult.success) return
 
-    const parsed = parsedWordGridContentResult.value['tesseract-crypt-01']
-    const currentDefinition = SUB_GAMES['tesseract-crypt-01']
+    const parsed = parsedWordGridContentResult.value['word-tile-crypt-02']
     expect(parsed).toBeDefined()
-
-    const { puzzleRoute, wrongInputOutcome, successOutcome, ...parsedContentConfig } =
-      parsed.shapeConfig
-    const {
-      puzzleRoute: _currentPuzzleRoute,
-      wrongInputOutcome: _currentWrongInputOutcome,
-      successOutcome: _currentSuccessOutcome,
-      ...currentContentConfig
-    } = tesseractWordGridConfig
-
-    expect(parsedContentConfig).toEqual(currentContentConfig)
-    expect(parsed.definition).toEqual(
+    expect(wordTileCrypt02Content.content.assetId).toBe('word-grid-board-blank')
+    expect(wordTileCrypt02Content.content.rows).toBe(5)
+    expect(wordTileCrypt02Content.content.columns).toBe(5)
+    expect(parsed.shapeConfig.targetSequence).toEqual('SALAMANDER'.split(''))
+    expect(parsed.definition.lifecycle).toEqual(
       expect.objectContaining({
-        instanceId: currentDefinition.instanceId,
-        shapeId: currentDefinition.shapeId,
-        title: currentDefinition.title,
-        description: currentDefinition.description,
-        introBackgroundImage: currentDefinition.introBackgroundImage,
+        failure: {
+          exit: 'death',
+          message: 'Christos failed to spell SALAMANDER.',
+          killerName: 'Ancient Evil',
+          suppressDeathDialog: true,
+          deathRoute: '/death',
+        },
+        waypoint: { createsWaypoint: false },
+        revisit: 'success-screen',
+        progress: { mode: 'local-only' },
+        reward: {
+          kind: 'item',
+          id: 'salamander-letter',
+          grantEvent: 'success-screen-entered',
+          idempotent: true,
+        },
       })
     )
-    expect(parsed.definition.entrance).toEqual(currentDefinition.entrance)
-    expect(parsed.definition.lifecycle.failure).toEqual(currentDefinition.lifecycle.failure)
-    expect(parsed.definition.lifecycle.waypoint).toEqual(currentDefinition.lifecycle.waypoint)
-    expect(parsed.definition.lifecycle.revisit).toBe(currentDefinition.lifecycle.revisit)
-    expect(parsed.definition.lifecycle.progress).toEqual(currentDefinition.lifecycle.progress)
-    expect(parsed.definition.lifecycle.returnToRpg).toEqual(currentDefinition.lifecycle.returnToRpg)
+
+    const availableCounts = wordTileCrypt02Content.content.letters
+      .flat()
+      .reduce<Record<string, number>>((counts, letter) => {
+        counts[letter] = (counts[letter] ?? 0) + 1
+        return counts
+      }, {})
+    const requiredCounts = 'SALAMANDER'
+      .split('')
+      .reduce<Record<string, number>>((counts, letter) => {
+        counts[letter] = (counts[letter] ?? 0) + 1
+        return counts
+      }, {})
+    expect(requiredCounts.A).toBe(3)
+    Object.entries(requiredCounts).forEach(([letter, required]) => {
+      expect(availableCounts[letter]).toBeGreaterThanOrEqual(required)
+    })
+
+    expect(collectible.salamanderLetter).toEqual(
+      expect.objectContaining({
+        shortName: 'salamanderLetter',
+        name: "The Salamander's Letter",
+        effects: [{ type: 'showMessage', message: SALAMANDER_LETTER_TEXT }],
+      })
+    )
+    expect(wordTileCrypt02Content.presentation.success.rewardModalText).toBe(SALAMANDER_LETTER_TEXT)
+  })
+
+  it('parses word-tile-crypt-01 from authored content', () => {
+    expect(parsedWordGridContentResult.success).toBe(true)
+    if (!parsedWordGridContentResult.success) return
+
+    const parsed = parsedWordGridContentResult.value['word-tile-crypt-01']
+    expect(parsed).toBeDefined()
+    expect(wordTileCrypt01Content.content.assetId).toBe('word-grid-board-blank')
+
+    const { puzzleRoute, wrongInputOutcome, successOutcome } = parsed.shapeConfig
+    expect(parsed.shapeConfig.letters).toEqual(wordTileCrypt01Content.content.letters)
+    expect(parsed.shapeConfig.targetSequence).toEqual('TESSERACT'.split(''))
+    expect(parsed.definition).toEqual(
+      expect.objectContaining({
+        instanceId: 'word-tile-crypt-01',
+        shapeId: 'word-grid',
+        title: wordTileCrypt01Content.metadata.title,
+        description: wordTileCrypt01Content.metadata.description,
+      })
+    )
+    expect(parsed.definition.lifecycle.failure).toEqual(wordTileCrypt01Content.lifecycle.failure)
+    expect(parsed.definition.lifecycle.waypoint).toEqual(wordTileCrypt01Content.lifecycle.waypoint)
+    expect(parsed.definition.lifecycle.revisit).toBe(wordTileCrypt01Content.lifecycle.revisit)
+    expect(parsed.definition.lifecycle.progress).toEqual(wordTileCrypt01Content.lifecycle.progress)
+    expect(parsed.definition.lifecycle.returnToRpg).toEqual(
+      wordTileCrypt01Content.lifecycle.returnToRpg
+    )
     expect(parsed.definition.lifecycle.completion).toEqual({
       event: 'success-confirmed',
-      idempotent: currentDefinition.lifecycle.completion.idempotent,
+      idempotent: true,
     })
     expect(parsed.definition.lifecycle.reward).toEqual({
       kind: 'item',
@@ -67,15 +119,15 @@ describe('content catalogs', () => {
       idempotent: true,
     })
 
-    // Tier 1 intentionally produces the future dynamic routes; runtime still uses legacy routes.
+    // Parsed routes are the real dynamic Expo Router URLs used at runtime.
     expect({ puzzleRoute, wrongInputOutcome, successOutcome }).toEqual({
-      puzzleRoute: '/sub-games/word-grid/tesseract-crypt-01/puzzle',
+      puzzleRoute: '/sub-games/word-grid/word-tile-crypt-01/puzzle',
       wrongInputOutcome: {
-        route: '/sub-games/word-grid/tesseract-crypt-01/failure',
+        route: '/sub-games/word-grid/word-tile-crypt-01/failure',
         delayMs: 500,
       },
       successOutcome: {
-        route: '/sub-games/word-grid/tesseract-crypt-01/success',
+        route: '/sub-games/word-grid/word-tile-crypt-01/success',
         delayMs: 500,
       },
     })

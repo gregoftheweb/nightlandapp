@@ -5,16 +5,28 @@ import { router } from 'expo-router'
 import { SubGameResult } from '@config/types'
 import { getSubGameDefinition } from '@config/subGames'
 import { logIfDev } from './utils'
+import {
+  parsedWordGridContentResult,
+  WORD_GRID_SHAPE_ADAPTER,
+} from '@/app/sub-games/_shared/word-grid/contentCatalog'
 
 /**
  * Enter a sub-game by navigating to its intro route from the registry
- * @param instanceId - Stable registered encounter identifier (e.g., 'tesseract-crypt-01')
+ * @param instanceId - Stable registered encounter identifier (e.g., 'word-tile-crypt-01')
  * @param context - Optional context data (e.g., objectId)
  */
 export function enterSubGame(instanceId: string, context?: { objectId?: string }) {
   logIfDev(`🎯 Entering sub-game instance: ${instanceId}`, context)
 
-  // Get the sub-game definition from the registry
+  if (
+    parsedWordGridContentResult.success &&
+    parsedWordGridContentResult.value[instanceId]?.definition.shapeId === 'word-grid'
+  ) {
+    router.replace(WORD_GRID_SHAPE_ADAPTER.routes(instanceId).entry as any)
+    return
+  }
+
+  // Non-word-grid shapes still use the legacy registry.
   const definition = getSubGameDefinition(instanceId)
 
   // Navigate to the sub-game's intro route

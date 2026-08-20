@@ -52,8 +52,8 @@ Startup flow: static raw catalog → `adapter.parse()` every entry → collect a
 ```typescript
 // app/sub-games/_shared/word-grid/contentCatalog.ts
 const WORD_GRID_CONTENT_RAW: RawContentCatalog<WordGridEncounterContent> = {
-  'tesseract-crypt-01': tesseractCrypt01,
-  'tesseract-crypt-02': tesseractCrypt02,
+  'word-tile-crypt-01': wordTileCrypt01,
+  'word-tile-crypt-02': wordTileCrypt02,
 }
 ```
 
@@ -152,8 +152,8 @@ const gameboardManifest: GameboardManifest = {
       kind: 'scattered-group',
       placement: { exclude: ['end'] },
       instances: [
-        'tesseract-crypt-01',
-        'tesseract-crypt-02',
+        'word-tile-crypt-01',
+        'word-tile-crypt-02',
         'tesseract-crypt-03',
         'tesseract-crypt-04',
         'tesseract-crypt-05',
@@ -273,9 +273,9 @@ Injecting `path` and `random` explicitly (rather than assuming they exist as hid
 1. Complete the Tier 1 cleanup task (`WORD_GRID_ENCOUNTER_CONTENT_SPEC.md` §10) — renames, `placementPolicy` removal, lint fix. Confirm clean baseline before starting Tier 2/3 work.
 2. Implement Tier 2: raw/parsed catalog split (§2.1), catalog-key-equals-instanceId validation (§2.2), aggregate parse-error reporting.
 3. Implement the `GameboardManifest` types (§3.2) and its validator (§3.4) in `config/gameboardManifest.ts` (or split into `config/types/gameboard.ts` + a data file, your call).
-4. Author the real gameboard manifest matching TODAY's actual game: `range`/`end` slots for the four hardcoded one-offs (rough percentages matching current hand-placed positions), a `scattered-group` for word-grid with `instances: ['tesseract-crypt-01']`. Prove the whole pipeline end-to-end with existing content before adding anything new.
+4. Author the real gameboard manifest matching TODAY's actual game: `range`/`end` slots for the four hardcoded one-offs (rough percentages matching current hand-placed positions), a `scattered-group` for word-grid with `instances: ['word-tile-crypt-01']`. Prove the whole pipeline end-to-end with existing content before adding anything new.
 5. Implement `generateLayout` (§4) against a stub `PathPositionResolver` (linear interpolation between two hardcoded points is fine — real trail geometry is deferred). Wire placements into `GameState` + save, including `GameboardCatalogIdentity` (§3.5).
-6. Author `tesseract-crypt-02`; add it to the scattered group's `instances` — the actual proof this system works for new content.
+6. Author `word-tile-crypt-02`; add it to the scattered group's `instances` — the actual proof this system works for new content.
 7. Only after all of the above: the real trail geometry, more content, more shapes.
 
 ---
