@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Modal,
@@ -9,7 +9,13 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import type { EncounterPlacement, NonCollisionObject, Position } from '@config/types'
+import type {
+  EncounterPlacement,
+  GreatPower,
+  LevelObjectInstance,
+  NonCollisionObject,
+  Position,
+} from '@config/types'
 
 export const DEBUG_MINIMAP_SIZE = 250
 
@@ -23,10 +29,31 @@ interface DebugMinimapProps {
   onClose: () => void
   boardSize: BoardDimensions
   encounterPlacements: readonly EncounterPlacement[]
+  greatPowers: readonly GreatPower[]
+  levelObjects: readonly LevelObjectInstance[]
   nonCollisionObjects: readonly NonCollisionObject[]
   playerPosition: Position
   mapSize?: number
 }
+
+const STATIC_BUILDING_IDS = new Set(['redoubt', 'healingPool', 'poisonPool', 'cursedTotem'])
+
+const LEGEND_ITEMS = [
+  { label: 'Player', color: '#00ff66' },
+  { label: 'Encounters', color: '#ffcc00' },
+  { label: 'Footsteps', color: '#91a0ad' },
+  { label: 'Great Powers', color: '#d65cff' },
+  { label: 'Buildings', color: '#ff7a1a' },
+  { label: 'River', color: '#00d9ff' },
+] as const
+
+interface InspectableMarker {
+  key: string
+  point: { x: number; y: number }
+  info: string
+}
+
+const INSPECTION_RADIUS_PX = 12
 
 export function positionToMinimapPoint(
   position: Position,
@@ -60,11 +87,23 @@ function markerPosition(point: { x: number; y: number }, diameter: number) {
   return { left: point.x - diameter / 2, top: point.y - diameter / 2 }
 }
 
+function footprintCenter(
+  position: Position,
+  footprint: { width: number; height: number }
+): Position {
+  return {
+    row: position.row + footprint.height / 2,
+    col: position.col + footprint.width / 2,
+  }
+}
+
 export default function DebugMinimap({
   visible,
   onClose,
   boardSize,
   encounterPlacements,
+  greatPowers,
+  levelObjects,
   nonCollisionObjects,
   playerPosition,
   mapSize,
@@ -72,8 +111,89 @@ export default function DebugMinimap({
   const { width: screenWidth } = useWindowDimensions()
   const actualMapSize = mapSize ?? screenWidth
   const footsteps = nonCollisionObjects.filter((object) => object.type === 'footstep')
+  const rivers = nonCollisionObjects.filter((object) => object.type === 'river')
+  const staticBuildings = levelObjects.filter((object) => {
+    const identity = typeof object.templateId === 'string' ? object.templateId : object.shortName
+    return STATIC_BUILDING_IDS.has(identity)
+  })
   const playerPoint = positionToMinimapPoint(playerPosition, boardSize, actualMapSize)
-  const [selectedEncounter, setSelectedEncounter] = useState<string | null>(null)
+  const inspectableMarkers = useMemo<InspectableMarker[]>(() => {
+    const markers: InspectableMarker[] = []
+
+    footsteps.forEach((footstep) => {
+      markers.push({
+        key: `footstep-${footstep.id}`,
+        point: positionToMinimapPoint(footstep.position, boardSize, actualMapSize),
+        info: `Footstep\nPosition: (${footstep.position.row}, ${footstep.position.col})\nRotation: ${footstep.rotation}°`,
+      })
+    })
+
+    rivers.forEach((river) => {
+      markers.push({
+        key: `river-${river.id}`,
+        point: positionToMinimapPoint(
+          footprintCenter(river.position, { width: river.width, height: river.height }),
+          boardSize,
+          actualMapSize
+        ),
+        info: `${river.shortName}\nAnchor: (${river.position.row}, ${river.position.col})\nFootprint: ${river.width}×${river.height}`,
+      })
+    })
+
+    staticBuildings.forEach((building) => {
+      if (!building.position) return
+      const footprint = building.size ?? { width: 1, height: 1 }
+      markers.push({
+        key: `building-${building.id}`,
+        point: positionToMinimapPoint(
+          footprintCenter(building.position, footprint),
+          boardSize,
+          actualMapSize
+        ),
+        info: `${building.name || building.shortName}\nPosition: (${building.position.row}, ${building.position.col})\nFootprint: ${footprint.width}×${footprint.height}`,
+      })
+    })
+
+    greatPowers.forEach((greatPower) => {
+      const footprint = { width: greatPower.width ?? 1, height: greatPower.height ?? 1 }
+      markers.push({
+        key: `great-power-${greatPower.id}`,
+        point: positionToMinimapPoint(
+          footprintCenter(greatPower.position, footprint),
+          boardSize,
+          actualMapSize
+        ),
+        info: `${greatPower.name || greatPower.shortName}\nPosition: (${greatPower.position.row}, ${greatPower.position.col})\nFootprint: ${footprint.width}×${footprint.height}\nAwakened: ${greatPower.awakened ? 'yes' : 'no'}`,
+      })
+    })
+
+    encounterPlacements.forEach((placement) => {
+      markers.push({
+        key: `encounter-${placement.occupancyId}`,
+        point: encounterPlacementToMinimapPoint(placement, boardSize, actualMapSize),
+        info: placement.instanceId,
+      })
+    })
+
+    markers.push({
+      key: 'player',
+      point: playerPoint,
+      info: `Player\nPosition: (${playerPosition.row}, ${playerPosition.col})`,
+    })
+
+    return markers
+  }, [
+    actualMapSize,
+    boardSize,
+    encounterPlacements,
+    footsteps,
+    greatPowers,
+    playerPoint,
+    playerPosition,
+    rivers,
+    staticBuildings,
+  ])
+  const [selectedMarkers, setSelectedMarkers] = useState<InspectableMarker[]>([])
   const labelOpacity = useRef(new Animated.Value(0)).current
   const labelAnimation = useRef<Animated.CompositeAnimation | null>(null)
 
@@ -84,9 +204,14 @@ export default function DebugMinimap({
     []
   )
 
-  const showEncounterName = (instanceId: string) => {
+  const inspectNear = (target: InspectableMarker) => {
+    const nearby = inspectableMarkers.filter((marker) => {
+      const dx = marker.point.x - target.point.x
+      const dy = marker.point.y - target.point.y
+      return Math.sqrt(dx * dx + dy * dy) <= INSPECTION_RADIUS_PX
+    })
     labelAnimation.current?.stop()
-    setSelectedEncounter(instanceId)
+    setSelectedMarkers(nearby)
     labelOpacity.setValue(1)
     labelAnimation.current = Animated.sequence([
       Animated.delay(3000),
@@ -97,14 +222,17 @@ export default function DebugMinimap({
       }),
     ])
     labelAnimation.current.start(({ finished }) => {
-      if (finished) setSelectedEncounter(null)
+      if (finished) setSelectedMarkers([])
     })
   }
+
+  const markerByKey = (key: string) =>
+    inspectableMarkers.find((marker) => marker.key === key) as InspectableMarker
 
   const handleClose = () => {
     labelAnimation.current?.stop()
     labelOpacity.setValue(0)
-    setSelectedEncounter(null)
+    setSelectedMarkers([])
     onClose()
   }
 
@@ -121,19 +249,112 @@ export default function DebugMinimap({
             <Text style={styles.closeText}>×</Text>
           </TouchableOpacity>
 
-          {selectedEncounter && (
+          {selectedMarkers.length > 0 && (
             <Animated.View style={[styles.encounterLabel, { opacity: labelOpacity }]}>
-              <Text style={styles.encounterLabelText}>{selectedEncounter}</Text>
+              {selectedMarkers.map((marker, index) => (
+                <Text key={marker.key} style={styles.encounterLabelText}>
+                  {index > 0 ? '\n' : ''}
+                  {marker.info}
+                </Text>
+              ))}
             </Animated.View>
           )}
 
           {footsteps.map((footstep) => {
             const point = positionToMinimapPoint(footstep.position, boardSize, actualMapSize)
             return (
-              <View
+              <Pressable
                 key={footstep.id}
                 accessibilityLabel={`Footstep at row ${footstep.position.row}, column ${footstep.position.col}`}
+                onPress={() => inspectNear(markerByKey(`footstep-${footstep.id}`))}
+                hitSlop={8}
                 style={[styles.footstepMarker, markerPosition(point, 3)]}
+              />
+            )
+          })}
+
+          {rivers.flatMap((river) =>
+            (river.collisionMask ?? []).map((segment, index) => {
+              const point = positionToMinimapPoint(
+                {
+                  row: river.position.row + segment.row,
+                  col: river.position.col + segment.col,
+                },
+                boardSize,
+                actualMapSize
+              )
+              const width = Math.max(
+                2,
+                ((segment.width ?? 1) / Math.max(1, boardSize.width - 1)) * actualMapSize
+              )
+              const height = Math.max(
+                2,
+                ((segment.height ?? 1) / Math.max(1, boardSize.height - 1)) * actualMapSize
+              )
+              return (
+                <View
+                  key={`${river.id}-segment-${index}`}
+                  accessibilityLabel={`River segment ${index + 1}`}
+                  style={[styles.riverSegment, { left: point.x, top: point.y, width, height }]}
+                />
+              )
+            })
+          )}
+
+          {rivers.map((river) => {
+            const anchor = positionToMinimapPoint(river.position, boardSize, actualMapSize)
+            const width = Math.max(
+              3,
+              (river.width / Math.max(1, boardSize.width - 1)) * actualMapSize
+            )
+            const height = Math.max(
+              3,
+              (river.height / Math.max(1, boardSize.height - 1)) * actualMapSize
+            )
+            return (
+              <Pressable
+                key={`river-hit-${river.id}`}
+                accessibilityLabel={`River ${river.shortName}`}
+                onPress={() => inspectNear(markerByKey(`river-${river.id}`))}
+                hitSlop={8}
+                style={[styles.riverHitTarget, { left: anchor.x, top: anchor.y, width, height }]}
+              />
+            )
+          })}
+
+          {staticBuildings.map((building) => {
+            if (!building.position) return null
+            const footprint = building.size ?? { width: 1, height: 1 }
+            const point = positionToMinimapPoint(
+              footprintCenter(building.position, footprint),
+              boardSize,
+              actualMapSize
+            )
+            return (
+              <Pressable
+                key={`building-${building.id}`}
+                accessibilityLabel={`Building ${building.name}`}
+                onPress={() => inspectNear(markerByKey(`building-${building.id}`))}
+                hitSlop={8}
+                style={[styles.buildingMarker, markerPosition(point, 9)]}
+              />
+            )
+          })}
+
+          {greatPowers.map((greatPower) => {
+            const footprint = { width: greatPower.width ?? 1, height: greatPower.height ?? 1 }
+            const point = positionToMinimapPoint(
+              footprintCenter(greatPower.position, footprint),
+              boardSize,
+              actualMapSize
+            )
+            return (
+              <Pressable
+                key={`great-power-${greatPower.id}`}
+                accessibilityLabel={`Great Power ${greatPower.name}`}
+                onPress={() => inspectNear(markerByKey(`great-power-${greatPower.id}`))}
+                hitSlop={8}
+                style={[styles.greatPowerMarker, markerPosition(point, 11)]}
               />
             )
           })}
@@ -144,17 +365,28 @@ export default function DebugMinimap({
               <Pressable
                 key={placement.occupancyId}
                 accessibilityLabel={`Encounter ${placement.instanceId}`}
-                onPress={() => showEncounterName(placement.instanceId)}
+                onPress={() => inspectNear(markerByKey(`encounter-${placement.occupancyId}`))}
                 hitSlop={8}
                 style={[styles.encounterMarker, markerPosition(point, 10)]}
               />
             )
           })}
 
-          <View
+          <Pressable
             accessibilityLabel="Player position"
+            onPress={() => inspectNear(markerByKey('player'))}
+            hitSlop={8}
             style={[styles.playerMarker, markerPosition(playerPoint, 8)]}
           />
+
+          <View style={styles.legend} accessibilityLabel="Minimap legend">
+            {LEGEND_ITEMS.map((item) => (
+              <View key={item.label} style={styles.legendRow}>
+                <View style={[styles.legendSwatch, { backgroundColor: item.color }]} />
+                <Text style={styles.legendText}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
     </Modal>
@@ -180,7 +412,36 @@ const styles = StyleSheet.create({
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: 'rgba(100, 150, 190, 0.65)',
+    backgroundColor: 'rgba(145, 160, 173, 0.7)',
+  },
+  riverSegment: {
+    position: 'absolute',
+    backgroundColor: '#00d9ff',
+    borderRadius: 1,
+    zIndex: 1,
+  },
+  riverHitTarget: {
+    position: 'absolute',
+    backgroundColor: 'transparent',
+    zIndex: 2,
+  },
+  buildingMarker: {
+    position: 'absolute',
+    width: 9,
+    height: 9,
+    borderRadius: 2,
+    backgroundColor: '#ff7a1a',
+    zIndex: 2,
+  },
+  greatPowerMarker: {
+    position: 'absolute',
+    width: 11,
+    height: 11,
+    borderRadius: 5.5,
+    backgroundColor: '#d65cff',
+    borderWidth: 1,
+    borderColor: '#fff',
+    zIndex: 3,
   },
   encounterMarker: {
     position: 'absolute',
@@ -233,5 +494,31 @@ const styles = StyleSheet.create({
     color: '#ffcc00',
     fontSize: 17,
     fontWeight: 'bold',
+  },
+  legend: {
+    position: 'absolute',
+    left: 8,
+    bottom: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 7,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    zIndex: 5,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 1,
+  },
+  legendSwatch: {
+    width: 8,
+    height: 8,
+    marginRight: 5,
+    borderRadius: 1,
+  },
+  legendText: {
+    color: '#fff',
+    fontSize: 10,
+    lineHeight: 12,
   },
 })

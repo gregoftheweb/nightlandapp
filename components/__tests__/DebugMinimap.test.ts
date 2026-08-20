@@ -48,6 +48,8 @@ describe('DebugMinimap coordinate mapping', () => {
         onClose,
         boardSize: { width: 400, height: 400 },
         encounterPlacements: [placement],
+        greatPowers: [],
+        levelObjects: [],
         nonCollisionObjects: [],
         playerPosition: { row: 395, col: 200 },
         mapSize: 250,
@@ -59,5 +61,138 @@ describe('DebugMinimap coordinate mapping', () => {
 
     fireEvent.press(view.getByLabelText('Close minimap'))
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders canonical Great Powers, static buildings, and every river mask segment', () => {
+    const view = render(
+      React.createElement(DebugMinimap, {
+        visible: true,
+        onClose: jest.fn(),
+        boardSize: { width: 400, height: 400 },
+        encounterPlacements: [],
+        greatPowers: [
+          {
+            id: 'watcher',
+            name: 'Watcher',
+            position: { row: 380, col: 180 },
+            width: 6,
+            height: 6,
+          } as any,
+        ],
+        levelObjects: [
+          {
+            id: 'redoubt',
+            templateId: 'redoubt',
+            shortName: 'redoubt',
+            name: 'Last Redoubt',
+            position: { row: 390, col: 198 },
+            size: { width: 8, height: 8 },
+          } as any,
+          {
+            id: 'generated-encounter',
+            templateId: 'tesseract-crypt-01',
+            shortName: 'tesseract',
+            name: 'Tesseract',
+            position: { row: 100, col: 100 },
+            size: { width: 6, height: 6 },
+          } as any,
+        ],
+        nonCollisionObjects: [
+          {
+            id: 'river',
+            type: 'river',
+            position: { row: 370, col: 195 },
+            collisionMask: [
+              { row: 0, col: 2, width: 1, height: 2 },
+              { row: 2, col: 3, width: 2, height: 1 },
+            ],
+          } as any,
+        ],
+        playerPosition: { row: 395, col: 200 },
+        mapSize: 250,
+      })
+    )
+
+    expect(view.getByLabelText('Great Power Watcher')).toBeTruthy()
+    expect(view.getByLabelText('Building Last Redoubt')).toBeTruthy()
+    expect(view.queryByLabelText('Building Tesseract')).toBeNull()
+    expect(view.getAllByLabelText(/River segment/)).toHaveLength(2)
+    expect(view.getByLabelText('Minimap legend')).toBeTruthy()
+  })
+
+  it('inspects every marker type and reports overlapping Watcher and encounter together', () => {
+    const overlappingEncounter = {
+      ...placement,
+      instanceId: 'overlap-encounter',
+      position: { row: 380, col: 180 },
+      footprint: { width: 6, height: 6 },
+    }
+    const view = render(
+      React.createElement(DebugMinimap, {
+        visible: true,
+        onClose: jest.fn(),
+        boardSize: { width: 400, height: 400 },
+        encounterPlacements: [overlappingEncounter],
+        greatPowers: [
+          {
+            id: 'watcher',
+            shortName: 'watcher_se',
+            name: 'Watcher',
+            position: { row: 380, col: 180 },
+            width: 6,
+            height: 6,
+            awakened: true,
+          } as any,
+        ],
+        levelObjects: [
+          {
+            id: 'redoubt',
+            templateId: 'redoubt',
+            shortName: 'redoubt',
+            name: 'Last Redoubt',
+            position: { row: 300, col: 300 },
+            size: { width: 8, height: 8 },
+          } as any,
+        ],
+        nonCollisionObjects: [
+          {
+            id: 'footstep',
+            shortName: 'footsteps',
+            type: 'footstep',
+            position: { row: 50, col: 50 },
+            rotation: 290,
+          } as any,
+          {
+            id: 'river',
+            shortName: 'river',
+            type: 'river',
+            position: { row: 200, col: 200 },
+            width: 22,
+            height: 15,
+            collisionMask: [{ row: 0, col: 2, width: 1, height: 2 }],
+          } as any,
+        ],
+        playerPosition: { row: 395, col: 200 },
+        mapSize: 250,
+      })
+    )
+
+    fireEvent.press(view.getByLabelText('Footstep at row 50, column 50'))
+    expect(view.getByText(/Rotation: 290°/)).toBeTruthy()
+
+    fireEvent.press(view.getByLabelText('Building Last Redoubt'))
+    expect(view.getByText(/Footprint: 8×8/)).toBeTruthy()
+
+    fireEvent.press(view.getByLabelText('River river'))
+    expect(view.getByText(/Anchor: \(200, 200\)/)).toBeTruthy()
+    expect(view.getByText(/Footprint: 22×15/)).toBeTruthy()
+
+    fireEvent.press(view.getByLabelText('Player position'))
+    expect(view.getByText('Player\nPosition: (395, 200)')).toBeTruthy()
+
+    fireEvent.press(view.getByLabelText('Great Power Watcher'))
+    expect(view.getByText(/Watcher/)).toBeTruthy()
+    expect(view.getByText(/Awakened: yes/)).toBeTruthy()
+    expect(view.getByText('overlap-encounter')).toBeTruthy()
   })
 })
