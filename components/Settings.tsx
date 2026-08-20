@@ -16,12 +16,15 @@ import { settingsManager } from '../modules/settingsManager'
 import type { GameState } from '@config/types'
 import { SafeAreaContent } from './SafeAreaContent'
 
-type TabType = 'settings' | 'status'
+type TabType = 'settings' | 'status' | 'debug'
 
 interface SettingsProps {
   visible: boolean
   onClose: () => void
   subGamesCompleted: GameState['subGamesCompleted']
+  encounterPlacements: GameState['encounterPlacements']
+  lastRedoubtPosition: GameState['level']['playerSpawn']
+  onDebugJump: (position: GameState['player']['position']) => void
 }
 
 interface ToggleProps {
@@ -75,7 +78,14 @@ function ModernToggle({ value, onToggle, label }: ToggleProps) {
   )
 }
 
-function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
+function Settings({
+  visible,
+  onClose,
+  subGamesCompleted,
+  encounterPlacements,
+  lastRedoubtPosition,
+  onDebugJump,
+}: SettingsProps) {
   const { width, height } = useWindowDimensions()
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(audioManager.getIsEnabled())
   const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
@@ -129,7 +139,9 @@ function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
       <SafeAreaContent style={styles.overlay} onTouchStart={(event) => event.stopPropagation()}>
         <View style={[styles.settingsContainer, { width: width * 0.8, height: height * 0.6 }]}>
           <View style={styles.header}>
-            <Text style={styles.title}>{activeTab === 'settings' ? 'Settings' : 'Status'}</Text>
+            <Text style={styles.title}>
+              {activeTab === 'settings' ? 'Settings' : activeTab === 'status' ? 'Status' : 'Debug'}
+            </Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={handleClosePress}
@@ -160,6 +172,18 @@ function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
                 Status
               </Text>
             </TouchableOpacity>
+
+            {__DEV__ && (
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'debug' && styles.activeTab]}
+                onPress={() => setActiveTab('debug')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.tabText, activeTab === 'debug' && styles.activeTabText]}>
+                  Debug
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.content}>
@@ -180,7 +204,7 @@ function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
                   />
                 </View>
               </>
-            ) : (
+            ) : activeTab === 'status' ? (
               // Status Tab Content
               <ScrollView
                 style={styles.scrollView}
@@ -200,6 +224,35 @@ function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
                   </View>
                 )}
               </ScrollView>
+            ) : (
+              __DEV__ && (
+                <ScrollView
+                  style={styles.scrollView}
+                  contentContainerStyle={styles.scrollViewContent}
+                  showsVerticalScrollIndicator={true}
+                >
+                  <Text style={styles.sectionTitle}>Jump to location</Text>
+                  <TouchableOpacity
+                    style={styles.debugJumpRow}
+                    onPress={() => onDebugJump(lastRedoubtPosition)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.debugJumpInstance}>Last Redoubt</Text>
+                    <Text style={styles.debugJumpSlot}>Original player spawn</Text>
+                  </TouchableOpacity>
+                  {encounterPlacements.map((placement) => (
+                    <TouchableOpacity
+                      key={placement.occupancyId}
+                      style={styles.debugJumpRow}
+                      onPress={() => onDebugJump(placement.position)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.debugJumpInstance}>{placement.instanceId}</Text>
+                      <Text style={styles.debugJumpSlot}>Slot: {placement.slotId}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )
             )}
           </View>
         </View>
@@ -208,7 +261,17 @@ function Settings({ visible, onClose, subGamesCompleted }: SettingsProps) {
   )
 }
 
-export default React.memo(Settings, (previous, next) => !previous.visible && !next.visible)
+export default React.memo(Settings, (previous, next) => {
+  if (previous.visible !== next.visible) return false
+  if (!next.visible) return true
+  return (
+    previous.onClose === next.onClose &&
+    previous.onDebugJump === next.onDebugJump &&
+    previous.subGamesCompleted === next.subGamesCompleted &&
+    previous.encounterPlacements === next.encounterPlacements &&
+    previous.lastRedoubtPosition === next.lastRedoubtPosition
+  )
+})
 
 const styles = StyleSheet.create({
   overlay: {
@@ -304,6 +367,22 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     lineHeight: 24,
+  },
+  debugJumpRow: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  debugJumpInstance: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  debugJumpSlot: {
+    color: 'rgba(255, 255, 255, 0.65)',
+    fontSize: 13,
+    marginTop: 3,
   },
   emptyText: {
     color: 'rgba(255, 255, 255, 0.6)',
