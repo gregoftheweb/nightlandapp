@@ -24,6 +24,8 @@ interface SettingsProps {
   onClose: () => void
   subGamesCompleted: GameState['subGamesCompleted']
   encounterPlacements: GameState['encounterPlacements']
+  greatPowers: NonNullable<GameState['level']['greatPowers']>
+  levelObjects: GameState['level']['objects']
   lastRedoubtPosition: GameState['level']['playerSpawn']
   boardSize: GameState['level']['boardSize']
   nonCollisionObjects: NonNullable<GameState['nonCollisionObjects']>
@@ -87,6 +89,8 @@ function Settings({
   onClose,
   subGamesCompleted,
   encounterPlacements,
+  greatPowers,
+  levelObjects,
   lastRedoubtPosition,
   boardSize,
   nonCollisionObjects,
@@ -241,6 +245,8 @@ function Settings({
                     onClose={() => setShowMinimap(false)}
                     boardSize={boardSize}
                     encounterPlacements={encounterPlacements}
+                    greatPowers={greatPowers}
+                    levelObjects={levelObjects}
                     nonCollisionObjects={nonCollisionObjects}
                     playerPosition={playerPosition}
                   />
@@ -295,6 +301,8 @@ export default React.memo(Settings, (previous, next) => {
     previous.onDebugJump === next.onDebugJump &&
     previous.subGamesCompleted === next.subGamesCompleted &&
     previous.encounterPlacements === next.encounterPlacements &&
+    previous.greatPowers === next.greatPowers &&
+    previous.levelObjects === next.levelObjects &&
     previous.lastRedoubtPosition === next.lastRedoubtPosition &&
     previous.boardSize === next.boardSize &&
     previous.nonCollisionObjects === next.nonCollisionObjects &&

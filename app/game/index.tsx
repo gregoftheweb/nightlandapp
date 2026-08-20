@@ -1164,6 +1164,8 @@ export default function Game() {
           onClose={handleCloseSettings}
           subGamesCompleted={state.subGamesCompleted}
           encounterPlacements={state.encounterPlacements}
+          greatPowers={state.level.greatPowers ?? []}
+          levelObjects={state.level.objects}
           lastRedoubtPosition={state.level.playerSpawn}
           boardSize={state.level.boardSize}
           nonCollisionObjects={state.nonCollisionObjects ?? []}
