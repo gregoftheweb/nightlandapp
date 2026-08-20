@@ -157,6 +157,10 @@ describe('Jaunt Power', () => {
       expect(result?.player.position.row).toBe(200)
       expect(result?.player.jauntCharges).toBe(2)
       expect(result?.player.isJauntArmed).toBe(false)
+      expect(result?.activeTeleportFlashes).toHaveLength(1)
+      expect(result?.activeTeleportFlashes[0]).toEqual(
+        expect.objectContaining({ gridCol: 200, gridRow: 200 })
+      )
     })
 
     it('should clamp position to grid bounds', () => {
@@ -196,6 +200,30 @@ describe('Jaunt Power', () => {
       expect(result).not.toBeNull()
       expect(result?.player.position.col).toBe(100) // Unchanged
       expect(result?.player.jauntCharges).toBe(0)
+    })
+  })
+
+  describe('DEBUG_TELEPORT_PLAYER', () => {
+    it('clamps and moves without changing Jaunt state or flashes', () => {
+      const lockedState = {
+        ...baseState,
+        player: {
+          ...basePlayer,
+          canJaunt: false,
+          jauntCharges: 0,
+          isJauntArmed: true,
+        },
+      }
+      const result = reduceJaunt(lockedState, {
+        type: 'DEBUG_TELEPORT_PLAYER',
+        payload: { targetPosition: { col: 700, row: -20 } },
+      })
+
+      expect(result?.player.position).toEqual({ col: 499, row: 0 })
+      expect(result?.player.canJaunt).toBe(false)
+      expect(result?.player.jauntCharges).toBe(0)
+      expect(result?.player.isJauntArmed).toBe(true)
+      expect(result?.activeTeleportFlashes).toEqual([])
     })
   })
 

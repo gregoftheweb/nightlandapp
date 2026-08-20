@@ -6,6 +6,22 @@ import { Position } from '../../config/types/primitives'
 // Counter to ensure unique flash IDs even with rapid successive teleports
 let flashIdCounter = 0
 
+/** Shared world-position update used by gameplay Jaunt and the dev-only jump menu. */
+export function teleportPlayerPosition(state: GameState, targetPosition: Position): GameState {
+  const clampedPosition = {
+    col: Math.max(0, Math.min(targetPosition.col, state.gridWidth - 1)),
+    row: Math.max(0, Math.min(targetPosition.row, state.gridHeight - 1)),
+  }
+
+  return {
+    ...state,
+    player: {
+      ...state.player,
+      position: clampedPosition,
+    },
+  }
+}
+
 export function reduceJaunt(state: GameState, action: any): GameState | null {
   switch (action.type) {
     case 'ARM_JAUNT': {
@@ -72,12 +88,11 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
         return state
       }
 
-      // Clamp target position to grid bounds
-      const clampedCol = Math.max(0, Math.min(targetPosition.col, state.gridWidth - 1))
-      const clampedRow = Math.max(0, Math.min(targetPosition.row, state.gridHeight - 1))
+      const teleportedState = teleportPlayerPosition(state, targetPosition)
+      const clampedPosition = teleportedState.player.position
 
       logIfDev('[Jaunt] Teleporting to position', {
-        target: { col: clampedCol, row: clampedRow },
+        target: clampedPosition,
         chargesRemaining: jauntCharges - 1,
       })
 
@@ -87,21 +102,26 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
       const flashId = `flash-${Date.now()}-${flashIdCounter}`
       const newFlash = {
         id: flashId,
-        gridCol: clampedCol,
-        gridRow: clampedRow,
+        gridCol: clampedPosition.col,
+        gridRow: clampedPosition.row,
       }
 
       // Teleport player and consume charge
       return {
-        ...state,
+        ...teleportedState,
         player: {
-          ...state.player,
-          position: { col: clampedCol, row: clampedRow },
+          ...teleportedState.player,
           jauntCharges: jauntCharges - 1,
           isJauntArmed: false,
         },
         activeTeleportFlashes: [...(state.activeTeleportFlashes || []), newFlash],
       }
+    }
+
+    case 'DEBUG_TELEPORT_PLAYER': {
+      if (!__DEV__) return state
+      const { targetPosition } = action.payload as { targetPosition: Position }
+      return teleportPlayerPosition(state, targetPosition)
     }
 
     case 'UPDATE_JAUNT_STATE': {

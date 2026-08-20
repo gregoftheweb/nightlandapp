@@ -16,7 +16,14 @@ import {
   handlePassTurn,
   initializeStartingMonsters,
 } from '../../modules/turnManager'
-import { Monster, LevelObjectInstance, Item, GreatPower, NonCollisionObject } from '@config/types'
+import {
+  Monster,
+  LevelObjectInstance,
+  Item,
+  GreatPower,
+  NonCollisionObject,
+  Position,
+} from '@config/types'
 import { audioManager } from '../../modules/audioManager'
 import { settingsManager } from '../../modules/settingsManager'
 import { UI_CONSTANTS, TIMING_CONSTANTS, COMBAT_CONSTANTS } from '../../constants/Game'
@@ -690,6 +697,15 @@ export default function Game() {
     setShowCoordinates(settingsManager.getShowCoordinates())
   }, [])
 
+  const handleDebugJump = useCallback(
+    (position: Position) => {
+      if (!__DEV__) return
+      dispatch({ type: 'DEBUG_TELEPORT_PLAYER', payload: { targetPosition: position } })
+      setSettingsVisible(false)
+    },
+    [dispatch]
+  )
+
   const handleInventoryPress = useCallback(() => {
     // Cancel Jaunt if armed
     if (state.player.isJauntArmed) {
@@ -1147,6 +1163,9 @@ export default function Game() {
           visible={settingsVisible}
           onClose={handleCloseSettings}
           subGamesCompleted={state.subGamesCompleted}
+          encounterPlacements={state.encounterPlacements}
+          lastRedoubtPosition={state.level.playerSpawn}
+          onDebugJump={handleDebugJump}
         />
         <Inventory
           visible={inventoryVisible}
