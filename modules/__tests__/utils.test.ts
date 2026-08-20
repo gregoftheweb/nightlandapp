@@ -83,7 +83,6 @@ describe('getObjectAtPoint', () => {
       activeMonsters: [],
       items: [],
       objects: [],
-      greatPowers: [],
       levels: { '1': mockLevel },
       weapons: [],
       monsters: [],
@@ -157,8 +156,6 @@ describe('getObjectAtPoint', () => {
       maxHP: 100,
       attack: 15,
       ac: 18,
-      awakened: false,
-      awakenCondition: 'player_within_range',
     }
     state.level.greatPowers = [greatPower]
 

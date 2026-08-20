@@ -55,7 +55,6 @@ export const greatPowerTemplates: GreatPowerTemplate[] = [
         type: 'soulsuck',
       },
     ],
-    awakenCondition: 'player_within_range',
   },
 ]
 

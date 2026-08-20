@@ -20,7 +20,6 @@ export function reduceLevel(state: GameState, action: any): GameState | null {
         ...state,
         level: newLevelConfig,
         levels: { ...state.levels, [action.levelId]: newLevelConfig },
-        greatPowers: newLevelConfig.greatPowers || [],
         objects: newLevelConfig.objects || [],
         nonCollisionObjects: newLevelConfig.nonCollisionObjects || [],
         activeMonsters: [],

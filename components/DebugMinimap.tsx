@@ -163,7 +163,7 @@ export default function DebugMinimap({
           boardSize,
           actualMapSize
         ),
-        info: `${greatPower.name || greatPower.shortName}\nPosition: (${greatPower.position.row}, ${greatPower.position.col})\nFootprint: ${footprint.width}×${footprint.height}\nAwakened: ${greatPower.awakened ? 'yes' : 'no'}`,
+        info: `${greatPower.name || greatPower.shortName}\nPosition: (${greatPower.position.row}, ${greatPower.position.col})\nFootprint: ${footprint.width}×${footprint.height}`,
       })
     })
 

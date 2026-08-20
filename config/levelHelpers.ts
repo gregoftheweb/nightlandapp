@@ -427,14 +427,13 @@ export function createGreatPowerInstance(
     templateId: shortName,
     position,
     currentHP: initialHP,
-    awakened: overrides.awakened ?? false,
   }
 
   // Hydrate to merge template + instance
   const hydrated = hydrateGreatPower(template, instance)
 
-  // Extract overrides that should not be reapplied (currentHP and awakened come from the pipeline)
-  const { currentHP, awakened, ...otherOverrides } = overrides
+  // Extract currentHP because it has already been applied through the hydration pipeline.
+  const { currentHP, ...otherOverrides } = overrides
 
   // Return final GreatPower with template/instance values and remaining overrides
   return {
@@ -443,7 +442,6 @@ export function createGreatPowerInstance(
     id: instance.id,
     position: instance.position,
     currentHP: hydrated.currentHP,
-    awakened: hydrated.awakened,
   }
 }
 

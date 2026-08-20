@@ -98,7 +98,7 @@ export function hydrateMonster(template: MonsterTemplate, instance: MonsterInsta
 
 /**
  * Hydrate a great power by merging a template with an instance
- * Instance-specific properties (position, currentHP, awakened) override template defaults
+ * Instance-specific properties (position and currentHP) override template defaults
  *
  * @param template - Static great power template definition
  * @param instance - Runtime instance data with position and state
@@ -116,7 +116,6 @@ export function hydrateGreatPower(
     templateId: instance.templateId,
     position: instance.position,
     currentHP: instance.currentHP,
-    awakened: instance.awakened,
     // Instance overrides take precedence
     zIndex: instance.zIndex ?? template.zIndex,
   }
