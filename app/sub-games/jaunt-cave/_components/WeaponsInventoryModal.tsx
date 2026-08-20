@@ -60,8 +60,8 @@ export function WeaponsInventoryModal({
                         <Text style={styles.weaponDescription}>{weapon.description}</Text>
                       )}
                       <View style={styles.weaponStats}>
-                        {weapon.damage && (
-                          <Text style={styles.weaponStat}>Damage: {weapon.damage}</Text>
+                        {weapon.damageMod !== undefined && (
+                          <Text style={styles.weaponStat}>Damage modifier: {weapon.damageMod}</Text>
                         )}
                         {weapon.weaponType && (
                           <Text style={styles.weaponStat}>Type: {weapon.weaponType}</Text>

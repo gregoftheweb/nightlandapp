@@ -157,6 +157,7 @@ function buildInitialState(
 
     // ===== META/PERSISTENCE DOMAIN =====
     weapons: weaponsCatalog,
+    weaponUpgrades: {},
     saveVersion: gameConfig.save.version,
     lastSaved: new Date(),
     playTime: 0,
@@ -250,6 +251,7 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
     inCombat: snapshot.inCombat || false,
     // Ensure waypoint tracking is preserved
     waypointSavesCreated: snapshot.waypointSavesCreated || {},
+    weaponUpgrades: snapshot.weaponUpgrades || {},
   }
 
   // MIGRATION: Fix hide ability if flag is set but player state isn't

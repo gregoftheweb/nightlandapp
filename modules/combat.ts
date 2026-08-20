@@ -1,7 +1,16 @@
 // modules/combat.ts - Enhanced d20 combat system with all combat logic
-import { GameState, Position, Monster } from '../config/types'
+import { GameState, Position, Monster, Item, WeaponUpgrade } from '../config/types'
 import { getTextContent, logIfDev } from './utils'
 import { COMBAT_STRINGS } from '@assets/copy/combat'
+import {
+  calculateWeaponAttackTotal,
+  calculateWeaponDamage,
+  getEquippedMeleeWeapon,
+  getEquippedRangedWeapon,
+  getWeaponUpgrade,
+  isMonsterInEquippedRangedWeaponRange,
+  shouldBreakHide,
+} from './weaponStats'
 
 // Roll a d20
 const rollD20 = (): number => {
@@ -21,9 +30,17 @@ const checkCollision = (pos1: Position, pos2: Position): boolean => {
 
 // ==================== CORE COMBAT ACTIONS ====================
 
-export const executeAttack = (attacker: any, defender: any, dispatch: any): boolean => {
+export const executeAttack = (
+  attacker: any,
+  defender: any,
+  dispatch: any,
+  weapon?: Item,
+  upgrade?: WeaponUpgrade
+): boolean => {
   const attackRoll = rollD20()
-  const totalAttack = attackRoll + attacker.attack
+  const totalAttack = weapon
+    ? calculateWeaponAttackTotal(attackRoll, attacker.attack, weapon, upgrade)
+    : attackRoll + attacker.attack
   const hit = totalAttack >= defender.ac
 
   logIfDev(`\n🎲 ${attacker.name} attacks ${defender.name}:`)
@@ -33,7 +50,9 @@ export const executeAttack = (attacker: any, defender: any, dispatch: any): bool
 
   if (hit) {
     const damageRoll = Math.floor(Math.random() * 6) + 1
-    const totalDamage = damageRoll + Math.floor(attacker.attack / 2)
+    const totalDamage = weapon
+      ? calculateWeaponDamage(damageRoll, attacker.attack, weapon, upgrade)
+      : damageRoll + Math.floor(attacker.attack / 2)
 
     // Use currentHP consistently for both player and monsters
     const currentHp = defender.currentHP
@@ -170,7 +189,9 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
       }
 
       if (targetMonster) {
-        const monsterDied = executeAttack(entity, targetMonster, dispatch)
+        const meleeWeapon = getEquippedMeleeWeapon(state)
+        const upgrade = meleeWeapon?.id ? getWeaponUpgrade(state, meleeWeapon.id) : undefined
+        const monsterDied = executeAttack(entity, targetMonster, dispatch, meleeWeapon, upgrade)
         if (monsterDied) {
           const updatedAttackSlots = state.attackSlots.filter((m: any) => m.id !== targetMonster.id)
           dispatch({
@@ -543,7 +564,8 @@ export const executeRangedAttack = (
   playerScreenX: number,
   playerScreenY: number,
   monsterScreenX: number,
-  monsterScreenY: number
+  monsterScreenY: number,
+  hideRandom: () => number = Math.random
 ): string | null => {
   // Find the target monster in either activeMonsters or attackSlots
   let targetMonster = state.activeMonsters.find((m) => m.id === targetMonsterId && m.currentHP > 0)
@@ -561,6 +583,15 @@ export const executeRangedAttack = (
     return null
   }
 
+  if (!isMonsterInEquippedRangedWeaponRange(state, targetMonster)) {
+    dispatch({
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: 'Target is out of range.' },
+    })
+    return null
+  }
+
+  const equippedWeapon = getEquippedRangedWeapon(state)
   const weaponName = getEquippedRangedWeaponName(state)
   const projectileColor = getEquippedRangedWeaponProjectileColor(state)
   const projectileStyle = getEquippedRangedWeaponProjectileStyle(state)
@@ -581,7 +612,7 @@ export const executeRangedAttack = (
   const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI
 
   // Calculate duration based on distance (faster for short distances, slower for long)
-  const pixelsPerMs = 0.5 // Speed of projectile
+  const pixelsPerMs = 0.5 * (equippedWeapon?.projectileSpeedMultiplier ?? 1)
   const durationMs = Math.max(120, Math.min(450, distance / pixelsPerMs))
 
   // Create projectile
@@ -608,7 +639,7 @@ export const executeRangedAttack = (
   })
 
   // Cancel Hide if active (ranged attacks break stealth)
-  if (state.player.hideActive) {
+  if (state.player.hideActive && equippedWeapon && shouldBreakHide(equippedWeapon, hideRandom)) {
     logIfDev('🥷 Ranged attack cancels Hide')
     dispatch({
       type: 'UPDATE_PLAYER',
@@ -655,11 +686,17 @@ export const processRangedAttackImpact = (
   }
 
   const player = state.player
+  const equippedWeapon = getEquippedRangedWeapon(state)
+  if (!equippedWeapon || !isMonsterInEquippedRangedWeaponRange(state, targetMonster)) {
+    logIfDev('Target is out of range at projectile impact')
+    return false
+  }
+  const upgrade = getWeaponUpgrade(state, equippedWeapon.id!)
   const monsterName = targetMonster.name || targetMonster.shortName || 'enemy'
 
   // Perform hit/miss roll using d20 system
   const attackRoll = rollD20()
-  const totalAttack = attackRoll + player.attack
+  const totalAttack = calculateWeaponAttackTotal(attackRoll, player.attack, equippedWeapon, upgrade)
   const hit = totalAttack >= targetMonster.ac
 
   logIfDev(
@@ -669,7 +706,7 @@ export const processRangedAttackImpact = (
   if (hit) {
     // Calculate damage using d6 dice roll
     const damageRoll = rollD6()
-    const totalDamage = damageRoll + Math.floor(player.attack / 2)
+    const totalDamage = calculateWeaponDamage(damageRoll, player.attack, equippedWeapon, upgrade)
     const newHp = Math.max(0, targetMonster.currentHP - totalDamage)
 
     logIfDev(`   💥 HIT! Damage: ${damageRoll} + ${Math.floor(player.attack / 2)} = ${totalDamage}`)

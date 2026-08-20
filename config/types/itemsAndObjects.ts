@@ -5,6 +5,8 @@ import { EntityBase, EntityTemplate } from './entitiesBase'
 import { Effect } from './effects'
 import { SubGameLaunch } from './subGames'
 
+export type HideBreakBehavior = 'always' | 'never' | { chance: number }
+
 /**
  * GameObject - Object/item-ish interface for interactive objects
  * Extends EntityBase with object-specific fields
@@ -48,6 +50,7 @@ export interface Item extends EntityBase {
   weaponId?: string
   healAmount?: number
   damage?: number
+  damageMod?: number
   splash?: {
     image: string
     text: string
@@ -61,12 +64,14 @@ export interface Item extends EntityBase {
   weaponType?: WeaponType
   range?: number
   hitBonus?: number
+  breaksHide?: HideBreakBehavior
   width?: number
   height?: number
   projectileColor?: string
   projectileLengthPx?: number
   projectileThicknessPx?: number
   projectileGlow?: boolean
+  projectileSpeedMultiplier?: number
 }
 
 /**

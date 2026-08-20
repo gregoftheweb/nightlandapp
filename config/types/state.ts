@@ -63,6 +63,7 @@ export interface GameState {
 
   // ===== META/PERSISTENCE DOMAIN =====
   weapons: Item[] // Global weapons catalog
+  weaponUpgrades: Record<string, WeaponUpgrade>
   saveVersion: string // Save format version
   lastSaved: Date // Last save timestamp
   playTime: number // Total play time in seconds
@@ -71,6 +72,11 @@ export interface GameState {
   waypointSavesCreated?: Record<string, boolean> // Lifecycle waypoint markers for instances
   encounterPlacements: EncounterPlacement[] // Generated board layout for this playthrough
   gameboardCatalogIdentity: GameboardCatalogIdentity // Rejects incompatible pre-release saves
+}
+
+export interface WeaponUpgrade {
+  damageMultiplier: number
+  hitBonusAdd: number
 }
 
 /**

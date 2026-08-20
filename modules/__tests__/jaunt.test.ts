@@ -68,6 +68,7 @@ describe('Jaunt Power', () => {
       gridWidth: 500,
       gridHeight: 500,
       weapons: [],
+      weaponUpgrades: {},
       saveVersion: '1.0',
       lastSaved: new Date(),
       playTime: 0,

@@ -6,11 +6,13 @@ import { AppState, type AppStateStatus } from 'react-native'
 import { Item, GameState } from '@config/types'
 import { DaemonState } from './useBattleState'
 import { HIT_INDICATOR_CONFIG } from './HitIndicator'
+import {
+  calculateWeaponDamage,
+  getEquippedRangedWeapon,
+  getWeaponUpgrade,
+} from '@modules/weaponStats'
 
 const DEFAULT_BOLT_COLOR = '#990000' // Fallback color when no weapon equipped
-
-// Laser pistol weapon ID for damage multiplier
-const LASER_PISTOL_ID = 'weapon-lazer-pistol-001'
 
 // Zap target positions (percentage of arena dimensions)
 // These are independent of daemon spawn positions and can be tweaked independently
@@ -36,7 +38,6 @@ export interface UseWeaponProps {
   getDaemonState: () => DaemonState
   getCurrentDaemonPosition: () => 'left' | 'center' | 'right'
   projectileDuration: number // Duration of projectile flight
-  getEquippedWeaponDamage: () => { min: number; max: number } | null
   onDaemonHit: (damage: number) => void // Callback to apply damage to daemon
   isFocused?: boolean
 }
@@ -65,7 +66,6 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
     getDaemonState,
     getCurrentDaemonPosition,
     projectileDuration,
-    getEquippedWeaponDamage,
     onDaemonHit,
     isFocused = true,
   } = props
@@ -205,34 +205,20 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
 
           // Apply damage on successful hit
           if (isHit) {
-            const weaponDamage = getEquippedWeaponDamage()
-            if (weaponDamage) {
-              // Roll damage between min and max
-              const baseDamage =
-                Math.floor(Math.random() * (weaponDamage.max - weaponDamage.min + 1)) +
-                weaponDamage.min
-
-              // Get equipped weapon to check for laser pistol
-              const equippedWeapon = gameState.weapons.find(
-                (w: Item) => w.id === gameState.player.equippedRangedWeaponId
+            const equippedWeapon = getEquippedRangedWeapon(gameState)
+            if (equippedWeapon?.id) {
+              const d6Roll = Math.floor(Math.random() * 6) + 1
+              const damageToApply = calculateWeaponDamage(
+                d6Roll,
+                gameState.player.attack,
+                equippedWeapon,
+                getWeaponUpgrade(gameState, equippedWeapon.id)
               )
-
-              // Apply 3x damage multiplier for laser pistol
-              const damageToApply =
-                equippedWeapon?.id === LASER_PISTOL_ID ? baseDamage * 3 : baseDamage
 
               onDaemonHit(damageToApply)
 
               if (__DEV__) {
                 console.log('[useWeapon] HIT! Dealt', damageToApply, 'damage')
-                if (equippedWeapon?.id === LASER_PISTOL_ID) {
-                  console.log(
-                    '[Jaunt] Laser pistol 3x multiplier applied:',
-                    baseDamage,
-                    '→',
-                    damageToApply
-                  )
-                }
               }
             }
           }
@@ -256,7 +242,8 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
       getDaemonState,
       getCurrentDaemonPosition,
       projectileDuration,
-      getEquippedWeaponDamage,
+      gameState.player.attack,
+      gameState.weaponUpgrades,
       gameState.player.equippedRangedWeaponId,
       gameState.weapons,
       onDaemonHit,

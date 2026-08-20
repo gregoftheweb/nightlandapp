@@ -18,6 +18,7 @@ const makeWeapon = (id: string): Item => ({
   type: 'weapon',
   weaponType: 'ranged',
   collectible: true,
+  damageMod: id === LASER_WEAPON_ID ? 3 : 0,
   projectileColor: '#ff7a00',
 })
 
@@ -68,7 +69,6 @@ describe('useWeapon', () => {
       getDaemonState: () => DaemonState.LANDED,
       getCurrentDaemonPosition: () => 'left',
       projectileDuration: 100,
-      getEquippedWeaponDamage: () => ({ min: 10, max: 10 }),
       onDaemonHit,
     })
 
@@ -78,13 +78,14 @@ describe('useWeapon', () => {
     })
 
     rerender(makeProps(LASER_WEAPON_ID, latestHitHandler))
+    jest.spyOn(Math, 'random').mockReturnValue(0)
 
     act(() => {
       result.current.handleZapTargetPress('left')
       jest.advanceTimersByTime(100)
     })
 
-    expect(latestHitHandler).toHaveBeenCalledWith(30)
+    expect(latestHitHandler).toHaveBeenCalledWith(8)
     expect(oldHitHandler).not.toHaveBeenCalled()
   })
 
@@ -110,7 +111,6 @@ describe('useWeapon', () => {
         getDaemonState: () => DaemonState.LANDED,
         getCurrentDaemonPosition: () => 'left',
         projectileDuration: 100,
-        getEquippedWeaponDamage: () => ({ min: 10, max: 10 }),
         onDaemonHit,
       })
     )

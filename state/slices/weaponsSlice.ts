@@ -4,6 +4,25 @@ import { logIfDev } from '../../modules/utils'
 
 export function reduceWeapons(state: GameState, action: any): GameState | null {
   switch (action.type) {
+    case 'APPLY_WEAPON_UPGRADE': {
+      const { weaponId, damageMultiplier, hitBonusAdd } = action.payload
+      const current = state.weaponUpgrades[weaponId] || {
+        damageMultiplier: 1,
+        hitBonusAdd: 0,
+      }
+
+      return {
+        ...state,
+        weaponUpgrades: {
+          ...state.weaponUpgrades,
+          [weaponId]: {
+            damageMultiplier: current.damageMultiplier * damageMultiplier,
+            hitBonusAdd: current.hitBonusAdd + hitBonusAdd,
+          },
+        },
+      }
+    }
+
     case 'ADD_TO_WEAPONS':
       return {
         ...state,
