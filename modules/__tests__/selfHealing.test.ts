@@ -94,6 +94,12 @@ describe('Self-Healing Mechanic', () => {
       lastSaved: new Date(),
       playTime: 0,
       lastAction: '',
+      encounterPlacements: [],
+      gameboardCatalogIdentity: {
+        gameboardVersion: 1,
+        gameboardHash: 'test',
+        referencedContentHash: 'test',
+      },
       selfHealTurnCounter,
     } as GameState
   }

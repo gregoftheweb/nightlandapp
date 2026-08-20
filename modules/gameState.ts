@@ -19,6 +19,23 @@ import { weaponsCatalog } from '../config/weapons'
 import { gameConfig } from '../config/gameConfig'
 import { reducer } from '../state/reducer'
 import { logIfDev } from './utils'
+import { GAMEBOARD_MANIFEST } from '../config/gameboardManifest'
+import {
+  buildBoardOccupancyRegistry,
+  generateLayout,
+  LinearPathPositionResolver,
+  placementsToLevelObjects,
+  RandomSource,
+  REAL_PARSED_CONTENT_CATALOGS,
+} from './gameboardLayout'
+import { buildGameboardCatalogIdentity, gameboardIdentityMatches } from './gameboardIdentity'
+
+export class IncompatibleGameboardSaveError extends Error {
+  constructor() {
+    super('This save uses a different gameboard or referenced content and requires a new game.')
+    this.name = 'IncompatibleGameboardSaveError'
+  }
+}
 
 /**
  * Creates a fresh initial game state for a given level.
@@ -61,13 +78,40 @@ function buildInitialState(
   levelId: string,
   levelConfig: (typeof levels)[keyof typeof levels]
 ): GameState {
+  const occupancy = buildBoardOccupancyRegistry(levelConfig)
+  const layoutResult =
+    levelId === '1'
+      ? generateLayout(
+          GAMEBOARD_MANIFEST,
+          REAL_PARSED_CONTENT_CATALOGS,
+          {
+            width: levelConfig.boardSize.width,
+            height: levelConfig.boardSize.height,
+            occupancy,
+          },
+          new LinearPathPositionResolver(),
+          new RandomSource()
+        )
+      : { success: true as const, value: [] }
+  if (!layoutResult.success) {
+    throw new Error(
+      `Unable to create gameboard layout: ${layoutResult.errors.map((error) => error.message).join('; ')}`
+    )
+  }
+  const encounterPlacements = layoutResult.value
+  const runtimeObjects = [
+    ...(levelConfig.objects || []),
+    ...placementsToLevelObjects(encounterPlacements),
+  ]
+  const runtimeLevel = { ...levelConfig, objects: runtimeObjects }
+
   return {
     // ===== LEVEL DOMAIN =====
-    level: levelConfig,
+    level: runtimeLevel,
     currentLevelId: levelId,
-    levels: { [levelId]: levelConfig },
+    levels: { [levelId]: runtimeLevel },
     items: levelConfig.items || [],
-    objects: levelConfig.objects || [],
+    objects: runtimeObjects,
     greatPowers: levelConfig.greatPowers || [],
     nonCollisionObjects: levelConfig.nonCollisionObjects || [],
     gridWidth: gameConfig.grid.width,
@@ -120,6 +164,8 @@ function buildInitialState(
     lastAction: '',
     subGamesCompleted: {}, // Decision: Reset on death for "fresh run" experience
     waypointSavesCreated: {}, // Track which waypoint saves have been created
+    encounterPlacements,
+    gameboardCatalogIdentity: buildGameboardCatalogIdentity(),
   }
 }
 
@@ -165,6 +211,10 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
   if (!snapshot) {
     logIfDev('⚠️  No snapshot provided, returning fresh initial state')
     return getInitialState('1')
+  }
+
+  if (!gameboardIdentityMatches(snapshot.gameboardCatalogIdentity)) {
+    throw new IncompatibleGameboardSaveError()
   }
 
   logIfDev('💾 Reconstructing GameState from snapshot')
@@ -252,6 +302,7 @@ export const deserializeGameState = (serializedState: string): GameState => {
     const snapshot: GameSnapshot = JSON.parse(serializedState)
     return fromSnapshot(snapshot)
   } catch (e) {
+    if (e instanceof IncompatibleGameboardSaveError) throw e
     console.error('Failed to deserialize game state:', e)
     return initialState
   }

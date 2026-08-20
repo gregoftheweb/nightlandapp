@@ -2,6 +2,7 @@ import { Level } from './levels'
 import { Item, LevelObjectInstance, NonCollisionObject } from './itemsAndObjects'
 import { Player, Monster, GreatPower } from './actors'
 import { CombatParticipant, CombatLogEntry, Projectile, TeleportFlash } from './combat'
+import type { EncounterPlacement, GameboardCatalogIdentity } from './gameboard'
 
 /**
  * GameState represents the complete state of the game.
@@ -69,6 +70,8 @@ export interface GameState {
   lastAction: string // Last action performed (for debugging)
   subGamesCompleted?: Record<string, boolean> // Keys are registered instanceIds (plus namespaced effect/reward flags)
   waypointSavesCreated?: Record<string, boolean> // Lifecycle waypoint markers for instances
+  encounterPlacements: EncounterPlacement[] // Generated board layout for this playthrough
+  gameboardCatalogIdentity: GameboardCatalogIdentity // Rejects incompatible pre-release saves
 }
 
 /**
