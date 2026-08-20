@@ -59,7 +59,6 @@ describe('sub-game instance registry', () => {
     ['deep-silo', '/sub-games/deep-silo/screen1', 'one-off'],
     ['hermit-hollow', '/sub-games/hermit-hollow/main', 'dialogue'],
     ['jaunt-cave', '/sub-games/jaunt-cave/main', 'one-off'],
-    ['tesseract-crypt-01', '/sub-games/tesseract/main', 'word-grid'],
   ] as const)(
     'resolves %s with route, shape, and lifecycle config',
     (instanceId, route, shapeId) => {

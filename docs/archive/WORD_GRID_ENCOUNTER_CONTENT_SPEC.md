@@ -42,7 +42,7 @@ The Tier 2 content catalog (defined in the gameboard spec) **must** key its entr
 
 ```typescript
 interface WordGridEncounterContent {
-  instanceId: string // stable, kebab-case, e.g. 'tesseract-crypt-02'.
+  instanceId: string // stable, kebab-case, e.g. 'word-tile-crypt-02'.
   // Never reused after removal.
   shapeId: 'word-grid'
 

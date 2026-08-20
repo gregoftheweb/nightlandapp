@@ -2,7 +2,8 @@ import { buildParsedCatalog, buildRawCatalog } from '@config/contentCatalog'
 
 import { VALID_WORD_GRID_CONTENT } from './__fixtures__/manifestFixtures'
 import { createWordGridAssetCatalog, WORD_GRID_ASSETS } from './assetCatalog'
-import { tesseractCrypt01Content } from './content/tesseractCrypt01'
+import { wordTileCrypt01Content } from './content/wordTileCrypt01'
+import { wordTileCrypt02Content } from './content/wordTileCrypt02'
 import { createWordGridShapeAdapter } from './manifestAdapter'
 
 const fixtureAssetsResult = createWordGridAssetCatalog(
@@ -23,14 +24,29 @@ export const RAW_WORD_GRID_CONTENT = buildRawCatalog([
     content: VALID_WORD_GRID_CONTENT,
   },
   {
-    instanceId: tesseractCrypt01Content.instanceId,
-    content: tesseractCrypt01Content,
+    instanceId: wordTileCrypt01Content.instanceId,
+    content: wordTileCrypt01Content,
+  },
+  {
+    instanceId: wordTileCrypt02Content.instanceId,
+    content: wordTileCrypt02Content,
   },
 ])
 
+export const WORD_GRID_SHAPE_ADAPTER = createWordGridShapeAdapter({
+  assets: Object.freeze({ ...WORD_GRID_ASSETS, ...fixtureAssetsResult.value }),
+})
+
 export const parsedWordGridContentResult = buildParsedCatalog(
   RAW_WORD_GRID_CONTENT,
-  createWordGridShapeAdapter({
-    assets: Object.freeze({ ...WORD_GRID_ASSETS, ...fixtureAssetsResult.value }),
-  })
+  WORD_GRID_SHAPE_ADAPTER
 )
+
+export function resolveParsedWordGridEncounter(instanceId: string) {
+  if (!parsedWordGridContentResult.success) {
+    throw new Error('Parsed word-grid catalog is invalid')
+  }
+  const parsed = parsedWordGridContentResult.value[instanceId]
+  if (!parsed) throw new Error(`Unknown word-grid encounter '${instanceId}'`)
+  return parsed
+}

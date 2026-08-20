@@ -56,6 +56,11 @@ const realAssetsResult = createWordGridAssetCatalog([
     intrinsicSize: { width: 1024, height: 972 },
   },
   {
+    assetId: 'word-grid-board-blank',
+    image: require('@assets/images/backgrounds/subgames/tesseract-puzzle-board-blank.webp'),
+    intrinsicSize: { width: 1062, height: 1008 },
+  },
+  {
     assetId: 'tesseract-entrance',
     image: require('@assets/images/sprites/buildings/tesseract-puzzle1.webp'),
     intrinsicSize: { width: 256, height: 384 },

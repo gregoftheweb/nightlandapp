@@ -5,6 +5,7 @@ import {
   type LayoutChangeEvent,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -28,14 +29,24 @@ import {
   wordGridTilesToPixels,
 } from './geometry'
 import { appendWordGridLetter } from './sequence'
+import { resolveWordGridTapFeedbackColors } from './tapFeedback'
 import type { WordGridConfig, WordGridTile } from './types'
+import { WordGridLetterOverlay } from './WordGridLetterOverlay'
+import type { SubGameInstanceDefinition } from '@config/subGames'
 
 const DEBUG_WORD_GRID = false
 const HORIZONTAL_PADDING = 10
+type WordGridScreenProps = {
+  config: WordGridConfig
+  definition?: SubGameInstanceDefinition
+}
 
-export function WordGridEntry({ config }: { config: WordGridConfig }) {
+const lifecycleResolver = (definition?: SubGameInstanceDefinition) =>
+  definition ? () => definition : undefined
+
+export function WordGridEntry({ config, definition }: WordGridScreenProps) {
   const router = useRouter()
-  const lifecycle = useSubGameLifecycle(config.instanceId)
+  const lifecycle = useSubGameLifecycle(config.instanceId, lifecycleResolver(definition))
 
   useEffect(() => {
     const route = lifecycle.resolveEntryRoute()
@@ -45,16 +56,14 @@ export function WordGridEntry({ config }: { config: WordGridConfig }) {
   return null
 }
 
-export function WordGridIntroScreen({ config }: { config: WordGridConfig }) {
+export function WordGridIntroScreen({ config, definition }: WordGridScreenProps) {
   const router = useRouter()
-  const lifecycle = useSubGameLifecycle(config.instanceId)
+  const lifecycle = useSubGameLifecycle(config.instanceId, lifecycleResolver(definition))
 
   useEffect(() => {
     if (!lifecycle.isCompleted()) return
     const revisitRoute = lifecycle.resolveEntryRoute()
-    if (revisitRoute && revisitRoute !== '/sub-games/tesseract/main') {
-      router.replace(revisitRoute as never)
-    }
+    if (revisitRoute) router.replace(revisitRoute as never)
   }, [lifecycle, router])
 
   if (lifecycle.isCompleted()) return null
@@ -93,7 +102,7 @@ interface RenderedImage {
   offsetY: number
 }
 
-export function WordGridPuzzleScreen({ config }: { config: WordGridConfig }) {
+export function WordGridPuzzleScreen({ config }: WordGridScreenProps) {
   validateWordGridConfig(config)
   const router = useRouter()
   const { width: screenWidth } = useWindowDimensions()
@@ -106,6 +115,7 @@ export function WordGridPuzzleScreen({ config }: { config: WordGridConfig }) {
   const [tiles, setTiles] = useState<WordGridTile[]>([])
   const [selectedTiles, setSelectedTiles] = useState<WordGridTile[]>([])
   const [lastTappedTile, setLastTappedTile] = useState<WordGridTile | null>(null)
+  const [invalidTileId, setInvalidTileId] = useState<string | null>(null)
   const [currentSequence, setCurrentSequence] = useState<string[]>([])
   const [inactiveTiles, setInactiveTiles] = useState<Set<string>>(new Set())
   const circleOpacity = useRef(new Animated.Value(0)).current
@@ -170,11 +180,12 @@ export function WordGridPuzzleScreen({ config }: { config: WordGridConfig }) {
       const tappedTile = getWordGridTileAtPoint(tiles, adjustedX, adjustedY)
       if (!tappedTile || inactiveTiles.has(tappedTile.id)) return
 
+      const result = appendWordGridLetter(currentSequence, tappedTile.letter, config.targetSequence)
+
       setSelectedTiles((previous) => [...previous, tappedTile])
       setLastTappedTile(tappedTile)
+      setInvalidTileId(result.outcome === 'failure' ? tappedTile.id : null)
       setInactiveTiles((previous) => new Set(previous).add(tappedTile.id))
-
-      const result = appendWordGridLetter(currentSequence, tappedTile.letter, config.targetSequence)
       setCurrentSequence(result.sequence)
 
       if (result.outcome === 'failure') {
@@ -224,6 +235,12 @@ export function WordGridPuzzleScreen({ config }: { config: WordGridConfig }) {
                 ]}
                 onPress={handlePress}
               >
+                <WordGridLetterOverlay
+                  tiles={tiles}
+                  offsetX={actualImageSize.offsetX}
+                  offsetY={actualImageSize.offsetY}
+                />
+
                 {selectedTiles.map((tile) => (
                   <View
                     key={tile.id}
@@ -236,7 +253,10 @@ export function WordGridPuzzleScreen({ config }: { config: WordGridConfig }) {
                         width: tile.widthPx,
                         height: tile.heightPx,
                         borderWidth: config.tapFeedback.selectedBorderWidth,
-                        borderColor: config.tapFeedback.selectedBorderColor,
+                        borderColor: resolveWordGridTapFeedbackColors(
+                          config.tapFeedback,
+                          tile.id === invalidTileId
+                        ).borderColor,
                       },
                     ]}
                   />
@@ -279,7 +299,10 @@ export function WordGridPuzzleScreen({ config }: { config: WordGridConfig }) {
                       width: circleSize,
                       height: circleSize,
                       borderRadius: circleSize / 2,
-                      backgroundColor: config.tapFeedback.circleColor,
+                      backgroundColor: resolveWordGridTapFeedbackColors(
+                        config.tapFeedback,
+                        lastTappedTile.id === invalidTileId
+                      ).circleColor,
                       opacity: circleOpacity,
                     }}
                   />
@@ -319,8 +342,8 @@ export function WordGridPuzzleScreen({ config }: { config: WordGridConfig }) {
   )
 }
 
-export function WordGridFailureScreen({ config }: { config: WordGridConfig }) {
-  const lifecycle = useSubGameLifecycle(config.instanceId)
+export function WordGridFailureScreen({ config, definition }: WordGridScreenProps) {
+  const lifecycle = useSubGameLifecycle(config.instanceId, lifecycleResolver(definition))
 
   return (
     <>
@@ -348,8 +371,8 @@ export function WordGridFailureScreen({ config }: { config: WordGridConfig }) {
   )
 }
 
-export function WordGridSuccessScreen({ config }: { config: WordGridConfig }) {
-  const lifecycle = useSubGameLifecycle(config.instanceId)
+export function WordGridSuccessScreen({ config, definition }: WordGridScreenProps) {
+  const lifecycle = useSubGameLifecycle(config.instanceId, lifecycleResolver(definition))
   const [showRewardModal, setShowRewardModal] = useState(false)
   const isReturnVisit = lifecycle.isCompleted()
 
@@ -398,7 +421,15 @@ export function WordGridSuccessScreen({ config }: { config: WordGridConfig }) {
                 <Text style={styles.modalTitle}>
                   {config.presentation.success.rewardModalTitle}
                 </Text>
-                <Text style={styles.modalText}>{config.presentation.success.rewardModalText}</Text>
+                <ScrollView
+                  testID="word-grid-reward-scroll"
+                  style={styles.modalScroll}
+                  showsVerticalScrollIndicator
+                >
+                  <Text style={styles.modalText}>
+                    {config.presentation.success.rewardModalText}
+                  </Text>
+                </ScrollView>
                 <TouchableOpacity
                   style={styles.modalButton}
                   onPress={() => setShowRewardModal(false)}
@@ -540,6 +571,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   modalText: { fontSize: 16, color: '#fff', textAlign: 'left', marginBottom: 20, lineHeight: 22 },
+  modalScroll: { maxHeight: 360, marginBottom: 20 },
   modalButton: {
     paddingVertical: 12,
     paddingHorizontal: 20,

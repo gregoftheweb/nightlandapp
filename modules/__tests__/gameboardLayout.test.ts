@@ -21,7 +21,8 @@ const encounterIds = [
   'deep-silo',
   'aerowreckage-puzzle',
   'hermit-hollow',
-  'tesseract-crypt-01',
+  'word-tile-crypt-01',
+  'word-tile-crypt-02',
 ]
 
 function seededRandom(seed: number): () => number {
@@ -178,8 +179,8 @@ describe('gameboard layout integration', () => {
       expect(result.value.map(({ instanceId }) => instanceId).sort()).toEqual(
         [...encounterIds].sort()
       )
-      expect(new Set(result.value.map(({ occupancyId }) => occupancyId)).size).toBe(5)
-      expect(occupancy.snapshot()).toHaveLength(fixedCount + 5)
+      expect(new Set(result.value.map(({ occupancyId }) => occupancyId)).size).toBe(6)
+      expect(occupancy.snapshot()).toHaveLength(fixedCount + 6)
     }
   )
 
@@ -194,7 +195,7 @@ describe('gameboard layout integration', () => {
         new RandomSource()
       )
       expect(result.success).toBe(true)
-      if (result.success) expect(result.value).toHaveLength(5)
+      if (result.success) expect(result.value).toHaveLength(6)
     }
   })
 
@@ -237,7 +238,7 @@ describe('gameboard layout integration', () => {
     )
     expect(result.success).toBe(false)
     if (result.success) return
-    expect(result.errors).toHaveLength(5)
+    expect(result.errors).toHaveLength(6)
     expect(
       result.errors.every((error) => error.message.includes('would overlap existing object'))
     ).toBe(true)

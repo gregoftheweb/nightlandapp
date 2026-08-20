@@ -67,7 +67,8 @@ interface GameBoardProps {
         description: string,
         image?: ImageSourcePropType,
         ctaLabel?: string,
-        onCtaPress?: () => void
+        onCtaPress?: () => void,
+        scrollableDescription?: boolean
       ) => void)
     | null
   >
@@ -109,12 +110,14 @@ function GameBoard({
     image?: ImageSourcePropType
     ctaLabel?: string
     onCtaPress?: () => void
+    scrollableDescription?: boolean
   }>({
     name: '',
     description: '',
     image: undefined,
     ctaLabel: undefined,
     onCtaPress: undefined,
+    scrollableDescription: false,
   })
 
   const [combatInfoVisible, setCombatInfoVisible] = useState(false)
@@ -147,12 +150,13 @@ function GameBoard({
       description: string,
       image?: ImageSourcePropType,
       ctaLabel?: string,
-      onCtaPress?: () => void
+      onCtaPress?: () => void,
+      scrollableDescription = false
     ) => {
       if (__DEV__) {
         console.log('showInfo called:', { name, ctaLabel, infoVisible })
       }
-      setInfoData({ name, description, image, ctaLabel, onCtaPress })
+      setInfoData({ name, description, image, ctaLabel, onCtaPress, scrollableDescription })
       setInfoVisible(true)
     },
     [infoVisible]
@@ -1004,6 +1008,7 @@ function GameBoard({
         image={infoData.image}
         ctaLabel={infoData.ctaLabel}
         onCtaPress={infoData.onCtaPress}
+        scrollableDescription={infoData.scrollableDescription}
         onClose={() => {
           const id = instanceId.current
           if (__DEV__) {

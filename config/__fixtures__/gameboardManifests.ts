@@ -24,7 +24,7 @@ export const VALID_GAMEBOARD_MANIFEST: GameboardManifest = {
         exclude: [{ nearSlotId: 'jaunt-range', bufferPct: 0.05 }],
         minSpacingPct: 0.1,
       },
-      instances: ['tesseract-crypt-01'],
+      instances: ['word-tile-crypt-01'],
     },
   ],
 }
@@ -71,7 +71,7 @@ export const invalidGameboardFixtures: Record<
   },
   duplicateScatteredInstance: {
     expectedCode: 'duplicate-scattered-instance',
-    make: mutate((manifest) => manifest.slots[2].instances.push('tesseract-crypt-01')),
+    make: mutate((manifest) => manifest.slots[2].instances.push('word-tile-crypt-01')),
   },
   unknownContentRef: {
     expectedCode: 'unknown-content-ref',

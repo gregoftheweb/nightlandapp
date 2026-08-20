@@ -14,8 +14,8 @@ I must.
 
 — Persius`
 
-export const tesseractCrypt01Content = {
-  instanceId: 'tesseract-crypt-01',
+export const wordTileCrypt01Content = {
+  instanceId: 'word-tile-crypt-01',
   shapeId: 'word-grid',
   metadata: {
     title: 'Tesseract',
@@ -34,7 +34,7 @@ export const tesseractCrypt01Content = {
     },
   },
   content: {
-    assetId: 'tesseract-board',
+    assetId: 'word-grid-board-blank',
     gridRect: { xPct: 0.095, yPct: 0.11, widthPct: 0.805, heightPct: 0.76 },
     rows: 5,
     columns: 5,
@@ -43,10 +43,9 @@ export const tesseractCrypt01Content = {
       ['Z', 'T', 'V', 'A', 'N'],
       ['L', 'G', 'R', 'E', 'Y'],
       ['W', 'P', 'S', 'T', 'H'],
-      ['D', '<', 'T', 'O', 'M'],
+      ['D', 'I', 'T', 'O', 'M'],
       ['E', 'C', 'H', 'R', 'S'],
     ],
-    nonTargetSymbols: ['<'],
     targetSequence: 'TESSERACT',
   },
   lifecycle: {
@@ -80,10 +79,10 @@ export const tesseractCrypt01Content = {
       tapFeedback: {
         selectionFadeMs: 2000,
         selectedBorderWidth: 3,
-        selectedBorderColor: '#00ff00',
+        selectedBorderColor: '#20e878',
         inactiveOverlayColor: 'rgba(0, 0, 0, 0.5)',
         circleSize: 36,
-        circleColor: 'rgba(0, 255, 0, 0.5)',
+        circleColor: 'rgba(32, 232, 120, 0.55)',
       },
     },
     failure: {

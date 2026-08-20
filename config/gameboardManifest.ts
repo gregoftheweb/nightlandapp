@@ -48,7 +48,7 @@ export const GAMEBOARD_MANIFEST = {
       shapeId: 'word-grid',
       kind: 'scattered-group',
       placement: { exclude: ['end'] },
-      instances: ['tesseract-crypt-01'],
+      instances: ['word-tile-crypt-01', 'word-tile-crypt-02'],
     },
   ],
 } satisfies GameboardManifest

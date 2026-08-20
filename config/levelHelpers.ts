@@ -28,7 +28,7 @@ import {
   getNonCollisionTemplate,
 } from './objects'
 import { getGreatPowerTemplate } from './monsters'
-import { getSubGameDefinition } from './subGames'
+import { getSubGameDefinition, type SubGameInstanceDefinition } from './subGames'
 import { hydrateGreatPower } from '@modules/hydration'
 
 /**
@@ -241,9 +241,10 @@ export function createObjectInstance(
 export function createSubGameEntranceInstance(
   instanceId: string,
   position: Position,
-  overrides: Partial<LevelObjectInstance> = {}
+  overrides: Partial<LevelObjectInstance> = {},
+  resolvedDefinition?: SubGameInstanceDefinition
 ): LevelObjectInstance {
-  const subGame = getSubGameDefinition(instanceId)
+  const subGame = resolvedDefinition ?? getSubGameDefinition(instanceId)
   if (!subGame.entrance) {
     throw new Error(`Sub-game ${instanceId} does not have an entrance definition`)
   }

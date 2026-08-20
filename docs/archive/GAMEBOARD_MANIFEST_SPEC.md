@@ -70,8 +70,8 @@ Unchanged in spirit from v4's asset catalog concept, but now explicitly framed a
 ```typescript
 // app/sub-games/_shared/word-grid/contentCatalog.ts
 const WORD_GRID_CONTENT: Record<string, WordGridEncounterContent> = {
-  'tesseract-crypt-01': tesseractCrypt01Content,
-  'tesseract-crypt-02': tesseractCrypt02Content,
+  'word-tile-crypt-01': wordTileCrypt01Content,
+  'word-tile-crypt-02': wordTileCrypt02Content,
   // one entry per authored puzzle
 }
 ```
@@ -157,8 +157,8 @@ const gameboardManifest: GameboardManifest = {
       count: 7,
       placement: { type: 'scattered', exclude: ['end'] },
       instances: [
-        'tesseract-crypt-01',
-        'tesseract-crypt-02',
+        'word-tile-crypt-01',
+        'word-tile-crypt-02',
         'tesseract-crypt-03',
         'tesseract-crypt-04',
         'tesseract-crypt-05',
@@ -250,10 +250,10 @@ The current lint error (`EncounterManifest` duplicate export) should be fixed by
 1. Rename Tier 1 types per §2 (`WordGridEncounterContent`, etc.); retire `EncounterManifest`; confirm lint is clean.
 2. Define `GameboardManifest` and its slot types (§4) in `config/gameboardManifest.ts` (or a `config/types/gameboard.ts` + separate data file, if you'd rather split types from the authored instance — worth deciding which you prefer before this step).
 3. Write the gameboard manifest's own validator (§4.3), including cross-validation into Tier 1/2 (does every `contentRef` actually resolve and match its declared `shapeId`).
-4. Rename `WordGridManifestEntry`'s content catalog to make clear it's Tier 2 plumbing (`contentCatalog.ts`), and confirm Tesseract's real content is registered there (still just `tesseract-crypt-01` for now).
-5. Author the gameboard manifest itself with today's real content: a `FixedRangeSlot`/`EndSlot` for each existing hardcoded one-off (jaunt-cave, deep-silo, hermit-hollow, aerowreckage-puzzle — using whatever rough placement percentages match their current hand-placed positions), and a `ScatteredGroupSlot` for word-grid with `count: 1`, `instances: ['tesseract-crypt-01']` — proving the whole pipeline end-to-end with content that already exists, before adding anything new.
+4. Rename `WordGridManifestEntry`'s content catalog to make clear it's Tier 2 plumbing (`contentCatalog.ts`), and confirm Tesseract's real content is registered there (still just `word-tile-crypt-01` for now).
+5. Author the gameboard manifest itself with today's real content: a `FixedRangeSlot`/`EndSlot` for each existing hardcoded one-off (jaunt-cave, deep-silo, hermit-hollow, aerowreckage-puzzle — using whatever rough placement percentages match their current hand-placed positions), and a `ScatteredGroupSlot` for word-grid with `count: 1`, `instances: ['word-tile-crypt-01']` — proving the whole pipeline end-to-end with content that already exists, before adding anything new.
 6. Build `generateLayout` (§5) against a stub/placeholder trail-position function (even something as simple as "linear interpolation between two hardcoded board points" is fine for now — the real trail geometry is explicitly deferred, §8).
-7. Author `tesseract-crypt-02`, bump the scattered slot's `count` to 2, add it to `instances` — the actual proof this whole system works for adding new content.
+7. Author `word-tile-crypt-02`, bump the scattered slot's `count` to 2, add it to `instances` — the actual proof this whole system works for adding new content.
 8. Only after that: the real trail geometry, more content, more shapes.
 
 ---

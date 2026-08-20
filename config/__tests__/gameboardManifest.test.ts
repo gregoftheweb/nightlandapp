@@ -8,4 +8,15 @@ describe('real gameboard manifest', () => {
       value: GAMEBOARD_MANIFEST,
     })
   })
+
+  it('registers both word-grid encounters in the scattered group', () => {
+    const wordGridSlot = GAMEBOARD_MANIFEST.slots.find((slot) => slot.slotId === 'word-grid-clues')
+    expect(wordGridSlot).toEqual(
+      expect.objectContaining({
+        shapeId: 'word-grid',
+        kind: 'scattered-group',
+        instances: ['word-tile-crypt-01', 'word-tile-crypt-02'],
+      })
+    )
+  })
 })

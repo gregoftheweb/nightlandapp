@@ -127,6 +127,18 @@ I must.
 
 — Persius`
 
+export const SALAMANDER_LETTER_TEXT = `To whoever finds this,
+
+I am called the Salamander, one of the last of the Science-Wizards of the old world. It was I who wrought the Tesseract — the golden orb — in the age before the dark swallowed the sun. I made it as the catalyst, the one true means by which mankind might yet be delivered from the Night Land.
+
+It is complete. I have only to find the place where the Earth Current is strong enough to harness. I go now in search of such a place.
+
+The Watchers know what I made. They circle closer with each turn of the world's slow dying.
+
+If I fall, seek what I have hidden. The cure is real. The escape is real. Carry it forward, and let this be a blessing upon you, and upon all who still draw breath in the Night Land.
+
+— The Salamander`
+
 export const collectible: Record<string, GameObject> = {
   persiusNote2: {
     kind: 'object',
@@ -161,6 +173,24 @@ export const collectible: Record<string, GameObject> = {
       {
         type: 'showMessage',
         message: PERSIUS_SCROLL_TEXT,
+      },
+    ],
+  },
+  salamanderLetter: {
+    kind: 'object',
+    shortName: 'salamanderLetter',
+    category: 'collectible',
+    name: "The Salamander's Letter",
+    description: SALAMANDER_LETTER_TEXT,
+    type: 'collectible',
+    collectible: true,
+    active: true,
+    usable: true,
+    consumeOnUse: false,
+    effects: [
+      {
+        type: 'showMessage',
+        message: SALAMANDER_LETTER_TEXT,
       },
     ],
   },

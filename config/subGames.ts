@@ -7,7 +7,6 @@ import type {
 } from './types/subGames'
 
 import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
-import tesseractIMG from '@assets/images/sprites/buildings/tesseract-puzzle1.webp'
 import hermitIMG from '@assets/images/backgrounds/subgames/hermit/hermit-save2.webp'
 import jauntCaveIMG from '@assets/images/sprites/buildings/jaunt-cave.webp'
 import deepSiloIMG from '@assets/images/sprites/buildings/silo.webp'
@@ -225,50 +224,6 @@ const definitions: SubGameInstanceDefinition[] = [
       zIndex: 0,
       effects: [{ type: 'hide' }],
       ctaLabel: 'Enter the cave',
-      requiresPlayerOnObject: true,
-    },
-  },
-  {
-    instanceId: 'tesseract-crypt-01',
-    shapeId: 'word-grid',
-    entryRoute: '/sub-games/tesseract/main',
-    lifecycle: {
-      completion: {
-        event: 'Player presses return to the Night Land on the success screen',
-        idempotent: true,
-      },
-      failure: {
-        exit: 'death',
-        message: 'Christos failed to guess the right word.',
-        killerName: 'Ancient Evil',
-        suppressDeathDialog: true,
-        deathRoute: '/death',
-      },
-      waypoint: { createsWaypoint: false },
-      revisit: 'success-screen',
-      progress: { mode: 'local-only' },
-      reward: {
-        kind: 'item',
-        id: 'persius-scroll',
-        grantEvent: 'First entry to the success screen',
-        idempotent: true,
-      },
-      returnToRpg: returnsNormally,
-    },
-    title: 'Tesseract',
-    description:
-      'An ancient circle of black stone, steeped in a will that is not its own. Those who seek to command its power gain forbidden knowledge… or vanish without even the mercy of death.',
-    introBackgroundImage: require('@assets/images/backgrounds/subgames/tesseract/tesseract-screen1.webp'),
-    entrance: {
-      shortName: 'tesseract',
-      category: 'building',
-      width: 6,
-      height: 6,
-      image: tesseractIMG,
-      active: true,
-      zIndex: 0,
-      effects: [{ type: 'hide' }],
-      ctaLabel: 'Investigate',
       requiresPlayerOnObject: true,
     },
   },

@@ -28,7 +28,7 @@
 
 ```typescript
 interface WordGridEncounterContent {
-  instanceId: string // stable, kebab-case, e.g. 'tesseract-crypt-02'
+  instanceId: string // stable, kebab-case, e.g. 'word-tile-crypt-02'
   shapeId: 'word-grid'
 
   metadata: {
@@ -145,7 +145,7 @@ const WORD_GRID_ASSETS: Record<string, WordGridAssetDefinition> = {/* ... */}
 
 ## 8. Routing — filesystem path vs. actual URL
 
-The adapter's `routes(instanceId)` (defined generically in the pattern doc) returns the **actual navigable URL**, e.g. `/sub-games/word-grid/tesseract-crypt-02` — **not** a filesystem path. Expo Router's underlying file may be `app/sub-games/word-grid/[instanceId]/index.tsx`, but the corresponding public route has no `/index` suffix. Keep this distinction explicit in the adapter's implementation and its tests, so a future refactor doesn't accidentally append `/index` to a returned route string.
+The adapter's `routes(instanceId)` (defined generically in the pattern doc) returns the **actual navigable URL**, e.g. `/sub-games/word-grid/word-tile-crypt-02` — **not** a filesystem path. Expo Router's underlying file is `app/sub-games/word-grid/[instanceId]/index.tsx`, but the corresponding public route has no `/index` suffix. Keep this distinction explicit in the adapter's implementation and its tests, so a future refactor doesn't accidentally append `/index` to a returned route string.
 
 ## 9. Word-grid-specific validation (in addition to the generic principles in the pattern doc)
 

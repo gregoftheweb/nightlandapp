@@ -5,6 +5,7 @@ import {
   wordGridTilesToPixels,
 } from '../geometry'
 import { appendWordGridLetter } from '../sequence'
+import { resolveParsedWordGridEncounter } from '../contentCatalog'
 
 const testGrid = {
   rect: { left: 0.1, top: 0.2, right: 0.9, bottom: 0.8 },
@@ -58,5 +59,34 @@ describe('generic word-grid shape logic', () => {
     expect(() => validateWordGridGeometry(testGrid.rect, 2, 2, testGrid.letters)).toThrow(
       'must exactly match'
     )
+  })
+
+  it.each([
+    ['word-tile-crypt-01', 'TESSERACT'],
+    ['word-tile-crypt-02', 'SALAMANDER'],
+  ] as const)('plays %s with its own parsed grid and target', (instanceId, targetWord) => {
+    const config = resolveParsedWordGridEncounter(instanceId).shapeConfig
+    expect(config.targetSequence.join('')).toBe(targetWord)
+    expect(() =>
+      validateWordGridGeometry(config.gridRect, config.rows, config.columns, config.letters)
+    ).not.toThrow()
+    expect(
+      generateWordGridTiles(
+        config.gridRect,
+        config.rows,
+        config.columns,
+        config.gap,
+        config.letters
+      )
+    ).toHaveLength(25)
+
+    let sequence: string[] = []
+    config.targetSequence.forEach((letter, index) => {
+      const result = appendWordGridLetter(sequence, letter, config.targetSequence)
+      sequence = result.sequence
+      expect(result.outcome).toBe(
+        index === config.targetSequence.length - 1 ? 'success' : 'continue'
+      )
+    })
   })
 })

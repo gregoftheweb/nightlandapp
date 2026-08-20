@@ -90,7 +90,7 @@ describe('DebugMinimap coordinate mapping', () => {
           } as any,
           {
             id: 'generated-encounter',
-            templateId: 'tesseract-crypt-01',
+            templateId: 'word-tile-crypt-01',
             shortName: 'tesseract',
             name: 'Tesseract',
             position: { row: 100, col: 100 },

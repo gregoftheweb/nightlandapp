@@ -10,6 +10,7 @@ import {
   NativeTouchEvent,
   Image,
   ImageSourcePropType,
+  ScrollView,
 } from 'react-native'
 import { SafeAreaContent } from './SafeAreaContent'
 
@@ -21,6 +22,7 @@ interface InfoBoxProps {
   onClose: () => void
   ctaLabel?: string
   onCtaPress?: () => void
+  scrollableDescription?: boolean
 }
 
 export const InfoBox: React.FC<InfoBoxProps> = ({
@@ -31,6 +33,7 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
   onClose,
   ctaLabel,
   onCtaPress,
+  scrollableDescription = false,
 }) => {
   const [opacity] = useState(new Animated.Value(0))
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -107,7 +110,17 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
             </View>
           )}
 
-          <Text style={styles.description}>{description}</Text>
+          {scrollableDescription ? (
+            <ScrollView
+              testID="info-box-description-scroll"
+              style={styles.descriptionScroll}
+              showsVerticalScrollIndicator
+            >
+              <Text style={styles.description}>{description}</Text>
+            </ScrollView>
+          ) : (
+            <Text style={styles.description}>{description}</Text>
+          )}
 
           {ctaLabel && onCtaPress && (
             <TouchableOpacity style={styles.ctaButton} onPress={onCtaPress} activeOpacity={0.7}>
@@ -134,6 +147,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#ff0000',
     maxWidth: 300,
+    maxHeight: '80%',
     margin: 20,
   },
   header: {
@@ -186,6 +200,10 @@ const styles = StyleSheet.create({
     color: '#ff0000',
     textAlign: 'center',
     lineHeight: 20,
+    marginTop: 10,
+  },
+  descriptionScroll: {
+    flexShrink: 1,
     marginTop: 10,
   },
   ctaButton: {
