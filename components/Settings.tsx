@@ -15,6 +15,7 @@ import { audioManager } from '../modules/audioManager'
 import { settingsManager } from '../modules/settingsManager'
 import type { GameState } from '@config/types'
 import { SafeAreaContent } from './SafeAreaContent'
+import DebugMinimap from './DebugMinimap'
 
 type TabType = 'settings' | 'status' | 'debug'
 
@@ -24,6 +25,9 @@ interface SettingsProps {
   subGamesCompleted: GameState['subGamesCompleted']
   encounterPlacements: GameState['encounterPlacements']
   lastRedoubtPosition: GameState['level']['playerSpawn']
+  boardSize: GameState['level']['boardSize']
+  nonCollisionObjects: NonNullable<GameState['nonCollisionObjects']>
+  playerPosition: GameState['player']['position']
   onDebugJump: (position: GameState['player']['position']) => void
 }
 
@@ -84,12 +88,16 @@ function Settings({
   subGamesCompleted,
   encounterPlacements,
   lastRedoubtPosition,
+  boardSize,
+  nonCollisionObjects,
+  playerPosition,
   onDebugJump,
 }: SettingsProps) {
   const { width, height } = useWindowDimensions()
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(audioManager.getIsEnabled())
   const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
   const [activeTab, setActiveTab] = useState<TabType>('settings')
+  const [showMinimap, setShowMinimap] = useState(false)
 
   // Puzzle name mapping for friendly display
   const PUZZLE_NAMES: Record<string, string> = {
@@ -116,6 +124,7 @@ function Settings({
       setBackgroundMusicEnabled(audioManager.getIsEnabled())
       setShowCoordinates(settingsManager.getShowCoordinates())
       setActiveTab('settings') // Reset to settings tab when opening
+      setShowMinimap(false)
     }
   }, [visible])
 
@@ -226,32 +235,49 @@ function Settings({
               </ScrollView>
             ) : (
               __DEV__ && (
-                <ScrollView
-                  style={styles.scrollView}
-                  contentContainerStyle={styles.scrollViewContent}
-                  showsVerticalScrollIndicator={true}
-                >
-                  <Text style={styles.sectionTitle}>Jump to location</Text>
-                  <TouchableOpacity
-                    style={styles.debugJumpRow}
-                    onPress={() => onDebugJump(lastRedoubtPosition)}
-                    activeOpacity={0.7}
+                <>
+                  <DebugMinimap
+                    visible={showMinimap}
+                    onClose={() => setShowMinimap(false)}
+                    boardSize={boardSize}
+                    encounterPlacements={encounterPlacements}
+                    nonCollisionObjects={nonCollisionObjects}
+                    playerPosition={playerPosition}
+                  />
+                  <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollViewContent}
+                    showsVerticalScrollIndicator={true}
                   >
-                    <Text style={styles.debugJumpInstance}>Last Redoubt</Text>
-                    <Text style={styles.debugJumpSlot}>Original player spawn</Text>
-                  </TouchableOpacity>
-                  {encounterPlacements.map((placement) => (
+                    <Text style={styles.sectionTitle}>Jump to location</Text>
                     <TouchableOpacity
-                      key={placement.occupancyId}
-                      style={styles.debugJumpRow}
-                      onPress={() => onDebugJump(placement.position)}
+                      style={styles.debugActionRow}
+                      onPress={() => setShowMinimap(true)}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.debugJumpInstance}>{placement.instanceId}</Text>
-                      <Text style={styles.debugJumpSlot}>Slot: {placement.slotId}</Text>
+                      <Text style={styles.debugActionText}>View minimap</Text>
                     </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                    <TouchableOpacity
+                      style={styles.debugJumpRow}
+                      onPress={() => onDebugJump(lastRedoubtPosition)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.debugJumpInstance}>Last Redoubt</Text>
+                      <Text style={styles.debugJumpSlot}>Original player spawn</Text>
+                    </TouchableOpacity>
+                    {encounterPlacements.map((placement) => (
+                      <TouchableOpacity
+                        key={placement.occupancyId}
+                        style={styles.debugJumpRow}
+                        onPress={() => onDebugJump(placement.position)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.debugJumpInstance}>{placement.instanceId}</Text>
+                        <Text style={styles.debugJumpSlot}>Slot: {placement.slotId}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
               )
             )}
           </View>
@@ -269,7 +295,10 @@ export default React.memo(Settings, (previous, next) => {
     previous.onDebugJump === next.onDebugJump &&
     previous.subGamesCompleted === next.subGamesCompleted &&
     previous.encounterPlacements === next.encounterPlacements &&
-    previous.lastRedoubtPosition === next.lastRedoubtPosition
+    previous.lastRedoubtPosition === next.lastRedoubtPosition &&
+    previous.boardSize === next.boardSize &&
+    previous.nonCollisionObjects === next.nonCollisionObjects &&
+    previous.playerPosition === next.playerPosition
   )
 })
 
@@ -373,6 +402,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  debugActionRow: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#990000',
+    backgroundColor: 'rgba(153, 0, 0, 0.25)',
+  },
+  debugActionText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   debugJumpInstance: {
     color: '#fff',

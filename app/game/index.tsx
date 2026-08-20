@@ -1165,6 +1165,9 @@ export default function Game() {
           subGamesCompleted={state.subGamesCompleted}
           encounterPlacements={state.encounterPlacements}
           lastRedoubtPosition={state.level.playerSpawn}
+          boardSize={state.level.boardSize}
+          nonCollisionObjects={state.nonCollisionObjects ?? []}
+          playerPosition={state.player.position}
           onDebugJump={handleDebugJump}
         />
         <Inventory
