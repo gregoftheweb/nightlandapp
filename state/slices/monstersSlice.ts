@@ -25,18 +25,6 @@ export function reduceMonsters(state: GameState, action: any): GameState | null 
     case 'UPDATE_ACTIVE_MONSTERS':
       return { ...state, activeMonsters: action.payload.activeMonsters }
 
-    case 'AWAKEN_GREAT_POWER':
-      return {
-        ...state,
-        level: {
-          ...state.level,
-          greatPowers:
-            state.level.greatPowers?.map((power) =>
-              power.id === action.payload.greatPowerId ? { ...power, awakened: true } : power
-            ) || [],
-        },
-      }
-
     case 'UPDATE_WAITING_MONSTERS':
       return { ...state, waitingMonsters: action.payload.waitingMonsters }
 

@@ -1,6 +1,6 @@
 import { Level } from './levels'
 import { Item, LevelObjectInstance, NonCollisionObject } from './itemsAndObjects'
-import { Player, Monster, GreatPower } from './actors'
+import { Player, Monster } from './actors'
 import { CombatParticipant, CombatLogEntry, Projectile, TeleportFlash } from './combat'
 import type { EncounterPlacement, GameboardCatalogIdentity } from './gameboard'
 
@@ -22,7 +22,6 @@ export interface GameState {
   items: Item[] // Items available in current level
   objects: LevelObjectInstance[] // Interactive objects in current level
   nonCollisionObjects?: NonCollisionObject[] // Decorative/non-collision objects
-  greatPowers: GreatPower[] // Great powers available in current level
   gridWidth: number // Game grid width
   gridHeight: number // Game grid height
 

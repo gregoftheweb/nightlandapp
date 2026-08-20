@@ -65,7 +65,6 @@ describe('Jaunt Power', () => {
       maxAttackers: 3,
       items: [],
       objects: [],
-      greatPowers: [],
       gridWidth: 500,
       gridHeight: 500,
       weapons: [],

@@ -295,12 +295,11 @@ function GameBoard({
   const handleGreatPowerTap = useCallback(
     (greatPower: GreatPower) => {
       if (__DEV__) console.log('handleGreatPowerTap called, greatPower:', greatPower)
-      const statusInfo = greatPower.awakened ? 'AWAKENED' : 'Sleeping'
       showInfo(
         greatPower.name || greatPower.shortName || 'Great Power',
         `${
           greatPower.description || 'An ancient entity of immense power.'
-        }\n\nStatus: ${statusInfo}\nHP: ${greatPower.currentHP}/${greatPower.maxHP}\nAC: ${
+        }\n\nHP: ${greatPower.currentHP}/${greatPower.maxHP}\nAC: ${
           greatPower.ac
         }\nAttack: ${greatPower.attack}`,
         getGreatPowerImage(greatPower)
@@ -646,7 +645,6 @@ function GameBoard({
               style={{
                 width: '100%',
                 height: '100%',
-                opacity: greatPower.awakened ? 1.0 : 0.7,
               }}
               resizeMode="contain"
             />

@@ -52,13 +52,18 @@ export function reduceItems(state: GameState, action: any): GameState | null {
         ),
       }
 
-    case 'UPDATE_OBJECT':
+    case 'UPDATE_OBJECT': {
+      const updateObjects = (objects: GameState['objects']) =>
+        objects.map((obj) =>
+          obj.shortName === action.payload.shortName ? { ...obj, ...action.payload.updates } : obj
+        )
+      const objects = updateObjects(state.objects)
       return {
         ...state,
-        objects: state.objects.map((obj) =>
-          obj.shortName === action.payload.shortName ? { ...obj, ...action.payload.updates } : obj
-        ),
+        objects,
+        level: { ...state.level, objects },
       }
+    }
 
     default:
       return null

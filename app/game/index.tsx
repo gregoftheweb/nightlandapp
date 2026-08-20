@@ -26,7 +26,7 @@ import {
 } from '@config/types'
 import { audioManager } from '../../modules/audioManager'
 import { settingsManager } from '../../modules/settingsManager'
-import { UI_CONSTANTS, TIMING_CONSTANTS, COMBAT_CONSTANTS } from '../../constants/Game'
+import { UI_CONSTANTS, TIMING_CONSTANTS } from '../../constants/Game'
 import { findNearestMonster } from '../../modules/monsterUtils'
 import {
   executeRangedAttack,
@@ -371,14 +371,13 @@ export default function Game() {
 
   const showGreatPowerInfo = useCallback((greatPower: GreatPower) => {
     if (!showInfoRef.current) return
-    const statusInfo = greatPower.awakened ? 'AWAKENED' : 'Sleeping'
     const greatPowerImage =
       greatPower.image || require('@assets/images/sprites/monsters/watcherse.webp')
     showInfoRef.current(
       greatPower.name || greatPower.shortName || 'Great Power',
       `${
         greatPower.description || 'An ancient entity of immense power.'
-      }\n\nStatus: ${statusInfo}\nHP: ${greatPower.currentHP}/${
+      }\n\nHP: ${greatPower.currentHP}/${
         greatPower.maxHP
       }\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`,
       greatPowerImage
@@ -566,34 +565,7 @@ export default function Game() {
     [state.inCombat, state.rangedAttackMode, dispatch]
   )
 
-  const handleGreatPowerTap = useCallback(
-    (greatPower: GreatPower) => {
-      if (__DEV__) {
-        console.log('Great Power tapped:', greatPower.name, 'awakened:', greatPower.awakened)
-      }
-
-      if (greatPower.awakened) return
-
-      const playerPos = state.player.position
-      const powerPos = greatPower.position
-      const distance =
-        Math.abs(playerPos.row - powerPos.row) + Math.abs(playerPos.col - powerPos.col)
-
-      if (
-        distance <= COMBAT_CONSTANTS.GREAT_POWER_AWAKEN_DISTANCE &&
-        greatPower.awakenCondition === 'player_within_range'
-      ) {
-        if (__DEV__) {
-          console.log('Awakening Great Power:', greatPower.name)
-        }
-        dispatch({
-          type: 'AWAKEN_GREAT_POWER',
-          payload: { greatPowerId: greatPower.id },
-        })
-      }
-    },
-    [state.player.position, dispatch]
-  )
+  const handleGreatPowerTap = useCallback((_greatPower: GreatPower) => {}, [])
 
   const handleLongPress = useCallback(
     (event: any) => {

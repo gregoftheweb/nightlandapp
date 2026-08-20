@@ -83,7 +83,6 @@ describe('Self-Healing Mechanic', () => {
       activeMonsters: [],
       items: [],
       objects: [],
-      greatPowers: [],
       levels: { '1': mockLevel },
       weapons: [],
       monsters: [],

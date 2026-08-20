@@ -401,7 +401,6 @@ describe('hydration module', () => {
         maxHP: 100,
         attack: 20,
         ac: 18,
-        awakenCondition: 'defeat_all_monsters',
       }
 
       const instance: GreatPowerInstance = {
@@ -409,7 +408,6 @@ describe('hydration module', () => {
         templateId: 'great-power-v2',
         position: { row: 30, col: 30 },
         currentHP: 80,
-        awakened: false,
       }
 
       const hydrated = hydrateGreatPower(template, instance)
@@ -423,33 +421,6 @@ describe('hydration module', () => {
       expect(hydrated.currentHP).toBe(80)
       expect(hydrated.attack).toBe(20)
       expect(hydrated.ac).toBe(18)
-      expect(hydrated.awakened).toBe(false)
-      expect(hydrated.awakenCondition).toBe('defeat_all_monsters')
-    })
-
-    it('should handle awakened state in instance', () => {
-      const template: GreatPowerTemplate = {
-        kind: 'greatPower',
-        shortName: 'awakened-power-v2',
-        category: 'greatpower',
-        name: 'Awakened Power V2',
-        maxHP: 150,
-        attack: 25,
-        ac: 20,
-        awakenCondition: 'player_reaches_position',
-      }
-
-      const instance: GreatPowerInstance = {
-        id: 'awakened-power-v2-1',
-        templateId: 'awakened-power-v2',
-        position: { row: 40, col: 40 },
-        currentHP: 150,
-        awakened: true, // Awakened
-      }
-
-      const hydrated = hydrateGreatPower(template, instance)
-
-      expect(hydrated.awakened).toBe(true)
     })
   })
 
@@ -538,7 +509,6 @@ describe('hydration module', () => {
             maxHP: 100,
             attack: 20,
             ac: 18,
-            awakenCondition: 'condition_a',
           },
         ],
         [
@@ -551,7 +521,6 @@ describe('hydration module', () => {
             maxHP: 120,
             attack: 22,
             ac: 20,
-            awakenCondition: 'condition_b',
           },
         ],
       ])
@@ -562,14 +531,12 @@ describe('hydration module', () => {
           templateId: 'power-v2-a',
           position: { row: 50, col: 50 },
           currentHP: 90,
-          awakened: false,
         },
         {
           id: 'power-v2-b-1',
           templateId: 'power-v2-b',
           position: { row: 60, col: 60 },
           currentHP: 120,
-          awakened: true,
         },
       ]
 
@@ -578,10 +545,8 @@ describe('hydration module', () => {
       expect(hydrated).toHaveLength(2)
       expect(hydrated[0].name).toBe('Power V2 A')
       expect(hydrated[0].currentHP).toBe(90)
-      expect(hydrated[0].awakened).toBe(false)
       expect(hydrated[1].name).toBe('Power V2 B')
       expect(hydrated[1].currentHP).toBe(120)
-      expect(hydrated[1].awakened).toBe(true)
     })
 
     it('should throw error if great power template not found', () => {
@@ -592,7 +557,6 @@ describe('hydration module', () => {
           templateId: 'missing-power-v2',
           position: { row: 1, col: 1 },
           currentHP: 100,
-          awakened: false,
         },
       ]
 

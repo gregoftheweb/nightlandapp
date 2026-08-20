@@ -260,13 +260,6 @@ const handleGreatPowerEffects = (
 ) => {
   console.log(`Player collided with Great Power: ${greatPower.name}`)
 
-  if (!greatPower.awakened && greatPower.awakenCondition === 'player_within_range') {
-    dispatch({
-      type: 'AWAKEN_GREAT_POWER',
-      payload: { id: greatPower.id },
-    })
-  }
-
   if (greatPower.effects) {
     const deathMessage = COMBAT_STRINGS.soulSuckDeath.player(greatPower.name)
 

@@ -141,7 +141,6 @@ describe('DebugMinimap coordinate mapping', () => {
             position: { row: 380, col: 180 },
             width: 6,
             height: 6,
-            awakened: true,
           } as any,
         ],
         levelObjects: [
@@ -192,7 +191,7 @@ describe('DebugMinimap coordinate mapping', () => {
 
     fireEvent.press(view.getByLabelText('Great Power Watcher'))
     expect(view.getByText(/Watcher/)).toBeTruthy()
-    expect(view.getByText(/Awakened: yes/)).toBeTruthy()
+    expect(view.queryByText(/Awakened:/)).toBeNull()
     expect(view.getByText('overlap-encounter')).toBeTruthy()
   })
 })

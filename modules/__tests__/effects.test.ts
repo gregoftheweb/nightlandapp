@@ -84,7 +84,6 @@ describe('Unified Effects System', () => {
       activeMonsters,
       items: [],
       objects: [],
-      greatPowers: [],
       levels: { '1': mockLevel },
       weapons: [],
       monsters: [],

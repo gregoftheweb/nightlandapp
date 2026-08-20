@@ -77,7 +77,6 @@ export interface GreatPowerTemplate extends EntityTemplate<'greatPower', GreatPo
   maxHP: MaxHP
   attack: number
   ac: number
-  awakenCondition: string
   width?: number
   height?: number
   effects?: Effect[]
@@ -96,7 +95,6 @@ export interface GreatPowerInstance {
   templateId: string // Reference to GreatPowerTemplate.shortName
   position: Position
   currentHP: CurrentHP
-  awakened: boolean
   // Instance-specific overrides
   zIndex?: number
 }
@@ -110,7 +108,6 @@ export interface GreatPower extends GreatPowerTemplate {
   templateId: string
   position: Position
   currentHP: CurrentHP
-  awakened: boolean
 }
 
 // ===== Runtime Type Aliases =====

@@ -112,7 +112,6 @@ function buildInitialState(
     levels: { [levelId]: runtimeLevel },
     items: levelConfig.items || [],
     objects: runtimeObjects,
-    greatPowers: levelConfig.greatPowers || [],
     nonCollisionObjects: levelConfig.nonCollisionObjects || [],
     gridWidth: gameConfig.grid.width,
     gridHeight: gameConfig.grid.height,
@@ -226,11 +225,15 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
 
   // Get fresh initial state as base
   const base = getInitialState(snapshot.currentLevelId || '1')
+  // Discard the former duplicate; level.greatPowers is the only canonical source.
+  const { greatPowers: _legacyGreatPowers, ...canonicalSnapshot } = snapshot as GameSnapshot & {
+    greatPowers?: unknown
+  }
 
   // Merge snapshot data with base, clearing transient UI state
   const result = {
     ...base,
-    ...snapshot,
+    ...canonicalSnapshot,
     // Convert ISO string back to Date
     lastSaved: new Date(snapshot.lastSaved),
     // Clear transient UI flags that should not persist
