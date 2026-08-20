@@ -90,11 +90,33 @@ export function buildBoardOccupancyRegistry(level: Level): BoardOccupancyRegistr
     })
   })
   level.nonCollisionObjects?.forEach((object) => {
+    if (object.collisionMask?.length) {
+      object.collisionMask.forEach((segment, index) => {
+        seed.push({
+          id: `${object.id}-mask-${index}`,
+          position: {
+            row: object.position.row + segment.row,
+            col: object.position.col + segment.col,
+          },
+          width: segment.width ?? 1,
+          height: segment.height ?? 1,
+        })
+      })
+      return
+    }
     seed.push({
       id: object.id,
       position: object.position,
       width: object.width || 1,
       height: object.height || 1,
+    })
+  })
+  level.greatPowers?.forEach((greatPower) => {
+    seed.push({
+      id: greatPower.id,
+      position: greatPower.position,
+      width: greatPower.width ?? 1,
+      height: greatPower.height ?? 1,
     })
   })
   seed.push({ id: 'player-spawn', position: level.playerSpawn, width: 1, height: 1 })
