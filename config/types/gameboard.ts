@@ -1,4 +1,5 @@
 import type { SubGameShapeId } from './subGames'
+import type { Position } from './primitives'
 
 export type GameboardRegion = 'start' | 'end' | { nearSlotId: string; bufferPct: number }
 
@@ -30,4 +31,27 @@ export type GameboardSlot =
 export interface GameboardManifest {
   version: number
   slots: GameboardSlot[]
+}
+
+export interface EncounterPlacement {
+  instanceId: string
+  shapeId: SubGameShapeId
+  slotId: string
+  position: Position
+  progressPct: number
+  footprint: { width: number; height: number }
+  occupancyId: string
+}
+
+export interface GameboardCatalogIdentity {
+  gameboardVersion: number
+  gameboardHash: string
+  referencedContentHash: string
+}
+
+/** Serializable authored content used by save fingerprinting; never contains image handles. */
+export interface ContentFingerprintInput {
+  shapeId: SubGameShapeId
+  instanceId: string
+  content: unknown
 }

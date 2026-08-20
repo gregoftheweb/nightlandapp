@@ -1,14 +1,16 @@
 import type { GameboardManifest } from './types/gameboard'
+
 /**
  * Authored gameboard structure matching today's encounter set.
- * This value is validated in tests but is not consumed by the running game yet.
  *
- * NOTE: placement percentages currently reflect today's dev/test layout —
- * all four one-off encounters are clustered near the level start for easy
- * testing, per current practice. These are NOT final story-beat positions
- * (e.g. Aero-Wreckage at ~1/3, Jaunt Cave at midpoint, per original design
- * intent). Update these ranges when the real level path/placement is
- * designed — do not treat these values as intentional final placement.
+ * NOTE: placement percentages are spaced apart just enough to avoid
+ * footprint collisions during layout-generator testing (build order step 6),
+ * kept intentionally tight/close together for fast manual testing. These
+ * are NOT final story-beat positions. Real design intent for later:
+ * Aero-Wreckage ~1/3 along the path, Jaunt Cave at the midpoint, Deep Silo
+ * and Hermit Hollow's real positions TBD. Update these ranges once real
+ * trail geometry (build order step 8) replaces the current linear-interpolation
+ * stub PathPositionResolver.
  */
 export const GAMEBOARD_MANIFEST = {
   version: 1,
@@ -17,29 +19,29 @@ export const GAMEBOARD_MANIFEST = {
       slotId: 'hermit-hollow',
       shapeId: 'dialogue',
       kind: 'range',
-      placement: { minPct: 0, maxPct: 0.025 },
+      placement: { minPct: 0.02, maxPct: 0.06 },
       contentRef: 'hermit-hollow',
     },
     {
       slotId: 'aerowreckage-puzzle',
       shapeId: 'one-off',
       kind: 'range',
-      placement: { minPct: 0, maxPct: 0.03 },
+      placement: { minPct: 0.09, maxPct: 0.13 },
       contentRef: 'aerowreckage-puzzle',
-    },
-    {
-      slotId: 'deep-silo',
-      shapeId: 'one-off',
-      kind: 'range',
-      placement: { minPct: 0, maxPct: 0.04 },
-      contentRef: 'deep-silo',
     },
     {
       slotId: 'jaunt-cave',
       shapeId: 'one-off',
       kind: 'range',
-      placement: { minPct: 0, maxPct: 0.05 },
+      placement: { minPct: 0.16, maxPct: 0.2 },
       contentRef: 'jaunt-cave',
+    },
+    {
+      slotId: 'deep-silo',
+      shapeId: 'one-off',
+      kind: 'range',
+      placement: { minPct: 0.23, maxPct: 0.27 },
+      contentRef: 'deep-silo',
     },
     {
       slotId: 'word-grid-clues',

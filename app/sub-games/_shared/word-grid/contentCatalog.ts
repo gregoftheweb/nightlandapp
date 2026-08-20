@@ -17,7 +17,7 @@ if (!fixtureAssetsResult.success) {
   throw new Error('The temporary word-grid fixture asset catalog is invalid')
 }
 
-const RAW_WORD_GRID_CONTENT = buildRawCatalog([
+export const RAW_WORD_GRID_CONTENT = buildRawCatalog([
   {
     instanceId: VALID_WORD_GRID_CONTENT.instanceId,
     content: VALID_WORD_GRID_CONTENT,
