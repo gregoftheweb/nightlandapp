@@ -37,7 +37,13 @@ export interface LifecycleDependencies {
 }
 
 const rewardFlag = (instance: SubGameInstanceDefinition): string =>
-  `${instance.instanceId}:reward:${instance.lifecycle.reward.kind === 'none' ? 'none' : instance.lifecycle.reward.id}`
+  `${instance.instanceId}:reward:${
+    instance.lifecycle.reward.kind === 'none'
+      ? 'none'
+      : instance.lifecycle.reward.kind === 'weapon-upgrade'
+        ? instance.lifecycle.reward.weaponId
+        : instance.lifecycle.reward.id
+  }`
 
 function routeDirectory(entryRoute: string): string {
   const slash = entryRoute.lastIndexOf('/')
@@ -59,6 +65,7 @@ export function resolveSubGameEntryRoute(
         ? `${instance.entryRoute}/success`
         : `${routeDirectory(instance.entryRoute)}/success`
     case 'aftermath-screen':
+      if (instance.lifecycle.aftermathRoute) return instance.lifecycle.aftermathRoute
       return instance.shapeId === 'word-grid'
         ? `${instance.entryRoute}/aftermath`
         : `${routeDirectory(instance.entryRoute)}/aftermath`
@@ -132,6 +139,15 @@ function rewardActions(
         ? { type: 'ADD_RANGED_WEAPON', payload: { id: reward.id } }
         : { type: 'ADD_TO_WEAPONS', payload: { weapon } }
     )
+  } else if (reward.kind === 'weapon-upgrade') {
+    actions.push({
+      type: 'APPLY_WEAPON_UPGRADE',
+      payload: {
+        weaponId: reward.weaponId,
+        damageMultiplier: reward.damageMultiplier,
+        hitBonusAdd: reward.hitBonusAdd,
+      },
+    })
   } else {
     const result = applyEffect({ type: reward.id } as Effect, {
       state,

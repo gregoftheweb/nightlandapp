@@ -126,6 +126,42 @@ describe('sub-game lifecycle controller', () => {
     expect(harness.exit).toHaveBeenCalledWith({ completed: false })
   })
 
+  it('applies a weapon-upgrade reward once across repeated completion attempts', async () => {
+    const config = {
+      ...baseConfig,
+      reward: {
+        kind: 'weapon-upgrade',
+        weaponId: 'weapon-discos-001',
+        damageMultiplier: 2,
+        hitBonusAdd: 2,
+        grantEvent: 'Charged weapon retrieved',
+        idempotent: true,
+      },
+    } satisfies SubGameLifecycleConfig
+    const harness = makeHarness(config)
+
+    await Promise.all([harness.controller.completeSubGame(), harness.controller.completeSubGame()])
+    await harness.controller.completeSubGame()
+
+    const upgradeActions = harness.dispatch.mock.calls
+      .map(([action]) => action)
+      .filter((action) => action.type === 'APPLY_WEAPON_UPGRADE')
+    expect(upgradeActions).toEqual([
+      {
+        type: 'APPLY_WEAPON_UPGRADE',
+        payload: {
+          weaponId: 'weapon-discos-001',
+          damageMultiplier: 2,
+          hitBonusAdd: 2,
+        },
+      },
+    ])
+    expect(harness.getState().weaponUpgrades['weapon-discos-001']).toEqual({
+      damageMultiplier: 2,
+      hitBonusAdd: 2,
+    })
+  })
+
   it('death failure dispatches GAME_OVER without a normal RPG return', async () => {
     const config = {
       ...baseConfig,
@@ -191,6 +227,17 @@ describe('sub-game revisit routing', () => {
     const config = { ...baseConfig, revisit: 'unavailable' } satisfies SubGameLifecycleConfig
     expect(resolveSubGameEntryRoute(makeInstance(config), false)).toBe(
       '/sub-games/test-encounter/main'
+    )
+  })
+
+  it('uses an explicitly declared one-off aftermath route', () => {
+    const config = {
+      ...baseConfig,
+      revisit: 'aftermath-screen',
+      aftermathRoute: '/sub-games/deep-silo/screen8',
+    } satisfies SubGameLifecycleConfig
+    expect(resolveSubGameEntryRoute(makeInstance(config), true)).toBe(
+      '/sub-games/deep-silo/screen8'
     )
   })
 })

@@ -30,6 +30,14 @@ export type SubGameProgressConfig =
 export type SubGameRewardConfig =
   | { kind: 'none' }
   | {
+      kind: 'weapon-upgrade'
+      weaponId: string
+      damageMultiplier: number
+      hitBonusAdd: number
+      grantEvent: string
+      idempotent: true
+    }
+  | {
       kind: 'item' | 'weapon' | 'effect' | 'ability'
       id: string
       grantEvent: string
@@ -44,6 +52,8 @@ export interface SubGameLifecycleConfig {
     | { createsWaypoint: false }
     | { createsWaypoint: true; waypointName: string; snapshot: string; idempotent: true }
   revisit: SubGameRevisitPolicy
+  /** Optional explicit destination for a one-off aftermath screen. */
+  aftermathRoute?: string
   progress: SubGameProgressConfig
   reward: SubGameRewardConfig
   returnToRpg: { signalRpgResume: true; exitSubGame: true }

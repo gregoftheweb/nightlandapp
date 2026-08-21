@@ -6,20 +6,26 @@ import { useRouter } from 'expo-router'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
+import { powerOff, powerOn, useDeepSiloPuzzleState } from './puzzleState'
 
 const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen7.webp')
 
 export default function DeepSiloScreen7() {
   const router = useRouter()
+  const puzzle = useDeepSiloPuzzleState()
 
   const handleBack = () => {
     if (__DEV__) console.log('[DeepSilo] Heading back to screen 6')
     router.back()
   }
 
-  const handleThrowSwitch = () => {
-    if (__DEV__) console.log('[DeepSilo] Throwing the power switch')
+  const handlePowerOn = async () => {
+    await puzzle.commit(powerOn(puzzle.state).state)
     router.push('/sub-games/deep-silo/switch-animation' as any)
+  }
+
+  const handlePowerOff = async () => {
+    await puzzle.commit(powerOff(puzzle.state))
   }
 
   return (
@@ -31,13 +37,33 @@ export default function DeepSiloScreen7() {
             <TouchableOpacity style={styles.button} onPress={handleBack} activeOpacity={0.7}>
               <Text style={styles.buttonText}>Go back</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.switchButton]}
-              onPress={handleThrowSwitch}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.buttonText}>Throw switch</Text>
-            </TouchableOpacity>
+            {!puzzle.isLoading && !puzzle.state.powerOn && (
+              <TouchableOpacity
+                style={[styles.button, styles.switchButton]}
+                onPress={() => void handlePowerOn()}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.buttonText}>Power On</Text>
+              </TouchableOpacity>
+            )}
+            {!puzzle.isLoading && puzzle.state.powerOn && (
+              <>
+                <TouchableOpacity
+                  style={[styles.button, styles.switchButton]}
+                  onPress={() => void handlePowerOff()}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.buttonText}>Power Off</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => router.push('/sub-games/deep-silo/screen8' as never)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.buttonText}>View generator</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </BottomActionBar>
       </View>
