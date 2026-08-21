@@ -223,14 +223,15 @@ describe('Death Reset System', () => {
       expect(serialized).toBeTruthy()
     })
 
-    test('fromSnapshot should reconstruct state (stub)', () => {
+    test('fromSnapshot should reconstruct persisted trail state', () => {
       const state = getInitialState('1')
       const snapshot = toSnapshot(state)
       const reconstructed = fromSnapshot(snapshot)
 
-      // Currently a stub, should return fresh state
       expect(reconstructed.currentLevelId).toBe('1')
       expect(reconstructed.player).toBeDefined()
+      expect(reconstructed.trailNetwork?.geometry).toEqual(snapshot.trailNetworkGeometry)
+      expect(reconstructed.generatedFootsteps).toEqual(snapshot.generatedFootsteps)
     })
   })
 

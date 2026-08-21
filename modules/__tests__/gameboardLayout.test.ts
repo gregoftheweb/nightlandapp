@@ -22,6 +22,7 @@ import { getNonCollisionTemplate } from '@config/objects'
 import { buildSpatialGrid } from '../spacialGrid'
 import { getObjectAtPoint } from '../utils'
 import { FOOTSTEP_INTERVAL_TILES, MAX_BRANCH_LENGTH_TILES } from '../trailGeometry'
+import * as trailGeometry from '../trailGeometry'
 
 const encounterIds = [
   'jaunt-cave',
@@ -452,7 +453,8 @@ describe('gameboard layout integration', () => {
     ).toBe(false)
     const snapshot = toSnapshot(state) as unknown as Record<string, unknown>
     expect(snapshot).not.toHaveProperty('trailNetwork')
-    expect(snapshot).not.toHaveProperty('generatedFootsteps')
+    expect(snapshot).toHaveProperty('trailNetworkGeometry')
+    expect(snapshot).toHaveProperty('generatedFootsteps')
   })
 
   test('materializes all three variants with distinct matching assets', () => {
@@ -490,6 +492,53 @@ describe('gameboard layout integration', () => {
         gameboardCatalogIdentity: { ...snapshot.gameboardCatalogIdentity, gameboardHash: 'stale' },
       })
     ).toThrow(IncompatibleGameboardSaveError)
+  })
+
+  test('persists and rehydrates identical trail geometry, resolution, and footsteps', () => {
+    const state = getInitialState('1')
+    const snapshot = toSnapshot(state)
+    const geometryBytes = JSON.stringify(state.trailNetwork!.geometry)
+    expect(JSON.stringify(snapshot.trailNetworkGeometry)).toBe(geometryBytes)
+
+    const generateSpy = jest.spyOn(trailGeometry, 'generateTrailNetwork')
+    const restored = fromSnapshot(snapshot)
+
+    expect(generateSpy).not.toHaveBeenCalled()
+    generateSpy.mockRestore()
+    expect(JSON.stringify(restored.trailNetwork!.geometry)).toBe(geometryBytes)
+    const locations = [
+      { type: 'trunk' as const, progressPct: 0 },
+      { type: 'trunk' as const, progressPct: 0.25 },
+      { type: 'trunk' as const, progressPct: 0.73 },
+      { type: 'trunk' as const, progressPct: 1 },
+      ...state.trailNetwork!.branches.flatMap((branch) => [
+        { type: 'branch' as const, branchId: branch.branchId, branchProgressPct: 0 },
+        { type: 'branch' as const, branchId: branch.branchId, branchProgressPct: 0.5 },
+        { type: 'branch' as const, branchId: branch.branchId, branchProgressPct: 1 },
+      ]),
+    ]
+    locations.forEach((location) => {
+      expect(restored.trailNetwork!.resolve(location)).toEqual(
+        state.trailNetwork!.resolve(location)
+      )
+    })
+    expect(restored.generatedFootsteps).toEqual(state.generatedFootsteps)
+    expect(generatedFootstepsToNonCollisionObjects(restored.generatedFootsteps)).toEqual(
+      generatedFootstepsToNonCollisionObjects(state.generatedFootsteps)
+    )
+  })
+
+  test('rejects pre-persistence snapshots without trail geometry or footsteps', () => {
+    const snapshot = toSnapshot(getInitialState('1'))
+    const {
+      trailNetworkGeometry: _trailNetworkGeometry,
+      generatedFootsteps: _generatedFootsteps,
+      ...oldSnapshot
+    } = snapshot
+
+    expect(() => fromSnapshot(oldSnapshot as typeof snapshot)).toThrow(
+      IncompatibleGameboardSaveError
+    )
   })
 
   test('rejects pre-release saves with the former flat placement progress schema', () => {
