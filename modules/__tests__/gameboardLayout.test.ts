@@ -10,7 +10,6 @@ import {
   buildBoardOccupancyRegistry,
   BoardOccupancyRegistry,
   generateLayout,
-  LinearPathPositionResolver,
   RandomSource,
   REAL_PARSED_CONTENT_CATALOGS,
 } from '../gameboardLayout'
@@ -165,57 +164,123 @@ describe('gameboard layout integration', () => {
   test.each(Array.from({ length: 50 }, (_, index) => index + 1))(
     'seed %i produces all placements without fixed or generated overlap',
     (seed) => {
-      const occupancy = buildBoardOccupancyRegistry(levels['1'])
-      const fixedCount = occupancy.snapshot().length
       const result = generateLayout(
         GAMEBOARD_MANIFEST,
         REAL_PARSED_CONTENT_CATALOGS,
-        { width: 400, height: 400, occupancy },
-        new LinearPathPositionResolver(),
+        levels['1'],
         new RandomSource(seededRandom(seed))
       )
       expect(result.success).toBe(true)
       if (!result.success) return
-      expect(result.value.map(({ instanceId }) => instanceId).sort()).toEqual(
+      expect(result.value.placements.map(({ instanceId }) => instanceId).sort()).toEqual(
         [...encounterIds].sort()
       )
-      expect(new Set(result.value.map(({ occupancyId }) => occupancyId)).size).toBe(6)
-      expect(occupancy.snapshot()).toHaveLength(fixedCount + 6)
+      expect(new Set(result.value.placements.map(({ occupancyId }) => occupancyId)).size).toBe(6)
+      expect(result.value.trailNetwork.geometry.trunkWaypoints.length).toBeGreaterThan(2)
+      expect(result.value.trailNetwork.branches).toHaveLength(2)
+      expect(
+        result.value.placements.some(
+          (placement) =>
+            placement.location.type === 'branch' && placement.location.branchProgressPct >= 0.8
+        )
+      ).toBe(true)
+      const independentOccupancy = buildBoardOccupancyRegistry(levels['1'])
+      result.value.placements.forEach((placement) => {
+        expect(independentOccupancy.isFree(placement.position, placement.footprint).free).toBe(true)
+        independentOccupancy.reserve(placement.instanceId, placement.position, placement.footprint)
+      })
     }
   )
 
   test('succeeds repeatedly with the real Math.random source', () => {
     for (let run = 0; run < 25; run += 1) {
-      const occupancy = buildBoardOccupancyRegistry(levels['1'])
       const result = generateLayout(
         GAMEBOARD_MANIFEST,
         REAL_PARSED_CONTENT_CATALOGS,
-        { width: 400, height: 400, occupancy },
-        new LinearPathPositionResolver(),
+        levels['1'],
         new RandomSource()
       )
       expect(result.success).toBe(true)
-      if (result.success) expect(result.value).toHaveLength(6)
+      if (result.success) expect(result.value.placements).toHaveLength(6)
     }
   })
 
-  test('wraps the unchanged stub progress and resolved position in a trunk location', () => {
-    const hermitSlot = GAMEBOARD_MANIFEST.slots.find((slot) => slot.slotId === 'hermit-hollow')!
+  test.each([7, 19, 43])('seed %i resolves placements against a real winding network', (seed) => {
     const result = generateLayout(
-      { version: GAMEBOARD_MANIFEST.version, slots: [hermitSlot] },
+      GAMEBOARD_MANIFEST,
       REAL_PARSED_CONTENT_CATALOGS,
-      { width: 400, height: 400, occupancy: new BoardOccupancyRegistry() },
-      new LinearPathPositionResolver(),
-      new RandomSource(() => 0.5)
+      levels['1'],
+      new RandomSource(seededRandom(seed))
     )
     expect(result.success).toBe(true)
     if (!result.success) return
-    const hermit = result.value.find((placement) => placement.instanceId === 'hermit-hollow')!
-    expect(hermit.location.type).toBe('trunk')
-    if (hermit.location.type !== 'trunk') return
-    expect(hermit.location.progressPct).toBeCloseTo(0.04, 12)
-    expect(hermit.position).toEqual({ row: 380, col: 180 })
-    expect(hermit).not.toHaveProperty('progressPct')
+    expect(result.value.trailNetwork.geometry.trunkWaypoints.length).toBeGreaterThan(2)
+    expect(
+      result.value.trailNetwork.geometry.trunkWaypoints.some(
+        (point) => Math.abs(point.col - levels['1'].playerSpawn.col) > 20
+      )
+    ).toBe(true)
+    result.value.placements.forEach((placement) => {
+      expect(placement.position).toEqual(result.value.trailNetwork.resolve(placement.location))
+    })
+  })
+
+  test('caps branch count to eligible scattered instances and allocates a branch terminus', () => {
+    const oneScatteredInstanceManifest = {
+      ...GAMEBOARD_MANIFEST,
+      slots: GAMEBOARD_MANIFEST.slots.map((slot) =>
+        slot.kind === 'scattered-group' ? { ...slot, instances: [slot.instances[0]] } : slot
+      ),
+    }
+    const result = generateLayout(
+      oneScatteredInstanceManifest,
+      REAL_PARSED_CONTENT_CATALOGS,
+      levels['1'],
+      new RandomSource(seededRandom(31))
+    )
+    expect(result.success).toBe(true)
+    if (!result.success) return
+    expect(result.value.trailNetwork.branches).toHaveLength(1)
+    const scattered = result.value.placements.find(
+      (placement) => placement.slotId === 'word-grid-clues'
+    )!
+    expect(scattered.location.type).toBe('branch')
+    if (scattered.location.type === 'branch') {
+      expect(scattered.location.branchProgressPct).toBeGreaterThanOrEqual(0.8)
+    }
+  })
+
+  test('uses one occupancy registry for endpoint checks and every reservation', () => {
+    const isFreeInstances = new Set<BoardOccupancyRegistry>()
+    const reserveInstances = new Set<BoardOccupancyRegistry>()
+    const originalIsFree = BoardOccupancyRegistry.prototype.isFree
+    const originalReserve = BoardOccupancyRegistry.prototype.reserve
+    const isFreeSpy = jest
+      .spyOn(BoardOccupancyRegistry.prototype, 'isFree')
+      .mockImplementation(function (this: BoardOccupancyRegistry, position, footprint) {
+        isFreeInstances.add(this)
+        return originalIsFree.call(this, position, footprint)
+      })
+    const reserveSpy = jest
+      .spyOn(BoardOccupancyRegistry.prototype, 'reserve')
+      .mockImplementation(function (this: BoardOccupancyRegistry, label, position, footprint) {
+        reserveInstances.add(this)
+        return originalReserve.call(this, label, position, footprint)
+      })
+
+    const result = generateLayout(
+      GAMEBOARD_MANIFEST,
+      REAL_PARSED_CONTENT_CATALOGS,
+      levels['1'],
+      new RandomSource(seededRandom(53))
+    )
+    isFreeSpy.mockRestore()
+    reserveSpy.mockRestore()
+
+    expect(result.success).toBe(true)
+    expect(isFreeInstances.size).toBe(1)
+    expect(reserveInstances.size).toBe(1)
+    expect([...isFreeInstances][0]).toBe([...reserveInstances][0])
   })
 
   test('new game merges exactly one generated object per encounter into both runtime lists', () => {
@@ -250,7 +315,7 @@ describe('gameboard layout integration', () => {
     const [placement, ...remaining] = snapshot.encounterPlacements
     expect(placement.location.type).toBe('trunk')
     if (placement.location.type !== 'trunk')
-      throw new Error('Expected current stub placement on trunk')
+      throw new Error('Expected first manifest-authored placement on trunk')
     const { location: _location, ...placementWithoutLocation } = placement
     const legacySnapshot = {
       ...snapshot,
@@ -264,21 +329,34 @@ describe('gameboard layout integration', () => {
     )
   })
 
-  test('returns every failed slot and overlap reason without throwing or partial output', () => {
-    const occupancy = new BoardOccupancyRegistry()
-    occupancy.reserve('block-path', { row: 0, col: 0 }, { width: 400, height: 400 })
+  test('returns endpoint validation failure without throwing when the entire board is occupied', () => {
+    const blockedLevel = {
+      ...levels['1'],
+      objects: [
+        ...levels['1'].objects,
+        {
+          id: 'block-path',
+          shortName: 'block-path',
+          category: 'building',
+          name: 'Block Path',
+          position: { row: 0, col: 0 },
+          size: { width: 400, height: 400 },
+        },
+      ],
+    }
     const result = generateLayout(
       GAMEBOARD_MANIFEST,
       REAL_PARSED_CONTENT_CATALOGS,
-      { width: 400, height: 400, occupancy },
-      new LinearPathPositionResolver(),
+      blockedLevel,
       new RandomSource(() => 0.5)
     )
     expect(result.success).toBe(false)
     if (result.success) return
-    expect(result.errors).toHaveLength(6)
-    expect(
-      result.errors.every((error) => error.message.includes('would overlap existing object'))
-    ).toBe(true)
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        code: 'trail-endpoint-unavailable',
+        path: 'trail.end',
+      }),
+    ])
   })
 })

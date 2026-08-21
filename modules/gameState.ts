@@ -21,9 +21,7 @@ import { reducer } from '../state/reducer'
 import { logIfDev } from './utils'
 import { GAMEBOARD_MANIFEST } from '../config/gameboardManifest'
 import {
-  buildBoardOccupancyRegistry,
   generateLayout,
-  LinearPathPositionResolver,
   placementsToLevelObjects,
   RandomSource,
   REAL_PARSED_CONTENT_CATALOGS,
@@ -96,27 +94,21 @@ function buildInitialState(
   levelId: string,
   levelConfig: (typeof levels)[keyof typeof levels]
 ): GameState {
-  const occupancy = buildBoardOccupancyRegistry(levelConfig)
   const layoutResult =
     levelId === '1'
       ? generateLayout(
           GAMEBOARD_MANIFEST,
           REAL_PARSED_CONTENT_CATALOGS,
-          {
-            width: levelConfig.boardSize.width,
-            height: levelConfig.boardSize.height,
-            occupancy,
-          },
-          new LinearPathPositionResolver(),
+          levelConfig,
           new RandomSource()
         )
-      : { success: true as const, value: [] }
+      : { success: true as const, value: { placements: [] } }
   if (!layoutResult.success) {
     throw new Error(
       `Unable to create gameboard layout: ${layoutResult.errors.map((error) => error.message).join('; ')}`
     )
   }
-  const encounterPlacements = layoutResult.value
+  const encounterPlacements = layoutResult.value.placements
   const runtimeObjects = [
     ...(levelConfig.objects || []),
     ...placementsToLevelObjects(encounterPlacements),
