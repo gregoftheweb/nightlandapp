@@ -1,5 +1,6 @@
 import type { SubGameShapeId } from './subGames'
 import type { Position } from './primitives'
+import type { TrailLocation } from '../../modules/trailGeometry'
 
 export type GameboardRegion = 'start' | 'end' | { nearSlotId: string; bufferPct: number }
 
@@ -37,8 +38,8 @@ export interface EncounterPlacement {
   instanceId: string
   shapeId: SubGameShapeId
   slotId: string
+  location: TrailLocation
   position: Position
-  progressPct: number
   footprint: { width: number; height: number }
   occupancyId: string
 }

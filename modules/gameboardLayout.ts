@@ -199,7 +199,9 @@ function excluded(
     if (region === 'start') return progress <= START_END_REGION_SIZE
     if (region === 'end') return progress >= 1 - START_END_REGION_SIZE
     const neighbor = placed.find((placement) => placement.slotId === region.nearSlotId)
-    return neighbor ? Math.abs(progress - neighbor.progressPct) <= region.bufferPct : false
+    return neighbor?.location.type === 'trunk'
+      ? Math.abs(progress - neighbor.location.progressPct) <= region.bufferPct
+      : false
   })
 }
 
@@ -270,7 +272,9 @@ export function generateLayout(
             const minSpacing = slot.placement.minSpacingPct ?? 0
             if (
               placements.some(
-                (placement) => path.distanceBetween(progressPct, placement.progressPct) < minSpacing
+                (placement) =>
+                  placement.location.type === 'trunk' &&
+                  path.distanceBetween(progressPct, placement.location.progressPct) < minSpacing
               )
             ) {
               lastReason = `candidate violates minSpacingPct ${minSpacing}`
@@ -292,8 +296,8 @@ export function generateLayout(
             instanceId,
             shapeId: slot.shapeId,
             slotId: slot.slotId,
+            location: { type: 'trunk', progressPct },
             position,
-            progressPct,
             footprint,
             occupancyId,
           }

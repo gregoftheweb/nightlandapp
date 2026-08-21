@@ -83,6 +83,15 @@ export function encounterPlacementToMinimapPoint(
   )
 }
 
+export function describeEncounterLocation(placement: EncounterPlacement): string {
+  switch (placement.location.type) {
+    case 'trunk':
+      return `Trunk: ${(placement.location.progressPct * 100).toFixed(1)}%`
+    case 'branch':
+      return `Branch ${placement.location.branchId}: ${(placement.location.branchProgressPct * 100).toFixed(1)}%`
+  }
+}
+
 function markerPosition(point: { x: number; y: number }, diameter: number) {
   return { left: point.x - diameter / 2, top: point.y - diameter / 2 }
 }
@@ -171,7 +180,7 @@ export default function DebugMinimap({
       markers.push({
         key: `encounter-${placement.occupancyId}`,
         point: encounterPlacementToMinimapPoint(placement, boardSize, actualMapSize),
-        info: placement.instanceId,
+        info: `${placement.instanceId}\n${describeEncounterLocation(placement)}`,
       })
     })
 

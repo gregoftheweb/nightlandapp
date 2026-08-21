@@ -1,5 +1,9 @@
-import { encounterPlacementToMinimapPoint, positionToMinimapPoint } from '../DebugMinimap'
-import DebugMinimap from '../DebugMinimap'
+import {
+  default as DebugMinimap,
+  describeEncounterLocation,
+  encounterPlacementToMinimapPoint,
+  positionToMinimapPoint,
+} from '../DebugMinimap'
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react-native'
 
@@ -8,7 +12,7 @@ const placement = {
   shapeId: 'one-off' as const,
   slotId: 'test-slot',
   position: { row: 100, col: 120 },
-  progressPct: 0.5,
+  location: { type: 'trunk' as const, progressPct: 0.5 },
   footprint: { width: 6, height: 4 },
   occupancyId: 'test-occupancy',
 }
@@ -40,6 +44,16 @@ describe('DebugMinimap coordinate mapping', () => {
     expect(point).toEqual({ x: 123, y: 102 })
   })
 
+  it('safely describes both trunk and branch placement locations', () => {
+    expect(describeEncounterLocation(placement)).toBe('Trunk: 50.0%')
+    expect(
+      describeEncounterLocation({
+        ...placement,
+        location: { type: 'branch', branchId: 'branch-2', branchProgressPct: 0.75 },
+      })
+    ).toBe('Branch branch-2: 75.0%')
+  })
+
   it('shows a tapped encounter name and closes from the X button', () => {
     const onClose = jest.fn()
     const view = render(
@@ -57,7 +71,7 @@ describe('DebugMinimap coordinate mapping', () => {
     )
 
     fireEvent.press(view.getByLabelText('Encounter test-encounter'))
-    expect(view.getByText('test-encounter')).toBeTruthy()
+    expect(view.getByText('test-encounter\nTrunk: 50.0%')).toBeTruthy()
 
     fireEvent.press(view.getByLabelText('Close minimap'))
     expect(onClose).toHaveBeenCalledTimes(1)
@@ -192,6 +206,6 @@ describe('DebugMinimap coordinate mapping', () => {
     fireEvent.press(view.getByLabelText('Great Power Watcher'))
     expect(view.getByText(/Watcher/)).toBeTruthy()
     expect(view.queryByText(/Awakened:/)).toBeNull()
-    expect(view.getByText('overlap-encounter')).toBeTruthy()
+    expect(view.getByText('overlap-encounter\nTrunk: 50.0%')).toBeTruthy()
   })
 })

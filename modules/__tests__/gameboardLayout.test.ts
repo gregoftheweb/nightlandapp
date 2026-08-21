@@ -199,6 +199,25 @@ describe('gameboard layout integration', () => {
     }
   })
 
+  test('wraps the unchanged stub progress and resolved position in a trunk location', () => {
+    const hermitSlot = GAMEBOARD_MANIFEST.slots.find((slot) => slot.slotId === 'hermit-hollow')!
+    const result = generateLayout(
+      { version: GAMEBOARD_MANIFEST.version, slots: [hermitSlot] },
+      REAL_PARSED_CONTENT_CATALOGS,
+      { width: 400, height: 400, occupancy: new BoardOccupancyRegistry() },
+      new LinearPathPositionResolver(),
+      new RandomSource(() => 0.5)
+    )
+    expect(result.success).toBe(true)
+    if (!result.success) return
+    const hermit = result.value.find((placement) => placement.instanceId === 'hermit-hollow')!
+    expect(hermit.location.type).toBe('trunk')
+    if (hermit.location.type !== 'trunk') return
+    expect(hermit.location.progressPct).toBeCloseTo(0.04, 12)
+    expect(hermit.position).toEqual({ row: 380, col: 180 })
+    expect(hermit).not.toHaveProperty('progressPct')
+  })
+
   test('new game merges exactly one generated object per encounter into both runtime lists', () => {
     const state = getInitialState('1')
     expect(state.level.objects).toBe(state.objects)
@@ -224,6 +243,25 @@ describe('gameboard layout integration', () => {
         gameboardCatalogIdentity: { ...snapshot.gameboardCatalogIdentity, gameboardHash: 'stale' },
       })
     ).toThrow(IncompatibleGameboardSaveError)
+  })
+
+  test('rejects pre-release saves with the former flat placement progress schema', () => {
+    const snapshot = toSnapshot(getInitialState('1'))
+    const [placement, ...remaining] = snapshot.encounterPlacements
+    expect(placement.location.type).toBe('trunk')
+    if (placement.location.type !== 'trunk')
+      throw new Error('Expected current stub placement on trunk')
+    const { location: _location, ...placementWithoutLocation } = placement
+    const legacySnapshot = {
+      ...snapshot,
+      encounterPlacements: [
+        { ...placementWithoutLocation, progressPct: placement.location.progressPct },
+        ...remaining,
+      ],
+    }
+    expect(() => fromSnapshot(legacySnapshot as typeof snapshot)).toThrow(
+      IncompatibleGameboardSaveError
+    )
   })
 
   test('returns every failed slot and overlap reason without throwing or partial output', () => {
