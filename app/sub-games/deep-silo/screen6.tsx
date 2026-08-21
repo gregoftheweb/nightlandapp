@@ -10,6 +10,12 @@ import { subGameTheme } from '../_shared/subGameTheme'
 import { collectible } from '@config/objects'
 import { Item } from '@config/types'
 import { SafeAreaContent } from '@components/SafeAreaContent'
+import {
+  applyGeneratorSurge,
+  pickUpDiscos,
+  placeDiscos,
+  useDeepSiloPuzzleState,
+} from './puzzleState'
 
 const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6.webp')
 
@@ -20,6 +26,8 @@ export default function DeepSiloScreen6() {
   const { state, dispatch } = useGameContext()
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteRead, setNoteRead] = useState(false)
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const puzzle = useDeepSiloPuzzleState()
 
   const alreadyHasNote = state.player.inventory.some((item) => item.id === PERSIUS_NOTE_2_ID)
 
@@ -66,10 +74,34 @@ export default function DeepSiloScreen6() {
     router.push('/sub-games/deep-silo/screen7')
   }
 
+  const handleTableAction = async () => {
+    if (puzzle.state.discosOnTable) {
+      await puzzle.commit(pickUpDiscos(puzzle.state))
+      setFeedback('You lift Discos from the plate. Stored power hums through the metal.')
+      return
+    }
+    const result = placeDiscos(puzzle.state)
+    await puzzle.commit(result.state)
+    if (!result.surge) {
+      setFeedback('Discos settles into the metal plate. It waits in the darkness.')
+      return
+    }
+    const nextHP = applyGeneratorSurge(state.player.currentHP, dispatch, (route) =>
+      router.replace(route as never)
+    )
+    if (nextHP > 0) {
+      setFeedback(
+        'The live plate erupts in sparks. You wrench Discos clear and take 10 damage. The failing current dies away.'
+      )
+    }
+  }
+
   return (
     <BackgroundImage source={bg}>
       <View style={styles.container}>
-        <View style={styles.contentArea} />
+        <View style={styles.contentArea}>
+          {feedback && <Text style={styles.feedback}>{feedback}</Text>}
+        </View>
         <BottomActionBar>
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.button} onPress={handleBack} activeOpacity={0.7}>
@@ -90,6 +122,17 @@ export default function DeepSiloScreen6() {
               </TouchableOpacity>
             )}
           </View>
+          {!puzzle.isLoading && (
+            <TouchableOpacity
+              style={[styles.button, styles.tableButton]}
+              onPress={() => void handleTableAction()}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.buttonText}>
+                {puzzle.state.discosOnTable ? 'Pick up Discos' : 'Place Discos on table'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </BottomActionBar>
 
         {/* Note Modal */}
@@ -124,6 +167,18 @@ const styles = StyleSheet.create({
   },
   contentArea: {
     flex: 1,
+    justifyContent: 'flex-end',
+    padding: 20,
+  },
+  feedback: {
+    color: subGameTheme.white,
+    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    borderColor: subGameTheme.red,
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 17,
+    lineHeight: 24,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -149,6 +204,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: subGameTheme.white,
     textAlign: 'center',
+  },
+  tableButton: {
+    flex: 0,
+    marginTop: 10,
+    alignSelf: 'stretch',
+    backgroundColor: subGameTheme.red,
+    borderColor: subGameTheme.blue,
   },
   modalOverlay: {
     flex: 1,

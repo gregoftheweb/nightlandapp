@@ -165,8 +165,9 @@ progress behavior. If only those global outcomes persist, the game is still `loc
 
 ### 7. Reward policy
 
-Every game declares either `none` or one reward/effect/ability ID and its exact grant event. Multiple
-rewards may be represented as a typed list when needed.
+Every game declares either `none` or one reward, effect, ability, or weapon-upgrade payload and its
+exact grant event. A weapon upgrade identifies the weapon plus its multiplicative damage and additive
+hit modifiers. Multiple rewards may be represented as a typed list when needed.
 
 Every grant must be idempotent. The implementation must check durable state—such as inventory IDs,
 an unlocked ability, or a completion/reward flag—rather than relying only on component-local state.
@@ -199,11 +200,10 @@ must be decided or aligned before the declaration can be enforced.
 | Jaunt Cave    | `jaunt-cave`; `one-off`; `/sub-games/jaunt-cave/main`                        | Player confirms return from victory screen; idempotent            | Death; killer `Jaunt Daemon`; instance death copy and route required           | Yes; one-time `jaunt-cave` snapshot containing completion, Jaunt unlock, charges, and related player state | `aftermath-screen`                                                                          | `local-only`; battle restarts after remount before completion               | Ability `jaunt`; grant on confirmed victory, idempotent via completion/ability state | Victory/aftermath exits use resume signal and `exitSubGame`; death uses death flow                   |
 | Tesseract     | `word-tile-crypt-01`; `word-grid`; `/sub-games/word-grid/word-tile-crypt-01` | Player confirms return from success screen; idempotent            | Death; killer `Ancient Evil`; suppress dialog; route `/death`                  | No                                                                                                         | `success-screen`                                                                            | `local-only`; selected letters reset on remount                             | Item `persius-scroll`; grant once using inventory ID                                 | Success exit calls resume signal and `exitSubGame`; death uses death flow                            |
 | Aero-Wreckage | `aerowreckage-puzzle`; `one-off`; `/sub-games/aerowreckage-puzzle/entry`     | Player confirms Return to Quest on success screen; idempotent     | `{ exit: 'safe' }`                                                             | No                                                                                                         | `resume`: re-enter at entry, with saved dial/open state restored when the puzzle is reached | `async-storage`; key `aerowreckage-puzzle`, version 1; retain on completion | Weapon `weapon-lazer-pistol-001`; grant once using ranged inventory ID               | Incomplete exit and success exit use `exitSubGame`; verify every normal exit also signals RPG resume |
-| Deep Silo     | `deep-silo`; `one-off`; `/sub-games/deep-silo/screen1`                       | **Not implemented**                                               | `{ exit: 'safe' }`                                                             | No                                                                                                         | `restart`                                                                                   | `local-only`                                                                | None until its lifecycle is designed                                                 | **Incomplete:** power-restored screen has no completion-and-return path                              |
+| Deep Silo     | `deep-silo`; `one-off`; `/sub-games/deep-silo/screen1`                       | Charged Discos retrieved; player confirms return                  | `{ exit: 'safe' }`                                                             | `Deep Silo Restored`; completion + Discos upgrade + Persius note                                           | `aftermath-screen` → `/sub-games/deep-silo/screen8`                                         | `async-storage`; `deep-silo-power-puzzle`; v1; retained after completion    | `weapon-upgrade`; Discos ×2 damage, +2 hit; on confirmed return                      | Complete                                                                                             |
 
-Deep Silo is not contract-compliant and should be finished using this contract. Its completion event,
-failure policy, waypoint decision, revisit behavior, final reward/outcome, and normal return path must
-be chosen together before its current sequence is treated as a template.
+Deep Silo uses a persisted table/control-panel state. Completion is gated on charging and retrieving
+Discos; its generator surge remains an internal hazard rather than a structural lifecycle failure.
 
 ## How to add a new sub-game
 

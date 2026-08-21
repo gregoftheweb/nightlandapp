@@ -1,17 +1,25 @@
 // app/sub-games/deep-silo/screen1.tsx
 // Deep Silo - Surface level
-import React from 'react'
+import React, { useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
 import { exitSubGame } from '@modules/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
+import { useSubGameLifecycle } from '../_shared/lifecycle'
 
 const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen1.webp')
 
 export default function DeepSiloScreen1() {
   const router = useRouter()
+  const lifecycle = useSubGameLifecycle('deep-silo')
+
+  useEffect(() => {
+    if (!lifecycle.isCompleted()) return
+    const route = lifecycle.resolveEntryRoute()
+    if (route) router.replace(route as never)
+  }, [lifecycle, router])
 
   const handleDown = () => {
     if (__DEV__) console.log('[DeepSilo] Going deeper - screen 2')
