@@ -254,16 +254,10 @@ monsters: [
 }
 ```
 
-### Pattern 4: Create Path with Footsteps
+### Pattern 4: Generated Trail Footsteps
 
-```typescript
-nonCollisionObjects: [
-  createNonCollisionObject('footsteps', { row: 100, col: 100 }, 0),
-  createNonCollisionObject('footsteps', { row: 95, col: 100 }, 0),
-  createNonCollisionObject('footsteps', { row: 90, col: 100 }, 0),
-  // ... more footsteps
-]
-```
+Trail footsteps are generated at runtime from the level's trail network. Do not add hand-placed
+footstep objects to `nonCollisionObjects`.
 
 ### Pattern 5: Complex River with Collision Mask
 

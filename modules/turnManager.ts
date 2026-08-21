@@ -11,6 +11,22 @@ import { SPAWN_CONSTANTS } from '../constants/Game'
 import { logIfDev } from './utils'
 import { reducer as gameReducer } from '../state/reducer'
 
+export const DEBUG_TURN_TIMING = true
+
+function now(): number {
+  return globalThis.performance?.now?.() ?? Date.now()
+}
+
+function timed<T>(label: string, operation: () => T): T {
+  if (!DEBUG_TURN_TIMING) return operation()
+  const started = now()
+  try {
+    return operation()
+  } finally {
+    console.log(`[turn-timing] ${label}: ${(now() - started).toFixed(2)}ms`)
+  }
+}
+
 // ==================== MODULE-LEVEL STATE (Preserved for combat/monster flow integrity) ====================
 let currentGameState: GameState
 let gameDispatch: (action: any) => void
@@ -53,8 +69,10 @@ const applyActionToSnapshot = (state: GameState, action: any): GameState => {
  */
 const createWrappedDispatch = (dispatch: (action: any) => void): ((action: any) => void) => {
   return (action) => {
-    currentGameState = applyActionToSnapshot(currentGameState, action)
-    dispatch(action)
+    timed(`dispatch.${action.type}`, () => {
+      currentGameState = applyActionToSnapshot(currentGameState, action)
+      dispatch(action)
+    })
   }
 }
 
@@ -89,7 +107,9 @@ const doCombatTurn = (
 
   // Check ongoing object interactions at current position (for recuperate, etc.)
   // Use currentGameState (updated via dispatch) for consistency with slotting
-  checkObjectInteractions(currentGameState, gameDispatch, currentGameState.player.position)
+  timed('combat.object-interactions', () =>
+    checkObjectInteractions(currentGameState, gameDispatch, currentGameState.player.position)
+  )
 
   // Early exit if player died (check after dispatch updates)
   if (currentGameState.player.currentHP <= 0) {
@@ -104,10 +124,8 @@ const doMoveTurn = (direction: string, setOverlay?: (overlay: any) => void): voi
   logIfDev(`🚶 EXECUTING MOVE TURN: ${direction}`)
 
   // Move Player
-  const newPosition = calculateNewPosition(
-    currentGameState.player.position,
-    direction,
-    currentGameState
+  const newPosition = timed('movement.position-calculation', () =>
+    calculateNewPosition(currentGameState.player.position, direction, currentGameState)
   )
   gameDispatch({ type: 'MOVE_PLAYER', payload: { position: newPosition } })
 
@@ -120,9 +138,15 @@ const doMoveTurn = (direction: string, setOverlay?: (overlay: any) => void): voi
   logIfDev(`Player moved to: (${newPosition.row}, ${newPosition.col}), Move: ${newMoveCount}`)
 
   // Handle world interactions at new position
-  const spatialGrid = buildSpatialGrid(currentGameState)
-  checkItemInteractions(currentGameState, gameDispatch, setOverlay, spatialGrid)
-  checkObjectInteractions(currentGameState, gameDispatch, newPosition, spatialGrid)
+  const spatialGrid = timed('movement.spatial-grid-rebuild', () =>
+    buildSpatialGrid(currentGameState)
+  )
+  timed('movement.item-interactions', () =>
+    checkItemInteractions(currentGameState, gameDispatch, setOverlay, spatialGrid)
+  )
+  timed('movement.object-interactions', () =>
+    checkObjectInteractions(currentGameState, gameDispatch, newPosition, spatialGrid)
+  )
 }
 
 // ==================== NON-MOVE TURN EXECUTION ====================
@@ -134,7 +158,9 @@ const doNonMoveTurn = (): void => {
   gameDispatch({ type: 'PASS_TURN' })
 
   // Check ongoing object interactions at current position (for recuperate, etc.)
-  checkObjectInteractions(currentGameState, gameDispatch, currentGameState.player.position)
+  timed('non-movement.object-interactions', () =>
+    checkObjectInteractions(currentGameState, gameDispatch, currentGameState.player.position)
+  )
 }
 
 // ==================== MONSTER MOVEMENT AND COMBAT SETUP ====================
@@ -241,6 +267,7 @@ const executeTurn = (
   setOverlay?: (overlay: any) => void,
   setDeathMessage?: (message: string) => void
 ): void => {
+  const turnStarted = DEBUG_TURN_TIMING ? now() : 0
   logIfDev(`\n🎯 === STARTING TURN EXECUTION ===`)
   logIfDev(`Action: ${action}, Direction: ${direction || 'none'}, In Combat: ${inCombat}`)
 
@@ -250,7 +277,7 @@ const executeTurn = (
   // DO TURN
   if (inCombat) {
     // Combat Turn - preserves slotting
-    doCombatTurn(action, targetId, setDeathMessage)
+    timed('turn.combat', () => doCombatTurn(action, targetId, setDeathMessage))
 
     // Early exit if player died
     if (currentGameState.player.currentHP <= 0) {
@@ -259,19 +286,22 @@ const executeTurn = (
   } else {
     // Non-Combat Turn
     if (turnType === 'move') {
-      doMoveTurn(direction!, setOverlay)
+      timed('turn.movement', () => doMoveTurn(direction!, setOverlay))
     } else {
-      doNonMoveTurn()
+      timed('turn.non-movement', doNonMoveTurn)
     }
   }
 
   // Move monsters (always happens unless player died)
-  doMonsterMovement()
+  timed('turn.monster-movement-and-spawning', doMonsterMovement)
 
   // Cleanup
-  doTurnCleanup()
+  timed('turn.cleanup', doTurnCleanup)
 
   logIfDev(`✅ === TURN EXECUTION COMPLETE ===\n`)
+  if (DEBUG_TURN_TIMING) {
+    console.log(`[turn-timing] turn.total: ${(now() - turnStarted).toFixed(2)}ms`)
+  }
 }
 
 // ==================== PUBLIC INTERFACE FUNCTIONS ====================

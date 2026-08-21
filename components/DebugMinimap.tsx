@@ -272,7 +272,7 @@ export default function DebugMinimap({
 
           {footsteps.map((footstep) => {
             const point = positionToMinimapPoint(footstep.position, boardSize, actualMapSize)
-            const generated = footstep.shortName === 'generated-footsteps'
+            const generated = footstep.shortName.startsWith('generated-footsteps-')
             return (
               <Pressable
                 key={footstep.id}

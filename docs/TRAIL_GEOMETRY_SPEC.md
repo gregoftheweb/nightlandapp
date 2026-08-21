@@ -90,7 +90,7 @@ This removes the circular-dependency ambiguity entirely — there is one clear o
 function buildTraversalObstacles(level: Level): TraversalObstacles
 ```
 
-Takes the real `Level` directly (now that `generateLayout` has it per §5, this is no longer a signature mismatch). Includes `level.objects` (buildings), `level.nonCollisionObjects` entries of type `'river'` (real mask segments), `level.greatPowers`, and board bounds. Excludes decorative `'footstep'`-type entries and any `'generated-footsteps'`-tagged entries (§9).
+Takes the real `Level` directly (now that `generateLayout` has it per §5, this is no longer a signature mismatch). Includes `level.objects` (buildings), `level.nonCollisionObjects` entries of type `'river'` (real mask segments), `level.greatPowers`, and board bounds. Excludes decorative `'footstep'`-type entries and any entry whose `shortName` starts with `'generated-footsteps-'` (§9).
 
 ---
 
@@ -119,17 +119,25 @@ A pure geometry function — takes derived data views, never the raw `Level` or 
 
 **Correction: `NonCollisionObject` has no `templateName` field, and `createNonCollisionObject()` does not preserve one.** The real, existing discriminator is `shortName` — the template system already sets this from whichever template was used to construct the object (confirmed: `createNonCollisionObject(templateName, ...)` looks up `nonCollisionTemplates[templateName]`, and the resulting object's `shortName` reflects that template).
 
-A new template is registered with `shortName: 'generated-footsteps'`, using `assets/images/items/quest/footprints-red.webp`. Every place this spec refers to identifying/filtering generated footsteps uses **`shortName === 'generated-footsteps'`**, not `templateName` (corrected throughout — this replaces every prior reference to a nonexistent `templateName` tag).
+Three templates are registered with the `generated-footsteps-` prefix, using the green, blue, and red footprint assets. Every place that identifies or filters generated footsteps uses **`shortName.startsWith('generated-footsteps-')`**, not `templateName`.
 
 ```typescript
 interface FootstepDescriptor {
   position: Position
   rotationDegrees: number
+  variant: 'green' | 'blue' | 'red'
   onBranchId?: string
 }
 
-const FOOTSTEP_INTERVAL_TILES = 12 // real board-tile units, tunable
+const FOOTSTEP_INTERVAL_TILES = 24 // real board-tile units, tunable
 ```
+
+Variants are selected deterministically through the layout's `RandomSource`: 75% green, 20% blue,
+and 5% red. Descriptors remain data-only; runtime materialization selects the matching template.
+Each trunk and branch starts with a dedicated descriptor targeted five walked tiles beyond the
+point where its 2×2 footprint clears any object overlapping the path origin (acceptable band: 4–6
+tiles). Subsequent candidates use the regular interval measured from that accepted first descriptor.
+Every candidate is omitted when its footprint overlaps fixed occupancy or a resolved encounter.
 
 ---
 
@@ -215,7 +223,7 @@ When ≥1 branch and ≥1 eligible instance exist, at least one instance places 
 
 ## 17. Footstep generation (uses §9's corrected discriminator)
 
-Dropped along trunk and branches every `FOOTSTEP_INTERVAL_TILES` (§9) of real cumulative distance, rotation from local path direction, 0°=north/clockwise-positive (matches existing convention).
+After each path's dedicated edge-clearing first descriptor, footsteps are dropped every `FOOTSTEP_INTERVAL_TILES` (§9) of real cumulative distance measured from that first descriptor. Rotation uses local path direction, 0°=north/clockwise-positive (matches existing convention).
 
 ---
 

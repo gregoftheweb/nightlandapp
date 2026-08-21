@@ -39,6 +39,14 @@ import {
   isMonsterInEquippedRangedWeaponRange,
 } from '../../modules/weaponStats'
 import { getRuntimeNonCollisionObjects } from '../../modules/runtimeNonCollisionObjects'
+import {
+  clearHeldMovementQueue,
+  completeHeldMove,
+  heldMoveCanProgress,
+  heldMovementMustStop,
+  queueHeldMove,
+  type HeldMoveDirection,
+} from '../../modules/heldMovementQueue'
 
 type Direction = 'up' | 'down' | 'left' | 'right' | 'stay' | null
 
@@ -113,6 +121,8 @@ export default function Game() {
   const stateRef = useRef(state)
   const longPressInterval = useRef<ReturnType<typeof setInterval> | null>(null)
   const currentDirection = useRef<Direction>(null)
+  const heldMoveInFlight = useRef(false)
+  const pendingHeldMove = useRef<HeldMoveDirection | null>(null)
   const lastZapPressTime = useRef<number>(0)
   const didLongPress = useRef<boolean>(false)
 
@@ -277,35 +287,100 @@ export default function Game() {
     [dispatch, setOverlay]
   )
 
-  // Long press interval management
-  const startLongPressInterval = useCallback(
-    (direction: Direction) => {
-      currentDirection.current = direction
-      if (longPressInterval.current) {
-        clearInterval(longPressInterval.current)
-      }
-
-      longPressInterval.current = setInterval(() => {
-        if (stateRef.current.inCombat || !currentDirection.current) {
-          if (longPressInterval.current) {
-            clearInterval(longPressInterval.current)
-            longPressInterval.current = null
-          }
-          return
-        }
-        performMove(currentDirection.current)
-      }, TIMING_CONSTANTS.MOVEMENT_INTERVAL)
+  const executeHeldMove = useCallback(
+    (direction: HeldMoveDirection) => {
+      if (
+        !heldMoveCanProgress(
+          direction,
+          stateRef.current.player.position,
+          stateRef.current.gridWidth,
+          stateRef.current.gridHeight
+        )
+      )
+        return false
+      performMove(direction)
+      return true
     },
     [performMove]
   )
 
   const stopLongPressInterval = useCallback(() => {
-    if (longPressInterval.current) {
-      clearInterval(longPressInterval.current)
-      longPressInterval.current = null
-      currentDirection.current = null
-    }
+    if (longPressInterval.current) clearInterval(longPressInterval.current)
+    longPressInterval.current = null
+    currentDirection.current = null
+    clearHeldMovementQueue({ inFlight: heldMoveInFlight, pending: pendingHeldMove })
   }, [])
+
+  const tickHeldMove = useCallback(
+    (direction: HeldMoveDirection) =>
+      queueHeldMove(
+        direction,
+        { inFlight: heldMoveInFlight, pending: pendingHeldMove },
+        executeHeldMove,
+        stopLongPressInterval
+      ),
+    [executeHeldMove, stopLongPressInterval]
+  )
+
+  // Long press interval management
+  const startLongPressInterval = useCallback(
+    (direction: Direction) => {
+      stopLongPressInterval()
+      currentDirection.current = direction
+
+      longPressInterval.current = setInterval(() => {
+        const direction = currentDirection.current
+        if (stateRef.current.inCombat || !direction || direction === 'stay') {
+          stopLongPressInterval()
+          return
+        }
+        tickHeldMove(direction)
+      }, TIMING_CONSTANTS.MOVEMENT_INTERVAL)
+    },
+    [stopLongPressInterval, tickHeldMove]
+  )
+
+  useEffect(() => {
+    if (
+      heldMovementMustStop({
+        inCombat: state.inCombat,
+        settingsVisible,
+        inventoryVisible,
+        gameOver: !!state.gameOver,
+      })
+    ) {
+      stopLongPressInterval()
+      return
+    }
+    completeHeldMove(
+      { inFlight: heldMoveInFlight, pending: pendingHeldMove },
+      executeHeldMove,
+      stopLongPressInterval
+    )
+  }, [
+    state.moveCount,
+    state.player.position.row,
+    state.player.position.col,
+    state.inCombat,
+    settingsVisible,
+    inventoryVisible,
+    state.gameOver,
+    executeHeldMove,
+    stopLongPressInterval,
+  ])
+
+  useEffect(() => {
+    if (
+      heldMovementMustStop({
+        inCombat: state.inCombat,
+        settingsVisible,
+        inventoryVisible,
+        gameOver: !!state.gameOver,
+      })
+    ) {
+      stopLongPressInterval()
+    }
+  }, [state.inCombat, settingsVisible, inventoryVisible, state.gameOver, stopLongPressInterval])
 
   // Cleanup interval on unmount
   useEffect(() => {

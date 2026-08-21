@@ -389,7 +389,10 @@ export function generateLayout(
     value: {
       placements,
       trailNetwork,
-      generatedFootsteps: generateFootstepDescriptors(trailNetwork),
+      generatedFootsteps: generateFootstepDescriptors(trailNetwork, random, {
+        occupancy,
+        placements,
+      }),
     },
   }
 }

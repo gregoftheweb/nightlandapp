@@ -14,11 +14,14 @@ import {
   REAL_PARSED_CONTENT_CATALOGS,
 } from '../gameboardLayout'
 import { buildGameboardCatalogIdentity, sha256 } from '../gameboardIdentity'
-import { getRuntimeNonCollisionObjects } from '../runtimeNonCollisionObjects'
+import {
+  generatedFootstepsToNonCollisionObjects,
+  getRuntimeNonCollisionObjects,
+} from '../runtimeNonCollisionObjects'
 import { getNonCollisionTemplate } from '@config/objects'
 import { buildSpatialGrid } from '../spacialGrid'
 import { getObjectAtPoint } from '../utils'
-import { MAX_BRANCH_LENGTH_TILES } from '../trailGeometry'
+import { FOOTSTEP_INTERVAL_TILES, MAX_BRANCH_LENGTH_TILES } from '../trailGeometry'
 
 const encounterIds = [
   'jaunt-cave',
@@ -45,6 +48,43 @@ function pathLength(points: readonly { row: number; col: number }[]): number {
         sum + Math.hypot(point.row - points[index].row, point.col - points[index].col),
       0
     )
+}
+
+function walkedDistanceToPoint(
+  points: readonly { row: number; col: number }[],
+  target: { row: number; col: number }
+): number {
+  let walked = 0
+  for (let index = 1; index < points.length; index += 1) {
+    const start = points[index - 1]
+    const end = points[index]
+    const deltaRow = end.row - start.row
+    const deltaCol = end.col - start.col
+    const segmentLengthSquared = deltaRow * deltaRow + deltaCol * deltaCol
+    const progress = Math.max(
+      0,
+      Math.min(
+        1,
+        ((target.row - start.row) * deltaRow + (target.col - start.col) * deltaCol) /
+          segmentLengthSquared
+      )
+    )
+    const projected = {
+      row: start.row + deltaRow * progress,
+      col: start.col + deltaCol * progress,
+    }
+    if (Math.hypot(projected.row - target.row, projected.col - target.col) < 1e-6) {
+      return walked + Math.sqrt(segmentLengthSquared) * progress
+    }
+    walked += Math.sqrt(segmentLengthSquared)
+  }
+  throw new Error('Point is not on path')
+}
+
+function overlapsRedoubt(position: { row: number; col: number }): boolean {
+  return (
+    position.row < 398 && position.row + 2 > 390 && position.col < 206 && position.col + 2 > 198
+  )
 }
 
 function turnAngles(points: readonly { row: number; col: number }[]): number[] {
@@ -93,21 +133,14 @@ describe('gameboard layout integration', () => {
     })
   })
 
-  test('seeds all 48 hand-placed footsteps individually', () => {
+  test('has no hand-placed footsteps or legacy footstep template', () => {
     const level = levels['1']
     const footsteps = level.nonCollisionObjects!.filter((object) => object.type === 'footstep')
     const registry = buildBoardOccupancyRegistry(level)
     const entries = registry.snapshot()
-    expect(footsteps).toHaveLength(48)
-    footsteps.forEach((footstep) => {
-      expect(entries).toContainEqual({
-        id: footstep.id,
-        position: footstep.position,
-        width: footstep.width,
-        height: footstep.height,
-      })
-      expect(registry.isFree(footstep.position, { width: 1, height: 1 }).free).toBe(false)
-    })
+    expect(footsteps).toHaveLength(0)
+    expect(entries.some((entry) => entry.id.includes('footsteps'))).toBe(false)
+    expect(getNonCollisionTemplate('footsteps')).toBeUndefined()
   })
 
   test('seeds the river as its 13 real collision-mask segments, not its bounding box', () => {
@@ -150,7 +183,7 @@ describe('gameboard layout integration', () => {
     })
     expect(registry.isFree(level.playerSpawn, { width: 1, height: 1 }).free).toBe(false)
     expect(registry.isFree({ row: 380, col: 180 }, { width: 1, height: 1 }).free).toBe(false)
-    expect(entries).toHaveLength(67)
+    expect(entries).toHaveLength(19)
   })
 
   test('rejects conflicts with the Watcher and a static building', () => {
@@ -221,6 +254,11 @@ describe('gameboard layout integration', () => {
         expect(independentOccupancy.isFree(placement.position, placement.footprint).free).toBe(true)
         independentOccupancy.reserve(placement.instanceId, placement.position, placement.footprint)
       })
+      result.value.generatedFootsteps.forEach((footstep) => {
+        expect(independentOccupancy.isFree(footstep.position, { width: 2, height: 2 }).free).toBe(
+          true
+        )
+      })
     }
   )
 
@@ -263,6 +301,30 @@ describe('gameboard layout integration', () => {
       )
     ).toBeLessThanOrEqual(18 + 1e-10)
     expect(Math.max(...turnAngles(waypoints))).toBeLessThanOrEqual(18.01)
+    const firstTrunkFootstep = result.value.generatedFootsteps.find(
+      (descriptor) => descriptor.onBranchId === undefined
+    )!
+    const firstDistance = walkedDistanceToPoint(waypoints, firstTrunkFootstep.position)
+    let redoubtClearanceDistance = 0
+    while (
+      overlapsRedoubt(
+        result.value.trailNetwork.trunk.positionAt(redoubtClearanceDistance / pathLength(waypoints))
+      )
+    ) {
+      redoubtClearanceDistance += 0.01
+    }
+    expect(firstDistance - redoubtClearanceDistance).toBeGreaterThanOrEqual(4)
+    expect(firstDistance - redoubtClearanceDistance).toBeLessThanOrEqual(6)
+    expect(overlapsRedoubt(firstTrunkFootstep.position)).toBe(false)
+    const followingTrunkFootsteps = result.value.generatedFootsteps
+      .filter((descriptor) => descriptor.onBranchId === undefined)
+      .slice(1, 4)
+    followingTrunkFootsteps.forEach((descriptor) => {
+      const intervalsFromFirst =
+        (walkedDistanceToPoint(waypoints, descriptor.position) - firstDistance) /
+        FOOTSTEP_INTERVAL_TILES
+      expect(intervalsFromFirst).toBeCloseTo(Math.round(intervalsFromFirst), 6)
+    })
     result.value.placements.forEach((placement) => {
       expect(placement.position).toEqual(result.value.trailNetwork.resolve(placement.location))
     })
@@ -347,21 +409,27 @@ describe('gameboard layout integration', () => {
       true
     )
     expect(
-      state.nonCollisionObjects?.some((object) => object.shortName === 'generated-footsteps')
+      state.nonCollisionObjects?.some((object) =>
+        object.shortName.startsWith('generated-footsteps-')
+      )
     ).toBe(false)
     expect(
-      state.level.nonCollisionObjects?.some((object) => object.shortName === 'generated-footsteps')
+      state.level.nonCollisionObjects?.some((object) =>
+        object.shortName.startsWith('generated-footsteps-')
+      )
     ).toBe(false)
 
     const runtimeObjects = getRuntimeNonCollisionObjects(state)
-    const generatedObjects = runtimeObjects.filter(
-      (object) => object.shortName === 'generated-footsteps'
+    const generatedObjects = runtimeObjects.filter((object) =>
+      object.shortName.startsWith('generated-footsteps-')
     )
     expect(generatedObjects).toHaveLength(state.generatedFootsteps.length)
     expect(generatedObjects.every((object) => object.canTap === true)).toBe(true)
     expect(generatedObjects[0].position).toEqual(state.generatedFootsteps[0].position)
     expect(generatedObjects[0].rotation).toBe(state.generatedFootsteps[0].rotationDegrees)
-    expect(generatedObjects[0].image).toBe(getNonCollisionTemplate('generated-footsteps')?.image)
+    expect(generatedObjects[0].image).toBe(
+      getNonCollisionTemplate(`generated-footsteps-${state.generatedFootsteps[0].variant}`)?.image
+    )
     const tappableGeneratedFootstep = generatedObjects.find((object) => {
       const hit = getObjectAtPoint(object.position.row, object.position.col, {
         ...state,
@@ -373,18 +441,41 @@ describe('gameboard layout integration', () => {
     expect(tappableGeneratedFootstep).toEqual(
       expect.objectContaining({
         name: "Persius' Trail",
-        description: 'A fresh trail of red footprints winds onward through the Night Land.',
+        description: 'A fresh trail of footprints winds onward through the Night Land.',
       })
     )
     const spatialGrid = buildSpatialGrid(state)
     expect(
       spatialGrid
         .getNearby(state.generatedFootsteps[0].position, 1)
-        .some((entry) => entry.data.shortName === 'generated-footsteps')
+        .some((entry) => entry.data.shortName.startsWith('generated-footsteps-'))
     ).toBe(false)
     const snapshot = toSnapshot(state) as unknown as Record<string, unknown>
     expect(snapshot).not.toHaveProperty('trailNetwork')
     expect(snapshot).not.toHaveProperty('generatedFootsteps')
+  })
+
+  test('materializes all three variants with distinct matching assets', () => {
+    const variants = ['green', 'blue', 'red'] as const
+    const objects = generatedFootstepsToNonCollisionObjects(
+      variants.map((variant, index) => ({
+        position: { row: index, col: index + 1 },
+        rotationDegrees: index * 30,
+        variant,
+      }))
+    )
+
+    expect(objects.map((object) => object.shortName)).toEqual(
+      variants.map((variant) => `generated-footsteps-${variant}`)
+    )
+    objects.forEach((object, index) => {
+      expect(object.image).toBe(
+        getNonCollisionTemplate(`generated-footsteps-${variants[index]}`)?.image
+      )
+      expect(object.canTap).toBe(true)
+      expect(object.rotation).toBe(index * 30)
+    })
+    expect(new Set(objects.map((object) => object.image)).size).toBe(3)
   })
 
   test('save identity is SHA-256 and rejects mismatches instead of migrating', () => {

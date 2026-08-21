@@ -9,8 +9,9 @@ import maguffinRockIMG from '@assets/images/items/equipment/maguffinRock.webp'
 import shortSwordIMG from '@assets/images/items/equipment/shortSword.webp'
 import potionIMG from '@assets/images/items/consumables/potion.webp'
 import sanctuaryPoolImg from '@assets/images/sprites/buildings/poolofpeace.webp'
-import footprintsIMG from '@assets/images/items/quest/footprints-blue.webp'
-import generatedFootprintsIMG from '@assets/images/items/quest/footprints-red.webp'
+import generatedFootprintsBlueIMG from '@assets/images/items/quest/footprints-blue.webp'
+import generatedFootprintsGreenIMG from '@assets/images/items/quest/footprints-green.webp'
+import generatedFootprintsRedIMG from '@assets/images/items/quest/footprints-red.webp'
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
@@ -212,29 +213,43 @@ export const nonCollisionTemplates: Record<
   string,
   Omit<NonCollisionObject, 'id' | 'position' | 'rotation'>
 > = {
-  footsteps: {
+  'generated-footsteps-green': {
     kind: 'nonCollision',
-    shortName: 'footsteps',
+    shortName: 'generated-footsteps-green',
     category: 'decoration',
-    name: 'Footsteps of Persius',
-    description: 'Faint tracks of Persius lie before you, leading you onward in the gloomy dust.',
+    name: "Persius' Trail",
+    description: 'A fresh trail of footprints winds onward through the Night Land.',
     width: 2,
     height: 2,
-    image: footprintsIMG,
+    image: generatedFootprintsGreenIMG,
     zIndex: 1,
     type: 'footstep',
     canTap: true,
     active: true,
   },
-  'generated-footsteps': {
+  'generated-footsteps-blue': {
     kind: 'nonCollision',
-    shortName: 'generated-footsteps',
+    shortName: 'generated-footsteps-blue',
     category: 'decoration',
     name: "Persius' Trail",
-    description: 'A fresh trail of red footprints winds onward through the Night Land.',
+    description: 'A fresh trail of footprints winds onward through the Night Land.',
     width: 2,
     height: 2,
-    image: generatedFootprintsIMG,
+    image: generatedFootprintsBlueIMG,
+    zIndex: 1,
+    type: 'footstep',
+    canTap: true,
+    active: true,
+  },
+  'generated-footsteps-red': {
+    kind: 'nonCollision',
+    shortName: 'generated-footsteps-red',
+    category: 'decoration',
+    name: "Persius' Trail",
+    description: 'A fresh trail of footprints winds onward through the Night Land.',
+    width: 2,
+    height: 2,
+    image: generatedFootprintsRedIMG,
     zIndex: 1,
     type: 'footstep',
     canTap: true,

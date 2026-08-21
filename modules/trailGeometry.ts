@@ -1,4 +1,4 @@
-import type { Level, Position, ValidationResult } from '@config/types'
+import type { EncounterPlacement, Level, Position, ValidationResult } from '@config/types'
 import type { BoardOccupancyRegistry, PathPositionResolver, RandomSource } from './gameboardLayout'
 
 export type TrailLocation =
@@ -13,8 +13,11 @@ export interface TrailNetworkGeometry {
 export interface FootstepDescriptor {
   position: Position
   rotationDegrees: number
+  variant: FootstepVariant
   onBranchId?: string
 }
+
+export type FootstepVariant = 'green' | 'blue' | 'red'
 
 export interface TrailBranch {
   branchId: string
@@ -49,6 +52,11 @@ export const MAX_LOCAL_REROUTE_ATTEMPTS = 20
 export const MAX_FULL_REGENERATION_ATTEMPTS = 200
 export const MIN_BRANCH_SPACING_PCT = 0.08
 export const FOOTSTEP_INTERVAL_TILES = 24
+export const FIRST_FOOTSTEP_EDGE_MIN_TILES = 4
+export const FIRST_FOOTSTEP_EDGE_MAX_TILES = 6
+
+const FOOTSTEP_FOOTPRINT = { width: 2, height: 2 } as const
+const FIRST_FOOTSTEP_SEARCH_STEP_TILES = 0.25
 
 const EPSILON = 1e-7
 const TRUNK_STEP = 12
@@ -84,7 +92,7 @@ export function buildTraversalObstacles(level: Level): TraversalObstacles {
 
   level.nonCollisionObjects?.forEach((object) => {
     // The river-only gate structurally excludes both authored footsteps and decorations.
-    if (object.type !== 'river' || object.shortName === 'generated-footsteps') {
+    if (object.type !== 'river' || object.shortName.startsWith('generated-footsteps-')) {
       return
     }
     if (object.collisionMask?.length) {
@@ -217,49 +225,187 @@ export function createTrailNetwork(geometry: TrailNetworkGeometry): TrailNetwork
 
 export function generateFootstepDescriptors(
   trailNetwork: TrailNetwork,
-  interval: number = FOOTSTEP_INTERVAL_TILES
+  random: RandomSource,
+  options: {
+    occupancy?: BoardOccupancyRegistry
+    placements?: readonly EncounterPlacement[]
+    interval?: number
+  } = {}
 ): FootstepDescriptor[] {
+  const { occupancy, placements = [], interval = FOOTSTEP_INTERVAL_TILES } = options
   if (!Number.isFinite(interval) || interval <= 0) {
     throw new Error('Footstep interval must be a positive finite distance')
   }
   return [
-    ...footstepsAlongPath(trailNetwork.geometry.trunkWaypoints, interval),
+    ...footstepsAlongPath(
+      trailNetwork.geometry.trunkWaypoints,
+      random,
+      interval,
+      occupancy,
+      placements
+    ),
     ...trailNetwork.geometry.branches.flatMap((branch) =>
-      footstepsAlongPath(branch.waypoints, interval, branch.branchId)
+      footstepsAlongPath(branch.waypoints, random, interval, occupancy, placements, branch.branchId)
     ),
   ]
 }
 
 function footstepsAlongPath(
   waypoints: readonly Position[],
+  random: RandomSource,
   interval: number,
+  occupancy: BoardOccupancyRegistry | undefined,
+  placements: readonly EncounterPlacement[],
   onBranchId?: string
 ): FootstepDescriptor[] {
   const metrics = pathMetrics(waypoints)
   const descriptors: FootstepDescriptor[] = []
-  let segmentIndex = 1
-  for (let walked = 0; walked <= metrics.length + EPSILON; walked += interval) {
-    while (
-      segmentIndex < metrics.cumulative.length - 1 &&
-      metrics.cumulative[segmentIndex] <= walked
-    ) {
-      segmentIndex += 1
-    }
-    const segmentStart = waypoints[segmentIndex - 1]
-    const segmentEnd = waypoints[segmentIndex]
-    const segmentStartDistance = metrics.cumulative[segmentIndex - 1]
-    const segmentLength = metrics.cumulative[segmentIndex] - segmentStartDistance
-    const progress = segmentLength <= EPSILON ? 0 : (walked - segmentStartDistance) / segmentLength
-    const deltaRow = segmentEnd.row - segmentStart.row
-    const deltaCol = segmentEnd.col - segmentStart.col
-    const rotationDegrees = (Math.atan2(deltaCol, -deltaRow) * 180) / Math.PI
+  const firstDistance = findFirstFootstepDistance(waypoints, metrics, occupancy, placements)
+  if (firstDistance === undefined) return descriptors
+
+  for (let walked = firstDistance; walked <= metrics.length + EPSILON; walked += interval) {
+    const { position, rotationDegrees } = footstepAtDistance(waypoints, metrics, walked)
+    if (!footstepPositionIsFree(position, occupancy, placements)) continue
     descriptors.push({
-      position: interpolate(segmentStart, segmentEnd, progress),
+      position,
       rotationDegrees: (rotationDegrees + 360) % 360,
+      variant: selectFootstepVariant(random),
       ...(onBranchId ? { onBranchId } : {}),
     })
   }
   return descriptors
+}
+
+interface FootstepObstacle {
+  position: Position
+  width: number
+  height: number
+}
+
+function findFirstFootstepDistance(
+  waypoints: readonly Position[],
+  metrics: PathMetrics,
+  occupancy: BoardOccupancyRegistry | undefined,
+  placements: readonly EncounterPlacement[]
+): number | undefined {
+  const obstacles: FootstepObstacle[] = [
+    ...(occupancy?.snapshot() ?? []),
+    ...placements.map((placement) => ({
+      position: placement.position,
+      width: placement.footprint.width,
+      height: placement.footprint.height,
+    })),
+  ]
+  const origin = waypoints[0]
+  const originObstacles = obstacles.filter((obstacle) =>
+    rectanglesOverlap(origin, FOOTSTEP_FOOTPRINT, obstacle.position, obstacle)
+  )
+  let edgeDistance = 0
+  if (originObstacles.length > 0) {
+    let foundEdge = false
+    for (
+      let walked = 0;
+      walked <= metrics.length + EPSILON;
+      walked += FIRST_FOOTSTEP_SEARCH_STEP_TILES
+    ) {
+      const position = positionAtDistance(waypoints, metrics, walked)
+      if (
+        originObstacles.every(
+          (obstacle) =>
+            !rectanglesOverlap(position, FOOTSTEP_FOOTPRINT, obstacle.position, obstacle)
+        )
+      ) {
+        edgeDistance = walked
+        foundEdge = true
+        break
+      }
+    }
+    if (!foundEdge) return undefined
+  }
+
+  const preferredOffset = (FIRST_FOOTSTEP_EDGE_MIN_TILES + FIRST_FOOTSTEP_EDGE_MAX_TILES) / 2
+  const bandDistances: number[] = []
+  for (
+    let offset = FIRST_FOOTSTEP_EDGE_MIN_TILES;
+    offset <= FIRST_FOOTSTEP_EDGE_MAX_TILES + EPSILON;
+    offset += FIRST_FOOTSTEP_SEARCH_STEP_TILES
+  ) {
+    bandDistances.push(edgeDistance + offset)
+  }
+  bandDistances.sort(
+    (a, b) =>
+      Math.abs(a - edgeDistance - preferredOffset) - Math.abs(b - edgeDistance - preferredOffset)
+  )
+  const inBand = bandDistances.find((walked) => {
+    if (walked > metrics.length + EPSILON) return false
+    const position = positionAtDistance(waypoints, metrics, walked)
+    return footstepPositionIsFree(position, occupancy, placements)
+  })
+  if (inBand !== undefined) return inBand
+
+  for (
+    let walked = edgeDistance;
+    walked <= metrics.length + EPSILON;
+    walked += FIRST_FOOTSTEP_SEARCH_STEP_TILES
+  ) {
+    const position = positionAtDistance(waypoints, metrics, walked)
+    if (footstepPositionIsFree(position, occupancy, placements)) return walked
+  }
+  return undefined
+}
+
+function footstepAtDistance(
+  waypoints: readonly Position[],
+  metrics: PathMetrics,
+  walked: number
+): { position: Position; rotationDegrees: number } {
+  let segmentIndex = 1
+  while (
+    segmentIndex < metrics.cumulative.length - 1 &&
+    metrics.cumulative[segmentIndex] <= walked
+  ) {
+    segmentIndex += 1
+  }
+  const segmentStart = waypoints[segmentIndex - 1]
+  const segmentEnd = waypoints[segmentIndex]
+  const deltaRow = segmentEnd.row - segmentStart.row
+  const deltaCol = segmentEnd.col - segmentStart.col
+  return {
+    position: positionAtDistance(waypoints, metrics, walked),
+    rotationDegrees: (Math.atan2(deltaCol, -deltaRow) * 180) / Math.PI,
+  }
+}
+
+function footstepPositionIsFree(
+  position: Position,
+  occupancy: BoardOccupancyRegistry | undefined,
+  placements: readonly EncounterPlacement[]
+): boolean {
+  if (occupancy && !occupancy.isFree(position, FOOTSTEP_FOOTPRINT).free) return false
+  return !placements.some((placement) =>
+    rectanglesOverlap(position, FOOTSTEP_FOOTPRINT, placement.position, placement.footprint)
+  )
+}
+
+function rectanglesOverlap(
+  a: Position,
+  aSize: { width: number; height: number },
+  b: Position,
+  bSize: { width: number; height: number }
+): boolean {
+  return (
+    a.row < b.row + bSize.height &&
+    a.row + aSize.height > b.row &&
+    a.col < b.col + bSize.width &&
+    a.col + aSize.width > b.col
+  )
+}
+
+function selectFootstepVariant(random: RandomSource): FootstepVariant {
+  const roll = random.next()
+  if (roll < 0.75) return 'green'
+  if (roll < 0.95) return 'blue'
+  return 'red'
 }
 
 export class PolylinePathPositionResolver implements PathPositionResolver {
@@ -614,7 +760,11 @@ function pathMetrics(waypoints: readonly Position[]): PathMetrics {
   return { cumulative, length: cumulative[cumulative.length - 1] }
 }
 
-function positionAtDistance(path: Position[], metrics: PathMetrics, target: number): Position {
+function positionAtDistance(
+  path: readonly Position[],
+  metrics: PathMetrics,
+  target: number
+): Position {
   let index = 1
   while (index < metrics.cumulative.length - 1 && metrics.cumulative[index] < target) index += 1
   const before = metrics.cumulative[index - 1]
