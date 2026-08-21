@@ -13,6 +13,12 @@ import type {
   ValidationError,
   ValidationResult,
 } from '@config/types'
+import {
+  buildTraversalObstacles,
+  generateTrailNetwork,
+  type TrailLocation,
+  type TrailNetwork,
+} from './trailGeometry'
 
 export interface OccupancyFootprint {
   id: string
@@ -129,24 +135,6 @@ export interface PathPositionResolver {
   distanceBetween(aPct: number, bPct: number): number
 }
 
-export class LinearPathPositionResolver implements PathPositionResolver {
-  constructor(
-    private readonly start: Position = { row: 395, col: 180 },
-    private readonly end: Position = { row: 10, col: 180 }
-  ) {}
-
-  positionAt(progressPct: number): Position {
-    return {
-      row: Math.round(this.start.row + (this.end.row - this.start.row) * progressPct),
-      col: Math.round(this.start.col + (this.end.col - this.start.col) * progressPct),
-    }
-  }
-
-  distanceBetween(aPct: number, bPct: number): number {
-    return Math.abs(aPct - bPct)
-  }
-}
-
 export class RandomSource {
   constructor(private readonly source: () => number = Math.random) {}
 
@@ -181,26 +169,27 @@ export const REAL_PARSED_CONTENT_CATALOGS: ParsedContentCatalogsByShape = {
   },
 }
 
-export interface LevelLayoutConstraints {
-  width: number
-  height: number
-  occupancy: BoardOccupancyRegistry
-}
-
 const MAX_ATTEMPTS_PER_INSTANCE = 500
 const START_END_REGION_SIZE = 0.1
 
 function excluded(
-  progress: number,
+  location: TrailLocation,
   regions: readonly GameboardRegion[],
-  placed: EncounterPlacement[]
+  placed: EncounterPlacement[],
+  trailNetwork: TrailNetwork,
+  straightLineReference: number
 ): boolean {
   return regions.some((region) => {
-    if (region === 'start') return progress <= START_END_REGION_SIZE
-    if (region === 'end') return progress >= 1 - START_END_REGION_SIZE
+    if (region === 'start') {
+      return location.type === 'trunk' && location.progressPct <= START_END_REGION_SIZE
+    }
+    if (region === 'end') {
+      return location.type === 'trunk' && location.progressPct >= 1 - START_END_REGION_SIZE
+    }
     const neighbor = placed.find((placement) => placement.slotId === region.nearSlotId)
-    return neighbor?.location.type === 'trunk'
-      ? Math.abs(progress - neighbor.location.progressPct) <= region.bufferPct
+    return neighbor
+      ? trailNetwork.distanceBetween(location, neighbor.location) <=
+          region.bufferPct * straightLineReference
       : false
   })
 }
@@ -208,25 +197,80 @@ function excluded(
 function withinBounds(
   position: Position,
   footprint: { width: number; height: number },
-  level: LevelLayoutConstraints
+  level: Level
 ): boolean {
   return (
     position.row >= 0 &&
     position.col >= 0 &&
-    position.row + footprint.height <= level.height &&
-    position.col + footprint.width <= level.width
+    position.row + footprint.height <= level.boardSize.height &&
+    position.col + footprint.width <= level.boardSize.width
   )
+}
+
+function countEligibleScatteredInstances(
+  manifest: GameboardManifest,
+  catalogs: ParsedContentCatalogsByShape
+): number {
+  let count = 0
+  for (const slot of manifest.slots) {
+    if (slot.kind !== 'scattered-group') continue
+    for (const instanceId of slot.instances) {
+      try {
+        if (catalogs.resolve(slot.shapeId, instanceId).entrance) count += 1
+      } catch {
+        // The placement pass reports the existing detailed validation error.
+      }
+    }
+  }
+  return count
+}
+
+function randomScatteredLocation(trailNetwork: TrailNetwork, random: RandomSource): TrailLocation {
+  if (
+    trailNetwork.branches.length === 0 ||
+    random.next() < 1 / (trailNetwork.branches.length + 1)
+  ) {
+    return { type: 'trunk', progressPct: random.next() }
+  }
+  const branch = trailNetwork.branches[Math.floor(random.next() * trailNetwork.branches.length)]
+  return { type: 'branch', branchId: branch.branchId, branchProgressPct: random.next() }
+}
+
+function branchTerminusLocation(trailNetwork: TrailNetwork, random: RandomSource): TrailLocation {
+  const branch = trailNetwork.branches[Math.floor(random.next() * trailNetwork.branches.length)]
+  return {
+    type: 'branch',
+    branchId: branch.branchId,
+    branchProgressPct: 0.8 + random.next() * 0.2,
+  }
 }
 
 export function generateLayout(
   manifest: GameboardManifest,
   catalogs: ParsedContentCatalogsByShape,
-  level: LevelLayoutConstraints,
-  path: PathPositionResolver,
+  level: Level,
   random: RandomSource
-): ValidationResult<EncounterPlacement[]> {
+): ValidationResult<{ placements: EncounterPlacement[]; trailNetwork: TrailNetwork }> {
   const placements: EncounterPlacement[] = []
   const errors: ValidationError[] = []
+  const eligibleScatteredCount = countEligibleScatteredInstances(manifest, catalogs)
+  const branchCount = Math.min(2 + Math.floor(random.next() * 3), eligibleScatteredCount)
+  const occupancy = buildBoardOccupancyRegistry(level)
+  const trailResult = generateTrailNetwork(
+    buildTraversalObstacles(level),
+    occupancy,
+    random,
+    branchCount,
+    level.playerSpawn
+  )
+  if (!trailResult.success) return trailResult
+  const trailNetwork = trailResult.value
+  const trailEnd = trailNetwork.resolve({ type: 'trunk', progressPct: 1 })
+  const straightLineReference = Math.hypot(
+    level.playerSpawn.row - trailEnd.row,
+    level.playerSpawn.col - trailEnd.col
+  )
+  let mustAllocateBranchTerminus = eligibleScatteredCount > 0 && trailNetwork.branches.length > 0
 
   for (const slot of manifest.slots) {
     const instanceIds = slot.kind === 'scattered-group' ? slot.instances : [slot.contentRef]
@@ -257,51 +301,66 @@ export function generateLayout(
 
       for (let attempt = 0; attempt < attempts; attempt += 1) {
         try {
-          let progressPct: number
-          if (slot.kind === 'end') progressPct = 1
+          let location: TrailLocation
+          if (slot.kind === 'end') location = { type: 'trunk', progressPct: 1 }
           else if (slot.kind === 'range') {
-            progressPct =
-              slot.placement.minPct +
-              random.next() * (slot.placement.maxPct - slot.placement.minPct)
+            location = {
+              type: 'trunk',
+              progressPct:
+                slot.placement.minPct +
+                random.next() * (slot.placement.maxPct - slot.placement.minPct),
+            }
           } else {
-            progressPct = random.next()
-            if (excluded(progressPct, slot.placement.exclude, placements)) {
+            location = mustAllocateBranchTerminus
+              ? branchTerminusLocation(trailNetwork, random)
+              : randomScatteredLocation(trailNetwork, random)
+            if (
+              excluded(
+                location,
+                slot.placement.exclude,
+                placements,
+                trailNetwork,
+                straightLineReference
+              )
+            ) {
               lastReason = 'candidate is inside an excluded region'
               continue
             }
-            const minSpacing = slot.placement.minSpacingPct ?? 0
+            const minSpacing = (slot.placement.minSpacingPct ?? 0) * straightLineReference
             if (
               placements.some(
                 (placement) =>
-                  placement.location.type === 'trunk' &&
-                  path.distanceBetween(progressPct, placement.location.progressPct) < minSpacing
+                  trailNetwork.distanceBetween(location, placement.location) < minSpacing
               )
             ) {
-              lastReason = `candidate violates minSpacingPct ${minSpacing}`
+              lastReason = `candidate violates minSpacingPct ${slot.placement.minSpacingPct ?? 0}`
               continue
             }
           }
-          const position = path.positionAt(progressPct)
+          const position = trailNetwork.resolve(location)
           if (!withinBounds(position, footprint, level)) {
             lastReason = `candidate at (${position.row}, ${position.col}) is outside level bounds`
             continue
           }
-          const free = level.occupancy.isFree(position, footprint)
+          const free = occupancy.isFree(position, footprint)
           if (!free.free) {
             lastReason = `would overlap existing object ${free.overlappingIds.join(', ')}`
             continue
           }
-          const occupancyId = level.occupancy.reserve(instanceId, position, footprint)
+          const occupancyId = occupancy.reserve(instanceId, position, footprint)
           accepted = {
             instanceId,
             shapeId: slot.shapeId,
             slotId: slot.slotId,
-            location: { type: 'trunk', progressPct },
+            location,
             position,
             footprint,
             occupancyId,
           }
           placements.push(accepted)
+          if (location.type === 'branch' && location.branchProgressPct >= 0.8) {
+            mustAllocateBranchTerminus = false
+          }
           break
         } catch (error) {
           lastReason = error instanceof Error ? error.message : String(error)
@@ -319,7 +378,7 @@ export function generateLayout(
   }
 
   if (errors.length > 0) return { success: false, errors }
-  return { success: true, value: placements }
+  return { success: true, value: { placements, trailNetwork } }
 }
 
 export function placementsToLevelObjects(

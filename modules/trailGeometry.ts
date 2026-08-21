@@ -1,5 +1,5 @@
 import type { Level, Position, ValidationResult } from '@config/types'
-import { BoardOccupancyRegistry, type PathPositionResolver, RandomSource } from './gameboardLayout'
+import type { BoardOccupancyRegistry, PathPositionResolver, RandomSource } from './gameboardLayout'
 
 export type TrailLocation =
   | { type: 'trunk'; progressPct: number }
@@ -386,12 +386,26 @@ function canAddSegment(
   obstacles: TraversalObstacles
 ): boolean {
   const segment = { start: path[path.length - 1], end: candidate }
-  if (obstacles.obstacles.some((obstacle) => segmentIntersectsRectangle(segment, obstacle)))
+  if (
+    obstacles.obstacles.some((obstacle) => {
+      if (path.length === 1 && pointInsideObstacle(segment.start, obstacle)) return false
+      return segmentIntersectsRectangle(segment, obstacle)
+    })
+  )
     return false
   for (let index = 0; index < path.length - 2; index += 1) {
     if (segmentsIntersect(segment, { start: path[index], end: path[index + 1] })) return false
   }
   return true
+}
+
+function pointInsideObstacle(point: Position, obstacle: TraversalObstacle): boolean {
+  return (
+    point.row >= obstacle.position.row &&
+    point.row <= obstacle.position.row + obstacle.height &&
+    point.col >= obstacle.position.col &&
+    point.col <= obstacle.position.col + obstacle.width
+  )
 }
 
 function pathIntersects(segment: Segment, path: Position[], allowedPoint?: Position): boolean {

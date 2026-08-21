@@ -338,4 +338,22 @@ describe('standalone trail geometry', () => {
     expect(result.value.branches).toEqual([])
     expect(result.value.geometry.branches).toEqual([])
   })
+
+  test('the first segment may leave an authored obstacle containing the spawn', () => {
+    const result = generateTrailNetwork(
+      {
+        ...BOARD,
+        obstacles: [
+          { id: 'spawn-building', position: { row: 575, col: 295 }, width: 10, height: 10 },
+        ],
+      },
+      new BoardOccupancyRegistry(),
+      new RandomSource(seededRandom(73)),
+      0,
+      START
+    )
+    expect(result.success).toBe(true)
+    if (!result.success) return
+    expect(result.value.geometry.trunkWaypoints.length).toBeGreaterThan(2)
+  })
 })
