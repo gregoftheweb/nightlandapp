@@ -7,11 +7,11 @@ export function generatedFootstepsToNonCollisionObjects(
 ): NonCollisionObject[] {
   return descriptors.map((descriptor, index) =>
     createNonCollisionObject(
-      'generated-footsteps',
+      `generated-footsteps-${descriptor.variant}`,
       descriptor.position,
       descriptor.rotationDegrees,
       {
-        id: `generated-footsteps-${descriptor.onBranchId ?? 'trunk'}-${index}`,
+        id: `generated-footsteps-${descriptor.variant}-${descriptor.onBranchId ?? 'trunk'}-${index}`,
       }
     )
   )

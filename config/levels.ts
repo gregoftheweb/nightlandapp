@@ -60,65 +60,6 @@ export const levels: Record<LevelId, Level> = {
     ],
 
     nonCollisionObjects: [
-      // Start
-      // Existing footsteps (moving west)
-      createNonCollisionObject('footsteps', { row: 391, col: 195 }, 290),
-      createNonCollisionObject('footsteps', { row: 385, col: 175 }, 280),
-      createNonCollisionObject('footsteps', { row: 380, col: 155 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 135 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 115 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 95 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 75 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 55 }, 270),
-      createNonCollisionObject('footsteps', { row: 380, col: 35 }, 270),
-
-      // First S-curve - continuing west then curving north and east
-      createNonCollisionObject('footsteps', { row: 375, col: 25 }, 315), // curve NW
-      createNonCollisionObject('footsteps', { row: 368, col: 20 }, 350), // heading north
-      createNonCollisionObject('footsteps', { row: 360, col: 20 }, 0), // north
-      createNonCollisionObject('footsteps', { row: 350, col: 22 }, 10), // curve NE
-      createNonCollisionObject('footsteps', { row: 340, col: 30 }, 30), // heading NE
-      createNonCollisionObject('footsteps', { row: 330, col: 45 }, 45), // continue NE
-      createNonCollisionObject('footsteps', { row: 320, col: 65 }, 60), // more east
-      createNonCollisionObject('footsteps', { row: 310, col: 90 }, 75), // heading east
-      createNonCollisionObject('footsteps', { row: 305, col: 115 }, 85), // mostly east
-
-      // Second S-curve - curving north then west
-      createNonCollisionObject('footsteps', { row: 298, col: 140 }, 60), // curve NE
-      createNonCollisionObject('footsteps', { row: 290, col: 160 }, 45), // heading NE
-      createNonCollisionObject('footsteps', { row: 280, col: 175 }, 20), // more north
-      createNonCollisionObject('footsteps', { row: 270, col: 185 }, 10), // mostly north
-      createNonCollisionObject('footsteps', { row: 260, col: 190 }, 0), // straight north
-      createNonCollisionObject('footsteps', { row: 250, col: 193 }, 350), // curve NW
-      createNonCollisionObject('footsteps', { row: 240, col: 192 }, 330), // heading NW
-      createNonCollisionObject('footsteps', { row: 230, col: 185 }, 315), // more west
-      createNonCollisionObject('footsteps', { row: 220, col: 175 }, 300), // heading west
-      createNonCollisionObject('footsteps', { row: 210, col: 160 }, 290), // mostly west
-
-      // Final curve - heading back toward center-north
-      createNonCollisionObject('footsteps', { row: 200, col: 150 }, 315), // curve NW
-      createNonCollisionObject('footsteps', { row: 190, col: 145 }, 340), // heading north
-      createNonCollisionObject('footsteps', { row: 180, col: 145 }, 0), // north
-      createNonCollisionObject('footsteps', { row: 170, col: 148 }, 15), // curve NE
-      createNonCollisionObject('footsteps', { row: 160, col: 155 }, 30), // heading NE
-      createNonCollisionObject('footsteps', { row: 150, col: 165 }, 45), // more east
-      createNonCollisionObject('footsteps', { row: 140, col: 175 }, 50), // continue NE
-      createNonCollisionObject('footsteps', { row: 130, col: 182 }, 30), // more north
-      createNonCollisionObject('footsteps', { row: 120, col: 187 }, 20), // heading north
-      createNonCollisionObject('footsteps', { row: 110, col: 190 }, 10), // mostly north
-      createNonCollisionObject('footsteps', { row: 100, col: 192 }, 5), // almost straight
-      createNonCollisionObject('footsteps', { row: 90, col: 193 }, 5), // north
-      createNonCollisionObject('footsteps', { row: 80, col: 194 }, 5), // north
-      createNonCollisionObject('footsteps', { row: 70, col: 195 }, 5), // north
-      createNonCollisionObject('footsteps', { row: 60, col: 196 }, 5), // north
-      createNonCollisionObject('footsteps', { row: 50, col: 197 }, 5), // north
-      createNonCollisionObject('footsteps', { row: 40, col: 198 }, 5), // north
-      createNonCollisionObject('footsteps', { row: 30, col: 199 }, 5), // north
-      createNonCollisionObject('footsteps', { row: 20, col: 200 }, 0), // final approach
-      createNonCollisionObject('footsteps', { row: 10, col: 200 }, 0), // destination
-
-      // Arriving near pool
-
       createNonCollisionObject('river', { row: 370, col: 195 }, 0, {
         canTap: false,
         width: 22,

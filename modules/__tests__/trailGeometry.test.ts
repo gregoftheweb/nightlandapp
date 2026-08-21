@@ -1,4 +1,4 @@
-import type { Level, Position } from '@config/types'
+import type { EncounterPlacement, Level, Position } from '@config/types'
 import { BoardOccupancyRegistry, RandomSource } from '../gameboardLayout'
 import {
   buildTraversalObstacles,
@@ -137,23 +137,8 @@ describe('standalone trail geometry', () => {
           collisionMask: [{ row: 2, col: 3, width: 4, height: 5 }],
         },
         {
-          id: 'blue-step',
-          shortName: 'footsteps',
-          category: 'decoration',
-          name: 'Footstep',
-          position: { row: 10, col: 10 },
-          rotation: 0,
-          width: 2,
-          height: 2,
-          image: 1,
-          zIndex: 1,
-          type: 'footstep',
-          canTap: false,
-          active: true,
-        },
-        {
           id: 'generated-step',
-          shortName: 'generated-footsteps',
+          shortName: 'generated-footsteps-red',
           category: 'decoration',
           name: 'Generated Footstep',
           position: { row: 12, col: 12 },
@@ -308,30 +293,152 @@ describe('standalone trail geometry', () => {
         },
       ],
     })
-    const descriptors = generateFootstepDescriptors(network)
+    const descriptors = generateFootstepDescriptors(network, new RandomSource(() => 0.1))
     const trunk = descriptors.filter((descriptor) => !descriptor.onBranchId)
     const branch = descriptors.filter((descriptor) => descriptor.onBranchId === 'branch-cardinal')
 
     expect(trunk.map(({ position }) => position)).toEqual([
-      { row: 24, col: 0 },
-      { row: 0, col: 0 },
-      { row: 0, col: 24 },
-      { row: 24, col: 24 },
-      { row: 24, col: 0 },
+      { row: 19, col: 0 },
+      { row: 0, col: 5 },
+      { row: 5, col: 24 },
+      { row: 24, col: 19 },
     ])
-    expect(trunk.map(({ rotationDegrees }) => rotationDegrees)).toEqual([0, 90, 180, 270, 270])
+    expect(trunk.map(({ rotationDegrees }) => rotationDegrees)).toEqual([0, 90, 180, 270])
     expect(branch).toEqual([
       {
-        position: { row: 0, col: 12 },
+        position: { row: 5, col: 12 },
         rotationDegrees: 180,
-        onBranchId: 'branch-cardinal',
-      },
-      {
-        position: { row: 24, col: 12 },
-        rotationDegrees: 180,
+        variant: 'green',
         onBranchId: 'branch-cardinal',
       },
     ])
+  })
+
+  test('selects generated footstep colors with the 75/20/5 weighted distribution', () => {
+    const network = createTrailNetwork({
+      trunkWaypoints: [
+        { row: 0, col: 0 },
+        { row: 0, col: 24000 },
+      ],
+      branches: [],
+    })
+    const descriptors = generateFootstepDescriptors(
+      network,
+      new RandomSource(seededRandom(20260821))
+    )
+    const counts = descriptors.reduce(
+      (result, descriptor) => {
+        result[descriptor.variant] += 1
+        return result
+      },
+      { green: 0, blue: 0, red: 0 }
+    )
+    const total = descriptors.length
+
+    expect(total).toBe(1000)
+    expect(counts.green / total).toBeGreaterThan(0.7)
+    expect(counts.green / total).toBeLessThan(0.8)
+    expect(counts.blue / total).toBeGreaterThan(0.16)
+    expect(counts.blue / total).toBeLessThan(0.24)
+    expect(counts.red / total).toBeGreaterThan(0.03)
+    expect(counts.red / total).toBeLessThan(0.07)
+  })
+
+  test('skips the trunk origin and object-overlapping drops on both trunk and branches', () => {
+    const network = createTrailNetwork({
+      trunkWaypoints: [
+        { row: 0, col: 0 },
+        { row: 0, col: 200 },
+      ],
+      branches: [
+        {
+          branchId: 'branch-filtered',
+          originTrunkPct: 0.5,
+          waypoints: [
+            { row: 20, col: 0 },
+            { row: 20, col: 200 },
+          ],
+        },
+      ],
+    })
+    const occupancy = new BoardOccupancyRegistry([
+      { id: 'trunk-building', position: { row: 0, col: 24 }, width: 2, height: 2 },
+      { id: 'branch-building', position: { row: 20, col: 24 }, width: 2, height: 2 },
+    ])
+    const placements: EncounterPlacement[] = [
+      {
+        instanceId: 'trunk-encounter',
+        shapeId: 'one-off',
+        slotId: 'trunk-slot',
+        location: { type: 'trunk', progressPct: 0.5 },
+        position: { row: 0, col: 54 },
+        footprint: { width: 3, height: 2 },
+        occupancyId: 'trunk-encounter-occupancy',
+      },
+      {
+        instanceId: 'branch-encounter',
+        shapeId: 'one-off',
+        slotId: 'branch-slot',
+        location: { type: 'branch', branchId: 'branch-filtered', branchProgressPct: 0.5 },
+        position: { row: 20, col: 54 },
+        footprint: { width: 3, height: 2 },
+        occupancyId: 'branch-encounter-occupancy',
+      },
+    ]
+    const descriptors = generateFootstepDescriptors(network, new RandomSource(() => 0.1), {
+      occupancy,
+      placements,
+      interval: 10,
+    })
+    const trunk = descriptors.filter((descriptor) => !descriptor.onBranchId)
+    const branch = descriptors.filter((descriptor) => descriptor.onBranchId === 'branch-filtered')
+
+    expect(trunk[0].position.col).toBe(5)
+    expect(branch[0].position.col).toBe(5)
+    for (const row of [0, 20]) {
+      expect(descriptors.some(({ position }) => position.row === row && position.col === 25)).toBe(
+        false
+      )
+      expect(descriptors.some(({ position }) => position.row === row && position.col === 55)).toBe(
+        false
+      )
+    }
+    expect(trunk).toHaveLength(18)
+    expect(branch).toHaveLength(18)
+    expect(descriptors.length / 40).toBeGreaterThan(0.85)
+  })
+
+  test('places trunk and branch first steps five tiles beyond their origin obstacle edges', () => {
+    const network = createTrailNetwork({
+      trunkWaypoints: [
+        { row: 0, col: 0 },
+        { row: 0, col: 100 },
+      ],
+      branches: [
+        {
+          branchId: 'branch-edge',
+          originTrunkPct: 0.5,
+          waypoints: [
+            { row: 20, col: 0 },
+            { row: 20, col: 100 },
+          ],
+        },
+      ],
+    })
+    const occupancy = new BoardOccupancyRegistry([
+      { id: 'trunk-origin', position: { row: 0, col: 0 }, width: 8, height: 2 },
+      { id: 'branch-origin', position: { row: 20, col: 0 }, width: 8, height: 2 },
+    ])
+    const descriptors = generateFootstepDescriptors(network, new RandomSource(() => 0.1), {
+      occupancy,
+    })
+    const trunk = descriptors.filter((descriptor) => !descriptor.onBranchId)
+    const branch = descriptors.filter((descriptor) => descriptor.onBranchId === 'branch-edge')
+
+    expect(trunk[0].position).toEqual({ row: 0, col: 13 })
+    expect(branch[0].position).toEqual({ row: 20, col: 13 })
+    expect(trunk.slice(1, 4).map(({ position }) => position.col)).toEqual([37, 61, 85])
+    expect(branch.slice(1, 4).map(({ position }) => position.col)).toEqual([37, 61, 85])
   })
 
   test('rejects a blocked preferred corner and selects another cleared top-edge endpoint', () => {

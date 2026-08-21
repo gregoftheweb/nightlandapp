@@ -363,7 +363,7 @@ export function createItemInstance(
  *
  * @example
  * ```typescript
- * createNonCollisionObject('footsteps', { row: 391, col: 195 }, 290)
+ * createNonCollisionObject('river', { row: 370, col: 195 }, 0)
  * ```
  */
 export function createNonCollisionObject(

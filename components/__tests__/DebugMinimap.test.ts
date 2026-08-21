@@ -114,7 +114,7 @@ describe('DebugMinimap coordinate mapping', () => {
         nonCollisionObjects: [
           {
             id: 'generated-footstep',
-            shortName: 'generated-footsteps',
+            shortName: 'generated-footsteps-green',
             type: 'footstep',
             position: { row: 75, col: 80 },
             rotation: 90,
@@ -179,7 +179,7 @@ describe('DebugMinimap coordinate mapping', () => {
         nonCollisionObjects: [
           {
             id: 'footstep',
-            shortName: 'footsteps',
+            shortName: 'decorative-footstep',
             type: 'footstep',
             position: { row: 50, col: 50 },
             rotation: 290,
