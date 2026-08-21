@@ -11,6 +11,20 @@ export const VALID_GAMEBOARD_MANIFEST: GameboardManifest = {
       contentRef: 'jaunt-cave',
     },
     {
+      slotId: 'deep-silo-range',
+      shapeId: 'one-off',
+      kind: 'range',
+      placement: { minPct: 0.55, maxPct: 0.65 },
+      contentRef: 'deep-silo',
+    },
+    {
+      slotId: 'aerowreckage-range',
+      shapeId: 'one-off',
+      kind: 'range',
+      placement: { minPct: 0.2, maxPct: 0.3 },
+      contentRef: 'aerowreckage-puzzle',
+    },
+    {
       slotId: 'hermit-end',
       shapeId: 'dialogue',
       kind: 'end',
@@ -49,6 +63,14 @@ export const invalidGameboardFixtures: Record<
     expectedCode: 'invalid-manifest-version',
     make: mutate((manifest) => (manifest.version = 0)),
   },
+  nonIntegerVersion: {
+    expectedCode: 'invalid-manifest-version',
+    make: mutate((manifest) => (manifest.version = 1.5)),
+  },
+  invalidManifest: {
+    expectedCode: 'invalid-gameboard-manifest',
+    make: () => null,
+  },
   emptySlots: {
     expectedCode: 'empty-manifest-slots',
     make: () => ({ version: 1, slots: [] }),
@@ -61,25 +83,39 @@ export const invalidGameboardFixtures: Record<
     expectedCode: 'duplicate-slot-id',
     make: mutate((manifest) => (manifest.slots[1].slotId = 'jaunt-range')),
   },
+  invalidSlot: {
+    expectedCode: 'invalid-slot',
+    make: mutate((manifest) => (manifest.slots[0] = null)),
+  },
   invalidRangeBounds: {
     expectedCode: 'invalid-range-bounds',
     make: mutate((manifest) => (manifest.slots[0].placement = { minPct: 0.8, maxPct: 0.2 })),
   },
   emptyScatteredInstances: {
     expectedCode: 'empty-scattered-instances',
-    make: mutate((manifest) => (manifest.slots[2].instances = [])),
+    make: mutate((manifest) => (manifest.slots[4].instances = [])),
   },
   duplicateScatteredInstance: {
     expectedCode: 'duplicate-scattered-instance',
-    make: mutate((manifest) => manifest.slots[2].instances.push('word-tile-crypt-01')),
+    make: mutate((manifest) => manifest.slots[4].instances.push('word-tile-crypt-01')),
   },
   unknownContentRef: {
     expectedCode: 'unknown-content-ref',
-    make: mutate((manifest) => (manifest.slots[2].instances[0] = 'missing-grid')),
+    make: mutate((manifest) => (manifest.slots[4].instances[0] = 'missing-grid')),
+  },
+  unknownRegistryContentRef: {
+    expectedCode: 'unknown-content-ref',
+    make: mutate((manifest) => (manifest.slots[0].contentRef = 'missing-one-off')),
+  },
+  invalidContentRef: {
+    expectedCode: 'invalid-content-ref',
+    make: mutate((manifest) => (manifest.slots[0].contentRef = 42)),
   },
   shapeMismatch: {
     expectedCode: 'shape-id-mismatch',
-    make: mutate((manifest) => (manifest.slots[0].shapeId = 'dialogue')),
+    make: mutate((manifest) => {
+      manifest.slots[0].contentRef = 'word-tile-crypt-01'
+    }),
   },
   unregisteredShape: {
     expectedCode: 'unregistered-shape-id',
@@ -100,28 +136,36 @@ export const invalidGameboardFixtures: Record<
     expectedCode: 'invalid-slot-fields',
     make: mutate((manifest) => (manifest.slots[0].instances = ['deep-silo'])),
   },
+  endWithScatteredFields: {
+    expectedCode: 'invalid-slot-fields',
+    make: mutate((manifest) => (manifest.slots[3].instances = ['deep-silo'])),
+  },
   scatteredWithRangeFields: {
     expectedCode: 'invalid-slot-fields',
-    make: mutate((manifest) => (manifest.slots[2].placement.minPct = 0.2)),
+    make: mutate((manifest) => (manifest.slots[4].placement.minPct = 0.2)),
+  },
+  scatteredWithContentRef: {
+    expectedCode: 'invalid-slot-fields',
+    make: mutate((manifest) => (manifest.slots[4].contentRef = 'jaunt-cave')),
   },
   invalidMinSpacing: {
     expectedCode: 'invalid-min-spacing',
-    make: mutate((manifest) => (manifest.slots[2].placement.minSpacingPct = 2)),
+    make: mutate((manifest) => (manifest.slots[4].placement.minSpacingPct = 2)),
   },
   invalidBuffer: {
     expectedCode: 'invalid-region-buffer',
-    make: mutate((manifest) => (manifest.slots[2].placement.exclude[0].bufferPct = -0.1)),
+    make: mutate((manifest) => (manifest.slots[4].placement.exclude[0].bufferPct = -0.1)),
   },
   unknownNearSlot: {
     expectedCode: 'unknown-region-slot',
     make: mutate(
-      (manifest) => (manifest.slots[2].placement.exclude[0].nearSlotId = 'missing-slot')
+      (manifest) => (manifest.slots[4].placement.exclude[0].nearSlotId = 'missing-slot')
     ),
   },
   selfReferencingRegion: {
     expectedCode: 'self-referencing-region',
     make: mutate(
-      (manifest) => (manifest.slots[2].placement.exclude[0].nearSlotId = 'word-grid-clues')
+      (manifest) => (manifest.slots[4].placement.exclude[0].nearSlotId = 'word-grid-clues')
     ),
   },
   nearScatteredSlot: {
@@ -134,19 +178,19 @@ export const invalidGameboardFixtures: Record<
         placement: { exclude: [] },
         instances: ['fixture-grid-01'],
       })
-      manifest.slots[2].placement.exclude[0].nearSlotId = 'other-grids'
+      manifest.slots[4].placement.exclude[0].nearSlotId = 'other-grids'
     }),
   },
   duplicateExclusion: {
     expectedCode: 'duplicate-exclusion',
     make: mutate((manifest) => {
-      manifest.slots[2].placement.exclude = ['start', 'start']
+      manifest.slots[4].placement.exclude = ['start', 'start']
     }),
   },
   unsatisfiableExclusions: {
     expectedCode: 'unsatisfiable-exclusions',
     make: mutate((manifest) => {
-      manifest.slots[2].placement.exclude = ['start', 'end']
+      manifest.slots[4].placement.exclude = ['start', 'end']
     }),
   },
   invalidSlotKind: {
@@ -155,10 +199,10 @@ export const invalidGameboardFixtures: Record<
   },
   invalidRegion: {
     expectedCode: 'invalid-region',
-    make: mutate((manifest) => (manifest.slots[2].placement.exclude = ['middle'])),
+    make: mutate((manifest) => (manifest.slots[4].placement.exclude = ['middle'])),
   },
   invalidExclusions: {
     expectedCode: 'invalid-exclusions',
-    make: mutate((manifest) => delete manifest.slots[2].placement.exclude),
+    make: mutate((manifest) => delete manifest.slots[4].placement.exclude),
   },
 }

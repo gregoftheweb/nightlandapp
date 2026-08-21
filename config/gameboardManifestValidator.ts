@@ -18,16 +18,12 @@ function addError(errors: ValidationError[], code: string, path: string, message
   errors.push({ code, path, message })
 }
 
-function resolveContent(
-  shapeId: string,
-  contentRef: string
-): SubGameInstanceDefinition | undefined {
-  if (shapeId === 'word-grid') {
-    if (!parsedWordGridContentResult.success) return undefined
-    return parsedWordGridContentResult.value[contentRef]?.definition
+function resolveContent(contentRef: string): SubGameInstanceDefinition | undefined {
+  if (parsedWordGridContentResult.success) {
+    const wordGridDefinition = parsedWordGridContentResult.value[contentRef]?.definition
+    if (wordGridDefinition) return wordGridDefinition
   }
-  if (!isRegisteredSubGameInstance(contentRef)) return undefined
-  return getSubGameDefinition(contentRef)
+  return isRegisteredSubGameInstance(contentRef) ? getSubGameDefinition(contentRef) : undefined
 }
 
 function regionKey(region: unknown): string | undefined {
@@ -111,7 +107,7 @@ export function validateGameboardManifest(manifest: unknown): ValidationResult<G
       seenInstanceIds.set(contentRef, slotId)
     }
 
-    const definition = resolveContent(shapeId, contentRef)
+    const definition = resolveContent(contentRef)
     if (!definition) {
       addError(
         errors,
