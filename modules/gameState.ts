@@ -102,7 +102,10 @@ function buildInitialState(
           levelConfig,
           new RandomSource()
         )
-      : { success: true as const, value: { placements: [] } }
+      : {
+          success: true as const,
+          value: { placements: [], trailNetwork: null, generatedFootsteps: [] },
+        }
   if (!layoutResult.success) {
     throw new Error(
       `Unable to create gameboard layout: ${layoutResult.errors.map((error) => error.message).join('; ')}`
@@ -175,6 +178,8 @@ function buildInitialState(
     subGamesCompleted: {}, // Decision: Reset on death for "fresh run" experience
     waypointSavesCreated: {}, // Track which waypoint saves have been created
     encounterPlacements,
+    trailNetwork: layoutResult.value.trailNetwork,
+    generatedFootsteps: layoutResult.value.generatedFootsteps,
     gameboardCatalogIdentity: buildGameboardCatalogIdentity(),
   }
 }
@@ -202,8 +207,13 @@ export const createInitialGameState = (levelId: string = '1'): GameState => {
  * @returns A JSON-serializable GameSnapshot
  */
 export const toSnapshot = (state: GameState): GameSnapshot => {
+  const {
+    trailNetwork: _runtimeTrailNetwork,
+    generatedFootsteps: _runtimeGeneratedFootsteps,
+    ...persistedState
+  } = state
   return {
-    ...state,
+    ...persistedState,
     lastSaved: state.lastSaved.toISOString(), // Convert Date to ISO string
     // Note: Image refs in level/objects/items are already ImageSourcePropType (serializable)
   }

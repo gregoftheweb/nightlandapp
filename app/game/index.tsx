@@ -38,6 +38,7 @@ import {
   findNearestMonsterInEquippedRangedWeaponRange,
   isMonsterInEquippedRangedWeaponRange,
 } from '../../modules/weaponStats'
+import { getRuntimeNonCollisionObjects } from '../../modules/runtimeNonCollisionObjects'
 
 type Direction = 'up' | 'down' | 'left' | 'right' | 'stay' | null
 
@@ -122,6 +123,17 @@ export default function Game() {
 
   const getGameState = useCallback(() => stateRef.current, [])
 
+  const authoredNonCollisionObjects = state.nonCollisionObjects
+  const generatedFootstepDescriptors = state.generatedFootsteps
+  const runtimeNonCollisionObjects = useMemo(
+    () =>
+      getRuntimeNonCollisionObjects({
+        nonCollisionObjects: authoredNonCollisionObjects,
+        generatedFootsteps: generatedFootstepDescriptors,
+      }),
+    [authoredNonCollisionObjects, generatedFootstepDescriptors]
+  )
+
   // Keep the expensive board behind a narrow identity boundary. State used only
   // by menus, saving, or other screens no longer invalidates the board tree.
   const boardState = useMemo<GameBoardState>(
@@ -136,7 +148,7 @@ export default function Game() {
       inCombat: state.inCombat,
       items: state.items,
       level: state.level,
-      nonCollisionObjects: state.nonCollisionObjects,
+      nonCollisionObjects: runtimeNonCollisionObjects,
       player: state.player,
       rangedAttackMode: state.rangedAttackMode,
       suppressDeathDialog: state.suppressDeathDialog,
@@ -153,7 +165,7 @@ export default function Game() {
       state.inCombat,
       state.items,
       state.level,
-      state.nonCollisionObjects,
+      runtimeNonCollisionObjects,
       state.player,
       state.rangedAttackMode,
       state.suppressDeathDialog,
@@ -606,7 +618,10 @@ export default function Game() {
       const { tapCol, tapRow } = calculateTapPosition(pageX, pageY)
 
       // Check if there's an object at this position
-      const objectAtPoint = getObjectAtPoint(tapRow, tapCol, state)
+      const objectAtPoint = getObjectAtPoint(tapRow, tapCol, {
+        ...state,
+        nonCollisionObjects: runtimeNonCollisionObjects,
+      })
 
       if (objectAtPoint) {
         // Long press on object - set flag and show InfoBox
@@ -662,6 +677,7 @@ export default function Game() {
     },
     [
       state,
+      runtimeNonCollisionObjects,
       isOverlayVisible,
       calculateTapPosition,
       isTapInViewport,
@@ -1165,7 +1181,7 @@ export default function Game() {
           levelObjects={state.level.objects}
           lastRedoubtPosition={state.level.playerSpawn}
           boardSize={state.level.boardSize}
-          nonCollisionObjects={state.nonCollisionObjects ?? []}
+          nonCollisionObjects={runtimeNonCollisionObjects}
           playerPosition={state.player.position}
           onDebugJump={handleDebugJump}
         />

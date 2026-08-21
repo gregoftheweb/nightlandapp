@@ -74,6 +74,8 @@ describe('Jaunt Power', () => {
       playTime: 0,
       lastAction: '',
       encounterPlacements: [],
+      trailNetwork: null,
+      generatedFootsteps: [],
       gameboardCatalogIdentity: {
         gameboardVersion: 1,
         gameboardHash: 'test',

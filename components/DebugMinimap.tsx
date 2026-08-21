@@ -42,6 +42,7 @@ const LEGEND_ITEMS = [
   { label: 'Player', color: '#00ff66' },
   { label: 'Encounters', color: '#ffcc00' },
   { label: 'Footsteps', color: '#91a0ad' },
+  { label: 'Generated trail', color: '#e53935' },
   { label: 'Great Powers', color: '#d65cff' },
   { label: 'Buildings', color: '#ff7a1a' },
   { label: 'River', color: '#00d9ff' },
@@ -271,13 +272,17 @@ export default function DebugMinimap({
 
           {footsteps.map((footstep) => {
             const point = positionToMinimapPoint(footstep.position, boardSize, actualMapSize)
+            const generated = footstep.shortName === 'generated-footsteps'
             return (
               <Pressable
                 key={footstep.id}
-                accessibilityLabel={`Footstep at row ${footstep.position.row}, column ${footstep.position.col}`}
+                accessibilityLabel={`${generated ? 'Generated footstep' : 'Footstep'} at row ${footstep.position.row}, column ${footstep.position.col}`}
                 onPress={() => inspectNear(markerByKey(`footstep-${footstep.id}`))}
                 hitSlop={8}
-                style={[styles.footstepMarker, markerPosition(point, 3)]}
+                style={[
+                  generated ? styles.generatedFootstepMarker : styles.footstepMarker,
+                  markerPosition(point, 3),
+                ]}
               />
             )
           })}
@@ -422,6 +427,13 @@ const styles = StyleSheet.create({
     height: 3,
     borderRadius: 1.5,
     backgroundColor: 'rgba(145, 160, 173, 0.7)',
+  },
+  generatedFootstepMarker: {
+    position: 'absolute',
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#e53935',
   },
   riverSegment: {
     position: 'absolute',

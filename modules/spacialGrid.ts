@@ -7,6 +7,7 @@ import {
   NonCollisionObject,
   GameState,
 } from '../config/types'
+import { getRuntimeNonCollisionObjects } from './runtimeNonCollisionObjects'
 
 export const DEFAULT_SPATIAL_CELL_SIZE = 10
 
@@ -176,7 +177,7 @@ export function buildSpatialGrid(
   })
 
   // Add non-collision objects (only those with collision masks)
-  gameState.nonCollisionObjects?.forEach((obj: NonCollisionObject) => {
+  getRuntimeNonCollisionObjects(gameState).forEach((obj: NonCollisionObject) => {
     if (obj.active && obj.position && obj.collisionMask && obj.collisionMask.length > 0) {
       // Insert each collision mask tile separately for precise collision detection
       obj.collisionMask.forEach((mask, index) => {

@@ -3,6 +3,7 @@ import { Item, LevelObjectInstance, NonCollisionObject } from './itemsAndObjects
 import { Player, Monster } from './actors'
 import { CombatParticipant, CombatLogEntry, Projectile, TeleportFlash } from './combat'
 import type { EncounterPlacement, GameboardCatalogIdentity } from './gameboard'
+import type { FootstepDescriptor, TrailNetwork } from '../../modules/trailGeometry'
 
 /**
  * GameState represents the complete state of the game.
@@ -71,6 +72,8 @@ export interface GameState {
   subGamesCompleted?: Record<string, boolean> // Keys are registered instanceIds (plus namespaced effect/reward flags)
   waypointSavesCreated?: Record<string, boolean> // Lifecycle waypoint markers for instances
   encounterPlacements: EncounterPlacement[] // Generated board layout for this playthrough
+  trailNetwork: TrailNetwork | null // Live runtime network; persisted in Stage 5
+  generatedFootsteps: FootstepDescriptor[] // Live descriptors; persisted in Stage 5
   gameboardCatalogIdentity: GameboardCatalogIdentity // Rejects incompatible pre-release saves
 }
 
@@ -83,6 +86,6 @@ export interface WeaponUpgrade {
  * GameSnapshot represents a JSON-serializable subset of GameState.
  * Used for save/load operations. Excludes non-serializable types like Date, Image, functions.
  */
-export type GameSnapshot = Omit<GameState, 'lastSaved'> & {
+export type GameSnapshot = Omit<GameState, 'lastSaved' | 'trailNetwork' | 'generatedFootsteps'> & {
   lastSaved: string // ISO date string instead of Date object
 }

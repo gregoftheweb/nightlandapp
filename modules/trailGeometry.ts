@@ -10,6 +10,12 @@ export interface TrailNetworkGeometry {
   branches: { branchId: string; originTrunkPct: number; waypoints: Position[] }[]
 }
 
+export interface FootstepDescriptor {
+  position: Position
+  rotationDegrees: number
+  onBranchId?: string
+}
+
 export interface TrailBranch {
   branchId: string
   originTrunkPct: number
@@ -40,12 +46,16 @@ export interface TraversalObstacles {
 export const HOUSE_OF_SILENCE_PLACEHOLDER_FOOTPRINT = { width: 8, height: 8 } as const
 export const TRAIL_LENGTH_RATIO = 3
 export const MAX_LOCAL_REROUTE_ATTEMPTS = 20
-export const MAX_FULL_REGENERATION_ATTEMPTS = 20
+export const MAX_FULL_REGENERATION_ATTEMPTS = 200
 export const MIN_BRANCH_SPACING_PCT = 0.08
+export const FOOTSTEP_INTERVAL_TILES = 24
 
 const EPSILON = 1e-7
-const TRUNK_STEP = 18
+const TRUNK_STEP = 12
+const MAX_TRUNK_TURN_RADIANS = (18 * Math.PI) / 180
+const TRUNK_EDGE_MARGIN = 120
 const BRANCH_STEP = 12
+export const MAX_BRANCH_LENGTH_TILES = 6 * FOOTSTEP_INTERVAL_TILES
 const ENDPOINT_NUDGE_STEP = 8
 
 interface Segment {
@@ -142,10 +152,12 @@ export function generateTrailNetwork(
     )
   }
 
+  let completedTrunkAttempts = 0
   for (let attempt = 0; attempt < MAX_FULL_REGENERATION_ATTEMPTS; attempt += 1) {
     const end = endpoints[attempt % endpoints.length]
     const trunk = generateTrunk(start, end, obstacles, random)
     if (!trunk) continue
+    completedTrunkAttempts += 1
     const branches = generateBranches(trunk, branchCount, obstacles, random)
     if (!branches) continue
     return { success: true, value: createTrailNetwork({ trunkWaypoints: trunk, branches }) }
@@ -153,7 +165,7 @@ export function generateTrailNetwork(
 
   const fallbackEnd = endpoints[0]
   console.warn(
-    '[trail-geometry] Generation retries exhausted; using obstacle-exempt straight-line fallback with zero branches.'
+    `[trail-geometry] Generation retries exhausted (${completedTrunkAttempts} completed trunks); using obstacle-exempt straight-line fallback with zero branches.`
   )
   return {
     success: true,
@@ -201,6 +213,53 @@ export function createTrailNetwork(geometry: TrailNetworkGeometry): TrailNetwork
     },
     geometry: copiedGeometry,
   }
+}
+
+export function generateFootstepDescriptors(
+  trailNetwork: TrailNetwork,
+  interval: number = FOOTSTEP_INTERVAL_TILES
+): FootstepDescriptor[] {
+  if (!Number.isFinite(interval) || interval <= 0) {
+    throw new Error('Footstep interval must be a positive finite distance')
+  }
+  return [
+    ...footstepsAlongPath(trailNetwork.geometry.trunkWaypoints, interval),
+    ...trailNetwork.geometry.branches.flatMap((branch) =>
+      footstepsAlongPath(branch.waypoints, interval, branch.branchId)
+    ),
+  ]
+}
+
+function footstepsAlongPath(
+  waypoints: readonly Position[],
+  interval: number,
+  onBranchId?: string
+): FootstepDescriptor[] {
+  const metrics = pathMetrics(waypoints)
+  const descriptors: FootstepDescriptor[] = []
+  let segmentIndex = 1
+  for (let walked = 0; walked <= metrics.length + EPSILON; walked += interval) {
+    while (
+      segmentIndex < metrics.cumulative.length - 1 &&
+      metrics.cumulative[segmentIndex] <= walked
+    ) {
+      segmentIndex += 1
+    }
+    const segmentStart = waypoints[segmentIndex - 1]
+    const segmentEnd = waypoints[segmentIndex]
+    const segmentStartDistance = metrics.cumulative[segmentIndex - 1]
+    const segmentLength = metrics.cumulative[segmentIndex] - segmentStartDistance
+    const progress = segmentLength <= EPSILON ? 0 : (walked - segmentStartDistance) / segmentLength
+    const deltaRow = segmentEnd.row - segmentStart.row
+    const deltaCol = segmentEnd.col - segmentStart.col
+    const rotationDegrees = (Math.atan2(deltaCol, -deltaRow) * 180) / Math.PI
+    descriptors.push({
+      position: interpolate(segmentStart, segmentEnd, progress),
+      rotationDegrees: (rotationDegrees + 360) % 360,
+      ...(onBranchId ? { onBranchId } : {}),
+    })
+  }
+  return descriptors
 }
 
 export class PolylinePathPositionResolver implements PathPositionResolver {
@@ -264,37 +323,114 @@ function generateTrunk(
 ): Position[] | undefined {
   const directDistance = distance(start, end)
   const targetLength = directDistance * TRAIL_LENGTH_RATIO
-  const usableWidth = Math.max(1, obstacles.width - TRUNK_STEP * 2)
-  const estimatedSweep = Math.hypot(usableWidth * 0.82, Math.abs(start.row - end.row) / 3)
-  const sweepCount = Math.max(4, Math.ceil(targetLength / estimatedSweep) + 1)
   const waypoints: Position[] = [copyPosition(start)]
-  let seekRight = random.next() < 0.5
+  let lateralSign = initialLateralSign(start, obstacles, random)
+  let heading = wanderingHeading(start, start, lateralSign)
+  let reversalTurnDirection = 0
+  const maxSteps = Math.ceil(targetLength / TRUNK_STEP) * 5
 
-  // Monotonic upward progress plus alternating lateral bias produces a random S-walk.
-  // Monotonic rows also make non-self-intersection an invariant for clear candidates.
-  for (let sweep = 1; sweep < sweepCount; sweep += 1) {
+  for (let stepIndex = 0; stepIndex < maxSteps; stepIndex += 1) {
+    const current = waypoints[waypoints.length - 1]
+    const walked = pathMetrics(waypoints).length
+    const toEnd = distance(current, end)
+    const approachingEnd = walked + toEnd >= targetLength
+    const endHeading = headingToward(current, end)
+    if (approachingEnd) reversalTurnDirection = 0
+
+    if (
+      approachingEnd &&
+      toEnd <= TRUNK_STEP &&
+      Math.abs(angleDifference(heading, endHeading)) <= MAX_TRUNK_TURN_RADIANS
+    ) {
+      if (!canAddSegment(waypoints, end, obstacles)) return undefined
+      waypoints.push(copyPosition(end))
+      return pathMetrics(waypoints).length + EPSILON >= targetLength ? waypoints : undefined
+    }
+
+    if (!approachingEnd) {
+      const reachedLateralEdge =
+        (lateralSign < 0 && current.col <= TRUNK_EDGE_MARGIN) ||
+        (lateralSign > 0 && current.col >= obstacles.width - TRUNK_EDGE_MARGIN)
+      if (reachedLateralEdge) {
+        lateralSign *= -1
+        reversalTurnDirection = lateralSign
+      }
+    }
+
+    const desiredHeading = approachingEnd
+      ? endHeading
+      : wanderingHeading(current, start, lateralSign)
     let accepted = false
     for (let localAttempt = 0; localAttempt < MAX_LOCAL_REROUTE_ATTEMPTS; localAttempt += 1) {
-      const rowProgress = sweep / sweepCount
-      const rowJitter = (random.next() - 0.5) * (Math.abs(start.row - end.row) / sweepCount) * 0.3
-      const inset = TRUNK_STEP + random.next() * usableWidth * 0.12
+      const desiredTurn = clamp(
+        angleDifference(heading, desiredHeading),
+        -MAX_TRUNK_TURN_RADIANS,
+        MAX_TRUNK_TURN_RADIANS
+      )
+      const jitter =
+        start.row - current.row < TRUNK_EDGE_MARGIN
+          ? 0
+          : ((random.next() - 0.5) * (72 * Math.PI)) / 180
+      const completingReversal =
+        reversalTurnDirection !== 0 &&
+        Math.abs(angleDifference(heading, desiredHeading)) <= MAX_TRUNK_TURN_RADIANS
+      const turn =
+        reversalTurnDirection === 0
+          ? clamp(desiredTurn + jitter, -MAX_TRUNK_TURN_RADIANS, MAX_TRUNK_TURN_RADIANS)
+          : completingReversal
+            ? angleDifference(heading, desiredHeading)
+            : reversalTurnDirection * MAX_TRUNK_TURN_RADIANS
+      const candidateHeading = normalizeAngle(heading + turn)
+      const rerouteScale = 1 - (localAttempt / (MAX_LOCAL_REROUTE_ATTEMPTS - 1)) * 0.75
+      const stepLength = (approachingEnd ? Math.min(TRUNK_STEP, toEnd) : TRUNK_STEP) * rerouteScale
       const candidate = {
-        row: start.row + (end.row - start.row) * rowProgress + rowJitter,
-        col: seekRight ? obstacles.width - inset : inset,
+        row: current.row - Math.cos(candidateHeading) * stepLength,
+        col: current.col + Math.sin(candidateHeading) * stepLength,
       }
       if (!pointInBounds(candidate, obstacles) || !canAddSegment(waypoints, candidate, obstacles))
         continue
       waypoints.push(candidate)
+      heading = candidateHeading
+      if (completingReversal) reversalTurnDirection = 0
       accepted = true
-      seekRight = !seekRight
       break
     }
     if (!accepted) return undefined
   }
+  return undefined
+}
 
-  if (!canAddSegment(waypoints, end, obstacles)) return undefined
-  waypoints.push(copyPosition(end))
-  return pathMetrics(waypoints).length + EPSILON >= targetLength ? waypoints : undefined
+function wanderingHeading(current: Position, start: Position, lateralSign: number): number {
+  const upwardRate = start.row - current.row < TRUNK_EDGE_MARGIN ? 0.45 : 0.02
+  return lateralSign * Math.acos(upwardRate)
+}
+
+function initialLateralSign(
+  start: Position,
+  obstacles: TraversalObstacles,
+  random: RandomSource
+): number {
+  const preferred = random.next() < 0.5 ? -1 : 1
+  for (const sign of [preferred, -preferred]) {
+    const heading = wanderingHeading(start, start, sign)
+    const path = [start]
+    let clear = true
+    const probeSteps = Math.ceil(TRUNK_EDGE_MARGIN / TRUNK_STEP)
+    for (let step = 0; step < probeSteps; step += 1) {
+      const current = path[path.length - 1]
+      const candidate = {
+        row: current.row - Math.cos(heading) * TRUNK_STEP,
+        col: current.col + Math.sin(heading) * TRUNK_STEP,
+      }
+      if (!pointInBounds(candidate, obstacles) || !canAddSegment(path, candidate, obstacles)) {
+        clear = false
+        break
+      }
+      path.push(candidate)
+    }
+    if (clear) return sign
+  }
+  return preferred
 }
 
 function generateBranches(
@@ -324,7 +460,7 @@ function generateBranches(
         continue
       }
       const origin = positionAtDistance(trunk, trunkMetrics, originDistance)
-      const desiredLength = trunkMetrics.length * (0.1 + random.next() * 0.1)
+      const desiredLength = MAX_BRANCH_LENGTH_TILES * (0.65 + random.next() * 0.35)
       const waypoints = generateBranch(origin, desiredLength, trunk, branches, obstacles, random)
       if (!waypoints) continue
       accepted = { branchId: `branch-${branchIndex + 1}`, originTrunkPct: originPct, waypoints }
@@ -388,7 +524,13 @@ function canAddSegment(
   const segment = { start: path[path.length - 1], end: candidate }
   if (
     obstacles.obstacles.some((obstacle) => {
-      if (path.length === 1 && pointInsideObstacle(segment.start, obstacle)) return false
+      if (
+        pointInsideObstacle(path[0], obstacle) &&
+        pointInsideObstacle(segment.start, obstacle) &&
+        distance(path[0], segment.start) <= TRUNK_EDGE_MARGIN
+      ) {
+        return false
+      }
       return segmentIntersectsRectangle(segment, obstacle)
     })
   )
@@ -536,6 +678,21 @@ function distance(a: Position, b: Position): number {
 
 function unitVector(from: Position, to: Position): Position {
   return normalize({ row: to.row - from.row, col: to.col - from.col })
+}
+
+function headingToward(from: Position, to: Position): number {
+  return Math.atan2(to.col - from.col, from.row - to.row)
+}
+
+function normalizeAngle(angle: number): number {
+  let normalized = angle
+  while (normalized <= -Math.PI) normalized += Math.PI * 2
+  while (normalized > Math.PI) normalized -= Math.PI * 2
+  return normalized
+}
+
+function angleDifference(from: number, to: number): number {
+  return normalizeAngle(to - from)
 }
 
 function normalize(vector: Position): Position {
