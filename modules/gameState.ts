@@ -37,6 +37,24 @@ export class IncompatibleGameboardSaveError extends Error {
   }
 }
 
+function hasCurrentEncounterPlacementSchema(snapshot: GameSnapshot): boolean {
+  if (!Array.isArray(snapshot.encounterPlacements)) return false
+  return snapshot.encounterPlacements.every((placement) => {
+    if (!placement || typeof placement !== 'object') return false
+    const candidate = placement as unknown as Record<string, unknown>
+    if ('progressPct' in candidate) return false
+    const location = candidate.location
+    if (!location || typeof location !== 'object') return false
+    const typedLocation = location as Record<string, unknown>
+    if (typedLocation.type === 'trunk') return typeof typedLocation.progressPct === 'number'
+    return (
+      typedLocation.type === 'branch' &&
+      typeof typedLocation.branchId === 'string' &&
+      typeof typedLocation.branchProgressPct === 'number'
+    )
+  })
+}
+
 /**
  * Creates a fresh initial game state for a given level.
  * This is the single source of truth for the default/initial state.
@@ -214,6 +232,9 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
   }
 
   if (!gameboardIdentityMatches(snapshot.gameboardCatalogIdentity)) {
+    throw new IncompatibleGameboardSaveError()
+  }
+  if (!hasCurrentEncounterPlacementSchema(snapshot)) {
     throw new IncompatibleGameboardSaveError()
   }
 
