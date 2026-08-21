@@ -27,6 +27,11 @@ import {
   REAL_PARSED_CONTENT_CATALOGS,
 } from './gameboardLayout'
 import { buildGameboardCatalogIdentity, gameboardIdentityMatches } from './gameboardIdentity'
+import {
+  createTrailNetwork,
+  type FootstepDescriptor,
+  type TrailNetworkGeometry,
+} from './trailGeometry'
 
 export class IncompatibleGameboardSaveError extends Error {
   constructor() {
@@ -53,6 +58,61 @@ function hasCurrentEncounterPlacementSchema(snapshot: GameSnapshot): boolean {
   })
 }
 
+function isPosition(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const position = value as Record<string, unknown>
+  return Number.isFinite(position.row) && Number.isFinite(position.col)
+}
+
+function hasCurrentTrailSchema(snapshot: GameSnapshot): boolean {
+  const candidate = snapshot as unknown as Record<string, unknown>
+  if (!('trailNetworkGeometry' in candidate) || !('generatedFootsteps' in candidate)) return false
+  const geometry = candidate.trailNetworkGeometry
+  if (geometry === null) {
+    return snapshot.currentLevelId !== '1' && Array.isArray(candidate.generatedFootsteps)
+  }
+  if (!geometry || typeof geometry !== 'object') return false
+  const typedGeometry = geometry as Record<string, unknown>
+  if (
+    !Array.isArray(typedGeometry.trunkWaypoints) ||
+    typedGeometry.trunkWaypoints.length < 2 ||
+    !typedGeometry.trunkWaypoints.every(isPosition) ||
+    !Array.isArray(typedGeometry.branches)
+  )
+    return false
+  if (
+    !typedGeometry.branches.every((branch) => {
+      if (!branch || typeof branch !== 'object') return false
+      const typedBranch = branch as Record<string, unknown>
+      return (
+        typeof typedBranch.branchId === 'string' &&
+        Number.isFinite(typedBranch.originTrunkPct) &&
+        Array.isArray(typedBranch.waypoints) &&
+        typedBranch.waypoints.length >= 2 &&
+        typedBranch.waypoints.every(isPosition)
+      )
+    })
+  )
+    return false
+  return (
+    Array.isArray(candidate.generatedFootsteps) &&
+    candidate.generatedFootsteps.every((descriptor) => {
+      if (!descriptor || typeof descriptor !== 'object') return false
+      const typedDescriptor = descriptor as Record<string, unknown>
+      return (
+        isPosition(typedDescriptor.position) &&
+        Number.isFinite(typedDescriptor.rotationDegrees) &&
+        ['green', 'blue', 'red'].includes(String(typedDescriptor.variant)) &&
+        (typedDescriptor.onBranchId === undefined || typeof typedDescriptor.onBranchId === 'string')
+      )
+    })
+  )
+}
+
+interface InitialStateOptions {
+  skipGameboardLayout?: boolean
+}
+
 /**
  * Creates a fresh initial game state for a given level.
  * This is the single source of truth for the default/initial state.
@@ -60,7 +120,10 @@ function hasCurrentEncounterPlacementSchema(snapshot: GameSnapshot): boolean {
  * @param levelId - The level ID to initialize (defaults to '1')
  * @returns A complete, fresh GameState object
  */
-export const getInitialState = (levelId: string = '1'): GameState => {
+export const getInitialState = (
+  levelId: string = '1',
+  options: InitialStateOptions = {}
+): GameState => {
   // Type-safe level lookup with validation
   const levelConfig = levels[levelId as keyof typeof levels]
 
@@ -72,11 +135,11 @@ export const getInitialState = (levelId: string = '1'): GameState => {
       throw new Error('Critical error: Level 1 configuration is missing!')
     }
     // Use fallback config directly rather than recursive call
-    return buildInitialState('1', fallbackConfig)
+    return buildInitialState('1', fallbackConfig, options)
   }
 
   logIfDev(`🎮 Creating initial state for level: ${levelId}`)
-  return buildInitialState(levelId, levelConfig)
+  return buildInitialState(levelId, levelConfig, options)
 }
 
 /**
@@ -92,10 +155,11 @@ export const getInitialState = (levelId: string = '1'): GameState => {
  */
 function buildInitialState(
   levelId: string,
-  levelConfig: (typeof levels)[keyof typeof levels]
+  levelConfig: (typeof levels)[keyof typeof levels],
+  options: InitialStateOptions = {}
 ): GameState {
   const layoutResult =
-    levelId === '1'
+    levelId === '1' && !options.skipGameboardLayout
       ? generateLayout(
           GAMEBOARD_MANIFEST,
           REAL_PARSED_CONTENT_CATALOGS,
@@ -207,16 +271,32 @@ export const createInitialGameState = (levelId: string = '1'): GameState => {
  * @returns A JSON-serializable GameSnapshot
  */
 export const toSnapshot = (state: GameState): GameSnapshot => {
-  const {
-    trailNetwork: _runtimeTrailNetwork,
-    generatedFootsteps: _runtimeGeneratedFootsteps,
-    ...persistedState
-  } = state
+  const { trailNetwork, generatedFootsteps, ...persistedState } = state
   return {
     ...persistedState,
     lastSaved: state.lastSaved.toISOString(), // Convert Date to ISO string
+    trailNetworkGeometry: trailNetwork ? copyTrailNetworkGeometry(trailNetwork.geometry) : null,
+    generatedFootsteps: copyFootstepDescriptors(generatedFootsteps),
     // Note: Image refs in level/objects/items are already ImageSourcePropType (serializable)
   }
+}
+
+function copyTrailNetworkGeometry(geometry: TrailNetworkGeometry): TrailNetworkGeometry {
+  return {
+    trunkWaypoints: geometry.trunkWaypoints.map((position) => ({ ...position })),
+    branches: geometry.branches.map((branch) => ({
+      branchId: branch.branchId,
+      originTrunkPct: branch.originTrunkPct,
+      waypoints: branch.waypoints.map((position) => ({ ...position })),
+    })),
+  }
+}
+
+function copyFootstepDescriptors(descriptors: readonly FootstepDescriptor[]): FootstepDescriptor[] {
+  return descriptors.map((descriptor) => ({
+    ...descriptor,
+    position: { ...descriptor.position },
+  }))
 }
 
 /**
@@ -239,6 +319,9 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
   if (!hasCurrentEncounterPlacementSchema(snapshot)) {
     throw new IncompatibleGameboardSaveError()
   }
+  if (!hasCurrentTrailSchema(snapshot)) {
+    throw new IncompatibleGameboardSaveError()
+  }
 
   logIfDev('💾 Reconstructing GameState from snapshot')
   logIfDev(`💾 Snapshot has ${Object.keys(snapshot).length} keys`)
@@ -247,17 +330,22 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
   logIfDev(`💾 Snapshot moveCount: ${snapshot.moveCount}`)
   logIfDev(`💾 Snapshot subGamesCompleted:`, snapshot.subGamesCompleted)
 
-  // Get fresh initial state as base
-  const base = getInitialState(snapshot.currentLevelId || '1')
+  // Build defaults without generating random layout data that the snapshot already owns.
+  const base = getInitialState(snapshot.currentLevelId || '1', { skipGameboardLayout: true })
   // Discard the former duplicate; level.greatPowers is the only canonical source.
-  const { greatPowers: _legacyGreatPowers, ...canonicalSnapshot } = snapshot as GameSnapshot & {
-    greatPowers?: unknown
-  }
+  const {
+    greatPowers: _legacyGreatPowers,
+    trailNetworkGeometry,
+    generatedFootsteps,
+    ...canonicalSnapshot
+  } = snapshot as GameSnapshot & { greatPowers?: unknown }
 
   // Merge snapshot data with base, clearing transient UI state
   const result = {
     ...base,
     ...canonicalSnapshot,
+    trailNetwork: trailNetworkGeometry ? createTrailNetwork(trailNetworkGeometry) : null,
+    generatedFootsteps: copyFootstepDescriptors(generatedFootsteps),
     // Convert ISO string back to Date
     lastSaved: new Date(snapshot.lastSaved),
     // Clear transient UI flags that should not persist

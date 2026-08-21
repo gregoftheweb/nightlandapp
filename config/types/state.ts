@@ -3,7 +3,11 @@ import { Item, LevelObjectInstance, NonCollisionObject } from './itemsAndObjects
 import { Player, Monster } from './actors'
 import { CombatParticipant, CombatLogEntry, Projectile, TeleportFlash } from './combat'
 import type { EncounterPlacement, GameboardCatalogIdentity } from './gameboard'
-import type { FootstepDescriptor, TrailNetwork } from '../../modules/trailGeometry'
+import type {
+  FootstepDescriptor,
+  TrailNetwork,
+  TrailNetworkGeometry,
+} from '../../modules/trailGeometry'
 
 /**
  * GameState represents the complete state of the game.
@@ -88,4 +92,6 @@ export interface WeaponUpgrade {
  */
 export type GameSnapshot = Omit<GameState, 'lastSaved' | 'trailNetwork' | 'generatedFootsteps'> & {
   lastSaved: string // ISO date string instead of Date object
+  trailNetworkGeometry: TrailNetworkGeometry | null
+  generatedFootsteps: FootstepDescriptor[]
 }
