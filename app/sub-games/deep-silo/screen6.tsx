@@ -1,6 +1,6 @@
 // app/sub-games/deep-silo/screen6.tsx
 // Deep Silo - The deepest level, Persius Note 2 reveal
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { View, StyleSheet, TouchableOpacity, Text, Modal, ScrollView } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useGameContext } from '@context/GameContext'
@@ -17,7 +17,10 @@ import {
   useDeepSiloPuzzleState,
 } from './puzzleState'
 
-const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6.webp')
+const emptyTableBg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6-table-empty.webp')
+const chargingTableBg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6-table-charging.webp')
+const sparkBg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6-spark.webp')
+const SPARK_DISPLAY_MS = 1500
 
 const PERSIUS_NOTE_2_ID = 'persius-note-2'
 
@@ -27,6 +30,8 @@ export default function DeepSiloScreen6() {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteRead, setNoteRead] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [showSpark, setShowSpark] = useState(false)
+  const sparkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const puzzle = useDeepSiloPuzzleState()
 
   const alreadyHasNote = state.player.inventory.some((item) => item.id === PERSIUS_NOTE_2_ID)
@@ -37,6 +42,13 @@ export default function DeepSiloScreen6() {
       setNoteRead(true)
     }
   }, [alreadyHasNote])
+
+  useEffect(
+    () => () => {
+      if (sparkTimerRef.current) clearTimeout(sparkTimerRef.current)
+    },
+    []
+  )
 
   const handleReadNote = () => {
     // Add to inventory when first read
@@ -86,6 +98,12 @@ export default function DeepSiloScreen6() {
       setFeedback('Discos settles into the metal plate. It waits in the darkness.')
       return
     }
+    setShowSpark(true)
+    if (sparkTimerRef.current) clearTimeout(sparkTimerRef.current)
+    sparkTimerRef.current = setTimeout(() => {
+      sparkTimerRef.current = null
+      setShowSpark(false)
+    }, SPARK_DISPLAY_MS)
     const nextHP = applyGeneratorSurge(state.player.currentHP, dispatch, (route) =>
       router.replace(route as never)
     )
@@ -96,8 +114,14 @@ export default function DeepSiloScreen6() {
     }
   }
 
+  const background = showSpark
+    ? sparkBg
+    : puzzle.state.discosOnTable
+      ? chargingTableBg
+      : emptyTableBg
+
   return (
-    <BackgroundImage source={bg}>
+    <BackgroundImage source={background}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
           {feedback && <Text style={styles.feedback}>{feedback}</Text>}
