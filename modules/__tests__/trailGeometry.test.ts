@@ -3,8 +3,11 @@ import { BoardOccupancyRegistry, RandomSource } from '../gameboardLayout'
 import {
   buildTraversalObstacles,
   createTrailNetwork,
+  generateFootstepDescriptors,
+  FOOTSTEP_INTERVAL_TILES,
   generateTrailNetwork,
   HOUSE_OF_SILENCE_PLACEHOLDER_FOOTPRINT,
+  MAX_BRANCH_LENGTH_TILES,
   TRAIL_LENGTH_RATIO,
   type TrailNetworkGeometry,
   type TraversalObstacle,
@@ -226,12 +229,8 @@ describe('standalone trail geometry', () => {
 
     geometry.branches.forEach((branch, branchIndex) => {
       expect(pathSelfIntersects(branch.waypoints)).toBe(false)
-      expect(pathLength(branch.waypoints)).toBeGreaterThanOrEqual(
-        pathLength(geometry.trunkWaypoints) * 0.1
-      )
-      expect(pathLength(branch.waypoints)).toBeLessThanOrEqual(
-        pathLength(geometry.trunkWaypoints) * 0.2
-      )
+      expect(pathLength(branch.waypoints)).toBeGreaterThan(0)
+      expect(pathLength(branch.waypoints)).toBeLessThanOrEqual(MAX_BRANCH_LENGTH_TILES + 1e-10)
       for (let index = 0; index < branch.waypoints.length - 1; index += 1) {
         expect(
           segmentCrossesObstacle(branch.waypoints[index], branch.waypoints[index + 1], obstacle)
@@ -286,6 +285,53 @@ describe('standalone trail geometry', () => {
         { type: 'branch', branchId: 'b', branchProgressPct: 1 }
       )
     ).toBeCloseTo(Math.sqrt(208), 12)
+  })
+
+  test('drops cumulative-distance footsteps with north-clockwise rotations on trunk and branch', () => {
+    expect(FOOTSTEP_INTERVAL_TILES).toBe(24)
+    const network = createTrailNetwork({
+      trunkWaypoints: [
+        { row: 24, col: 0 },
+        { row: 0, col: 0 },
+        { row: 0, col: 24 },
+        { row: 24, col: 24 },
+        { row: 24, col: 0 },
+      ],
+      branches: [
+        {
+          branchId: 'branch-cardinal',
+          originTrunkPct: 0.5,
+          waypoints: [
+            { row: 0, col: 12 },
+            { row: 24, col: 12 },
+          ],
+        },
+      ],
+    })
+    const descriptors = generateFootstepDescriptors(network)
+    const trunk = descriptors.filter((descriptor) => !descriptor.onBranchId)
+    const branch = descriptors.filter((descriptor) => descriptor.onBranchId === 'branch-cardinal')
+
+    expect(trunk.map(({ position }) => position)).toEqual([
+      { row: 24, col: 0 },
+      { row: 0, col: 0 },
+      { row: 0, col: 24 },
+      { row: 24, col: 24 },
+      { row: 24, col: 0 },
+    ])
+    expect(trunk.map(({ rotationDegrees }) => rotationDegrees)).toEqual([0, 90, 180, 270, 270])
+    expect(branch).toEqual([
+      {
+        position: { row: 0, col: 12 },
+        rotationDegrees: 180,
+        onBranchId: 'branch-cardinal',
+      },
+      {
+        position: { row: 24, col: 12 },
+        rotationDegrees: 180,
+        onBranchId: 'branch-cardinal',
+      },
+    ])
   })
 
   test('rejects a blocked preferred corner and selects another cleared top-edge endpoint', () => {

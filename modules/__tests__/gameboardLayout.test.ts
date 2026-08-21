@@ -14,6 +14,11 @@ import {
   REAL_PARSED_CONTENT_CATALOGS,
 } from '../gameboardLayout'
 import { buildGameboardCatalogIdentity, sha256 } from '../gameboardIdentity'
+import { getRuntimeNonCollisionObjects } from '../runtimeNonCollisionObjects'
+import { getNonCollisionTemplate } from '@config/objects'
+import { buildSpatialGrid } from '../spacialGrid'
+import { getObjectAtPoint } from '../utils'
+import { MAX_BRANCH_LENGTH_TILES } from '../trailGeometry'
 
 const encounterIds = [
   'jaunt-cave',
@@ -30,6 +35,29 @@ function seededRandom(seed: number): () => number {
     value = (value * 1664525 + 1013904223) >>> 0
     return value / 0x100000000
   }
+}
+
+function pathLength(points: readonly { row: number; col: number }[]): number {
+  return points
+    .slice(1)
+    .reduce(
+      (sum, point, index) =>
+        sum + Math.hypot(point.row - points[index].row, point.col - points[index].col),
+      0
+    )
+}
+
+function turnAngles(points: readonly { row: number; col: number }[]): number[] {
+  const headings = points
+    .slice(1)
+    .map((point, index) => Math.atan2(point.col - points[index].col, points[index].row - point.row))
+  return headings.slice(1).map((heading, index) => {
+    const difference = Math.atan2(
+      Math.sin(heading - headings[index]),
+      Math.cos(heading - headings[index])
+    )
+    return (Math.abs(difference) * 180) / Math.PI
+  })
 }
 
 describe('gameboard layout integration', () => {
@@ -178,6 +206,10 @@ describe('gameboard layout integration', () => {
       expect(new Set(result.value.placements.map(({ occupancyId }) => occupancyId)).size).toBe(6)
       expect(result.value.trailNetwork.geometry.trunkWaypoints.length).toBeGreaterThan(2)
       expect(result.value.trailNetwork.branches).toHaveLength(2)
+      result.value.trailNetwork.branches.forEach((branch) => {
+        expect(branch.length).toBeGreaterThan(0)
+        expect(branch.length).toBeLessThanOrEqual(MAX_BRANCH_LENGTH_TILES + 1e-10)
+      })
       expect(
         result.value.placements.some(
           (placement) =>
@@ -214,12 +246,23 @@ describe('gameboard layout integration', () => {
     )
     expect(result.success).toBe(true)
     if (!result.success) return
-    expect(result.value.trailNetwork.geometry.trunkWaypoints.length).toBeGreaterThan(2)
+    expect(result.value.trailNetwork.geometry.trunkWaypoints.length).toBeGreaterThan(50)
     expect(
       result.value.trailNetwork.geometry.trunkWaypoints.some(
         (point) => Math.abs(point.col - levels['1'].playerSpawn.col) > 20
       )
     ).toBe(true)
+    const waypoints = result.value.trailNetwork.geometry.trunkWaypoints
+    expect(
+      Math.max(
+        ...waypoints
+          .slice(1)
+          .map((point, index) =>
+            Math.hypot(point.row - waypoints[index].row, point.col - waypoints[index].col)
+          )
+      )
+    ).toBeLessThanOrEqual(18 + 1e-10)
+    expect(Math.max(...turnAngles(waypoints))).toBeLessThanOrEqual(18.01)
     result.value.placements.forEach((placement) => {
       expect(placement.position).toEqual(result.value.trailNetwork.resolve(placement.location))
     })
@@ -294,6 +337,54 @@ describe('gameboard layout integration', () => {
         state.objects.filter((object) => object.subGame?.instanceId === instanceId)
       ).toHaveLength(1)
     }
+  })
+
+  test('keeps generated footsteps out of stored arrays and materializes them only for runtime reads', () => {
+    const state = getInitialState('1')
+    expect(state.trailNetwork).not.toBeNull()
+    expect(state.generatedFootsteps.length).toBeGreaterThan(0)
+    expect(state.generatedFootsteps.some((descriptor) => descriptor.onBranchId !== undefined)).toBe(
+      true
+    )
+    expect(
+      state.nonCollisionObjects?.some((object) => object.shortName === 'generated-footsteps')
+    ).toBe(false)
+    expect(
+      state.level.nonCollisionObjects?.some((object) => object.shortName === 'generated-footsteps')
+    ).toBe(false)
+
+    const runtimeObjects = getRuntimeNonCollisionObjects(state)
+    const generatedObjects = runtimeObjects.filter(
+      (object) => object.shortName === 'generated-footsteps'
+    )
+    expect(generatedObjects).toHaveLength(state.generatedFootsteps.length)
+    expect(generatedObjects.every((object) => object.canTap === true)).toBe(true)
+    expect(generatedObjects[0].position).toEqual(state.generatedFootsteps[0].position)
+    expect(generatedObjects[0].rotation).toBe(state.generatedFootsteps[0].rotationDegrees)
+    expect(generatedObjects[0].image).toBe(getNonCollisionTemplate('generated-footsteps')?.image)
+    const tappableGeneratedFootstep = generatedObjects.find((object) => {
+      const hit = getObjectAtPoint(object.position.row, object.position.col, {
+        ...state,
+        nonCollisionObjects: runtimeObjects,
+      })
+      return hit?.type === 'nonCollisionObject' && hit.data.id === object.id
+    })
+    expect(tappableGeneratedFootstep).toBeDefined()
+    expect(tappableGeneratedFootstep).toEqual(
+      expect.objectContaining({
+        name: "Persius' Trail",
+        description: 'A fresh trail of red footprints winds onward through the Night Land.',
+      })
+    )
+    const spatialGrid = buildSpatialGrid(state)
+    expect(
+      spatialGrid
+        .getNearby(state.generatedFootsteps[0].position, 1)
+        .some((entry) => entry.data.shortName === 'generated-footsteps')
+    ).toBe(false)
+    const snapshot = toSnapshot(state) as unknown as Record<string, unknown>
+    expect(snapshot).not.toHaveProperty('trailNetwork')
+    expect(snapshot).not.toHaveProperty('generatedFootsteps')
   })
 
   test('save identity is SHA-256 and rejects mismatches instead of migrating', () => {

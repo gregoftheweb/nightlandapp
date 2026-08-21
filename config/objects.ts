@@ -10,6 +10,7 @@ import shortSwordIMG from '@assets/images/items/equipment/shortSword.webp'
 import potionIMG from '@assets/images/items/consumables/potion.webp'
 import sanctuaryPoolImg from '@assets/images/sprites/buildings/poolofpeace.webp'
 import footprintsIMG from '@assets/images/items/quest/footprints-blue.webp'
+import generatedFootprintsIMG from '@assets/images/items/quest/footprints-red.webp'
 
 // WEAPONS TEMPLATES - Pure templates without position data
 export const weapons: Record<string, GameObject> = {
@@ -220,6 +221,20 @@ export const nonCollisionTemplates: Record<
     width: 2,
     height: 2,
     image: footprintsIMG,
+    zIndex: 1,
+    type: 'footstep',
+    canTap: true,
+    active: true,
+  },
+  'generated-footsteps': {
+    kind: 'nonCollision',
+    shortName: 'generated-footsteps',
+    category: 'decoration',
+    name: "Persius' Trail",
+    description: 'A fresh trail of red footprints winds onward through the Night Land.',
+    width: 2,
+    height: 2,
+    image: generatedFootprintsIMG,
     zIndex: 1,
     type: 'footstep',
     canTap: true,

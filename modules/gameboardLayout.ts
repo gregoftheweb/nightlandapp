@@ -15,7 +15,9 @@ import type {
 } from '@config/types'
 import {
   buildTraversalObstacles,
+  generateFootstepDescriptors,
   generateTrailNetwork,
+  type FootstepDescriptor,
   type TrailLocation,
   type TrailNetwork,
 } from './trailGeometry'
@@ -250,7 +252,11 @@ export function generateLayout(
   catalogs: ParsedContentCatalogsByShape,
   level: Level,
   random: RandomSource
-): ValidationResult<{ placements: EncounterPlacement[]; trailNetwork: TrailNetwork }> {
+): ValidationResult<{
+  placements: EncounterPlacement[]
+  trailNetwork: TrailNetwork
+  generatedFootsteps: FootstepDescriptor[]
+}> {
   const placements: EncounterPlacement[] = []
   const errors: ValidationError[] = []
   const eligibleScatteredCount = countEligibleScatteredInstances(manifest, catalogs)
@@ -378,7 +384,14 @@ export function generateLayout(
   }
 
   if (errors.length > 0) return { success: false, errors }
-  return { success: true, value: { placements, trailNetwork } }
+  return {
+    success: true,
+    value: {
+      placements,
+      trailNetwork,
+      generatedFootsteps: generateFootstepDescriptors(trailNetwork),
+    },
+  }
 }
 
 export function placementsToLevelObjects(

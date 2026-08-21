@@ -113,6 +113,13 @@ describe('DebugMinimap coordinate mapping', () => {
         ],
         nonCollisionObjects: [
           {
+            id: 'generated-footstep',
+            shortName: 'generated-footsteps',
+            type: 'footstep',
+            position: { row: 75, col: 80 },
+            rotation: 90,
+          } as any,
+          {
             id: 'river',
             type: 'river',
             position: { row: 370, col: 195 },
@@ -132,6 +139,8 @@ describe('DebugMinimap coordinate mapping', () => {
     expect(view.queryByLabelText('Building Tesseract')).toBeNull()
     expect(view.getAllByLabelText(/River segment/)).toHaveLength(2)
     expect(view.getByLabelText('Minimap legend')).toBeTruthy()
+    expect(view.getByText('Generated trail')).toBeTruthy()
+    expect(view.getByLabelText('Generated footstep at row 75, column 80')).toBeTruthy()
   })
 
   it('inspects every marker type and reports overlapping Watcher and encounter together', () => {
