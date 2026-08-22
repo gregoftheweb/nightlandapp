@@ -6,8 +6,8 @@ export { DaemonState }
 
 export const DAEMON_ATTACK_CHANCE = 0.6
 export const DAEMON_HIT_CHANCE = 0.8
-export const DAEMON_DAMAGE_MIN = 10
-export const DAEMON_DAMAGE_RANGE = 16
+export const DAEMON_DAMAGE_MIN = 9
+export const DAEMON_DAMAGE_RANGE = 15
 
 const rollToHit = (): boolean => Math.random() < DAEMON_HIT_CHANCE
 const rollDamage = (): number => Math.floor(Math.random() * DAEMON_DAMAGE_RANGE) + DAEMON_DAMAGE_MIN

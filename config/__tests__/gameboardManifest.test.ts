@@ -19,4 +19,15 @@ describe('real gameboard manifest', () => {
       })
     )
   })
+
+  it('registers both Jaunt Cave instances in their own timed-encounter group', () => {
+    const timedSlot = GAMEBOARD_MANIFEST.slots.find((slot) => slot.slotId === 'timed-encounters')
+    expect(timedSlot).toEqual(
+      expect.objectContaining({
+        shapeId: 'timed-encounter',
+        kind: 'scattered-group',
+        instances: ['jaunt-cave', 'jaunt-cave-02'],
+      })
+    )
+  })
 })
