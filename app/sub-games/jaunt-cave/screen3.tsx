@@ -9,6 +9,7 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { ReadableTextBox } from '../_shared/ReadableTextBox'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { saveWaypoint } from '@modules/saveGame'
+import { grantJauntCrystalToPlayer } from '../../../state/slices/jauntSlice'
 
 const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen3.webp')
 const SUB_GAME_ID = 'jaunt-cave'
@@ -40,21 +41,13 @@ export default function JauntCaveScreen3() {
         },
       })
 
-      // Unlock Jaunt capability (following Hermit Hollow pattern with hideUnlocked)
+      // Grant the first Jaunt Crystal and unlock the ability.
       if (__DEV__) {
-        console.log('[Jaunt Cave] Unlocking Jaunt capability')
+        console.log('[Jaunt Cave] Granting Jaunt Crystal')
       }
 
       dispatch({
-        type: 'UPDATE_PLAYER',
-        payload: {
-          updates: {
-            canJaunt: true,
-            jauntCharges: 3, // Start with 3 charges when unlocked
-            jauntRechargeCounter: 0,
-            isJauntArmed: false,
-          },
-        },
+        type: 'GRANT_JAUNT_CRYSTAL',
       })
 
       // Create waypoint save on first completion (following Hermit Hollow pattern)
@@ -76,13 +69,7 @@ export default function JauntCaveScreen3() {
         const stateWithCompletion = {
           ...state,
           subGamesCompleted: updatedSubGamesCompleted,
-          player: {
-            ...state.player,
-            canJaunt: true,
-            jauntCharges: 3,
-            jauntRechargeCounter: 0,
-            isJauntArmed: false,
-          },
+          player: grantJauntCrystalToPlayer(state.player),
         }
 
         saveWaypoint(stateWithCompletion, WAYPOINT_NAME)

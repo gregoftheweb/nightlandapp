@@ -61,9 +61,9 @@ describe('getObjectAtPoint', () => {
       hideActive: false,
       hideRechargeProgressTurns: 0,
       // Jaunt ability state
-      canJaunt: false,
-      jauntCharges: 0,
-      jauntRechargeCounter: 0,
+      jauntUnlocked: false,
+      jauntCrystalCharges: 0,
+      jauntCrystalReserve: 0,
       isJauntArmed: false,
     }
 

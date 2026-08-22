@@ -33,8 +33,9 @@ interface PlayerHUDProps {
   hideChargeTurns?: number
   hideActive?: boolean
   // Jaunt ability state
-  canJaunt?: boolean
-  jauntCharges?: number
+  jauntUnlocked?: boolean
+  jauntCrystalCharges?: number
+  jauntCrystalReserve?: number
   isJauntArmed?: boolean
 }
 
@@ -52,8 +53,9 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   hideUnlocked = false,
   hideChargeTurns = 0,
   hideActive = false,
-  canJaunt = false,
-  jauntCharges = 0,
+  jauntUnlocked = false,
+  jauntCrystalCharges = 0,
+  jauntCrystalReserve = 0,
   isJauntArmed = false,
 }) => {
   const insets = useSafeAreaInsets()
@@ -99,11 +101,11 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
       pointerEvents="box-none"
     >
       <View
-        style={hideUnlocked || canJaunt ? styles.hudFrameExpanded : styles.hudFrame}
+        style={hideUnlocked || jauntUnlocked ? styles.hudFrameExpanded : styles.hudFrame}
         pointerEvents="box-none"
       >
         <View
-          style={hideUnlocked || canJaunt ? styles.statusBarExpanded : styles.statusBar}
+          style={hideUnlocked || jauntUnlocked ? styles.statusBarExpanded : styles.statusBar}
           pointerEvents="box-none"
         >
           <Text style={styles.hpText}>HP: {currentHP}</Text>
@@ -115,7 +117,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
         {/* Zap Button */}
         <TouchableOpacity
-          style={hideUnlocked || canJaunt ? styles.zapButtonExpanded : styles.zapButton}
+          style={hideUnlocked || jauntUnlocked ? styles.zapButtonExpanded : styles.zapButton}
           onPress={handleZapPress}
           activeOpacity={0.7}
         >
@@ -163,7 +165,9 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
         {/* Inventory Button */}
         <TouchableOpacity
-          style={hideUnlocked || canJaunt ? styles.inventoryButtonExpanded : styles.inventoryButton}
+          style={
+            hideUnlocked || jauntUnlocked ? styles.inventoryButtonExpanded : styles.inventoryButton
+          }
           onPress={handleInventoryPress}
           activeOpacity={0.7}
         >
@@ -171,30 +175,41 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
         </TouchableOpacity>
 
         {/* Jaunt Button - only show if unlocked (mirrored position to Hide button) */}
-        {canJaunt && (
+        {jauntUnlocked && (
           <View style={styles.jauntButtonContainer}>
             {/* Background indicator - green glow when armed */}
             {isJauntArmed && <View style={styles.jauntArmedBackground} />}
             <TouchableOpacity
-              style={[styles.jauntButton, jauntCharges === 0 && styles.jauntButtonDepleted]}
+              style={[
+                styles.jauntButton,
+                jauntCrystalCharges === 0 &&
+                  jauntCrystalReserve === 0 &&
+                  styles.jauntButtonDepleted,
+              ]}
               onPress={handleJauntPress}
               activeOpacity={0.7}
-              disabled={jauntCharges === 0}
+              disabled={jauntCrystalCharges === 0 && jauntCrystalReserve === 0}
             >
               <Image
                 source={jauntButtonIMG}
                 style={[
                   styles.jauntButtonImage,
-                  jauntCharges === 0 && styles.jauntButtonImageDepleted,
+                  jauntCrystalCharges === 0 &&
+                    jauntCrystalReserve === 0 &&
+                    styles.jauntButtonImageDepleted,
                 ]}
               />
             </TouchableOpacity>
-            {/* Charge pips (3 max) */}
+            {/* Active crystal charge pips (reserve crystals are intentionally not shown) */}
             <View style={styles.jauntChargePips}>
-              {Array.from({ length: 3 }).map((_, i) => (
+              {Array.from({ length: 5 }).map((_, i) => (
                 <View
                   key={i}
-                  style={[styles.jauntChargePip, i < jauntCharges && styles.jauntChargePipFilled]}
+                  style={[
+                    styles.jauntChargePip,
+                    i < Math.min(5, Math.max(0, jauntCrystalCharges)) &&
+                      styles.jauntChargePipFilled,
+                  ]}
                 />
               ))}
             </View>
