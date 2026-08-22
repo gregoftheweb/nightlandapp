@@ -40,9 +40,11 @@ const rewardFlag = (instance: SubGameInstanceDefinition): string =>
   `${instance.instanceId}:reward:${
     instance.lifecycle.reward.kind === 'none'
       ? 'none'
-      : instance.lifecycle.reward.kind === 'weapon-upgrade'
-        ? instance.lifecycle.reward.weaponId
-        : instance.lifecycle.reward.id
+      : instance.lifecycle.reward.kind === 'jaunt-crystal-grant'
+        ? 'jaunt-crystal'
+        : instance.lifecycle.reward.kind === 'weapon-upgrade'
+          ? instance.lifecycle.reward.weaponId
+          : instance.lifecycle.reward.id
   }`
 
 function routeDirectory(entryRoute: string): string {
@@ -148,6 +150,8 @@ function rewardActions(
         hitBonusAdd: reward.hitBonusAdd,
       },
     })
+  } else if (reward.kind === 'jaunt-crystal-grant') {
+    actions.push({ type: 'GRANT_JAUNT_CRYSTAL' })
   } else {
     const result = applyEffect({ type: reward.id } as Effect, {
       state,

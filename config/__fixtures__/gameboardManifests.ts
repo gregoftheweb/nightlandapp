@@ -5,7 +5,7 @@ export const VALID_GAMEBOARD_MANIFEST: GameboardManifest = {
   slots: [
     {
       slotId: 'jaunt-range',
-      shapeId: 'one-off',
+      shapeId: 'timed-encounter',
       kind: 'range',
       placement: { minPct: 0.4, maxPct: 0.5 },
       contentRef: 'jaunt-cave',
@@ -126,7 +126,7 @@ export const invalidGameboardFixtures: Record<
     make: mutate((manifest) => {
       manifest.slots.push({
         slotId: 'jaunt-end',
-        shapeId: 'one-off',
+        shapeId: 'timed-encounter',
         kind: 'end',
         contentRef: 'jaunt-cave',
       })

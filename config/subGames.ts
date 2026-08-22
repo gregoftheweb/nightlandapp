@@ -8,14 +8,15 @@ import type {
 
 import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
 import hermitIMG from '@assets/images/backgrounds/subgames/hermit/hermit-save2.webp'
-import jauntCaveIMG from '@assets/images/sprites/buildings/jaunt-cave.webp'
 import deepSiloIMG from '@assets/images/sprites/buildings/silo.webp'
+import { parsedTimedEncounterContentResult } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
 
 export type SubGameInstanceId = string
 
 export const SUB_GAME_SHAPES: ReadonlySet<SubGameShapeId> = new Set([
   'dialogue',
   'word-grid',
+  'timed-encounter',
   'one-off',
 ])
 
@@ -203,59 +204,20 @@ const definitions: SubGameInstanceDefinition[] = [
       requiresPlayerOnObject: true,
     },
   },
-  {
-    instanceId: 'jaunt-cave',
-    shapeId: 'one-off',
-    entryRoute: '/sub-games/jaunt-cave/main',
-    lifecycle: {
-      completion: { event: 'Player confirms return from the victory screen', idempotent: true },
-      failure: {
-        exit: 'death',
-        message: 'The Jaunt Daemon has slain Christos.',
-        killerName: 'Jaunt Daemon',
-        suppressDeathDialog: false,
-        deathRoute: '/death',
-      },
-      waypoint: {
-        createsWaypoint: true,
-        waypointName: 'jaunt-cave',
-        snapshot:
-          'Completion, Jaunt unlock, active crystal charges, reserve, and related player state',
-        idempotent: true,
-      },
-      revisit: 'aftermath-screen',
-      progress: { mode: 'local-only' },
-      reward: {
-        kind: 'ability',
-        id: 'jaunt',
-        grantEvent: 'Player confirms victory',
-        idempotent: true,
-      },
-      returnToRpg: returnsNormally,
-    },
-    title: 'Cave of the daemon of the walking shadows',
-    description:
-      'A sulfur smelling wallow in the Night Lands plains lead to a cave shining with the light from lava. Christos is drawn to it, an aegis of foreboding and necessity upon him. He knows he MUST confront what is inside. Doom and Destiny collide within.',
-    introBackgroundImage: require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen1.webp'),
-    entrance: {
-      shortName: 'jauntCave',
-      category: 'building',
-      width: 4,
-      height: 4,
-      image: jauntCaveIMG,
-      active: true,
-      zIndex: 0,
-      effects: [{ type: 'hide' }],
-      ctaLabel: 'Enter the cave',
-      requiresPlayerOnObject: true,
-    },
-  },
 ]
 
-export const SUB_GAMES = createSubGameRegistry(definitions, SUB_GAME_SHAPES, {
-  completion: definitions.map(({ instanceId }) => instanceId),
-  reward: definitions.map(({ instanceId }) => instanceId),
-  waypoint: definitions.map(({ instanceId }) => instanceId),
+if (!parsedTimedEncounterContentResult.success) {
+  throw new Error('Parsed timed-encounter catalog is invalid')
+}
+const registeredDefinitions = [
+  ...definitions,
+  ...Object.values(parsedTimedEncounterContentResult.value).map(({ definition }) => definition),
+]
+
+export const SUB_GAMES = createSubGameRegistry(registeredDefinitions, SUB_GAME_SHAPES, {
+  completion: registeredDefinitions.map(({ instanceId }) => instanceId),
+  reward: registeredDefinitions.map(({ instanceId }) => instanceId),
+  waypoint: registeredDefinitions.map(({ instanceId }) => instanceId),
 })
 
 export function getSubGameDefinition(instanceId: string): SubGameInstanceDefinition {

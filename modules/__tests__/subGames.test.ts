@@ -17,8 +17,8 @@ describe('sub-game navigation', () => {
     }
   )
 
-  it('keeps legacy registry navigation for non-word-grid shapes', () => {
+  it('uses the dynamic timed-encounter route for Jaunt Cave', () => {
     enterSubGame('jaunt-cave')
-    expect(router.replace).toHaveBeenCalledWith('/sub-games/jaunt-cave/main')
+    expect(router.replace).toHaveBeenCalledWith('/sub-games/jaunt-cave/jaunt-cave')
   })
 })

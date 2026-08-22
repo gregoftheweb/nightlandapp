@@ -9,6 +9,10 @@ import {
   parsedWordGridContentResult,
   WORD_GRID_SHAPE_ADAPTER,
 } from '@/app/sub-games/_shared/word-grid/contentCatalog'
+import {
+  parsedTimedEncounterContentResult,
+  TIMED_ENCOUNTER_SHAPE_ADAPTER,
+} from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
 
 /**
  * Enter a sub-game by navigating to its intro route from the registry
@@ -23,6 +27,14 @@ export function enterSubGame(instanceId: string, context?: { objectId?: string }
     parsedWordGridContentResult.value[instanceId]?.definition.shapeId === 'word-grid'
   ) {
     router.replace(WORD_GRID_SHAPE_ADAPTER.routes(instanceId).entry as any)
+    return
+  }
+
+  if (
+    parsedTimedEncounterContentResult.success &&
+    parsedTimedEncounterContentResult.value[instanceId]?.definition.shapeId === 'timed-encounter'
+  ) {
+    router.replace(TIMED_ENCOUNTER_SHAPE_ADAPTER.routes(instanceId).entry as any)
     return
   }
 

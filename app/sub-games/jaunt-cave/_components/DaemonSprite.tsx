@@ -25,6 +25,13 @@ export const SPRITES = {
 
 export type PositionKey = 'left' | 'center' | 'right'
 
+export const DAEMON_SPRITE_TIMINGS = {
+  GLOW_HALF_CYCLE: 300,
+  FIZZLE: 300,
+  BRIGHTNESS_BURST: 400,
+  CROSSFADE: 400,
+} as const
+
 interface DaemonSpriteProps {
   daemonState: DaemonState
   currentPosition: PositionKey
@@ -37,6 +44,10 @@ interface DaemonSpriteProps {
   isVulnerable: boolean
   isAttacking: boolean
   onDaemonTap: () => void
+  sprites?: typeof SPRITES
+  prep1FizzleColor?: string
+  prep2FizzleColor?: string
+  vulnerableGlowColor?: string
 }
 
 export function DaemonSprite({
@@ -50,6 +61,10 @@ export function DaemonSprite({
   isAttacking,
   arenaSize,
   onDaemonTap,
+  sprites = SPRITES,
+  prep1FizzleColor = '#ff6600',
+  prep2FizzleColor = '#ff00ff',
+  vulnerableGlowColor = '#ff0',
 }: DaemonSpriteProps) {
   // Animation values
   const glowAnim = useRef(new Animated.Value(0)).current
@@ -61,39 +76,39 @@ export function DaemonSprite({
   const getCurrentSprite = useCallback(() => {
     switch (daemonState) {
       case DaemonState.RESTING:
-        return SPRITES.resting
+        return sprites.resting
       case DaemonState.PREP1:
-        return SPRITES.prep1
+        return sprites.prep1
       case DaemonState.PREP2:
-        return SPRITES.prep2
+        return sprites.prep2
       case DaemonState.LANDED:
-        return SPRITES.landed
+        return sprites.landed
       case DaemonState.ATTACKING:
-        return attackDirection === 'left' ? SPRITES.attackLeft : SPRITES.attackRight
+        return attackDirection === 'left' ? sprites.attackLeft : sprites.attackRight
       default:
-        return SPRITES.resting
+        return sprites.resting
     }
-  }, [daemonState, attackDirection])
+  }, [daemonState, attackDirection, sprites])
 
   // Get sprite for a specific state (used for crossfade)
   const getSpriteForState = useCallback(
     (state: DaemonState) => {
       switch (state) {
         case DaemonState.RESTING:
-          return SPRITES.resting
+          return sprites.resting
         case DaemonState.PREP1:
-          return SPRITES.prep1
+          return sprites.prep1
         case DaemonState.PREP2:
-          return SPRITES.prep2
+          return sprites.prep2
         case DaemonState.LANDED:
-          return SPRITES.landed
+          return sprites.landed
         case DaemonState.ATTACKING:
-          return attackDirection === 'left' ? SPRITES.attackLeft : SPRITES.attackRight
+          return attackDirection === 'left' ? sprites.attackLeft : sprites.attackRight
         default:
-          return SPRITES.resting
+          return sprites.resting
       }
     },
-    [attackDirection]
+    [attackDirection, sprites]
   )
 
   // Glow effect for vulnerable state
@@ -102,12 +117,12 @@ export function DaemonSprite({
       Animated.sequence([
         Animated.timing(glowAnim, {
           toValue: 1,
-          duration: 300,
+          duration: DAEMON_SPRITE_TIMINGS.GLOW_HALF_CYCLE,
           useNativeDriver: true,
         }),
         Animated.timing(glowAnim, {
           toValue: 0,
-          duration: 300,
+          duration: DAEMON_SPRITE_TIMINGS.GLOW_HALF_CYCLE,
           useNativeDriver: true,
         }),
       ])
@@ -137,7 +152,7 @@ export function DaemonSprite({
       fizzleAnim.setValue(0)
       Animated.timing(fizzleAnim, {
         toValue: 1,
-        duration: 300,
+        duration: DAEMON_SPRITE_TIMINGS.FIZZLE,
         useNativeDriver: true,
       }).start(() => {
         fizzleAnim.setValue(0)
@@ -151,7 +166,7 @@ export function DaemonSprite({
       brightnessAnim.setValue(1) // Bright flash
       Animated.timing(brightnessAnim, {
         toValue: 0,
-        duration: 400,
+        duration: DAEMON_SPRITE_TIMINGS.BRIGHTNESS_BURST,
         useNativeDriver: true,
       }).start()
     }
@@ -163,7 +178,7 @@ export function DaemonSprite({
       crossfadeAnim.setValue(0) // Start with previous sprite visible
       Animated.timing(crossfadeAnim, {
         toValue: 1,
-        duration: 400, // 400ms crossfade
+        duration: DAEMON_SPRITE_TIMINGS.CROSSFADE,
         useNativeDriver: true,
       }).start()
     }
@@ -210,7 +225,7 @@ export function DaemonSprite({
                       }),
                     },
                   ],
-                  backgroundColor: '#ff6600', // Orange fizzle for prep1
+                  backgroundColor: prep1FizzleColor,
                 },
               ]}
             />
@@ -229,7 +244,7 @@ export function DaemonSprite({
                       }),
                     },
                   ],
-                  backgroundColor: '#ff00ff', // Magenta fizzle for prep2
+                  backgroundColor: prep2FizzleColor,
                 },
               ]}
             />
@@ -239,7 +254,7 @@ export function DaemonSprite({
             style={[
               styles.daemonWrapper,
               isVulnerable && {
-                shadowColor: '#ff0',
+                shadowColor: vulnerableGlowColor,
                 shadowOffset: { width: 0, height: 0 },
                 shadowOpacity: glowAnim,
                 shadowRadius: 20,

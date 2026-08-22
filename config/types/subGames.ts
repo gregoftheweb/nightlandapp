@@ -8,7 +8,7 @@ export interface SubGameLaunch {
   instanceId: string // Stable placed-encounter identifier in the sub-game registry
 }
 
-export type SubGameShapeId = 'dialogue' | 'word-grid' | 'one-off'
+export type SubGameShapeId = 'dialogue' | 'word-grid' | 'timed-encounter' | 'one-off'
 
 export type SubGameFailurePolicy =
   | { exit: 'safe' }
@@ -29,6 +29,7 @@ export type SubGameProgressConfig =
 
 export type SubGameRewardConfig =
   | { kind: 'none' }
+  | { kind: 'jaunt-crystal-grant'; grantEvent: string; idempotent: true }
   | {
       kind: 'weapon-upgrade'
       weaponId: string

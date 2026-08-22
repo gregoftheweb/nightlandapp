@@ -1,54 +1,60 @@
-// app/sub-games/jaunt-cave/main.tsx
+// Shared timed-encounter intro screen
 // Screen 1: Intro screen for the jaunt-cave sub-game
 import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
-import { exitSubGame } from '@modules/subGames'
-import { getSubGameDefinition } from '@config/subGames'
 import { useGameContext } from '@context/GameContext'
-import { BackgroundImage } from '../_shared/BackgroundImage'
-import { BottomActionBar } from '../_shared/BottomActionBar'
-import { ReadableTextBox } from '../_shared/ReadableTextBox'
-import { subGameTheme } from '../_shared/subGameTheme'
+import { exitSubGame } from '@modules/subGames'
+import { BackgroundImage } from '../BackgroundImage'
+import { BottomActionBar } from '../BottomActionBar'
+import { ReadableTextBox } from '../ReadableTextBox'
+import { subGameTheme } from '../subGameTheme'
+import type { TimedEncounterConfig } from './types'
+import type { SubGameLifecycleController } from '../lifecycle'
 
-const SUB_GAME_ID = 'jaunt-cave'
-const definition = getSubGameDefinition(SUB_GAME_ID)
-
-export default function JauntCaveMain() {
+export default function TimedEncounterIntro({
+  config,
+  lifecycle,
+}: {
+  config: TimedEncounterConfig
+  lifecycle: SubGameLifecycleController
+}) {
   const router = useRouter()
-  const { state } = useGameContext()
+  const { state, signalRpgResume } = useGameContext()
   const [isCheckingCompletion, setIsCheckingCompletion] = useState(true)
 
   // Extract completion status for use in effect dependency
-  const isCompleted = state.subGamesCompleted?.[SUB_GAME_ID] ?? false
+  const isCompleted = state.subGamesCompleted?.[config.instanceId] ?? false
 
   // Check if Jaunt Cave has been completed on mount
   useEffect(() => {
     if (isCompleted) {
       if (__DEV__) {
-        console.log(`[${SUB_GAME_ID}] Already completed - routing to aftermath screen (screen5)`)
+        console.log(`[${config.instanceId}] Already completed - routing to aftermath screen`)
       }
-      router.replace('/sub-games/jaunt-cave/screen5' as any)
+      const route = lifecycle.resolveEntryRoute()
+      if (route) router.replace(route as any)
     } else {
       if (__DEV__) {
-        console.log(`[${SUB_GAME_ID}] Not completed - showing intro screen`)
+        console.log(`[${config.instanceId}] Not completed - showing intro screen`)
       }
       setIsCheckingCompletion(false)
     }
-  }, [router, isCompleted])
+  }, [router, isCompleted, lifecycle, config.instanceId])
 
   const handleRejectDestiny = () => {
     if (__DEV__) {
-      console.log(`[${SUB_GAME_ID}] Rejecting destiny and returning to overworld`)
+      console.log(`[${config.instanceId}] Rejecting destiny and returning to overworld`)
     }
+    signalRpgResume()
     exitSubGame({ completed: false })
   }
 
   const handleEnterCave = () => {
     if (__DEV__) {
-      console.log(`[${SUB_GAME_ID}] Entering the cave`)
+      console.log(`[${config.instanceId}] Entering the cave`)
     }
-    router.push('/sub-games/jaunt-cave/screen1_5' as any)
+    router.push(`/sub-games/jaunt-cave/${config.instanceId}/rockfall` as any)
   }
 
   // Prevent UI flicker while checking completion status
@@ -57,13 +63,11 @@ export default function JauntCaveMain() {
   }
 
   return (
-    <BackgroundImage source={definition.introBackgroundImage}>
+    <BackgroundImage source={config.presentation.introBackground}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          <ReadableTextBox textStyle={styles.titleText}>{definition.title}</ReadableTextBox>
-          <ReadableTextBox textStyle={styles.descriptionText}>
-            {definition.description}
-          </ReadableTextBox>
+          <ReadableTextBox textStyle={styles.titleText}>{config.title}</ReadableTextBox>
+          <ReadableTextBox textStyle={styles.descriptionText}>{config.description}</ReadableTextBox>
         </View>
 
         <BottomActionBar>
@@ -73,13 +77,11 @@ export default function JauntCaveMain() {
               onPress={handleRejectDestiny}
               activeOpacity={0.7}
             >
-              <Text style={styles.buttonText}>
-                Reject your destiny and return to the Night Land
-              </Text>
+              <Text style={styles.buttonText}>{config.narrative.rejectLabel}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.button} onPress={handleEnterCave} activeOpacity={0.7}>
-              <Text style={styles.buttonText}>Accept your doom and enter the cave</Text>
+              <Text style={styles.buttonText}>{config.narrative.enterLabel}</Text>
             </TouchableOpacity>
           </View>
         </BottomActionBar>

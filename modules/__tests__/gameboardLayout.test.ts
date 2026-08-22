@@ -331,7 +331,7 @@ describe('gameboard layout integration', () => {
     })
   })
 
-  test('caps branch count to eligible scattered instances and allocates a branch terminus', () => {
+  test('caps branch count to eligible scattered groups and allocates branch termini', () => {
     const oneScatteredInstanceManifest = {
       ...GAMEBOARD_MANIFEST,
       slots: GAMEBOARD_MANIFEST.slots.map((slot) =>
@@ -346,14 +346,19 @@ describe('gameboard layout integration', () => {
     )
     expect(result.success).toBe(true)
     if (!result.success) return
-    expect(result.value.trailNetwork.branches).toHaveLength(1)
-    const scattered = result.value.placements.find(
-      (placement) => placement.slotId === 'word-grid-clues'
-    )!
-    expect(scattered.location.type).toBe('branch')
-    if (scattered.location.type === 'branch') {
-      expect(scattered.location.branchProgressPct).toBeGreaterThanOrEqual(0.8)
-    }
+    expect(result.value.trailNetwork.branches).toHaveLength(2)
+    const scattered = result.value.placements.filter(
+      (placement) =>
+        placement.slotId === 'word-grid-clues' || placement.slotId === 'timed-encounters'
+    )
+    expect(scattered).toHaveLength(2)
+    scattered.forEach((placement) => expect(placement.location.type).toBe('branch'))
+    expect(
+      scattered.some(
+        (placement) =>
+          placement.location.type === 'branch' && placement.location.branchProgressPct >= 0.8
+      )
+    ).toBe(true)
   })
 
   test('uses one occupancy registry for endpoint checks and every reservation', () => {

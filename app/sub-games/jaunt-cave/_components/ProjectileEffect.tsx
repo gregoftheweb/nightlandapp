@@ -6,7 +6,7 @@ import { Animated, StyleSheet } from 'react-native'
 // Adjust these values to change the look and feel of zap projectiles
 // ============================================================================
 
-const PROJECTILE_CONFIG = {
+export const PROJECTILE_CONFIG = {
   // Speed and timing
   DEFAULT_DURATION: 250, // Travel time in milliseconds (lower = faster projectiles, higher = slower)
   FADE_START_PERCENT: 0.9, // When to start fading (0.9 = fade in last 10% of journey)

@@ -467,12 +467,12 @@ const styles = StyleSheet.create({
     bottom: CHARGE_INDICATOR_OFFSET,
     left: 0,
     flexDirection: 'row',
-    gap: 2,
+    gap: 1,
     zIndex: 25,
   },
 
   jauntChargePip: {
-    width: 10,
+    width: 6,
     height: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 1,

@@ -121,9 +121,10 @@ describe('useBattleState', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0.1)
     const dispatch = jest.fn()
     const router = { replace: jest.fn() }
+    const onPlayerDeath = jest.fn(() => router.replace('/death'))
     const shakeAnim = {} as Animated.Value
     const { result } = renderHook(() =>
-      useBattleState({ shakeAnim, dispatch, currentPlayerHP: 1, router })
+      useBattleState({ shakeAnim, dispatch, currentPlayerHP: 1, router, onPlayerDeath })
     )
 
     act(() => jest.advanceTimersByTime(3400 + 500 + 200))
@@ -134,12 +135,11 @@ describe('useBattleState', () => {
     setTimeout(() => result.current.applyPlayerDamage(100), 750)
     act(() => jest.advanceTimersByTime(750))
 
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'GAME_OVER' }))
     expect(result.current.daemonHP).toBe(100)
 
     act(() => jest.advanceTimersByTime(750))
     expect(router.replace).toHaveBeenCalledTimes(1)
-    expect(router.replace).toHaveBeenCalledWith('/sub-games/jaunt-cave/screen4')
+    expect(router.replace).toHaveBeenCalledWith('/death')
   })
 
   test('preserves the PREP2 block boundary and shield duration', () => {
@@ -175,9 +175,16 @@ describe('useBattleState', () => {
   test('rapid lethal input during an active transition schedules one victory', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0.1)
     const router = { replace: jest.fn() }
+    const onDaemonDeath = jest.fn(() => router.replace('/sub-games/jaunt-cave/jaunt-cave/victory'))
     const shakeAnim = {} as Animated.Value
     const { result } = renderHook(() =>
-      useBattleState({ shakeAnim, dispatch: jest.fn(), currentPlayerHP: 100, router })
+      useBattleState({
+        shakeAnim,
+        dispatch: jest.fn(),
+        currentPlayerHP: 100,
+        router,
+        onDaemonDeath,
+      })
     )
 
     act(() => jest.advanceTimersByTime(3400))
@@ -189,6 +196,6 @@ describe('useBattleState', () => {
 
     act(() => jest.advanceTimersByTime(400))
     expect(router.replace).toHaveBeenCalledTimes(1)
-    expect(router.replace).toHaveBeenCalledWith('/sub-games/jaunt-cave/screen3')
+    expect(router.replace).toHaveBeenCalledWith('/sub-games/jaunt-cave/jaunt-cave/victory')
   })
 })
