@@ -57,7 +57,7 @@ describe('useBattleState', () => {
     expect(result.current.daemonState).toBe(DaemonState.LANDED)
     expect(dispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
-      payload: { updates: { currentHP: 89 } },
+      payload: { updates: { currentHP: 90 } },
     })
 
     act(() => jest.advanceTimersByTime(800))

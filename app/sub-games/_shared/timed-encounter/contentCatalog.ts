@@ -1,9 +1,11 @@
 import { buildParsedCatalog, buildRawCatalog } from '@config/contentCatalog'
 import { jauntCaveContent } from './content/jauntCave'
+import { jauntCave02Content } from './content/jauntCave02'
 import { createTimedEncounterShapeAdapter } from './manifestAdapter'
 
 export const RAW_TIMED_ENCOUNTER_CONTENT = buildRawCatalog([
   { instanceId: jauntCaveContent.instanceId, content: jauntCaveContent },
+  { instanceId: jauntCave02Content.instanceId, content: jauntCave02Content },
 ])
 export const TIMED_ENCOUNTER_SHAPE_ADAPTER = createTimedEncounterShapeAdapter()
 export const parsedTimedEncounterContentResult = buildParsedCatalog(

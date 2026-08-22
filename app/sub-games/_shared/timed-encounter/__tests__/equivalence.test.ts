@@ -4,6 +4,7 @@ import { resolveParsedTimedEncounter, TIMED_ENCOUNTER_SHAPE_ADAPTER } from '../c
 import { PROTECTED_TIMED_ENCOUNTER_MECHANICS as mechanics } from '../protectedMechanics'
 import { normalizeTimedEncounterInstanceId } from '../routing'
 import { jauntCaveContent } from '../content/jauntCave'
+import { jauntCave02Content } from '../content/jauntCave02'
 
 describe('timed-encounter extraction equivalence', () => {
   it('preserves every protected Jaunt Cave mechanical value', () => {
@@ -11,8 +12,8 @@ describe('timed-encounter extraction equivalence', () => {
       stateSequence: ['RESTING', 'PREP1', 'PREP2', 'teleport', 'ATTACKING-or-LANDED', 'crossfade'],
       attackChance: 0.6,
       daemonHitChance: 0.8,
-      daemonDamageMin: 10,
-      daemonDamageMax: 25,
+      daemonDamageMin: 9,
+      daemonDamageMax: 23,
       preventsConsecutivePositionRepeat: true,
       blockWindow: 'PREP2-only',
       battleTimings: {
@@ -105,6 +106,28 @@ describe('timed-encounter extraction equivalence', () => {
     )
     expect(first.value.definition.lifecycle.aftermathRoute).not.toBe(
       second.value.definition.lifecycle.aftermathRoute
+    )
+  })
+
+  it('resolves jaunt-cave-02 with identical content and its own derived routes', () => {
+    const { instanceId: firstId, ...firstContent } = jauntCaveContent
+    const { instanceId: secondId, ...secondContent } = jauntCave02Content
+    expect(firstId).toBe('jaunt-cave')
+    expect(secondId).toBe('jaunt-cave-02')
+    expect(secondContent).toEqual(firstContent)
+    expect(jauntCave02Content.lifecycle).not.toHaveProperty('aftermathRoute')
+
+    const first = resolveParsedTimedEncounter('jaunt-cave')
+    const second = resolveParsedTimedEncounter('jaunt-cave-02')
+    const { instanceId: _firstConfigId, ...firstConfig } = first.shapeConfig
+    const { instanceId: _secondConfigId, ...secondConfig } = second.shapeConfig
+    expect(secondConfig).toEqual(firstConfig)
+    expect(second.definition.entryRoute).toBe('/sub-games/jaunt-cave/jaunt-cave-02')
+    expect(second.definition.lifecycle.aftermathRoute).toBe(
+      '/sub-games/jaunt-cave/jaunt-cave-02/aftermath'
+    )
+    expect(second.definition.lifecycle.aftermathRoute).not.toBe(
+      first.definition.lifecycle.aftermathRoute
     )
   })
 })

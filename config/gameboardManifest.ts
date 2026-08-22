@@ -48,7 +48,7 @@ export const GAMEBOARD_MANIFEST = {
       shapeId: 'timed-encounter',
       kind: 'scattered-group',
       placement: { exclude: ['end'] },
-      instances: ['jaunt-cave'],
+      instances: ['jaunt-cave', 'jaunt-cave-02'],
     },
   ],
 } satisfies GameboardManifest

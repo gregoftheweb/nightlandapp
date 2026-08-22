@@ -26,6 +26,7 @@ import * as trailGeometry from '../trailGeometry'
 
 const encounterIds = [
   'jaunt-cave',
+  'jaunt-cave-02',
   'deep-silo',
   'aerowreckage-puzzle',
   'hermit-hollow',
@@ -237,7 +238,7 @@ describe('gameboard layout integration', () => {
       expect(result.value.placements.map(({ instanceId }) => instanceId).sort()).toEqual(
         [...encounterIds].sort()
       )
-      expect(new Set(result.value.placements.map(({ occupancyId }) => occupancyId)).size).toBe(6)
+      expect(new Set(result.value.placements.map(({ occupancyId }) => occupancyId)).size).toBe(7)
       expect(result.value.trailNetwork.geometry.trunkWaypoints.length).toBeGreaterThan(2)
       expect(result.value.trailNetwork.branches).toHaveLength(2)
       result.value.trailNetwork.branches.forEach((branch) => {
@@ -272,7 +273,7 @@ describe('gameboard layout integration', () => {
         new RandomSource()
       )
       expect(result.success).toBe(true)
-      if (result.success) expect(result.value.placements).toHaveLength(6)
+      if (result.success) expect(result.value.placements).toHaveLength(7)
     }
   })
 
