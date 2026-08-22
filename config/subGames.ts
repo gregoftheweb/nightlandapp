@@ -219,7 +219,8 @@ const definitions: SubGameInstanceDefinition[] = [
       waypoint: {
         createsWaypoint: true,
         waypointName: 'jaunt-cave',
-        snapshot: 'Completion, Jaunt unlock, charges, and related player state',
+        snapshot:
+          'Completion, Jaunt unlock, active crystal charges, reserve, and related player state',
         idempotent: true,
       },
       revisit: 'aftermath-screen',

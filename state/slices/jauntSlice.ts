@@ -6,6 +6,22 @@ import { Position } from '../../config/types/primitives'
 // Counter to ensure unique flash IDs even with rapid successive teleports
 let flashIdCounter = 0
 
+export function grantJauntCrystalToPlayer(player: GameState['player']): GameState['player'] {
+  if (!player.jauntUnlocked) {
+    return {
+      ...player,
+      jauntUnlocked: true,
+      jauntCrystalCharges: 5,
+      jauntCrystalReserve: 0,
+      isJauntArmed: false,
+    }
+  }
+  if (player.jauntCrystalCharges <= 0 && player.jauntCrystalReserve <= 0) {
+    return { ...player, jauntCrystalCharges: 5, isJauntArmed: false }
+  }
+  return { ...player, jauntCrystalReserve: player.jauntCrystalReserve + 1 }
+}
+
 /** Shared world-position update used by gameplay Jaunt and the dev-only jump menu. */
 export function teleportPlayerPosition(state: GameState, targetPosition: Position): GameState {
   const clampedPosition = {
@@ -25,16 +41,16 @@ export function teleportPlayerPosition(state: GameState, targetPosition: Positio
 export function reduceJaunt(state: GameState, action: any): GameState | null {
   switch (action.type) {
     case 'ARM_JAUNT': {
-      const { canJaunt, jauntCharges, isJauntArmed } = state.player
+      const { jauntUnlocked, jauntCrystalCharges, isJauntArmed } = state.player
 
       // Can't arm if not unlocked
-      if (!canJaunt) {
+      if (!jauntUnlocked) {
         logIfDev('[Jaunt] Cannot arm - ability not unlocked')
         return state
       }
 
       // Can't arm if no charges
-      if (jauntCharges <= 0) {
+      if (jauntCrystalCharges <= 0) {
         logIfDev('[Jaunt] Cannot arm - no charges available')
         return state
       }
@@ -79,11 +95,11 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
     }
 
     case 'EXECUTE_JAUNT': {
-      const { canJaunt, jauntCharges, isJauntArmed } = state.player
+      const { jauntUnlocked, jauntCrystalCharges, jauntCrystalReserve, isJauntArmed } = state.player
       const { targetPosition } = action.payload as { targetPosition: Position }
 
       // Validate preconditions
-      if (!canJaunt || jauntCharges <= 0 || !isJauntArmed) {
+      if (!jauntUnlocked || jauntCrystalCharges <= 0 || !isJauntArmed) {
         logIfDev('[Jaunt] Cannot execute - invalid state')
         return state
       }
@@ -93,7 +109,7 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
 
       logIfDev('[Jaunt] Teleporting to position', {
         target: clampedPosition,
-        chargesRemaining: jauntCharges - 1,
+        chargesRemaining: jauntCrystalCharges - 1,
       })
 
       // Create a teleport flash effect at the destination
@@ -106,12 +122,16 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
         gridRow: clampedPosition.row,
       }
 
-      // Teleport player and consume charge
+      const depleted = jauntCrystalCharges === 1
+      const reloadFromReserve = depleted && jauntCrystalReserve > 0
+
+      // Teleport player and consume one active-crystal charge. Reserve reload is atomic.
       return {
         ...teleportedState,
         player: {
           ...teleportedState.player,
-          jauntCharges: jauntCharges - 1,
+          jauntCrystalCharges: reloadFromReserve ? 5 : jauntCrystalCharges - 1,
+          jauntCrystalReserve: reloadFromReserve ? jauntCrystalReserve - 1 : jauntCrystalReserve,
           isJauntArmed: false,
         },
         activeTeleportFlashes: [...(state.activeTeleportFlashes || []), newFlash],
@@ -124,47 +144,10 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
       return teleportPlayerPosition(state, targetPosition)
     }
 
-    case 'UPDATE_JAUNT_STATE': {
-      const { canJaunt, jauntCharges, jauntRechargeCounter } = state.player
-
-      // Only update if jaunt is unlocked
-      if (!canJaunt) {
-        return state
-      }
-
-      // Don't recharge if already at max charges
-      if (jauntCharges >= 3) {
-        return state
-      }
-
-      // Increment recharge counter
-      const newCounter = jauntRechargeCounter + 1
-
-      // Check if we've hit the recharge threshold (20 turns)
-      if (newCounter >= 20) {
-        const newCharges = Math.min(3, jauntCharges + 1)
-        logIfDev('[Jaunt] Recharged +1 charge', {
-          newCharges,
-          maxCharges: 3,
-        })
-
-        return {
-          ...state,
-          player: {
-            ...state.player,
-            jauntCharges: newCharges,
-            jauntRechargeCounter: 0,
-          },
-        }
-      }
-
-      // Just increment counter
+    case 'GRANT_JAUNT_CRYSTAL': {
       return {
         ...state,
-        player: {
-          ...state.player,
-          jauntRechargeCounter: newCounter,
-        },
+        player: grantJauntCrystalToPlayer(state.player),
       }
     }
 
@@ -176,4 +159,25 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
     default:
       return null
   }
+}
+
+export function jauntExecutionActions(
+  player: GameState['player'],
+  targetPosition: Position
+): any[] {
+  const actions: any[] = [{ type: 'EXECUTE_JAUNT', payload: { targetPosition } }]
+  if (!player.jauntUnlocked || !player.isJauntArmed || player.jauntCrystalCharges !== 1) {
+    return actions
+  }
+  actions.push({
+    type: 'ADD_COMBAT_LOG',
+    payload: { message: 'The Jaunt Crystal is burned up, it dissolves in your hand' },
+  })
+  if (player.jauntCrystalReserve > 0) {
+    actions.push({
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: 'A fresh crystal ignites in your grasp' },
+    })
+  }
+  return actions
 }

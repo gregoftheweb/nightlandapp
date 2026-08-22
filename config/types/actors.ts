@@ -146,8 +146,8 @@ export interface Player {
   hideActive: boolean // Whether hide is currently active
   hideRechargeProgressTurns: number // Progress toward next charge (0-2)
   // Jaunt ability state (granted by defeating Jaunt Daemon in jaunt-cave)
-  canJaunt: boolean // Whether the jaunt ability has been unlocked
-  jauntCharges: number // Current charges (0-3)
-  jauntRechargeCounter: number // Progress toward next charge (0-19 turns)
+  jauntUnlocked: boolean // Whether the jaunt ability has been unlocked
+  jauntCrystalCharges: number // Remaining charges in the active crystal (0-5)
+  jauntCrystalReserve: number // Full unused crystals waiting in reserve
   isJauntArmed: boolean // Whether jaunt is currently armed/ready to target
 }

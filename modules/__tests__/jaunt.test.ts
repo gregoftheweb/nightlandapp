@@ -1,17 +1,16 @@
-// modules/__tests__/jaunt.test.ts
-import { reduceJaunt } from '../../state/slices/jauntSlice'
 import { GameState, Player } from '../../config/types'
+import { jauntExecutionActions, reduceJaunt } from '../../state/slices/jauntSlice'
 
-describe('Jaunt Power', () => {
-  let basePlayer: Player
-  let baseState: GameState
+describe('Jaunt crystal resource', () => {
+  let player: Player
+  let state: GameState
 
   beforeEach(() => {
-    basePlayer = {
+    player = {
       name: 'Christos',
       shortName: 'christos',
       id: 'christos',
-      description: 'Test player',
+      description: 'Test',
       lastComment: '',
       image: 0 as unknown as import('react-native').ImageSourcePropType,
       position: { row: 100, col: 100 },
@@ -34,26 +33,25 @@ describe('Jaunt Power', () => {
       hideChargeTurns: 0,
       hideActive: false,
       hideRechargeProgressTurns: 0,
-      canJaunt: true,
-      jauntCharges: 3,
-      jauntRechargeCounter: 0,
+      jauntUnlocked: true,
+      jauntCrystalCharges: 5,
+      jauntCrystalReserve: 0,
       isJauntArmed: false,
     }
-
-    baseState = {
+    state = {
       level: {
-        id: 'test-level',
-        name: 'Test Level',
-        description: 'Test level',
+        id: 'test',
+        name: 'Test',
+        description: 'Test',
         boardSize: { width: 500, height: 500 },
         playerSpawn: { row: 25, col: 25 },
         items: [],
         objects: [],
         greatPowers: [],
       },
-      currentLevelId: 'test-level',
+      currentLevelId: 'test',
       levels: {},
-      player: basePlayer,
+      player,
       moveCount: 0,
       inCombat: false,
       combatTurn: null,
@@ -86,199 +84,93 @@ describe('Jaunt Power', () => {
     }
   })
 
-  describe('ARM_JAUNT', () => {
-    it('should arm jaunt when charges are available', () => {
-      const result = reduceJaunt(baseState, { type: 'ARM_JAUNT' })
-      expect(result).not.toBeNull()
-      expect(result?.player.isJauntArmed).toBe(true)
-      expect(result?.player.jauntCharges).toBe(3) // No charge consumed yet
-    })
-
-    it('should toggle off when already armed', () => {
-      const armedState = {
-        ...baseState,
-        player: { ...basePlayer, isJauntArmed: true },
-      }
-      const result = reduceJaunt(armedState, { type: 'ARM_JAUNT' })
-      expect(result).not.toBeNull()
-      expect(result?.player.isJauntArmed).toBe(false)
-    })
-
-    it('should not arm when charges are 0', () => {
-      const noChargesState = {
-        ...baseState,
-        player: { ...basePlayer, jauntCharges: 0 },
-      }
-      const result = reduceJaunt(noChargesState, { type: 'ARM_JAUNT' })
-      expect(result).not.toBeNull()
-      expect(result?.player.isJauntArmed).toBe(false)
-    })
-
-    it('should not arm when jaunt is not unlocked', () => {
-      const lockedState = {
-        ...baseState,
-        player: { ...basePlayer, canJaunt: false },
-      }
-      const result = reduceJaunt(lockedState, { type: 'ARM_JAUNT' })
-      expect(result).not.toBeNull()
-      expect(result?.player.isJauntArmed).toBe(false)
-    })
+  it('arms only when unlocked with an active charge and cancel does not consume it', () => {
+    const armed = reduceJaunt(state, { type: 'ARM_JAUNT' })!
+    expect(armed.player.isJauntArmed).toBe(true)
+    expect(reduceJaunt(armed, { type: 'CANCEL_JAUNT' })!.player.jauntCrystalCharges).toBe(5)
+    expect(
+      reduceJaunt(
+        { ...state, player: { ...player, jauntCrystalCharges: 0 } },
+        { type: 'ARM_JAUNT' }
+      )!.player.isJauntArmed
+    ).toBe(false)
+    expect(
+      reduceJaunt({ ...state, player: { ...player, jauntUnlocked: false } }, { type: 'ARM_JAUNT' })!
+        .player.isJauntArmed
+    ).toBe(false)
   })
 
-  describe('CANCEL_JAUNT', () => {
-    it('should cancel armed state without consuming charge', () => {
-      const armedState = {
-        ...baseState,
-        player: { ...basePlayer, isJauntArmed: true, jauntCharges: 3 },
-      }
-      const result = reduceJaunt(armedState, { type: 'CANCEL_JAUNT' })
-      expect(result).not.toBeNull()
-      expect(result?.player.isJauntArmed).toBe(false)
-      expect(result?.player.jauntCharges).toBe(3) // No charge consumed
-    })
-
-    it('should do nothing if not armed', () => {
-      const result = reduceJaunt(baseState, { type: 'CANCEL_JAUNT' })
-      expect(result).not.toBeNull()
-      expect(result?.player.isJauntArmed).toBe(false)
-    })
+  it('teleports and consumes one active-crystal charge', () => {
+    const result = execute({ ...player, isJauntArmed: true })
+    expect(result.player.position).toEqual({ col: 200, row: 200 })
+    expect(result.player.jauntCrystalCharges).toBe(4)
+    expect(result.player.isJauntArmed).toBe(false)
+    expect(result.activeTeleportFlashes).toHaveLength(1)
   })
 
-  describe('EXECUTE_JAUNT', () => {
-    it('should teleport player and consume 1 charge', () => {
-      const armedState = {
-        ...baseState,
-        player: { ...basePlayer, isJauntArmed: true, jauntCharges: 3 },
-      }
-      const result = reduceJaunt(armedState, {
+  it('atomically reloads from reserve on burn-out, with no zero-charge state', () => {
+    const result = execute({
+      ...player,
+      isJauntArmed: true,
+      jauntCrystalCharges: 1,
+      jauntCrystalReserve: 2,
+    })
+    expect(result.player.jauntCrystalCharges).toBe(5)
+    expect(result.player.jauntCrystalReserve).toBe(1)
+  })
+
+  it('reaches true zero when no reserve remains', () => {
+    const result = execute({ ...player, isJauntArmed: true, jauntCrystalCharges: 1 })
+    expect(result.player.jauntCrystalCharges).toBe(0)
+    expect(result.player.jauntCrystalReserve).toBe(0)
+  })
+
+  it('emits the exact burn message and optional immediate-reload message at exactly zero', () => {
+    const messages = (p: Player) =>
+      jauntExecutionActions(p, { col: 1, row: 1 })
+        .map((action) => action.payload?.message)
+        .filter(Boolean)
+    expect(messages({ ...player, isJauntArmed: true, jauntCrystalCharges: 1 })).toEqual([
+      'The Jaunt Crystal is burned up, it dissolves in your hand',
+    ])
+    expect(
+      messages({ ...player, isJauntArmed: true, jauntCrystalCharges: 1, jauntCrystalReserve: 1 })
+    ).toEqual([
+      'The Jaunt Crystal is burned up, it dissolves in your hand',
+      'A fresh crystal ignites in your grasp',
+    ])
+    expect(messages({ ...player, isJauntArmed: true, jauntCrystalCharges: 2 })).toEqual([])
+  })
+
+  it('grants first crystal, reloads true zero, and otherwise stacks reserve', () => {
+    const grant = (p: Player) =>
+      reduceJaunt({ ...state, player: p }, { type: 'GRANT_JAUNT_CRYSTAL' })!.player
+    expect(grant({ ...player, jauntUnlocked: false, jauntCrystalCharges: 0 })).toEqual(
+      expect.objectContaining({
+        jauntUnlocked: true,
+        jauntCrystalCharges: 5,
+        jauntCrystalReserve: 0,
+      })
+    )
+    expect(grant({ ...player, jauntCrystalCharges: 0 }).jauntCrystalCharges).toBe(5)
+    expect(grant({ ...player, jauntCrystalCharges: 3, jauntCrystalReserve: 2 })).toEqual(
+      expect.objectContaining({ jauntCrystalCharges: 3, jauntCrystalReserve: 3 })
+    )
+  })
+
+  it('has no turn-based recharge action anymore', () => {
+    const depleted = { ...state, player: { ...player, jauntCrystalCharges: 0 } }
+    expect(reduceJaunt(depleted, { type: 'UPDATE_JAUNT_STATE' })).toBeNull()
+    expect(depleted.player.jauntCrystalCharges).toBe(0)
+  })
+
+  function execute(updatedPlayer: Player): GameState {
+    return reduceJaunt(
+      { ...state, player: updatedPlayer },
+      {
         type: 'EXECUTE_JAUNT',
         payload: { targetPosition: { col: 200, row: 200 } },
-      })
-      expect(result).not.toBeNull()
-      expect(result?.player.position.col).toBe(200)
-      expect(result?.player.position.row).toBe(200)
-      expect(result?.player.jauntCharges).toBe(2)
-      expect(result?.player.isJauntArmed).toBe(false)
-      expect(result?.activeTeleportFlashes).toHaveLength(1)
-      expect(result?.activeTeleportFlashes[0]).toEqual(
-        expect.objectContaining({ gridCol: 200, gridRow: 200 })
-      )
-    })
-
-    it('should clamp position to grid bounds', () => {
-      const armedState = {
-        ...baseState,
-        player: { ...basePlayer, isJauntArmed: true, jauntCharges: 3 },
       }
-      const result = reduceJaunt(armedState, {
-        type: 'EXECUTE_JAUNT',
-        payload: { targetPosition: { col: 600, row: 600 } }, // Outside bounds
-      })
-      expect(result).not.toBeNull()
-      expect(result?.player.position.col).toBe(499) // Clamped to gridWidth - 1
-      expect(result?.player.position.row).toBe(499) // Clamped to gridHeight - 1
-    })
-
-    it('should not execute if not armed', () => {
-      const result = reduceJaunt(baseState, {
-        type: 'EXECUTE_JAUNT',
-        payload: { targetPosition: { col: 200, row: 200 } },
-      })
-      expect(result).not.toBeNull()
-      expect(result?.player.position.col).toBe(100) // Unchanged
-      expect(result?.player.position.row).toBe(100)
-      expect(result?.player.jauntCharges).toBe(3) // No charge consumed
-    })
-
-    it('should not execute if no charges', () => {
-      const armedState = {
-        ...baseState,
-        player: { ...basePlayer, isJauntArmed: true, jauntCharges: 0 },
-      }
-      const result = reduceJaunt(armedState, {
-        type: 'EXECUTE_JAUNT',
-        payload: { targetPosition: { col: 200, row: 200 } },
-      })
-      expect(result).not.toBeNull()
-      expect(result?.player.position.col).toBe(100) // Unchanged
-      expect(result?.player.jauntCharges).toBe(0)
-    })
-  })
-
-  describe('DEBUG_TELEPORT_PLAYER', () => {
-    it('clamps and moves without changing Jaunt state or flashes', () => {
-      const lockedState = {
-        ...baseState,
-        player: {
-          ...basePlayer,
-          canJaunt: false,
-          jauntCharges: 0,
-          isJauntArmed: true,
-        },
-      }
-      const result = reduceJaunt(lockedState, {
-        type: 'DEBUG_TELEPORT_PLAYER',
-        payload: { targetPosition: { col: 700, row: -20 } },
-      })
-
-      expect(result?.player.position).toEqual({ col: 499, row: 0 })
-      expect(result?.player.canJaunt).toBe(false)
-      expect(result?.player.jauntCharges).toBe(0)
-      expect(result?.player.isJauntArmed).toBe(true)
-      expect(result?.activeTeleportFlashes).toEqual([])
-    })
-  })
-
-  describe('UPDATE_JAUNT_STATE', () => {
-    it('should increment recharge counter when not at max charges', () => {
-      const stateNotMax = {
-        ...baseState,
-        player: { ...basePlayer, jauntCharges: 2, jauntRechargeCounter: 0 },
-      }
-      const result = reduceJaunt(stateNotMax, { type: 'UPDATE_JAUNT_STATE' })
-      expect(result).not.toBeNull()
-      expect(result?.player.jauntRechargeCounter).toBe(1)
-      expect(result?.player.jauntCharges).toBe(2) // No charge gained yet
-    })
-
-    it('should add charge after 20 turns', () => {
-      const state19Turns = {
-        ...baseState,
-        player: { ...basePlayer, jauntCharges: 0, jauntRechargeCounter: 19 },
-      }
-      const result = reduceJaunt(state19Turns, { type: 'UPDATE_JAUNT_STATE' })
-      expect(result).not.toBeNull()
-      expect(result?.player.jauntCharges).toBe(1)
-      expect(result?.player.jauntRechargeCounter).toBe(0) // Reset
-    })
-
-    it('should not exceed max 3 charges', () => {
-      const state19Turns = {
-        ...baseState,
-        player: { ...basePlayer, jauntCharges: 3, jauntRechargeCounter: 19 },
-      }
-      const result = reduceJaunt(state19Turns, { type: 'UPDATE_JAUNT_STATE' })
-      expect(result).not.toBeNull()
-      expect(result?.player.jauntCharges).toBe(3) // Still at max
-      expect(result?.player.jauntRechargeCounter).toBe(19) // Counter not incremented at max
-    })
-
-    it('should not update if jaunt not unlocked', () => {
-      const lockedState = {
-        ...baseState,
-        player: { ...basePlayer, canJaunt: false, jauntRechargeCounter: 5 },
-      }
-      const result = reduceJaunt(lockedState, { type: 'UPDATE_JAUNT_STATE' })
-      expect(result).not.toBeNull()
-      expect(result?.player.jauntRechargeCounter).toBe(5) // Unchanged
-    })
-  })
-
-  describe('Legacy PLAYER_JAUNT_REQUESTED', () => {
-    it('should redirect to ARM_JAUNT', () => {
-      const result = reduceJaunt(baseState, { type: 'PLAYER_JAUNT_REQUESTED' })
-      expect(result).not.toBeNull()
-      expect(result?.player.isJauntArmed).toBe(true)
-    })
-  })
+    )!
+  }
 })

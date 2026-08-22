@@ -33,6 +33,7 @@ import {
   checkCombatEnd,
 } from '../../modules/combat'
 import { enterSubGame } from '../../modules/subGames'
+import { jauntExecutionActions } from '../../state/slices/jauntSlice'
 import { calculateGameViewport } from '../../modules/viewport'
 import {
   findNearestMonsterInEquippedRangedWeaponRange,
@@ -1083,7 +1084,7 @@ export default function Game() {
   ])
 
   const handleJauntPress = useCallback(() => {
-    if (!state.player.canJaunt) {
+    if (!state.player.jauntUnlocked) {
       if (__DEV__) {
         console.log('🌀 Jaunt ability not unlocked')
       }
@@ -1096,7 +1097,7 @@ export default function Game() {
 
     // Dispatch ARM_JAUNT which handles toggle logic
     dispatch({ type: 'ARM_JAUNT' })
-  }, [state.player.canJaunt, dispatch])
+  }, [state.player.jauntUnlocked, dispatch])
 
   const handleJauntTargetTap = useCallback(
     (event: any) => {
@@ -1120,14 +1121,9 @@ export default function Game() {
       }
 
       // Execute the jaunt teleport
-      dispatch({
-        type: 'EXECUTE_JAUNT',
-        payload: {
-          targetPosition: { col: tapCol, row: tapRow },
-        },
-      })
+      jauntExecutionActions(state.player, { col: tapCol, row: tapRow }).forEach(dispatch)
     },
-    [state.player.isJauntArmed, calculateTapPosition, dispatch, isTapInViewport]
+    [state.player, calculateTapPosition, dispatch, isTapInViewport]
   )
 
   const handleTurnPress = useCallback(() => {
@@ -1242,8 +1238,9 @@ export default function Game() {
           hideUnlocked={state.player.hideUnlocked}
           hideChargeTurns={state.player.hideChargeTurns}
           hideActive={state.player.hideActive}
-          canJaunt={state.player.canJaunt}
-          jauntCharges={state.player.jauntCharges}
+          jauntUnlocked={state.player.jauntUnlocked}
+          jauntCrystalCharges={state.player.jauntCrystalCharges}
+          jauntCrystalReserve={state.player.jauntCrystalReserve}
           isJauntArmed={state.player.isJauntArmed}
           inCombat={state.inCombat}
         />
