@@ -1,16 +1,15 @@
-// app/sub-games/jaunt-cave/screen1_5.tsx
+// Shared timed-encounter rockfall screen
 // Screen 1.5: Rockfall interstitial screen for the jaunt-cave sub-game
 import React, { useState, useRef, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native'
 import { useRouter } from 'expo-router'
-import { BackgroundImage } from '../_shared/BackgroundImage'
-import { BottomActionBar } from '../_shared/BottomActionBar'
-import { ReadableTextBox } from '../_shared/ReadableTextBox'
-import { subGameTheme } from '../_shared/subGameTheme'
+import { BackgroundImage } from '../BackgroundImage'
+import { BottomActionBar } from '../BottomActionBar'
+import { ReadableTextBox } from '../ReadableTextBox'
+import { subGameTheme } from '../subGameTheme'
+import type { TimedEncounterConfig } from './types'
 
-const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen2.webp')
-
-export default function JauntCaveScreen1_5() {
+export default function TimedEncounterRockfall({ config }: { config: TimedEncounterConfig }) {
   const router = useRouter()
   const [showContent, setShowContent] = useState(false)
   const shake = useRef(new Animated.Value(0)).current
@@ -50,19 +49,18 @@ export default function JauntCaveScreen1_5() {
     if (__DEV__) {
       console.log('[Jaunt Cave] Continuing to screen2 from rockfall')
     }
-    router.push('/sub-games/jaunt-cave/screen2' as any)
+    router.push(`/sub-games/jaunt-cave/${config.instanceId}/battle` as any)
   }
 
   return (
     <View style={styles.rootContainer}>
       <Animated.View style={[styles.fullScreen, { transform: [{ translateX: shake }] }]}>
-        <BackgroundImage source={BACKGROUND}>
+        <BackgroundImage source={config.presentation.battleBackground}>
           <View style={styles.container}>
             <View style={styles.contentArea}>
               {showContent && (
                 <ReadableTextBox textStyle={styles.narrativeText}>
-                  There is a rockfall in the cave! Christos is TRAPPED!{'\n\n'}
-                  In here his destiny becomes his DOOM!
+                  {config.narrative.rockfallText}
                 </ReadableTextBox>
               )}
             </View>
@@ -75,7 +73,7 @@ export default function JauntCaveScreen1_5() {
                     onPress={handleContinue}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.buttonText}>He meets his doom</Text>
+                    <Text style={styles.buttonText}>{config.narrative.rockfallContinueLabel}</Text>
                   </TouchableOpacity>
                 </View>
               </BottomActionBar>

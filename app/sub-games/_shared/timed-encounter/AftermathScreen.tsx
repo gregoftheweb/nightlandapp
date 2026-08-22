@@ -1,30 +1,35 @@
-// app/sub-games/jaunt-cave/screen5.tsx
+// Shared timed-encounter aftermath screen
 // Screen 5: Aftermath screen - shown when re-entering Jaunt Cave after winning
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { exitSubGame } from '@modules/subGames'
-import { BackgroundImage } from '../_shared/BackgroundImage'
-import { BottomActionBar } from '../_shared/BottomActionBar'
-import { ReadableTextBox } from '../_shared/ReadableTextBox'
-import { subGameTheme } from '../_shared/subGameTheme'
+import { BackgroundImage } from '../BackgroundImage'
+import { BottomActionBar } from '../BottomActionBar'
+import { ReadableTextBox } from '../ReadableTextBox'
+import { subGameTheme } from '../subGameTheme'
+import type { TimedEncounterConfig } from './types'
+import type { SubGameLifecycleController } from '../lifecycle'
 
-const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen5.webp')
-
-export default function JauntCaveScreen5() {
+export default function TimedEncounterAftermath({
+  config,
+  lifecycle,
+}: {
+  config: TimedEncounterConfig
+  lifecycle: SubGameLifecycleController
+}) {
   const handleReturnToNightLand = () => {
     if (__DEV__) {
       console.log('[Jaunt Cave Screen5] Returning to Night Land from aftermath screen')
     }
     // Use replace to prevent Back button from returning to Jaunt Cave
-    exitSubGame({ completed: true })
+    void lifecycle.completeSubGame()
   }
 
   return (
-    <BackgroundImage source={BACKGROUND}>
+    <BackgroundImage source={config.presentation.aftermathBackground}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
           <ReadableTextBox textStyle={styles.descriptionText}>
-            the cave is dark, the daemon is dead. There is nothing here now for Christos
+            {config.narrative.aftermathText}
           </ReadableTextBox>
         </View>
 
@@ -35,7 +40,7 @@ export default function JauntCaveScreen5() {
               onPress={handleReturnToNightLand}
               activeOpacity={0.7}
             >
-              <Text style={styles.buttonText}>Return to the Night Land</Text>
+              <Text style={styles.buttonText}>{config.narrative.returnLabel}</Text>
             </TouchableOpacity>
           </View>
         </BottomActionBar>

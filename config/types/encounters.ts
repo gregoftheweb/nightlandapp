@@ -2,7 +2,7 @@ import type { SubGameInstanceDefinition } from '../subGames'
 import type { Effect } from './effects'
 import type { ObjectCategory } from './primitives'
 
-export type RewardKind = 'item' | 'weapon' | 'effect' | 'ability'
+export type RewardKind = 'item' | 'weapon' | 'effect' | 'ability' | 'jaunt-crystal-grant'
 
 export interface EncounterEntranceContent {
   shortName: string

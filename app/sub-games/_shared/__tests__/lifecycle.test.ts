@@ -162,6 +162,20 @@ describe('sub-game lifecycle controller', () => {
     })
   })
 
+  it('grants one Jaunt crystal per completed instance without creating a waypoint', async () => {
+    const config = {
+      ...baseConfig,
+      reward: { kind: 'jaunt-crystal-grant', grantEvent: 'Victory confirmed', idempotent: true },
+    } satisfies SubGameLifecycleConfig
+    const harness = makeHarness(config)
+    await Promise.all([harness.controller.completeSubGame(), harness.controller.completeSubGame()])
+    const actions = harness.dispatch.mock.calls.map(([action]) => action)
+    expect(actions.filter((action) => action.type === 'GRANT_JAUNT_CRYSTAL')).toHaveLength(1)
+    expect(harness.getState().player.jauntUnlocked).toBe(true)
+    expect(harness.getState().player.jauntCrystalCharges).toBe(5)
+    expect(harness.saveWaypoint).not.toHaveBeenCalled()
+  })
+
   it('death failure dispatches GAME_OVER without a normal RPG return', async () => {
     const config = {
       ...baseConfig,
@@ -169,7 +183,7 @@ describe('sub-game lifecycle controller', () => {
         exit: 'death',
         message: 'The test horror prevailed.',
         killerName: 'Test Horror',
-        suppressDeathDialog: true,
+        suppressDeathDialog: false,
         deathRoute: '/death',
       },
     } satisfies SubGameLifecycleConfig
@@ -177,7 +191,14 @@ describe('sub-game lifecycle controller', () => {
 
     await harness.controller.failSubGame()
 
-    expect(harness.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'GAME_OVER' }))
+    expect(harness.dispatch).toHaveBeenCalledWith({
+      type: 'GAME_OVER',
+      payload: {
+        message: 'The test horror prevailed.',
+        killerName: 'Test Horror',
+        suppressDeathDialog: false,
+      },
+    })
     expect(harness.getState().gameOver).toBe(true)
     expect(harness.signalRpgResume).not.toHaveBeenCalled()
     expect(harness.exit).not.toHaveBeenCalled()

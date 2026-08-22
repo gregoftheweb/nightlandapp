@@ -58,7 +58,7 @@ describe('sub-game instance registry', () => {
     ['aerowreckage-puzzle', '/sub-games/aerowreckage-puzzle/entry', 'one-off'],
     ['deep-silo', '/sub-games/deep-silo/screen1', 'one-off'],
     ['hermit-hollow', '/sub-games/hermit-hollow/main', 'dialogue'],
-    ['jaunt-cave', '/sub-games/jaunt-cave/main', 'one-off'],
+    ['jaunt-cave', '/sub-games/jaunt-cave/jaunt-cave', 'timed-encounter'],
   ] as const)(
     'resolves %s with route, shape, and lifecycle config',
     (instanceId, route, shapeId) => {

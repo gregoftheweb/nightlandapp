@@ -4,8 +4,13 @@ import { DaemonState, PositionKey } from './DaemonSprite'
 
 export { DaemonState }
 
-const rollToHit = (): boolean => Math.random() < 0.8
-const rollDamage = (): number => Math.floor(Math.random() * 16) + 10
+export const DAEMON_ATTACK_CHANCE = 0.6
+export const DAEMON_HIT_CHANCE = 0.8
+export const DAEMON_DAMAGE_MIN = 10
+export const DAEMON_DAMAGE_RANGE = 16
+
+const rollToHit = (): boolean => Math.random() < DAEMON_HIT_CHANCE
+const rollDamage = (): number => Math.floor(Math.random() * DAEMON_DAMAGE_RANGE) + DAEMON_DAMAGE_MIN
 
 export const BATTLE_TIMINGS = {
   RESTING_MIN: 3000,
@@ -108,6 +113,8 @@ export interface UseBattleStateProps {
   currentPlayerHP: number
   router: any
   isFocused?: boolean
+  onPlayerDeath?: () => void
+  onDaemonDeath?: () => void
 }
 
 export interface UseBattleStateReturn {
@@ -134,6 +141,8 @@ export function useBattleState({
   currentPlayerHP,
   router,
   isFocused = true,
+  onPlayerDeath,
+  onDaemonDeath,
 }: UseBattleStateProps): UseBattleStateReturn {
   const [view, viewDispatch] = useReducer(reduceBattleView, {
     daemonState: DaemonState.RESTING,
@@ -231,14 +240,6 @@ export function useBattleState({
     if (newHP > 0) return false
 
     terminalRef.current = 'player-dead'
-    dispatch({
-      type: 'GAME_OVER',
-      payload: {
-        message: 'Christos was killed by the Jaunt Daemon.',
-        killerName: 'Jaunt Daemon',
-        suppressDeathDialog: true,
-      },
-    })
     return true
   }
 
@@ -247,7 +248,7 @@ export function useBattleState({
 
     runningRef.current = true
     cycleRef.current = {
-      willAttack: Math.random() < 0.6,
+      willAttack: Math.random() < DAEMON_ATTACK_CHANCE,
       nextPosition: getNextPosition(),
     }
     viewDispatch({ type: 'RESET_CYCLE' })
@@ -325,10 +326,10 @@ export function useBattleState({
         startCycleRef.current()
         return
       case 'navigate-player-death':
-        router.replace('/sub-games/jaunt-cave/screen4' as any)
+        onPlayerDeath?.()
         return
       case 'navigate-daemon-death':
-        router.replace('/sub-games/jaunt-cave/screen3')
+        onDaemonDeath?.()
     }
   }
 

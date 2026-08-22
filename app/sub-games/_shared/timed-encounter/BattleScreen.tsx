@@ -2,23 +2,23 @@ import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { View, StyleSheet, Animated } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useIsFocused } from '@react-navigation/native'
-import { BackgroundImage } from '../_shared/BackgroundImage'
-import { BottomActionBar } from '../_shared/BottomActionBar'
+import { BackgroundImage } from '../BackgroundImage'
+import { BottomActionBar } from '../BottomActionBar'
 import { useGameContext } from '@context/GameContext'
-import { BattleHUD } from './_components/BattleHUD'
-import { BattleHealthBars } from './_components/BattleHealthBars'
-import { WeaponsInventoryModal } from './_components/WeaponsInventoryModal'
-import { DaemonSprite } from './_components/DaemonSprite'
-import { FeedbackMessage } from './_components/FeedbackMessage'
-import { ProjectileEffect } from './_components/ProjectileEffect'
-import { HitIndicator } from './_components/HitIndicator'
-import { BlockShield } from './_components/BlockShield'
-import { useBattleState } from './_components/useBattleState'
-import { useWeapon } from './_components/useWeapon'
-import { useArenaLayout } from './_components/useArenaLayout'
+import { BattleHUD } from '../../jaunt-cave/_components/BattleHUD'
+import { BattleHealthBars } from '../../jaunt-cave/_components/BattleHealthBars'
+import { WeaponsInventoryModal } from '../../jaunt-cave/_components/WeaponsInventoryModal'
+import { DaemonSprite } from '../../jaunt-cave/_components/DaemonSprite'
+import { FeedbackMessage } from '../../jaunt-cave/_components/FeedbackMessage'
+import { ProjectileEffect } from '../../jaunt-cave/_components/ProjectileEffect'
+import { HitIndicator } from '../../jaunt-cave/_components/HitIndicator'
+import { BlockShield } from '../../jaunt-cave/_components/BlockShield'
+import { useBattleState } from '../../jaunt-cave/_components/useBattleState'
+import { useWeapon } from '../../jaunt-cave/_components/useWeapon'
+import { useArenaLayout } from '../../jaunt-cave/_components/useArenaLayout'
 
-const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen2.webp')
-const SUB_GAME_ID = 'jaunt-cave'
+import type { TimedEncounterConfig } from './types'
+import type { SubGameLifecycleController } from '../lifecycle'
 
 // Projectile duration constant (from ProjectileEffect component)
 const PROJECTILE_DURATION = 250 // ms
@@ -53,7 +53,11 @@ interface JauntCaveScreen2Props {
  *
  * @param {JauntCaveScreen2Props} props - Component props
  */
-const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
+const JauntCaveScreen2: React.FC<
+  JauntCaveScreen2Props & { config: TimedEncounterConfig; lifecycle: SubGameLifecycleController }
+> = ({
+  config,
+  lifecycle,
   daemonHP: initialDaemonHP = 100,
   maxDaemonHP = 100,
   onDaemonHit,
@@ -66,7 +70,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   const { state, dispatch } = useGameContext()
 
   // Extract completion status for use in effect dependency
-  const isCompleted = state.subGamesCompleted?.[SUB_GAME_ID] ?? false
+  const isCompleted = state.subGamesCompleted?.[config.instanceId] ?? false
 
   // Hardening: Redirect to screen5 if jaunt-cave already completed
   useEffect(() => {
@@ -74,9 +78,10 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
       if (__DEV__) {
         console.log('[Jaunt Cave Screen2] Already completed - redirecting to screen5')
       }
-      router.replace('/sub-games/jaunt-cave/screen5' as any)
+      const route = lifecycle.resolveEntryRoute()
+      if (route) router.replace(route as any)
     }
-  }, [router, isCompleted])
+  }, [router, isCompleted, lifecycle])
 
   // Get real Christos HP from game state
   const christosHP = state.player.currentHP
@@ -117,6 +122,9 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
     currentPlayerHP: state.player.currentHP,
     router,
     isFocused,
+    onPlayerDeath: () => void lifecycle.failSubGame(),
+    onDaemonDeath: () =>
+      router.replace(`/sub-games/jaunt-cave/${config.instanceId}/victory` as any),
   })
 
   const {
@@ -134,7 +142,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
 
   // Arena layout and positioning - calculates daemon position and arena dimensions
   const { arenaSize, bgRect, daemonX, daemonY, handleArenaLayout } = useArenaLayout({
-    backgroundImage: BACKGROUND,
+    backgroundImage: config.presentation.battleBackground,
     currentPosition,
   })
 
@@ -189,7 +197,7 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
   }, [battleState])
 
   return (
-    <BackgroundImage source={BACKGROUND} overlayOpacity={0}>
+    <BackgroundImage source={config.presentation.battleBackground} overlayOpacity={0}>
       <View style={styles.container} onLayout={handleArenaLayout}>
         {/* Shake container for attack effect */}
         <Animated.View style={[styles.gameContainer, { transform: [{ translateX: shakeAnim }] }]}>
@@ -207,6 +215,10 @@ const JauntCaveScreen2: React.FC<JauntCaveScreen2Props> = ({
               isVulnerable={isVulnerable}
               isAttacking={isAttacking}
               onDaemonTap={handleDaemonTap}
+              sprites={config.presentation.daemonSprites}
+              prep1FizzleColor={config.presentation.prep1FizzleColor}
+              prep2FizzleColor={config.presentation.prep2FizzleColor}
+              vulnerableGlowColor={config.presentation.vulnerableGlowColor}
             />
           )}
         </Animated.View>

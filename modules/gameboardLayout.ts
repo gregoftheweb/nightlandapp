@@ -1,4 +1,5 @@
 import { parsedWordGridContentResult } from '@/app/sub-games/_shared/word-grid/contentCatalog'
+import { parsedTimedEncounterContentResult } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
 import { createSubGameEntranceInstance } from '@config/levelHelpers'
 import { getSubGameDefinition } from '@config/subGames'
@@ -161,6 +162,14 @@ export const REAL_PARSED_CONTENT_CATALOGS: ParsedContentCatalogsByShape = {
       }
       const parsed = parsedWordGridContentResult.value[instanceId]
       if (!parsed) throw new Error(`Unknown word-grid encounter '${instanceId}'`)
+      return parsed.definition
+    }
+    if (shapeId === 'timed-encounter') {
+      if (!parsedTimedEncounterContentResult.success) {
+        throw new Error('Parsed timed-encounter catalog is invalid')
+      }
+      const parsed = parsedTimedEncounterContentResult.value[instanceId]
+      if (!parsed) throw new Error(`Unknown timed encounter '${instanceId}'`)
       return parsed.definition
     }
     const definition = getSubGameDefinition(instanceId)

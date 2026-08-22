@@ -19,11 +19,19 @@ const DEFAULT_BOLT_COLOR = '#990000' // Fallback color when no weapon equipped
 // Values are percentages (0.0 to 1.0) of arena width/height
 // Adjust these values to fine-tune where projectiles hit
 // They are initially set to match daemon spawn positions but can be adjusted as needed
-const ZAP_TARGETS = {
+export const ZAP_TARGETS = {
   left: { x: 0.2, y: 0.335 }, // Left target position (moved up from 0.37)
   center: { x: 0.5, y: 0.345 }, // Center target position (moved up from 0.38)
   right: { x: 0.8, y: 0.345 }, // Right target position (moved up from 0.38)
 } as const
+
+export function timedEncounterHitGate(
+  daemonState: DaemonState,
+  daemonPosition: 'left' | 'center' | 'right',
+  target: 'left' | 'center' | 'right'
+): boolean {
+  return daemonState === DaemonState.LANDED && daemonPosition === target
+}
 
 export interface UseWeaponProps {
   gameState: GameState
@@ -195,7 +203,7 @@ export function useWeapon(props: UseWeaponProps): UseWeaponReturn {
           // Determine if this is a hit or block
           const daemonState = getDaemonState()
           const daemonPosition = getCurrentDaemonPosition()
-          const isHit = daemonState === DaemonState.LANDED && daemonPosition === target
+          const isHit = timedEncounterHitGate(daemonState, daemonPosition, target)
 
           // Show indicator at target location
           setHitIndicator({

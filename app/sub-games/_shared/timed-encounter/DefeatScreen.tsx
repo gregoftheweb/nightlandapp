@@ -1,40 +1,44 @@
-// app/sub-games/jaunt-cave/screen4.tsx
+// Shared timed-encounter defeat screen
 // Screen 4: Death screen for the jaunt-cave sub-game
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { useRouter } from 'expo-router'
-import { BackgroundImage } from '../_shared/BackgroundImage'
-import { BottomActionBar } from '../_shared/BottomActionBar'
-import { ReadableTextBox } from '../_shared/ReadableTextBox'
-import { subGameTheme } from '../_shared/subGameTheme'
+import { BackgroundImage } from '../BackgroundImage'
+import { BottomActionBar } from '../BottomActionBar'
+import { ReadableTextBox } from '../ReadableTextBox'
+import { subGameTheme } from '../subGameTheme'
+import type { TimedEncounterConfig } from './types'
+import type { SubGameLifecycleController } from '../lifecycle'
 
-const BACKGROUND = require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen4.webp')
-
-export default function JauntCaveScreen4() {
-  const router = useRouter()
-
+export default function TimedEncounterDefeat({
+  config,
+  lifecycle,
+}: {
+  config: TimedEncounterConfig
+  lifecycle: SubGameLifecycleController
+}) {
   const handleGoToDeath = () => {
     if (__DEV__) {
       console.log('[Jaunt Cave] Navigating to main death screen')
     }
-    router.replace('/death')
+    void lifecycle.failSubGame()
   }
 
   return (
-    <BackgroundImage source={BACKGROUND}>
+    <BackgroundImage source={config.presentation.defeatBackground}>
       <View style={styles.container}>
         <View style={styles.contentArea}>
-          <ReadableTextBox textStyle={styles.titleText}>Defeated by the Daemon</ReadableTextBox>
+          <ReadableTextBox textStyle={styles.titleText}>
+            {config.narrative.defeatTitle}
+          </ReadableTextBox>
           <ReadableTextBox textStyle={styles.descriptionText}>
-            The Jaunt Daemon has slain Christos.{'\n\n'}
-            Sophia will weep in sorrow for you, now lost to your doom in the Night Land.
+            {config.narrative.defeatText}
           </ReadableTextBox>
         </View>
 
         <BottomActionBar>
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.button} onPress={handleGoToDeath} activeOpacity={0.7}>
-              <Text style={styles.buttonText}>Return to Night Land</Text>
+              <Text style={styles.buttonText}>{config.narrative.defeatActionLabel}</Text>
             </TouchableOpacity>
           </View>
         </BottomActionBar>

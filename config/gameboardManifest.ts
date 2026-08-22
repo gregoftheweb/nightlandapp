@@ -30,13 +30,6 @@ export const GAMEBOARD_MANIFEST = {
       contentRef: 'aerowreckage-puzzle',
     },
     {
-      slotId: 'jaunt-cave',
-      shapeId: 'one-off',
-      kind: 'range',
-      placement: { minPct: 0.16, maxPct: 0.2 },
-      contentRef: 'jaunt-cave',
-    },
-    {
       slotId: 'deep-silo',
       shapeId: 'one-off',
       kind: 'range',
@@ -49,6 +42,13 @@ export const GAMEBOARD_MANIFEST = {
       kind: 'scattered-group',
       placement: { exclude: ['end'] },
       instances: ['word-tile-crypt-01', 'word-tile-crypt-02'],
+    },
+    {
+      slotId: 'timed-encounters',
+      shapeId: 'timed-encounter',
+      kind: 'scattered-group',
+      placement: { exclude: ['end'] },
+      instances: ['jaunt-cave'],
     },
   ],
 } satisfies GameboardManifest
