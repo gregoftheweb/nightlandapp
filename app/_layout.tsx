@@ -12,6 +12,7 @@ import {
   GameBoardImagePreloader,
   type GameBoardImagePreloadResult,
 } from '../components/startup/GameBoardImagePreloader'
+import { EncounterImagePreloadController } from '../components/preload/EncounterImagePreloadController'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -157,6 +158,7 @@ export default function Layout() {
         />
 
         <GameProvider>
+          <EncounterImagePreloadController />
           <Stack
             screenOptions={{
               headerShown: false,

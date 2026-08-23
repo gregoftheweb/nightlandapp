@@ -13,6 +13,29 @@ import {
   parsedTimedEncounterContentResult,
   TIMED_ENCOUNTER_SHAPE_ADAPTER,
 } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
+import { requestEncounterImagePreload } from '@components/preload/EncounterImagePreloadController'
+import { resolveSubGameImageAssets } from './subGameImageAssets'
+
+let entryAttemptGeneration = 0
+let entryPreloadInFlight = false
+
+function resolveSubGameEntryRoute(instanceId: string): string {
+  if (
+    parsedWordGridContentResult.success &&
+    parsedWordGridContentResult.value[instanceId]?.definition.shapeId === 'word-grid'
+  ) {
+    return WORD_GRID_SHAPE_ADAPTER.routes(instanceId).entry
+  }
+
+  if (
+    parsedTimedEncounterContentResult.success &&
+    parsedTimedEncounterContentResult.value[instanceId]?.definition.shapeId === 'timed-encounter'
+  ) {
+    return TIMED_ENCOUNTER_SHAPE_ADAPTER.routes(instanceId).entry
+  }
+
+  return getSubGameDefinition(instanceId).entryRoute
+}
 
 /**
  * Enter a sub-game by navigating to its intro route from the registry
@@ -20,30 +43,25 @@ import {
  * @param context - Optional context data (e.g., objectId)
  */
 export function enterSubGame(instanceId: string, context?: { objectId?: string }) {
+  if (entryPreloadInFlight) {
+    logIfDev(`⏳ Ignoring repeated sub-game entry while images preload: ${instanceId}`)
+    return
+  }
+
   logIfDev(`🎯 Entering sub-game instance: ${instanceId}`, context)
+  const route = resolveSubGameEntryRoute(instanceId)
+  const assets = resolveSubGameImageAssets(instanceId)
+  const attempt = ++entryAttemptGeneration
+  entryPreloadInFlight = true
 
-  if (
-    parsedWordGridContentResult.success &&
-    parsedWordGridContentResult.value[instanceId]?.definition.shapeId === 'word-grid'
-  ) {
-    router.replace(WORD_GRID_SHAPE_ADAPTER.routes(instanceId).entry as any)
-    return
-  }
-
-  if (
-    parsedTimedEncounterContentResult.success &&
-    parsedTimedEncounterContentResult.value[instanceId]?.definition.shapeId === 'timed-encounter'
-  ) {
-    router.replace(TIMED_ENCOUNTER_SHAPE_ADAPTER.routes(instanceId).entry as any)
-    return
-  }
-
-  // Non-word-grid shapes still use the legacy registry.
-  const definition = getSubGameDefinition(instanceId)
-
-  // Navigate to the sub-game's intro route
-  // Use replace to prevent navigation stack buildup when entering/exiting sub-games
-  router.replace(definition.entryRoute as any)
+  void requestEncounterImagePreload(assets).then((result) => {
+    if (attempt !== entryAttemptGeneration) return
+    entryPreloadInFlight = false
+    if (__DEV__ && result.reason !== 'loaded') {
+      console.warn(`[sub-game preload] Continuing into '${instanceId}'`, result)
+    }
+    router.replace(route as any)
+  })
 }
 
 /**
@@ -53,8 +71,15 @@ export function enterSubGame(instanceId: string, context?: { objectId?: string }
 export function exitSubGame(result?: SubGameResult) {
   logIfDev(`🔙 Exiting sub-game`, result)
 
-  // Navigate back to the game
+  // Invalidate any late preload completion before navigating elsewhere.
+  entryAttemptGeneration += 1
+  entryPreloadInFlight = false
   router.replace('/game')
+}
+
+export function resetSubGameEntryStateForTests() {
+  entryAttemptGeneration += 1
+  entryPreloadInFlight = false
 }
 
 /**
