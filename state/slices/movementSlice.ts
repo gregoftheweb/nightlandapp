@@ -1,6 +1,7 @@
 // state/slices/movementSlice.ts
 import { GameState } from '../../config/types'
 import { logIfDev } from '../../modules/utils'
+import { toIntegerTilePosition } from '../../modules/playerPosition'
 
 export function reduceMovement(state: GameState, action: any): GameState | null {
   switch (action.type) {
@@ -11,9 +12,9 @@ export function reduceMovement(state: GameState, action: any): GameState | null 
       }
       let newPlayerPos
       if (action.payload.position) {
-        newPlayerPos = action.payload.position
+        newPlayerPos = toIntegerTilePosition(action.payload.position)
       } else if (action.payload.direction) {
-        const currentPos = state.player.position
+        const currentPos = toIntegerTilePosition(state.player.position)
         if (!currentPos) {
           if (__DEV__) {
             console.error('Player position is undefined!')
@@ -48,7 +49,7 @@ export function reduceMovement(state: GameState, action: any): GameState | null 
         }
         return state
       }
-      const oldPosition = state.player.position
+      const oldPosition = toIntegerTilePosition(state.player.position)
       const newState = {
         ...state,
         player: {

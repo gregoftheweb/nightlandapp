@@ -27,7 +27,12 @@ interface InventoryProps {
   weapons: GameState['weapons']
   dispatch: GameDispatch
   getGameState: () => GameState
-  showDialog?: (message: string, duration?: number, scrollable?: boolean) => void
+  showDialog?: (
+    message: string,
+    duration?: number,
+    scrollable?: boolean,
+    fontFamily?: string
+  ) => void
 }
 
 function Inventory({
@@ -82,8 +87,8 @@ function Inventory({
       // NOTE: applyItem is a normal function; it is NOT a React hook
       const isReadableMessage =
         item.effects?.some((effect) => effect.type === 'showMessage') ?? false
-      const showItemDialog = (message: string, duration?: number) =>
-        showDialog?.(message, duration, isReadableMessage)
+      const showItemDialog = (message: string, duration?: number, fontFamily?: string) =>
+        showDialog?.(message, duration, isReadableMessage, fontFamily)
       const result = applyItem(item, getGameState(), dispatch, showItemDialog)
 
       if (result.success) {

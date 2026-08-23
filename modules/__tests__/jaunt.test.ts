@@ -1,5 +1,6 @@
 import { GameState, Player } from '../../config/types'
 import { jauntExecutionActions, reduceJaunt } from '../../state/slices/jauntSlice'
+import { reduceMovement } from '../../state/slices/movementSlice'
 
 describe('Jaunt crystal resource', () => {
   let player: Player
@@ -107,6 +108,54 @@ describe('Jaunt crystal resource', () => {
     expect(result.player.jauntCrystalCharges).toBe(4)
     expect(result.player.isJauntArmed).toBe(false)
     expect(result.activeTeleportFlashes).toHaveLength(1)
+  })
+
+  it('exits attack mode and permits immediate movement when used during combat', () => {
+    const combatMonster = {
+      ...player,
+      id: 'combat-monster',
+      shortName: 'abhuman',
+      name: 'Abhuman',
+      inCombatSlot: true,
+    } as unknown as GameState['activeMonsters'][number]
+    const combatState: GameState = {
+      ...state,
+      inCombat: true,
+      activeMonsters: [combatMonster],
+      attackSlots: [combatMonster],
+      waitingMonsters: [combatMonster],
+      turnOrder: [player, combatMonster] as unknown as GameState['turnOrder'],
+      combatTurn: combatMonster as unknown as GameState['combatTurn'],
+      combatLog: [{ message: 'Combat started' }] as GameState['combatLog'],
+      rangedAttackMode: true,
+      targetedMonsterId: combatMonster.id,
+      player: { ...player, isJauntArmed: true },
+    }
+
+    const jaunted = reduceJaunt(combatState, {
+      type: 'EXECUTE_JAUNT',
+      payload: { targetPosition: { col: 200, row: 200 } },
+    })!
+
+    expect(jaunted).toEqual(
+      expect.objectContaining({
+        inCombat: false,
+        attackSlots: [],
+        waitingMonsters: [],
+        turnOrder: [],
+        combatTurn: null,
+        combatLog: [],
+        rangedAttackMode: false,
+        targetedMonsterId: null,
+      })
+    )
+    expect(jaunted.activeMonsters[0].inCombatSlot).toBe(false)
+
+    const moved = reduceMovement(jaunted, {
+      type: 'MOVE_PLAYER',
+      payload: { direction: 'right' },
+    })!
+    expect(moved.player.position).toEqual({ row: 200, col: 201 })
   })
 
   it('atomically reloads from reserve on burn-out, with no zero-charge state', () => {

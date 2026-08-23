@@ -42,7 +42,7 @@ export function InscriptionGrid({ text, fontSize, runic = false, testID }: Inscr
                   styles.character,
                   {
                     fontSize,
-                    lineHeight: fontSize * 1.12,
+                    lineHeight: fontSize * 1.2,
                     fontFamily: runic ? 'NotoSansRunic' : 'Sofia',
                   },
                 ]}

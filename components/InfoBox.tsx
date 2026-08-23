@@ -23,6 +23,7 @@ interface InfoBoxProps {
   ctaLabel?: string
   onCtaPress?: () => void
   scrollableDescription?: boolean
+  descriptionFontFamily?: string
 }
 
 export const InfoBox: React.FC<InfoBoxProps> = ({
@@ -34,6 +35,7 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
   ctaLabel,
   onCtaPress,
   scrollableDescription = false,
+  descriptionFontFamily,
 }) => {
   const [opacity] = useState(new Animated.Value(0))
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -116,10 +118,14 @@ export const InfoBox: React.FC<InfoBoxProps> = ({
               style={styles.descriptionScroll}
               showsVerticalScrollIndicator
             >
-              <Text style={styles.description}>{description}</Text>
+              <Text style={[styles.description, { fontFamily: descriptionFontFamily }]}>
+                {description}
+              </Text>
             </ScrollView>
           ) : (
-            <Text style={styles.description}>{description}</Text>
+            <Text style={[styles.description, { fontFamily: descriptionFontFamily }]}>
+              {description}
+            </Text>
           )}
 
           {ctaLabel && onCtaPress && (

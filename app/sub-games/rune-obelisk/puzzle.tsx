@@ -59,9 +59,9 @@ export default function RuneObeliskPuzzle() {
         <ObeliskArt state={getObeliskBackgroundState(winPhase)}>
           {({ actualWidth, actualHeight }) => {
             const artSize = Math.min(actualWidth, actualHeight)
-            const panelFontSize = Math.max(11, artSize * 0.025)
-            const dialSize = artSize * 0.22
-            const controlSize = artSize * 0.052
+            const panelFontSize = Math.max(11, artSize * 0.025) + 1
+            const dialSize = artSize * 0.198
+            const controlSize = artSize * 0.0624
             const controlPanelRect = getObeliskControlPanelRect(artSize)
             const categoryButtonSize = { width: artSize * 0.08, height: artSize * 0.065 }
             const activePosition = puzzle.positions[puzzle.activeCategory]
@@ -91,16 +91,6 @@ export default function RuneObeliskPuzzle() {
                   testID="obelisk-control-panel"
                   style={[styles.controlPanel, controlPanelRect]}
                 >
-                  {winPhase === 'playing' ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Leave rune obelisk"
-                      style={styles.leaveButton}
-                      onPress={() => void lifecycle.failSubGame()}
-                    >
-                      <Text style={styles.leaveButtonText}>×</Text>
-                    </Pressable>
-                  ) : null}
                   <>
                     <View style={styles.categoryRow}>
                       {RUNE_OBELISK_CATEGORY_ORDER.map((category) => {
@@ -159,30 +149,15 @@ const styles = StyleSheet.create({
   shakeView: { flex: 1 },
   textPanel: { position: 'absolute', top: '16.5%', width: '29%', height: '25%' },
   leftPanel: { left: '18%' },
-  rightPanel: { left: '53%' },
+  rightPanel: { left: '53%', transform: [{ translateX: 8 }] },
   controlPanel: {
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
-  leaveButton: {
-    position: 'absolute',
-    right: 4,
-    top: 2,
-    width: 24,
-    height: 24,
-    zIndex: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#607985',
-    backgroundColor: 'rgba(3, 12, 18, 0.88)',
-  },
-  leaveButtonText: { color: '#e9fdff', fontSize: 18, lineHeight: 20 },
   categoryRow: {
     position: 'absolute',
-    top: 0,
+    top: 10,
     width: '58%',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -210,7 +185,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: 5,
     alignItems: 'center',
   },
 })

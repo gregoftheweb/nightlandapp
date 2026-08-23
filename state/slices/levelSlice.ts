@@ -2,6 +2,7 @@
 import { GameState } from '../../config/types'
 import { levels } from '../../config/levels'
 import { logIfDev } from '../../modules/utils'
+import { toIntegerTilePosition } from '../../modules/playerPosition'
 
 export function reduceLevel(state: GameState, action: any): GameState | null {
   switch (action.type) {
@@ -33,7 +34,7 @@ export function reduceLevel(state: GameState, action: any): GameState | null {
         player: {
           ...state.player,
           currentHP: state.player.maxHP,
-          position: { row: 395, col: 200 },
+          position: toIntegerTilePosition(newLevelConfig.playerSpawn),
         },
       }
     }

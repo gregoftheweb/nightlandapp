@@ -13,7 +13,7 @@ export const OBELISK_CONTROL_PANEL_RECT: NormalizedRect = {
 }
 
 export const OBELISK_CONTROL_CLUSTER_SCALE = {
-  dial: 0.22,
+  dial: 0.198,
   categoryButtonHeight: 0.065,
 } as const
 
@@ -32,7 +32,7 @@ export function getObeliskControlPanelRect(artSize: number) {
 
 export function getObeliskControlClusterSize(artSize: number) {
   return {
-    width: artSize * (OBELISK_CONTROL_CLUSTER_SCALE.dial + 2 * 0.052 + 0.024),
+    width: artSize * (OBELISK_CONTROL_CLUSTER_SCALE.dial + 2 * 0.0624 + 0.024),
     height: artSize * OBELISK_CONTROL_PANEL_RECT.height,
   }
 }

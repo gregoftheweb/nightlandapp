@@ -1,13 +1,17 @@
 import { Stack } from 'expo-router'
-import { View, StyleSheet, StatusBar, Platform } from 'react-native'
+import { View, Text, StyleSheet, StatusBar, Platform } from 'react-native'
 import { useFonts } from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen'
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import { GameProvider } from '../context/GameContext'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { audioManager } from '../modules/audioManager'
 import { settingsManager } from '../modules/settingsManager'
 import { IOS_BACK_GESTURE_ROUTES } from '../config/routeGesturePolicy'
+import {
+  GameBoardImagePreloader,
+  type GameBoardImagePreloadResult,
+} from '../components/startup/GameBoardImagePreloader'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -41,16 +45,25 @@ export default function Layout() {
     Bilbo: require('../assets/fonts/BilboSwashCaps-Regular.ttf'),
     NotoSansRunic: require('../assets/fonts/NotoSansRunic-Regular.otf'),
   })
+  const [gameboardImagesReady, setGameboardImagesReady] = useState(false)
+  const startupReady = fontsLoaded && gameboardImagesReady
+
+  const handleGameboardImagesReady = useCallback((result: GameBoardImagePreloadResult) => {
+    if (__DEV__ && result.reason !== 'loaded') {
+      console.warn('[startup] Continuing after incomplete gameboard image preload', result)
+    }
+    setGameboardImagesReady(true)
+  }, [])
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
+    if (startupReady) {
       await SplashScreen.hideAsync()
     }
-  }, [fontsLoaded])
+  }, [startupReady])
 
   useEffect(() => {
     onLayoutRootView()
-  }, [fontsLoaded, onLayoutRootView])
+  }, [startupReady, onLayoutRootView])
 
   // Initialize audio system
   useEffect(() => {
@@ -122,8 +135,13 @@ export default function Layout() {
     }
   }, [])
 
-  if (!fontsLoaded) {
-    return null
+  if (!startupReady) {
+    return (
+      <View style={styles.bootLoading}>
+        <Text style={styles.bootLoadingTitle}>Nightland</Text>
+        <GameBoardImagePreloader onReady={handleGameboardImagesReady} />
+      </View>
+    )
   }
 
   return (
@@ -169,6 +187,17 @@ export default function Layout() {
 }
 
 const styles = StyleSheet.create({
+  bootLoading: {
+    flex: 1,
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bootLoadingTitle: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '600',
+  },
   container: {
     flex: 1,
     backgroundColor: '#000',

@@ -1,6 +1,7 @@
 // state/slices/saveSlice.ts
 import { GameState } from '../../config/types'
 import { logIfDev } from '../../modules/utils'
+import { toIntegerTilePosition } from '../../modules/playerPosition'
 
 export function reduceSave(state: GameState, action: any): GameState | null {
   switch (action.type) {
@@ -25,7 +26,18 @@ export function reduceSave(state: GameState, action: any): GameState | null {
         `💾 New state player position: ${JSON.stringify(action.payload.state.player?.position)}`
       )
       // Replace entire state with loaded state (fromSnapshot already handles cleanup)
-      return action.payload.state
+      const incomingState = action.payload.state as GameState
+      const incomingPosition = incomingState.player.position
+      if (Number.isInteger(incomingPosition.row) && Number.isInteger(incomingPosition.col)) {
+        return incomingState
+      }
+      return {
+        ...incomingState,
+        player: {
+          ...incomingState.player,
+          position: toIntegerTilePosition(incomingPosition),
+        },
+      }
 
     case 'SET_WAYPOINT_CREATED':
       logIfDev(`💾 SET_WAYPOINT_CREATED: ${action.payload.waypointName}`)

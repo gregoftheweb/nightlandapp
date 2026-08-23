@@ -28,7 +28,7 @@ describe('rune obelisk artwork layout', () => {
     }
   )
 
-  test('scales the dial exactly ten percent from its prior 0.20 art ratio', () => {
-    expect(OBELISK_CONTROL_CLUSTER_SCALE.dial).toBeCloseTo(0.2 * 1.1)
+  test('shrinks the prior 0.22 dial ratio by exactly ten percent', () => {
+    expect(OBELISK_CONTROL_CLUSTER_SCALE.dial).toBeCloseTo(0.22 * 0.9)
   })
 })
