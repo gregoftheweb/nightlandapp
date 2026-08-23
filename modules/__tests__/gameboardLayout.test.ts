@@ -30,6 +30,7 @@ const encounterIds = [
   'deep-silo',
   'aerowreckage-puzzle',
   'hermit-hollow',
+  'rune-obelisk',
   'word-tile-crypt-01',
   'word-tile-crypt-02',
 ]
@@ -238,7 +239,9 @@ describe('gameboard layout integration', () => {
       expect(result.value.placements.map(({ instanceId }) => instanceId).sort()).toEqual(
         [...encounterIds].sort()
       )
-      expect(new Set(result.value.placements.map(({ occupancyId }) => occupancyId)).size).toBe(7)
+      expect(new Set(result.value.placements.map(({ occupancyId }) => occupancyId)).size).toBe(
+        encounterIds.length
+      )
       expect(result.value.trailNetwork.geometry.trunkWaypoints.length).toBeGreaterThan(2)
       expect(result.value.trailNetwork.branches).toHaveLength(2)
       result.value.trailNetwork.branches.forEach((branch) => {
@@ -273,7 +276,7 @@ describe('gameboard layout integration', () => {
         new RandomSource()
       )
       expect(result.success).toBe(true)
-      if (result.success) expect(result.value.placements).toHaveLength(7)
+      if (result.success) expect(result.value.placements).toHaveLength(encounterIds.length)
     }
   })
 

@@ -35,6 +35,9 @@ export interface RuneDialProps {
   totalPositions: number
   onPositionChange: (position: number, direction: RuneDialDirection) => void
   labels?: readonly string[]
+  size?: number
+  controlSize?: number
+  disabled?: boolean
 }
 
 export function RuneDial({
@@ -42,6 +45,9 @@ export function RuneDial({
   totalPositions,
   onPositionChange,
   labels,
+  size,
+  controlSize = 80,
+  disabled = false,
 }: RuneDialProps) {
   if (!Number.isInteger(totalPositions) || totalPositions < 2) {
     throw new Error('RuneDial totalPositions must be an integer of at least 2')
@@ -51,7 +57,7 @@ export function RuneDial({
     const window = Dimensions.get('window')
     return { width: window.width, height: window.height }
   })
-  const dialSize = getDialSize(dimensions.width, dimensions.height)
+  const dialSize = size ?? getDialSize(dimensions.width, dimensions.height)
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -78,6 +84,7 @@ export function RuneDial({
   }, [currentPosition, displayAngleAnimated, totalPositions])
 
   const rotateOneStep = (direction: RuneDialDirection) => {
+    if (disabled) return
     const newPosition = stepPosition(currentPosition, direction, totalPositions)
     pendingPositionRef.current = newPosition
     onPositionChange(newPosition, direction)
@@ -103,7 +110,10 @@ export function RuneDial({
   const markers = Array.from({ length: markerCount }, (_, index) => {
     const position = Math.round(index * (totalPositions / markerCount)) % totalPositions
     const angleRad = (position / totalPositions) * TAU - DIAL_ORIENTATION_OFFSET
-    const angle = (angleRad * 180) / Math.PI
+    const radius = dialSize * 0.37
+    const markerSize = Math.max(24, dialSize * 0.16)
+    const x = Math.cos(angleRad) * radius
+    const y = Math.sin(angleRad) * radius
     const label = labels?.[position] ?? String(position)
 
     return (
@@ -112,17 +122,11 @@ export function RuneDial({
         style={[
           styles.marker,
           {
-            transform: [
-              { rotate: `${angle}deg` },
-              { translateY: -(dialSize / 2 - 20) },
-              { rotate: `${-angle}deg` },
-              {
-                rotate: displayAngleAnimated.interpolate({
-                  inputRange: [-TAU * MAX_ANIMATED_TURNS, TAU * MAX_ANIMATED_TURNS],
-                  outputRange: ['36000deg', '-36000deg'],
-                }),
-              },
-            ],
+            width: markerSize,
+            height: markerSize,
+            marginLeft: -markerSize / 2,
+            marginTop: -markerSize / 2,
+            transform: [{ translateX: x }, { translateY: y }],
           },
         ]}
       >
@@ -132,15 +136,27 @@ export function RuneDial({
   })
 
   return (
-    <View style={styles.outerContainer}>
+    <View
+      style={[
+        styles.outerContainer,
+        size !== undefined && styles.compactOuterContainer,
+        disabled && styles.disabled,
+      ]}
+    >
       <Pressable
+        disabled={disabled}
         onPress={() => rotateOneStep('CW')}
-        style={({ pressed }) => [styles.controlButton, pressed && styles.controlButtonPressed]}
+        style={({ pressed }) => [
+          styles.controlButton,
+          { width: controlSize, height: controlSize, borderRadius: controlSize / 2 },
+          pressed && styles.controlButtonPressed,
+        ]}
         accessibilityRole="button"
         accessibilityLabel="Rotate clockwise"
         accessibilityHint="Moves to the previous position"
+        accessibilityState={{ disabled }}
       >
-        <Text style={styles.controlButtonText}>\u21BB</Text>
+        <Text style={[styles.controlButtonText, { fontSize: controlSize * 0.5 }]}>{'↻'}</Text>
       </Pressable>
 
       <View style={styles.container}>
@@ -179,13 +195,19 @@ export function RuneDial({
       </View>
 
       <Pressable
+        disabled={disabled}
         onPress={() => rotateOneStep('CCW')}
-        style={({ pressed }) => [styles.controlButton, pressed && styles.controlButtonPressed]}
+        style={({ pressed }) => [
+          styles.controlButton,
+          { width: controlSize, height: controlSize, borderRadius: controlSize / 2 },
+          pressed && styles.controlButtonPressed,
+        ]}
         accessibilityRole="button"
         accessibilityLabel="Rotate counter-clockwise"
         accessibilityHint="Moves to the next position"
+        accessibilityState={{ disabled }}
       >
-        <Text style={styles.controlButtonText}>\u21BA</Text>
+        <Text style={[styles.controlButtonText, { fontSize: controlSize * 0.5 }]}>{'↺'}</Text>
       </Pressable>
     </View>
   )
@@ -199,18 +221,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 30,
   },
+  compactOuterContainer: {
+    paddingVertical: 0,
+  },
   controlButton: {
     width: 80,
     height: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 10,
+    marginHorizontal: 6,
     borderRadius: 40,
     borderWidth: 2,
     borderColor: '#8d8d8d',
     backgroundColor: '#242424',
   },
   controlButtonPressed: { opacity: 0.6 },
+  disabled: { opacity: 0.55 },
   controlButtonText: { color: '#f2f2f2', fontSize: 40 },
   container: { alignItems: 'center', justifyContent: 'center', position: 'relative' },
   fixedIndicator: { position: 'absolute', top: 20, zIndex: 10, alignItems: 'center' },
@@ -246,13 +272,18 @@ const styles = StyleSheet.create({
     borderColor: '#666',
   },
   markersContainer: { position: 'absolute', width: '100%', height: '100%' },
-  marker: { position: 'absolute', left: '50%', top: '50%', marginLeft: -15, marginTop: -10 },
+  marker: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   markerText: {
     fontSize: 16,
     color: '#f2f2f2',
     textAlign: 'center',
     fontFamily: 'NotoSansRunic',
-    transform: [{ rotate: '-90deg' }],
   },
   innerDial: {
     position: 'absolute',
