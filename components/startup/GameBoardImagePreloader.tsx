@@ -1,13 +1,15 @@
-import React, { useCallback, useEffect, useRef } from 'react'
-import { Image, type ImageSourcePropType, StyleSheet, View } from 'react-native'
+import React from 'react'
+import type { ImageSourcePropType } from 'react-native'
+import {
+  HiddenImagePreloader,
+  type ImagePreloadAsset,
+  type ImagePreloadResult,
+} from '../preload/HiddenImagePreloader'
 
 export const GAMEBOARD_IMAGE_PRELOAD_TIMEOUT_MS = 10_000
 
-export interface GameBoardImageAsset {
-  id: string
+export interface GameBoardImageAsset extends ImagePreloadAsset {
   source: ImageSourcePropType
-  width: number
-  height: number
 }
 
 export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.freeze([
@@ -139,11 +141,7 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   },
 ])
 
-export type GameBoardImagePreloadResult = {
-  reason: 'loaded' | 'failed' | 'timeout'
-  loadedCount: number
-  failedIds: string[]
-}
+export type GameBoardImagePreloadResult = ImagePreloadResult
 
 interface GameBoardImagePreloaderProps {
   onReady: (result: GameBoardImagePreloadResult) => void
@@ -154,72 +152,13 @@ export function GameBoardImagePreloader({
   onReady,
   timeoutMs = GAMEBOARD_IMAGE_PRELOAD_TIMEOUT_MS,
 }: GameBoardImagePreloaderProps) {
-  const onReadyRef = useRef(onReady)
-  const loadedIdsRef = useRef(new Set<string>())
-  const failedIdsRef = useRef(new Set<string>())
-  const completedRef = useRef(false)
-  onReadyRef.current = onReady
-
-  const finish = useCallback((reason: GameBoardImagePreloadResult['reason']) => {
-    if (completedRef.current) return
-    completedRef.current = true
-    onReadyRef.current({
-      reason,
-      loadedCount: loadedIdsRef.current.size,
-      failedIds: [...failedIdsRef.current],
-    })
-  }, [])
-
-  const settleAsset = useCallback(
-    (id: string, loaded: boolean) => {
-      if (completedRef.current) return
-      const settled = loadedIdsRef.current.has(id) || failedIdsRef.current.has(id)
-      if (settled) return
-
-      if (loaded) loadedIdsRef.current.add(id)
-      else failedIdsRef.current.add(id)
-
-      if (loadedIdsRef.current.size + failedIdsRef.current.size === GAMEBOARD_IMAGE_ASSETS.length) {
-        finish(failedIdsRef.current.size > 0 ? 'failed' : 'loaded')
-      }
-    },
-    [finish]
-  )
-
-  useEffect(() => {
-    const timeout = setTimeout(() => finish('timeout'), timeoutMs)
-    return () => clearTimeout(timeout)
-  }, [finish, timeoutMs])
-
   return (
-    <View pointerEvents="none" accessibilityElementsHidden style={styles.preloadContainer}>
-      {GAMEBOARD_IMAGE_ASSETS.map(({ id, source, width, height }) => (
-        <Image
-          key={id}
-          testID={`gameboard-preload-${id}`}
-          source={source}
-          style={[styles.preloadImage, { width, height }]}
-          fadeDuration={0}
-          onLoad={() => settleAsset(id, true)}
-          onError={() => {
-            console.warn(`[startup] Failed to decode gameboard image '${id}'`)
-            settleAsset(id, false)
-          }}
-        />
-      ))}
-    </View>
+    <HiddenImagePreloader
+      assets={GAMEBOARD_IMAGE_ASSETS}
+      onReady={onReady}
+      timeoutMs={timeoutMs}
+      testIDPrefix="gameboard-preload"
+      warningPrefix="[startup]"
+    />
   )
 }
-
-const styles = StyleSheet.create({
-  preloadContainer: {
-    position: 'absolute',
-    left: -10,
-    top: -10,
-    width: 1,
-    height: 1,
-    opacity: 0,
-    overflow: 'hidden',
-  },
-  preloadImage: { position: 'absolute' },
-})

@@ -5,6 +5,7 @@ import type {
   SubGameLifecycleConfig,
   SubGameShapeId,
 } from './types/subGames'
+import type { ImagePreloadAsset } from './types/imagePreload'
 
 import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
 import hermitIMG from '@assets/images/backgrounds/subgames/hermit/hermit-save2.webp'
@@ -28,6 +29,8 @@ export interface SubGameInstanceDefinition {
   title: string
   description: string
   introBackgroundImage: ImageSourcePropType
+  /** Complete set of images rendered after entering legacy registry-authored encounters. */
+  preloadAssets?: readonly ImagePreloadAsset[]
   entrance?: SubGameEntranceDefinition
 }
 
@@ -99,6 +102,56 @@ const definitions: SubGameInstanceDefinition[] = [
     description:
       'The twisted remnants of a long-lost crashed aerocraft from a forgotten age of the Redoubt. Ancient metal and strange devices lie scattered among the wreckage, relics of a time when humanity soared above the Night Land.',
     introBackgroundImage: require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe4.webp'),
+    preloadAssets: [
+      {
+        id: 'aerowreck-safe1',
+        source: require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe1.webp'),
+        width: 256,
+        height: 384,
+      },
+      {
+        id: 'aerowreck-safe2',
+        source: require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe2.webp'),
+        width: 256,
+        height: 384,
+      },
+      {
+        id: 'aerowreck-safe3',
+        source: require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe3.webp'),
+        width: 256,
+        height: 384,
+      },
+      {
+        id: 'aerowreck-safe4',
+        source: require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe4.webp'),
+        width: 256,
+        height: 256,
+      },
+      {
+        id: 'aerowreck-safe5',
+        source: require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe5.webp'),
+        width: 256,
+        height: 256,
+      },
+      {
+        id: 'aerowreck-safe6',
+        source: require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe6.webp'),
+        width: 256,
+        height: 384,
+      },
+      {
+        id: 'safe-dial-cc',
+        source: require('@assets/images/ui/icons/safe-dial-CC.webp'),
+        width: 394,
+        height: 334,
+      },
+      {
+        id: 'safe-dial-clockwise',
+        source: require('@assets/images/ui/icons/safe-dial-Clockwise.webp'),
+        width: 394,
+        height: 334,
+      },
+    ],
     entrance: {
       shortName: 'aeroWreckage',
       category: 'building',
@@ -151,6 +204,86 @@ const definitions: SubGameInstanceDefinition[] = [
     description:
       'A massive silo rises from the Night Land, its dark interior an unknown descent into the deep.',
     introBackgroundImage: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen1.webp'),
+    preloadAssets: [
+      {
+        id: 'silo-screen1',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen1.webp'),
+        width: 1024,
+        height: 1536,
+      },
+      {
+        id: 'silo-screen2',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen2.webp'),
+        width: 1024,
+        height: 1536,
+      },
+      {
+        id: 'silo-screen3',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen3.webp'),
+        width: 1024,
+        height: 1536,
+      },
+      {
+        id: 'silo-screen4',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen4.webp'),
+        width: 1024,
+        height: 1536,
+      },
+      {
+        id: 'silo-screen5',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen5.webp'),
+        width: 1024,
+        height: 1536,
+      },
+      {
+        id: 'silo-screen6-table-empty',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6-table-empty.webp'),
+        width: 843,
+        height: 1264,
+      },
+      {
+        id: 'silo-screen6-table-charging',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6-table-charging.webp'),
+        width: 843,
+        height: 1264,
+      },
+      {
+        id: 'silo-screen6-spark',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen6-spark.webp'),
+        width: 1024,
+        height: 1535,
+      },
+      {
+        id: 'silo-screen7',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen7.webp'),
+        width: 1024,
+        height: 1536,
+      },
+      {
+        id: 'silo-screen8',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen8.webp'),
+        width: 1024,
+        height: 1536,
+      },
+      {
+        id: 'silo-power-switch1',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-power-switch1.webp'),
+        width: 1024,
+        height: 1536,
+      },
+      {
+        id: 'silo-power-switch2',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-power-switch2.webp'),
+        width: 1024,
+        height: 1536,
+      },
+      {
+        id: 'silo-power-switch3',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-power-switch3.webp'),
+        width: 1024,
+        height: 1536,
+      },
+    ],
     entrance: {
       shortName: 'deepSilo',
       category: 'building',
@@ -195,6 +328,26 @@ const definitions: SubGameInstanceDefinition[] = [
     description:
       'A weathered stone obelisk bears paired tablets of runes and letters above an ancient dial.',
     introBackgroundImage: require('@assets/images/backgrounds/subgames/rosseta/obelisk-entrance.webp'),
+    preloadAssets: [
+      {
+        id: 'obelisk-entrance',
+        source: require('@assets/images/backgrounds/subgames/rosseta/obelisk-entrance.webp'),
+        width: 1408,
+        height: 768,
+      },
+      {
+        id: 'obelisk-plain',
+        source: require('@assets/images/backgrounds/subgames/rosseta/obelisk-plain.webp'),
+        width: 1024,
+        height: 1024,
+      },
+      {
+        id: 'obelisk-electric',
+        source: require('@assets/images/backgrounds/subgames/rosseta/obelisk-electric.webp'),
+        width: 1024,
+        height: 1024,
+      },
+    ],
     entrance: {
       shortName: 'runeObelisk',
       category: 'building',
@@ -235,6 +388,14 @@ const definitions: SubGameInstanceDefinition[] = [
     description:
       'A lonely hermit sits next to small campfire, safety and peace emanate from him and the small copse of woods around him.',
     introBackgroundImage: require('@assets/images/backgrounds/subgames/hermit/hermit-screen1.webp'),
+    preloadAssets: [
+      {
+        id: 'hermit-screen1',
+        source: require('@assets/images/backgrounds/subgames/hermit/hermit-screen1.webp'),
+        width: 256,
+        height: 384,
+      },
+    ],
     entrance: {
       shortName: 'hermit',
       category: 'building',
