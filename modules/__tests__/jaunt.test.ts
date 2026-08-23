@@ -37,6 +37,7 @@ describe('Jaunt crystal resource', () => {
       jauntCrystalCharges: 5,
       jauntCrystalReserve: 0,
       isJauntArmed: false,
+      runeCipherLearned: false,
     }
     state = {
       level: {

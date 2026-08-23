@@ -1,0 +1,31 @@
+export const RUNE_ALPHABET = {
+  A: '\u16A8',
+  B: '\u16D2',
+  C: '\u16B3',
+  D: '\u16DE',
+  E: '\u16D6',
+  F: '\u16A0',
+  G: '\u16B7',
+  H: '\u16BA',
+  I: '\u16C1',
+  J: '\u16C3',
+  K: '\u16B2',
+  L: '\u16DA',
+  M: '\u16D7',
+  N: '\u16BE',
+  O: '\u16DF',
+  P: '\u16C8',
+  Q: '\u16E9',
+  R: '\u16B1',
+  S: '\u16CA',
+  T: '\u16CF',
+  U: '\u16A2',
+  V: '\u16A1',
+  W: '\u16B9',
+  X: '\u16EA',
+  Y: '\u16A3',
+  Z: '\u16CE',
+} as const
+
+export type RuneAlphabetLetter = keyof typeof RUNE_ALPHABET
+export type RuneAlphabetCharacter = (typeof RUNE_ALPHABET)[RuneAlphabetLetter]

@@ -558,6 +558,42 @@ const executeUnlockHideAbilityEffect: EffectHandler<'unlock_hide_ability'> = (ef
   }
 }
 
+/** Unlocks the permanent ability to read the shared rune cipher. */
+const executeUnlockRuneCipherEffect: EffectHandler<'unlock_rune_cipher'> = (effect, context) => {
+  const { state, dispatch, showDialog } = context
+
+  logIfDev('\ud83c\udf81 Executing unlock_rune_cipher effect')
+
+  if (state.player.runeCipherLearned) {
+    logIfDev('Rune cipher already learned, skipping')
+    return {
+      success: false,
+      message: 'You already understand the rune cipher.',
+      consumeItem: false,
+    }
+  }
+
+  dispatch({
+    type: 'UPDATE_PLAYER',
+    payload: {
+      updates: {
+        runeCipherLearned: true,
+      },
+    },
+  })
+
+  const message = 'You have learned the rune cipher!'
+  showDialog?.(message, 3000)
+
+  logIfDev('\u2705 Rune cipher learned')
+
+  return {
+    success: true,
+    message,
+    consumeItem: false,
+  }
+}
+
 // ==================== EFFECT HANDLER REGISTRY ====================
 
 /**
@@ -576,6 +612,7 @@ type EffectByType = {
   soulsuck: Extract<Effect, { type: 'soulsuck' }>
   showMessage: Extract<Effect, { type: 'showMessage' }>
   unlock_hide_ability: Extract<Effect, { type: 'unlock_hide_ability' }>
+  unlock_rune_cipher: Extract<Effect, { type: 'unlock_rune_cipher' }>
   cloaking: Extract<Effect, { type: 'cloaking' }>
 }
 
@@ -603,6 +640,7 @@ const EFFECT_HANDLERS: {
   poison: executePoisonEffect,
   showMessage: executeShowMessageEffect,
   unlock_hide_ability: executeUnlockHideAbilityEffect,
+  unlock_rune_cipher: executeUnlockRuneCipherEffect,
   // Add new effect handlers here as they are implemented
 }
 
@@ -654,6 +692,10 @@ const dispatchEffect = (effect: Effect, context: EffectContext): EffectResult =>
     }
     case 'unlock_hide_ability': {
       const handler = EFFECT_HANDLERS.unlock_hide_ability
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'unlock_rune_cipher': {
+      const handler = EFFECT_HANDLERS.unlock_rune_cipher
       return handler ? handler(effect, context) : unknownEffectResult(effect.type)
     }
     case 'stun':

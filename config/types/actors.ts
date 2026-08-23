@@ -150,4 +150,6 @@ export interface Player {
   jauntCrystalCharges: number // Remaining charges in the active crystal (0-5)
   jauntCrystalReserve: number // Full unused crystals waiting in reserve
   isJauntArmed: boolean // Whether jaunt is currently armed/ready to target
+  // Rune cipher knowledge (granted by rune-learning encounters)
+  runeCipherLearned: boolean
 }

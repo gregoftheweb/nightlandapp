@@ -39,6 +39,7 @@ export default function Layout() {
     ThankYou: require('../assets/fonts/ThankYou.otf'),
     //BilboSwashCaps-Regular
     Bilbo: require('../assets/fonts/BilboSwashCaps-Regular.ttf'),
+    NotoSansRunic: require('../assets/fonts/NotoSansRunic-Regular.otf'),
   })
 
   const onLayoutRootView = useCallback(async () => {
