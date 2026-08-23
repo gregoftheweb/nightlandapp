@@ -26,6 +26,7 @@ import {
   RandomSource,
   REAL_PARSED_CONTENT_CATALOGS,
 } from './gameboardLayout'
+import { toIntegerTilePosition } from './playerPosition'
 import { buildGameboardCatalogIdentity, gameboardIdentityMatches } from './gameboardIdentity'
 import {
   createTrailNetwork,
@@ -196,7 +197,7 @@ function buildInitialState(
     // ===== PLAYER DOMAIN =====
     player: {
       ...playerConfig,
-      position: playerConfig.position || { row: 0, col: 0 },
+      position: toIntegerTilePosition(playerConfig.position || { row: 0, col: 0 }),
     },
     moveCount: 0,
     distanceTraveled: 0,
@@ -363,6 +364,11 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
     // Ensure waypoint tracking is preserved
     waypointSavesCreated: snapshot.waypointSavesCreated || {},
     weaponUpgrades: snapshot.weaponUpgrades || {},
+  }
+
+  result.player = {
+    ...result.player,
+    position: toIntegerTilePosition(result.player.position),
   }
 
   // MIGRATION: Fix hide ability if flag is set but player state isn't

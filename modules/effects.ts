@@ -52,6 +52,7 @@
 import { GameState, Item, Effect, Monster, Position } from '../config/types'
 import { createMonsterFromTemplate } from './monsterUtils'
 import { logIfDev } from './utils'
+import { resolveMessageEffectDisplay } from './messageEffectDisplay'
 
 // ==================== EFFECT EXECUTION INTERFACE ====================
 
@@ -62,7 +63,7 @@ import { logIfDev } from './utils'
 export interface EffectContext {
   state: GameState
   dispatch: (action: any) => void
-  showDialog?: (message: string, duration?: number) => void
+  showDialog?: (message: string, duration?: number, fontFamily?: string) => void
 
   // Source information
   sourceType: 'player' | 'monster' | 'object' | 'item' | 'system'
@@ -492,13 +493,12 @@ const executePoisonEffect: EffectHandler<'poison'> = (effect, context) => {
  * Used for: readable items like scrolls, notes, and letters.
  */
 const executeShowMessageEffect: EffectHandler<'showMessage'> = (effect, context) => {
-  const { showDialog, item } = context
-
-  const message = effect.message || effect.description || 'A message appears.'
+  const { showDialog, item, state, sourceId } = context
+  const display = resolveMessageEffectDisplay(state, effect, item?.id ?? sourceId)
 
   logIfDev('📜 Executing showMessage effect')
 
-  showDialog?.(message, 5000)
+  showDialog?.(display.text, 5000, display.fontFamily)
 
   const itemName = item?.name || 'item'
   return {
@@ -785,7 +785,7 @@ export const applyItem = (
   item: Item,
   state: GameState,
   dispatch: (action: any) => void,
-  showDialog?: (message: string, duration?: number) => void
+  showDialog?: (message: string, duration?: number, fontFamily?: string) => void
 ): EffectResult => {
   logIfDev(`📦 Using item: ${item.name}`)
 

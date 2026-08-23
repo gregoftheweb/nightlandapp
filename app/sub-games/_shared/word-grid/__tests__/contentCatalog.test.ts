@@ -76,7 +76,14 @@ describe('content catalogs', () => {
       expect.objectContaining({
         shortName: 'salamanderLetter',
         name: "The Salamander's Letter",
-        effects: [{ type: 'showMessage', message: SALAMANDER_LETTER_TEXT }],
+        effects: [
+          {
+            type: 'showMessage',
+            message: SALAMANDER_LETTER_TEXT,
+            lockedUntilFlag: 'runeCipherLearned',
+            lockedSeed: 'salamander-letter',
+          },
+        ],
       })
     )
     expect(wordTileCrypt02Content.presentation.success.rewardModalText).toBe(SALAMANDER_LETTER_TEXT)

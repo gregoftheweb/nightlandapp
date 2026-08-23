@@ -1,4 +1,5 @@
 import { Position, Area, EffectTarget } from './primitives'
+import type { Player } from './actors'
 
 // Strict discriminated union for effects
 // Each effect type defines only the fields it actually uses
@@ -48,6 +49,8 @@ export type Effect =
   | {
       type: 'showMessage'
       message: string
+      lockedUntilFlag?: keyof Player
+      lockedSeed?: string
       description?: string
     }
   | {

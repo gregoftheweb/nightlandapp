@@ -33,6 +33,8 @@ import { resolveWordGridTapFeedbackColors } from './tapFeedback'
 import type { WordGridConfig, WordGridTile } from './types'
 import { WordGridLetterOverlay } from './WordGridLetterOverlay'
 import type { SubGameInstanceDefinition } from '@config/subGames'
+import { useGameState } from '@context/GameContext'
+import { resolveWordGridRewardMessageDisplay } from './rewardMessageDisplay'
 
 const DEBUG_WORD_GRID = false
 const HORIZONTAL_PADDING = 10
@@ -372,9 +374,15 @@ export function WordGridFailureScreen({ config, definition }: WordGridScreenProp
 }
 
 export function WordGridSuccessScreen({ config, definition }: WordGridScreenProps) {
+  const state = useGameState()
   const lifecycle = useSubGameLifecycle(config.instanceId, lifecycleResolver(definition))
   const [showRewardModal, setShowRewardModal] = useState(false)
   const isReturnVisit = lifecycle.isCompleted()
+  const rewardDisplay = resolveWordGridRewardMessageDisplay(
+    state,
+    definition,
+    config.presentation.success.rewardModalText
+  )
 
   useEffect(() => {
     if (!isReturnVisit) void lifecycle.grantReward()
@@ -426,8 +434,8 @@ export function WordGridSuccessScreen({ config, definition }: WordGridScreenProp
                   style={styles.modalScroll}
                   showsVerticalScrollIndicator
                 >
-                  <Text style={styles.modalText}>
-                    {config.presentation.success.rewardModalText}
+                  <Text style={[styles.modalText, { fontFamily: rewardDisplay.fontFamily }]}>
+                    {rewardDisplay.text}
                   </Text>
                 </ScrollView>
                 <TouchableOpacity

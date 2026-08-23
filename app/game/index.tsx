@@ -110,7 +110,8 @@ export default function Game() {
         image?: any,
         ctaLabel?: string,
         onCtaPress?: () => void,
-        scrollableDescription?: boolean
+        scrollableDescription?: boolean,
+        descriptionFontFamily?: string
       ) => void)
     | null
   >(null)
@@ -1184,15 +1185,26 @@ export default function Game() {
   }, [router])
 
   // Create showDialog wrapper for inventory items
-  const showDialog = useCallback((message: string, _duration?: number, scrollable = false) => {
-    if (showInfoRef.current) {
-      // Use showInfo to display the message
-      showInfoRef.current('Message', message, undefined, undefined, undefined, scrollable)
-    } else {
-      // Fallback: just log if showInfo not available
-      console.log('[showDialog]', message)
-    }
-  }, [])
+  const showDialog = useCallback(
+    (message: string, _duration?: number, scrollable = false, fontFamily?: string) => {
+      if (showInfoRef.current) {
+        // Use showInfo to display the message
+        showInfoRef.current(
+          'Message',
+          message,
+          undefined,
+          undefined,
+          undefined,
+          scrollable,
+          fontFamily
+        )
+      } else {
+        // Fallback: just log if showInfo not available
+        console.log('[showDialog]', message)
+      }
+    },
+    []
+  )
 
   return (
     <Pressable

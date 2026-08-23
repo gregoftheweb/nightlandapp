@@ -193,6 +193,8 @@ export const collectible: Record<string, GameObject> = {
       {
         type: 'showMessage',
         message: SALAMANDER_LETTER_TEXT,
+        lockedUntilFlag: 'runeCipherLearned',
+        lockedSeed: 'salamander-letter',
       },
     ],
   },

@@ -2,6 +2,7 @@
 import { GameState } from '../../config/types'
 import { logIfDev } from '../../modules/utils'
 import { Position } from '../../config/types/primitives'
+import { toIntegerTilePosition } from '../../modules/playerPosition'
 
 // Counter to ensure unique flash IDs even with rapid successive teleports
 let flashIdCounter = 0
@@ -24,9 +25,10 @@ export function grantJauntCrystalToPlayer(player: GameState['player']): GameStat
 
 /** Shared world-position update used by gameplay Jaunt and the dev-only jump menu. */
 export function teleportPlayerPosition(state: GameState, targetPosition: Position): GameState {
+  const integerPosition = toIntegerTilePosition(targetPosition)
   const clampedPosition = {
-    col: Math.max(0, Math.min(targetPosition.col, state.gridWidth - 1)),
-    row: Math.max(0, Math.min(targetPosition.row, state.gridHeight - 1)),
+    col: Math.max(0, Math.min(integerPosition.col, state.gridWidth - 1)),
+    row: Math.max(0, Math.min(integerPosition.row, state.gridHeight - 1)),
   }
 
   return {
@@ -134,6 +136,19 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
           jauntCrystalReserve: reloadFromReserve ? jauntCrystalReserve - 1 : jauntCrystalReserve,
           isJauntArmed: false,
         },
+        // Jaunting away is a combat exit. Return the HUD/action gate to travel mode and
+        // release every surviving combatant back to normal overworld processing.
+        inCombat: false,
+        activeMonsters: teleportedState.activeMonsters.map((monster) =>
+          monster.inCombatSlot ? { ...monster, inCombatSlot: false } : monster
+        ),
+        attackSlots: [],
+        waitingMonsters: [],
+        turnOrder: [],
+        combatTurn: null,
+        combatLog: [],
+        rangedAttackMode: false,
+        targetedMonsterId: null,
         activeTeleportFlashes: [...(state.activeTeleportFlashes || []), newFlash],
       }
     }
