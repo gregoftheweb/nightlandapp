@@ -115,6 +115,40 @@ describe('sub-game lifecycle controller', () => {
     expect(harness.getState().waypointSavesCreated?.['test-waypoint']).toBe(true)
   })
 
+  it('snapshots the rune ability, completion, and reward exactly once at its waypoint', async () => {
+    const config = {
+      ...baseConfig,
+      waypoint: {
+        createsWaypoint: true,
+        waypointName: 'Rune Obelisk Awakened',
+        snapshot: 'Completion, rune ability, and reward flag',
+        idempotent: true,
+      },
+      reward: {
+        kind: 'ability',
+        id: 'unlock_rune_cipher',
+        grantEvent: 'All categories align',
+        idempotent: true,
+      },
+    } satisfies SubGameLifecycleConfig
+    const harness = makeHarness(config)
+
+    await Promise.all([harness.controller.grantReward(), harness.controller.grantReward()])
+    await Promise.all([harness.controller.completeSubGame(), harness.controller.completeSubGame()])
+    await harness.controller.completeSubGame()
+
+    const actions = harness.dispatch.mock.calls.map(([action]) => action)
+    expect(actions.filter((action) => action.type === 'UPDATE_PLAYER')).toEqual([
+      { type: 'UPDATE_PLAYER', payload: { updates: { runeCipherLearned: true } } },
+    ])
+    expect(harness.saveWaypoint).toHaveBeenCalledTimes(1)
+
+    const snapshot = harness.saveWaypoint.mock.calls[0][0]
+    expect(snapshot.player.runeCipherLearned).toBe(true)
+    expect(snapshot.subGamesCompleted['test-encounter']).toBe(true)
+    expect(snapshot.subGamesCompleted['test-encounter:reward:unlock_rune_cipher']).toBe(true)
+  })
+
   it('safe failure resumes and exits without completion or rewards', async () => {
     const harness = makeHarness(baseConfig)
 

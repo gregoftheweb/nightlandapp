@@ -37,6 +37,13 @@ export const GAMEBOARD_MANIFEST = {
       contentRef: 'deep-silo',
     },
     {
+      slotId: 'rune-obelisk',
+      shapeId: 'one-off',
+      kind: 'range',
+      placement: { minPct: 0.16, maxPct: 0.2 },
+      contentRef: 'rune-obelisk',
+    },
+    {
       slotId: 'word-grid-clues',
       shapeId: 'word-grid',
       kind: 'scattered-group',

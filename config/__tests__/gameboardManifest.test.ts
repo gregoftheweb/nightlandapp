@@ -30,4 +30,15 @@ describe('real gameboard manifest', () => {
       })
     )
   })
+
+  it('registers the rune obelisk as a fixed one-off range slot', () => {
+    const slot = GAMEBOARD_MANIFEST.slots.find((candidate) => candidate.slotId === 'rune-obelisk')
+    expect(slot).toEqual({
+      slotId: 'rune-obelisk',
+      shapeId: 'one-off',
+      kind: 'range',
+      placement: { minPct: 0.16, maxPct: 0.2 },
+      contentRef: 'rune-obelisk',
+    })
+  })
 })
