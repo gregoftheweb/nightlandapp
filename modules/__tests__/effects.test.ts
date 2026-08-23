@@ -66,6 +66,7 @@ describe('Unified Effects System', () => {
       jauntCrystalCharges: 0,
       jauntCrystalReserve: 0,
       isJauntArmed: false,
+      runeCipherLearned: false,
     }
 
     return {
@@ -110,6 +111,47 @@ describe('Unified Effects System', () => {
   beforeEach(() => {
     mockDispatch.mockClear()
     mockShowDialog.mockClear()
+  })
+
+  describe('Unlock Rune Cipher Effect', () => {
+    test('learns the cipher on first application', () => {
+      const state = createMockGameState()
+      const result = applyEffect(
+        { type: 'unlock_rune_cipher' },
+        {
+          state,
+          dispatch: mockDispatch,
+          showDialog: mockShowDialog,
+          sourceType: 'system',
+          trigger: 'onInteract',
+        }
+      )
+
+      expect(result.success).toBe(true)
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'UPDATE_PLAYER',
+        payload: { updates: { runeCipherLearned: true } },
+      })
+    })
+
+    test('rejects an already-learned cipher without dispatching', () => {
+      const state = createMockGameState()
+      state.player.runeCipherLearned = true
+
+      const result = applyEffect(
+        { type: 'unlock_rune_cipher' },
+        {
+          state,
+          dispatch: mockDispatch,
+          sourceType: 'system',
+          trigger: 'onInteract',
+        }
+      )
+
+      expect(result.success).toBe(false)
+      expect(result.consumeItem).toBe(false)
+      expect(mockDispatch).not.toHaveBeenCalled()
+    })
   })
 
   // ==================== HEAL EFFECT TESTS ====================

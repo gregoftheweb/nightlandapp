@@ -55,6 +55,10 @@ export type Effect =
       description?: string
     }
   | {
+      type: 'unlock_rune_cipher'
+      description?: string
+    }
+  | {
       type: 'stun'
       duration: number
       target?: EffectTarget

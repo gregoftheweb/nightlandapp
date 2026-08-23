@@ -25,7 +25,7 @@ const REVISIT_POLICIES = new Set([
 ])
 const REWARD_KINDS = new Set<RewardKind>(['item', 'weapon', 'effect', 'ability'])
 const WORD_GRID_EFFECT_REWARDS = new Set(['hide', 'soulsuck'])
-const WORD_GRID_ABILITY_REWARDS = new Set(['unlock_hide_ability', 'jaunt'])
+const WORD_GRID_ABILITY_REWARDS = new Set(['unlock_hide_ability', 'unlock_rune_cipher', 'jaunt'])
 const ENTRANCE_EFFECT_TYPES = new Set([
   'heal',
   'recuperate',
@@ -36,6 +36,7 @@ const ENTRANCE_EFFECT_TYPES = new Set([
   'poison',
   'showMessage',
   'unlock_hide_ability',
+  'unlock_rune_cipher',
   'stun',
   'teleport',
   'spawn',

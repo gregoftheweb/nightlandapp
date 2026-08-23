@@ -65,6 +65,7 @@ describe('getObjectAtPoint', () => {
       jauntCrystalCharges: 0,
       jauntCrystalReserve: 0,
       isJauntArmed: false,
+      runeCipherLearned: false,
     }
 
     return {

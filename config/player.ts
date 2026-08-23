@@ -42,4 +42,6 @@ export const playerConfig: Player = {
   jauntCrystalCharges: 0,
   jauntCrystalReserve: 0,
   isJauntArmed: false,
+  // Rune cipher knowledge (granted by rune-learning encounters)
+  runeCipherLearned: false,
 }
