@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@expo/cli": "^0.24.20",
+    "@expo/cli": "^57.0.17",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.1.10",
