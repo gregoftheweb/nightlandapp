@@ -254,11 +254,11 @@ export function calculateCameraOffset(
 
   const offsetX = Math.min(
     Math.max(playerPosition.col - Math.floor(viewportCols / 2), 0),
-    gridWidth - viewportCols
+    Math.max(0, gridWidth - viewportCols)
   )
   const offsetY = Math.min(
     Math.max(playerPosition.row - Math.floor(viewportRows / 2), 0),
-    gridHeight - viewportRows
+    Math.max(0, gridHeight - viewportRows)
   )
 
   return { offsetX, offsetY }

@@ -35,6 +35,19 @@ import {
 import { enterSubGame } from '../../modules/subGames'
 import { jauntExecutionActions } from '../../state/slices/jauntSlice'
 import { calculateGameViewport } from '../../modules/viewport'
+import GameBoardZoomControls from '../../components/GameBoardZoomControls'
+import {
+  DEFAULT_GAMEBOARD_ZOOM_LEVEL,
+  GAMEBOARD_ZOOM_MULTIPLIERS,
+  getRenderedGameBoardTileSize,
+  screenPointToTile,
+  stepGameBoardZoom,
+  type GameBoardZoomLevel,
+} from '../../modules/gameboardZoom'
+import {
+  loadGameBoardZoomLevel,
+  saveGameBoardZoomLevel,
+} from '../../modules/gameboardZoomPreference'
 import {
   findNearestMonsterInEquippedRangedWeaponRange,
   isMonsterInEquippedRangedWeaponRange,
@@ -58,13 +71,26 @@ export default function Game() {
   const [inventoryVisible, setInventoryVisible] = useState(false)
   const [targetId, setTargetId] = useState<string | undefined>()
   const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
+  const [zoomLevel, setZoomLevel] = useState<GameBoardZoomLevel>(DEFAULT_GAMEBOARD_ZOOM_LEVEL)
   const router = useRouter()
   const { width: windowWidth, height: windowHeight } = useWindowDimensions()
   const safeAreaInsets = useSafeAreaInsets()
+  const zoomMultiplier = GAMEBOARD_ZOOM_MULTIPLIERS[zoomLevel]
+  const renderedCellSize = getRenderedGameBoardTileSize(CELL_SIZE, zoomMultiplier)
   const viewport = useMemo(
-    () => calculateGameViewport(windowWidth, windowHeight, safeAreaInsets),
-    [windowHeight, windowWidth, safeAreaInsets]
+    () => calculateGameViewport(windowWidth, windowHeight, safeAreaInsets, renderedCellSize),
+    [windowHeight, windowWidth, safeAreaInsets, renderedCellSize, zoomMultiplier]
   )
+
+  useEffect(() => {
+    let active = true
+    void loadGameBoardZoomLevel().then((storedZoomLevel) => {
+      if (active) setZoomLevel(storedZoomLevel)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
 
   // Generate unique instance ID for this component
   const instanceId = useRef(`Game-${Math.random().toString(36).substr(2, 9)}`)
@@ -195,7 +221,14 @@ export default function Game() {
         state.gridWidth,
         state.gridHeight
       ),
-    [state.player.position, state.gridWidth, state.gridHeight, viewport.cols, viewport.rows]
+    [
+      state.player.position,
+      state.gridWidth,
+      state.gridHeight,
+      viewport.cols,
+      viewport.rows,
+      zoomMultiplier,
+    ]
   )
 
   // Audio management
@@ -230,16 +263,9 @@ export default function Game() {
 
   // Tap position calculation
   const calculateTapPosition = useCallback(
-    (pageX: number, pageY: number) => {
-      const rawCol = (pageX - viewport.left) / CELL_SIZE + cameraOffset.offsetX
-      const rawRow = (pageY - viewport.top) / CELL_SIZE + cameraOffset.offsetY
-
-      return {
-        tapCol: Math.floor(rawCol),
-        tapRow: Math.floor(rawRow),
-      }
-    },
-    [cameraOffset.offsetX, cameraOffset.offsetY, viewport.left, viewport.top]
+    (pageX: number, pageY: number) =>
+      screenPointToTile(pageX, pageY, viewport.left, viewport.top, cameraOffset, renderedCellSize),
+    [cameraOffset, renderedCellSize, viewport.left, viewport.top, zoomMultiplier]
   )
 
   const isTapInViewport = useCallback(
@@ -248,7 +274,7 @@ export default function Game() {
       x < viewport.left + viewport.width &&
       y >= viewport.top &&
       y < viewport.top + viewport.height,
-    [viewport.height, viewport.left, viewport.top, viewport.width]
+    [viewport.height, viewport.left, viewport.top, viewport.width, zoomMultiplier]
   )
 
   // Movement direction calculation
@@ -787,6 +813,17 @@ export default function Game() {
     setShowCoordinates(settingsManager.getShowCoordinates())
   }, [])
 
+  const changeZoom = useCallback((direction: 'in' | 'out') => {
+    setZoomLevel((current) => {
+      const next = stepGameBoardZoom(current, direction)
+      if (next !== current) void saveGameBoardZoomLevel(next)
+      return next
+    })
+  }, [])
+
+  const handleZoomIn = useCallback(() => changeZoom('in'), [changeZoom])
+  const handleZoomOut = useCallback(() => changeZoom('out'), [changeZoom])
+
   const handleDebugJump = useCallback(
     (position: Position) => {
       if (!__DEV__) return
@@ -1021,13 +1058,15 @@ export default function Game() {
 
       // Calculate screen positions for player and monster
       const playerScreenX =
-        (state.player.position.col - cameraOffset.offsetX) * CELL_SIZE + CELL_SIZE / 2
+        (state.player.position.col - cameraOffset.offsetX) * renderedCellSize + renderedCellSize / 2
       const playerScreenY =
-        (state.player.position.row - cameraOffset.offsetY) * CELL_SIZE + CELL_SIZE / 2
+        (state.player.position.row - cameraOffset.offsetY) * renderedCellSize + renderedCellSize / 2
       const monsterScreenX =
-        (targetMonster.position.col - cameraOffset.offsetX) * CELL_SIZE + CELL_SIZE / 2
+        (targetMonster.position.col - cameraOffset.offsetX) * renderedCellSize +
+        renderedCellSize / 2
       const monsterScreenY =
-        (targetMonster.position.row - cameraOffset.offsetY) * CELL_SIZE + CELL_SIZE / 2
+        (targetMonster.position.row - cameraOffset.offsetY) * renderedCellSize +
+        renderedCellSize / 2
 
       // Execute the ranged attack (spawns projectile)
       const projectileId = executeRangedAttack(
@@ -1053,7 +1092,7 @@ export default function Game() {
         console.log('🎯 handleZapPress complete')
       }
     }
-  }, [state, dispatch, cameraOffset])
+  }, [state, dispatch, cameraOffset, renderedCellSize, zoomMultiplier])
 
   const handleHidePress = useCallback(() => {
     if (!state.player.hideUnlocked) {
@@ -1218,6 +1257,7 @@ export default function Game() {
           state={boardState}
           viewport={viewport}
           cameraOffset={cameraOffset}
+          zoomMultiplier={zoomMultiplier}
           onPlayerTap={handlePlayerTap}
           onMonsterTap={handleMonsterTap}
           onBuildingTap={handleBuildingTap}
@@ -1229,6 +1269,11 @@ export default function Game() {
           onTeleportFlashComplete={handleTeleportFlashComplete}
           onShowInfoRef={showInfoRef}
           onCloseInfoRef={closeInfoRef}
+        />
+        <GameBoardZoomControls
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
         />
         {showCoordinates && (
           <PositionDisplay position={state.player.position} level={state.level} />

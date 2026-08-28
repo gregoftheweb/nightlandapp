@@ -57,5 +57,12 @@ export const GAMEBOARD_MANIFEST = {
       placement: { exclude: ['end'] },
       instances: ['jaunt-cave', 'jaunt-cave-02'],
     },
+    {
+      slotId: 'current-looms',
+      shapeId: 'current-loom',
+      kind: 'scattered-group',
+      placement: { exclude: ['end'] },
+      instances: ['current-loom-01', 'current-loom-02'],
+    },
   ],
 } satisfies GameboardManifest

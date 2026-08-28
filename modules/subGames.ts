@@ -13,6 +13,10 @@ import {
   parsedTimedEncounterContentResult,
   TIMED_ENCOUNTER_SHAPE_ADAPTER,
 } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
+import {
+  CURRENT_LOOM_SHAPE_ADAPTER,
+  parsedCurrentLoomContentResult,
+} from '@/app/sub-games/_shared/current-loom/contentCatalog'
 import { requestEncounterImagePreload } from '@components/preload/EncounterImagePreloadController'
 import { resolveSubGameImageAssets } from './subGameImageAssets'
 
@@ -32,6 +36,13 @@ function resolveSubGameEntryRoute(instanceId: string): string {
     parsedTimedEncounterContentResult.value[instanceId]?.definition.shapeId === 'timed-encounter'
   ) {
     return TIMED_ENCOUNTER_SHAPE_ADAPTER.routes(instanceId).entry
+  }
+
+  if (
+    parsedCurrentLoomContentResult.success &&
+    parsedCurrentLoomContentResult.value[instanceId]?.definition.shapeId === 'current-loom'
+  ) {
+    return CURRENT_LOOM_SHAPE_ADAPTER.routes(instanceId).entry
   }
 
   return getSubGameDefinition(instanceId).entryRoute

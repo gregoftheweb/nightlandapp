@@ -8,6 +8,9 @@ import type { JauntCaveEncounterContent } from '@/app/sub-games/_shared/timed-en
 import { RAW_WORD_GRID_CONTENT } from '@/app/sub-games/_shared/word-grid/contentCatalog'
 import { WORD_GRID_ASSETS } from '@/app/sub-games/_shared/word-grid/assetCatalog'
 import type { WordGridEncounterContent } from '@/app/sub-games/_shared/word-grid/content'
+import { RAW_CURRENT_LOOM_CONTENT } from '@/app/sub-games/_shared/current-loom/contentCatalog'
+import { CURRENT_LOOM_ASSETS } from '@/app/sub-games/_shared/current-loom/assetCatalog'
+import type { CurrentLoomEncounterContent } from '@/app/sub-games/_shared/current-loom/content'
 
 function dimensionsFor(source: ImageSourcePropType): { width: number; height: number } {
   const resolved = Image.resolveAssetSource(source)
@@ -39,6 +42,16 @@ function wordGridAssetIds(content: WordGridEncounterContent): string[] {
   ]
 }
 
+function currentLoomAssetIds(content: CurrentLoomEncounterContent): string[] {
+  return [
+    content.metadata.entrance.assetId,
+    content.presentation.intro.assetId,
+    content.presentation.puzzle.assetId,
+    content.presentation.hazard.assetId,
+    content.presentation.success.assetId,
+  ]
+}
+
 export function resolveSubGameImageAssets(instanceId: string): readonly ImagePreloadAsset[] {
   const timedContent = RAW_TIMED_ENCOUNTER_CONTENT[instanceId] as
     JauntCaveEncounterContent | undefined
@@ -53,6 +66,15 @@ export function resolveSubGameImageAssets(instanceId: string): readonly ImagePre
   if (wordGridContent?.shapeId === 'word-grid') {
     return wordGridAssetIds(wordGridContent).map((id) => {
       const definition = WORD_GRID_ASSETS[id]
+      return { id, source: definition.image, ...definition.intrinsicSize }
+    })
+  }
+
+  const currentLoomContent = RAW_CURRENT_LOOM_CONTENT[instanceId] as
+    CurrentLoomEncounterContent | undefined
+  if (currentLoomContent?.shapeId === 'current-loom') {
+    return currentLoomAssetIds(currentLoomContent).map((id) => {
+      const definition = CURRENT_LOOM_ASSETS[id]
       return { id, source: definition.image, ...definition.intrinsicSize }
     })
   }

@@ -31,6 +31,17 @@ describe('real gameboard manifest', () => {
     )
   })
 
+  it('registers both Current-Loom instances in a scattered group', () => {
+    const slot = GAMEBOARD_MANIFEST.slots.find((candidate) => candidate.slotId === 'current-looms')
+    expect(slot).toEqual({
+      slotId: 'current-looms',
+      shapeId: 'current-loom',
+      kind: 'scattered-group',
+      placement: { exclude: ['end'] },
+      instances: ['current-loom-01', 'current-loom-02'],
+    })
+  })
+
   it('registers the rune obelisk as a fixed one-off range slot', () => {
     const slot = GAMEBOARD_MANIFEST.slots.find((candidate) => candidate.slotId === 'rune-obelisk')
     expect(slot).toEqual({
