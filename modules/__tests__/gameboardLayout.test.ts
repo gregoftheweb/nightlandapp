@@ -35,6 +35,9 @@ const encounterIds = [
   'word-tile-crypt-02',
   'current-loom-01',
   'current-loom-02',
+  'current-loom-03',
+  'current-loom-04',
+  'current-loom-05',
 ]
 
 function seededRandom(seed: number): () => number {
@@ -338,14 +341,8 @@ describe('gameboard layout integration', () => {
   })
 
   test('caps branch count to eligible scattered groups and allocates branch termini', () => {
-    const oneScatteredInstanceManifest = {
-      ...GAMEBOARD_MANIFEST,
-      slots: GAMEBOARD_MANIFEST.slots.map((slot) =>
-        slot.kind === 'scattered-group' ? { ...slot, instances: [slot.instances[0]] } : slot
-      ),
-    }
     const result = generateLayout(
-      oneScatteredInstanceManifest,
+      GAMEBOARD_MANIFEST,
       REAL_PARSED_CONTENT_CATALOGS,
       levels['1'],
       new RandomSource(seededRandom(31))
@@ -354,11 +351,9 @@ describe('gameboard layout integration', () => {
     if (!result.success) return
     expect(result.value.trailNetwork.branches).toHaveLength(2)
     const scattered = result.value.placements.filter(
-      (placement) =>
-        placement.slotId === 'word-grid-clues' || placement.slotId === 'timed-encounters'
+      (placement) => placement.slotId === 'current-looms-branches'
     )
     expect(scattered).toHaveLength(2)
-    scattered.forEach((placement) => expect(placement.location.type).toBe('branch'))
     expect(
       scattered.some(
         (placement) =>

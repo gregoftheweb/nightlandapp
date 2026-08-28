@@ -1,12 +1,21 @@
 import { buildParsedCatalog, buildRawCatalog } from '@config/contentCatalog'
 
+import type { CurrentLoomEncounterContent } from './content'
 import { currentLoom01Content } from './content/currentLoom01'
 import { currentLoom02Content } from './content/currentLoom02'
+import {
+  currentLoom03Content,
+  currentLoom04Content,
+  currentLoom05Content,
+} from './content/additionalCurrentLooms'
 import { createCurrentLoomShapeAdapter } from './manifestAdapter'
 
-export const RAW_CURRENT_LOOM_CONTENT = buildRawCatalog([
+export const RAW_CURRENT_LOOM_CONTENT = buildRawCatalog<CurrentLoomEncounterContent>([
   { instanceId: currentLoom01Content.instanceId, content: currentLoom01Content },
   { instanceId: currentLoom02Content.instanceId, content: currentLoom02Content },
+  { instanceId: currentLoom03Content.instanceId, content: currentLoom03Content },
+  { instanceId: currentLoom04Content.instanceId, content: currentLoom04Content },
+  { instanceId: currentLoom05Content.instanceId, content: currentLoom05Content },
 ])
 
 export const CURRENT_LOOM_SHAPE_ADAPTER = createCurrentLoomShapeAdapter()
