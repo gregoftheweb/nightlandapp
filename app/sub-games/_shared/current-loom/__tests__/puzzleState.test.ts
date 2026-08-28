@@ -2,6 +2,7 @@ import { RandomSource } from '@modules/gameboardLayout'
 
 import {
   applyCurrentLoomHazard,
+  applyCurrentLoomTickDrain,
   createCurrentLoomPuzzle,
   isCurrentLoomSolved,
   tickCurrentLoom,
@@ -74,6 +75,22 @@ describe('Current-Loom puzzle state', () => {
         .map((action) => action.payload.updates.currentHP)
     ).toEqual([7, 2, 0])
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'GAME_OVER' }))
+    expect(navigate).toHaveBeenCalledWith('/death')
+  })
+
+  it('drains one HP per redistribution tick and uses the current-drain death framing', () => {
+    const dispatch = jest.fn()
+    const navigate = jest.fn()
+
+    expect(applyCurrentLoomTickDrain(2, dispatch, navigate)).toBe(1)
+    expect(applyCurrentLoomTickDrain(1, dispatch, navigate)).toBe(0)
+
+    expect(dispatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'GAME_OVER',
+        payload: expect.objectContaining({ killerName: 'The Draining Earth Current' }),
+      })
+    )
     expect(navigate).toHaveBeenCalledWith('/death')
   })
 })

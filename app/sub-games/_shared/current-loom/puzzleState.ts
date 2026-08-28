@@ -7,11 +7,15 @@ export const CURRENT_LOOM_SAFE_VALUE = 5
 export const CURRENT_LOOM_MIN = 0
 export const CURRENT_LOOM_MAX = 10
 export const CURRENT_LOOM_HOLD_TICK_MS = 150
+export const CURRENT_LOOM_TICK_DAMAGE = 1
 export const CURRENT_LOOM_HAZARD_DAMAGE = 5
 export const CURRENT_LOOM_HAZARD_OVERLAY_MS = 500
 export const CURRENT_LOOM_DEATH_MESSAGE =
   'The Current-Loom discharges through Christos and stills his heart.'
 export const CURRENT_LOOM_KILLER_NAME = 'The Unbound Earth Current'
+export const CURRENT_LOOM_DRAIN_DEATH_MESSAGE =
+  'The Current-Loom drinks the last of Christos\u2019s life and leaves him still.'
+export const CURRENT_LOOM_DRAIN_KILLER_NAME = 'The Draining Earth Current'
 
 export type CurrentLoomChannels = readonly [number, number, number, number, number]
 
@@ -140,23 +144,56 @@ export function createCurrentLoomPuzzle(
   return { channels: [4, 6, 4, 6, 5], tickCount: 0 }
 }
 
-export function applyCurrentLoomHazard(
+function applyCurrentLoomDamage(
   currentHP: number,
+  damage: number,
+  deathMessage: string,
+  killerName: string,
   dispatch: GameDispatch,
   navigateToDeath: (route: string) => void
 ): number {
-  const nextHP = Math.max(0, currentHP - CURRENT_LOOM_HAZARD_DAMAGE)
+  const nextHP = Math.max(0, currentHP - damage)
   dispatch({ type: 'UPDATE_PLAYER', payload: { updates: { currentHP: nextHP } } })
   if (nextHP <= 0) {
     dispatch({
       type: 'GAME_OVER',
       payload: {
-        message: CURRENT_LOOM_DEATH_MESSAGE,
-        killerName: CURRENT_LOOM_KILLER_NAME,
+        message: deathMessage,
+        killerName,
         suppressDeathDialog: true,
       },
     })
     navigateToDeath('/death')
   }
   return nextHP
+}
+
+export function applyCurrentLoomTickDrain(
+  currentHP: number,
+  dispatch: GameDispatch,
+  navigateToDeath: (route: string) => void
+): number {
+  return applyCurrentLoomDamage(
+    currentHP,
+    CURRENT_LOOM_TICK_DAMAGE,
+    CURRENT_LOOM_DRAIN_DEATH_MESSAGE,
+    CURRENT_LOOM_DRAIN_KILLER_NAME,
+    dispatch,
+    navigateToDeath
+  )
+}
+
+export function applyCurrentLoomHazard(
+  currentHP: number,
+  dispatch: GameDispatch,
+  navigateToDeath: (route: string) => void
+): number {
+  return applyCurrentLoomDamage(
+    currentHP,
+    CURRENT_LOOM_HAZARD_DAMAGE,
+    CURRENT_LOOM_DEATH_MESSAGE,
+    CURRENT_LOOM_KILLER_NAME,
+    dispatch,
+    navigateToDeath
+  )
 }
