@@ -9,37 +9,43 @@ describe('real gameboard manifest', () => {
     })
   })
 
-  it('registers both word-grid encounters in the scattered group', () => {
-    const wordGridSlot = GAMEBOARD_MANIFEST.slots.find((slot) => slot.slotId === 'word-grid-clues')
-    expect(wordGridSlot).toEqual(
-      expect.objectContaining({
-        shapeId: 'word-grid',
-        kind: 'scattered-group',
-        instances: ['word-tile-crypt-01', 'word-tile-crypt-02'],
-      })
-    )
+  it('follows the authored Act One encounter order', () => {
+    expect(GAMEBOARD_MANIFEST.slots.map((slot) => slot.slotId)).toEqual([
+      'tesseract-note',
+      'hermit-hollow',
+      'salamander-note',
+      'aerowreckage-puzzle',
+      'current-loom-first',
+      'current-looms-branches',
+      'jaunt-cave-first',
+      'deep-silo',
+      'rune-obelisk',
+      'current-loom-fourth',
+      'jaunt-cave-second',
+      'current-loom-fifth',
+    ])
   })
 
-  it('registers both Jaunt Cave instances in their own timed-encounter group', () => {
-    const timedSlot = GAMEBOARD_MANIFEST.slots.find((slot) => slot.slotId === 'timed-encounters')
-    expect(timedSlot).toEqual(
-      expect.objectContaining({
-        shapeId: 'timed-encounter',
-        kind: 'scattered-group',
-        instances: ['jaunt-cave', 'jaunt-cave-02'],
-      })
-    )
-  })
-
-  it('registers both Current-Loom instances in a scattered group', () => {
-    const slot = GAMEBOARD_MANIFEST.slots.find((candidate) => candidate.slotId === 'current-looms')
-    expect(slot).toEqual({
-      slotId: 'current-looms',
-      shapeId: 'current-loom',
-      kind: 'scattered-group',
-      placement: { exclude: ['end'] },
-      instances: ['current-loom-01', 'current-loom-02'],
+  it('registers exactly five Current-Looms, including two branch candidates', () => {
+    const loomIds = GAMEBOARD_MANIFEST.slots.flatMap((slot) => {
+      if (slot.shapeId !== 'current-loom') return []
+      return slot.kind === 'scattered-group' ? slot.instances : [slot.contentRef]
     })
+    expect(loomIds).toEqual([
+      'current-loom-01',
+      'current-loom-02',
+      'current-loom-03',
+      'current-loom-04',
+      'current-loom-05',
+    ])
+    expect(
+      GAMEBOARD_MANIFEST.slots.find((slot) => slot.slotId === 'current-looms-branches')
+    ).toEqual(
+      expect.objectContaining({
+        kind: 'scattered-group',
+        instances: ['current-loom-02', 'current-loom-03'],
+      })
+    )
   })
 
   it('registers the rune obelisk as a fixed one-off range slot', () => {
@@ -48,7 +54,7 @@ describe('real gameboard manifest', () => {
       slotId: 'rune-obelisk',
       shapeId: 'one-off',
       kind: 'range',
-      placement: { minPct: 0.16, maxPct: 0.2 },
+      placement: { minPct: 0.66, maxPct: 0.7 },
       contentRef: 'rune-obelisk',
     })
   })
