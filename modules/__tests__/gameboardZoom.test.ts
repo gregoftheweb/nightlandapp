@@ -1,14 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  __esModule: true,
-  default: {
-    clear: jest.fn(),
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-  },
-}))
-
 import { getInitialState } from '../gameState'
 import {
   GAMEBOARD_ZOOM_MULTIPLIERS,
@@ -23,6 +13,15 @@ import {
 } from '../gameboardZoomPreference'
 import { calculateNewPosition } from '../movement'
 import { buildSpatialGrid, checkOverlap } from '../spacialGrid'
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    clear: jest.fn(),
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+  },
+}))
 
 const mockedStorage = jest.mocked(AsyncStorage)
 

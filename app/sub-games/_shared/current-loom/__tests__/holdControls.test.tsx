@@ -53,8 +53,8 @@ describe('Current-Loom hold controls', () => {
   })
 
   it('starts immediately, repeats at the tunable tick rate, and clears on release/unmount', () => {
-    const intervalSpy = jest.spyOn(global, 'setInterval')
-    const clearSpy = jest.spyOn(global, 'clearInterval')
+    const intervalSpy = jest.spyOn(globalThis, 'setInterval')
+    const clearSpy = jest.spyOn(globalThis, 'clearInterval')
     const parsed = resolveParsedCurrentLoomEncounter('current-loom-01')
     const view = render(
       <CurrentLoomPuzzleScreen config={parsed.shapeConfig} definition={parsed.definition} />
