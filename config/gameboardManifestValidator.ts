@@ -1,4 +1,5 @@
 import { parsedWordGridContentResult } from '@/app/sub-games/_shared/word-grid/contentCatalog'
+import { parsedCurrentLoomContentResult } from '@/app/sub-games/_shared/current-loom/contentCatalog'
 import { getSubGameDefinition, isRegisteredSubGameInstance, SUB_GAME_SHAPES } from './subGames'
 import type { GameboardManifest } from './types/gameboard'
 import type { SubGameInstanceDefinition } from './subGames'
@@ -18,12 +19,28 @@ function addError(errors: ValidationError[], code: string, path: string, message
   errors.push({ code, path, message })
 }
 
-function resolveContent(contentRef: string): SubGameInstanceDefinition | undefined {
-  if (parsedWordGridContentResult.success) {
+function resolveContent(
+  shapeId: string,
+  contentRef: string
+): SubGameInstanceDefinition | undefined {
+  if (shapeId === 'word-grid' && parsedWordGridContentResult.success) {
     const wordGridDefinition = parsedWordGridContentResult.value[contentRef]?.definition
     if (wordGridDefinition) return wordGridDefinition
   }
-  return isRegisteredSubGameInstance(contentRef) ? getSubGameDefinition(contentRef) : undefined
+  if (shapeId === 'current-loom' && parsedCurrentLoomContentResult.success) {
+    return parsedCurrentLoomContentResult.value[contentRef]?.definition
+  }
+  if (isRegisteredSubGameInstance(contentRef)) return getSubGameDefinition(contentRef)
+
+  // Resolve a known cross-shape reference so validation can report a mismatch, not "unknown".
+  if (parsedWordGridContentResult.success) {
+    const definition = parsedWordGridContentResult.value[contentRef]?.definition
+    if (definition) return definition
+  }
+  if (parsedCurrentLoomContentResult.success) {
+    return parsedCurrentLoomContentResult.value[contentRef]?.definition
+  }
+  return undefined
 }
 
 function regionKey(region: unknown): string | undefined {
@@ -107,7 +124,7 @@ export function validateGameboardManifest(manifest: unknown): ValidationResult<G
       seenInstanceIds.set(contentRef, slotId)
     }
 
-    const definition = resolveContent(contentRef)
+    const definition = resolveContent(shapeId, contentRef)
     if (!definition) {
       addError(
         errors,

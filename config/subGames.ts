@@ -18,6 +18,7 @@ export const SUB_GAME_SHAPES: ReadonlySet<SubGameShapeId> = new Set([
   'dialogue',
   'word-grid',
   'timed-encounter',
+  'current-loom',
   'one-off',
 ])
 

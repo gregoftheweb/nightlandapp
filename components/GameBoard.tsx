@@ -18,13 +18,12 @@ import Projectile from './Projectile'
 import TeleportFlash from './effects/TeleportFlash'
 import { enterSubGame } from '@modules/subGames'
 import { GAME_CELL_SIZE, type GameViewport } from '@modules/viewport'
+import { getRenderedGameBoardTileSize } from '@modules/gameboardZoom'
 
 export const CELL_SIZE = GAME_CELL_SIZE
 
 // Background tile configuration
 const BACKGROUND_TILE_SIZE = 320
-const BACKGROUND_SCALE = CELL_SIZE / 32
-const SCALED_TILE_SIZE = BACKGROUND_TILE_SIZE * BACKGROUND_SCALE
 // Keep absent collection props referentially stable across renders. Freezing the
 // singleton also prevents one consumer from mutating every fallback collection.
 const EMPTY_ARRAY = Object.freeze([])
@@ -52,6 +51,7 @@ interface GameBoardProps {
   state: GameBoardState
   viewport: GameViewport
   cameraOffset: { offsetX: number; offsetY: number }
+  zoomMultiplier: number
   onPlayerTap?: () => void
   onMonsterTap?: (monster: Monster) => void
   onBuildingTap?: (building: LevelObjectInstance) => void
@@ -80,6 +80,7 @@ function GameBoard({
   state,
   viewport,
   cameraOffset,
+  zoomMultiplier,
   onPlayerTap,
   onMonsterTap,
   onBuildingTap,
@@ -92,6 +93,7 @@ function GameBoard({
   onShowInfoRef,
   onCloseInfoRef,
 }: GameBoardProps) {
+  const renderedCellSize = getRenderedGameBoardTileSize(CELL_SIZE, zoomMultiplier)
   // Generate unique instance ID for this component
   const instanceId = useRef(`GameBoard-${Math.random().toString(36).slice(2, 11)}`)
 
@@ -402,17 +404,20 @@ function GameBoard({
     const lines: React.ReactNode[] = []
     for (let row = 0; row <= viewport.rows; row++) {
       lines.push(
-        <View key={`grid-row-${row}`} style={[styles.gridRow, { top: row * CELL_SIZE }]} />
+        <View key={`grid-row-${row}`} style={[styles.gridRow, { top: row * renderedCellSize }]} />
       )
     }
     for (let col = 0; col <= viewport.cols; col++) {
       lines.push(
-        <View key={`grid-col-${col}`} style={[styles.gridColumn, { left: col * CELL_SIZE }]} />
+        <View
+          key={`grid-col-${col}`}
+          style={[styles.gridColumn, { left: col * renderedCellSize }]}
+        />
       )
     }
 
     return lines
-  }, [viewport.cols, viewport.rows])
+  }, [viewport.cols, viewport.rows, renderedCellSize, zoomMultiplier])
 
   // Only the handful of occupied cells move as the camera changes.
   const renderGridHighlights = useMemo(() => {
@@ -435,7 +440,12 @@ function GameBoard({
           style={[
             styles.cellHighlight,
             styles.monsterCellHighlight,
-            { left: screenCol * CELL_SIZE, top: screenRow * CELL_SIZE },
+            {
+              left: screenCol * renderedCellSize,
+              top: screenRow * renderedCellSize,
+              width: renderedCellSize,
+              height: renderedCellSize,
+            },
           ]}
         />
       )
@@ -459,7 +469,12 @@ function GameBoard({
               state.player.hideActive
                 ? styles.hiddenPlayerCellHighlight
                 : styles.playerCellHighlight,
-              { left: screenCol * CELL_SIZE, top: screenRow * CELL_SIZE },
+              {
+                left: screenCol * renderedCellSize,
+                top: screenRow * renderedCellSize,
+                width: renderedCellSize,
+                height: renderedCellSize,
+              },
             ]}
           />
         )
@@ -475,6 +490,8 @@ function GameBoard({
     state.player?.hideActive,
     viewport.cols,
     viewport.rows,
+    renderedCellSize,
+    zoomMultiplier,
   ])
 
   const renderCombatMonsters = useMemo(() => {
@@ -498,10 +515,10 @@ function GameBoard({
             key={`combat-monster-${monster.id}-${index}`}
             style={{
               position: 'absolute',
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: CELL_SIZE,
-              height: CELL_SIZE,
+              left: screenCol * renderedCellSize,
+              top: screenRow * renderedCellSize,
+              width: renderedCellSize,
+              height: renderedCellSize,
               zIndex: 4,
             }}
             pointerEvents="none"
@@ -510,6 +527,12 @@ function GameBoard({
               source={getMonsterImage(monster)}
               style={[
                 styles.character,
+                {
+                  width: renderedCellSize * 0.8,
+                  height: renderedCellSize * 0.8,
+                  left: renderedCellSize * 0.1,
+                  top: renderedCellSize * 0.1,
+                },
                 isTargeted && {
                   borderWidth: 1,
                   borderColor: 'yellow',
@@ -529,6 +552,8 @@ function GameBoard({
     cameraOffset.offsetX,
     viewport.cols,
     viewport.rows,
+    renderedCellSize,
+    zoomMultiplier,
   ])
 
   const renderPlayer = useMemo(() => {
@@ -547,17 +572,25 @@ function GameBoard({
         key="player"
         style={{
           position: 'absolute',
-          left: screenCol * CELL_SIZE,
-          top: screenRow * CELL_SIZE,
-          width: CELL_SIZE,
-          height: CELL_SIZE,
+          left: screenCol * renderedCellSize,
+          top: screenRow * renderedCellSize,
+          width: renderedCellSize,
+          height: renderedCellSize,
           zIndex: 5,
         }}
         pointerEvents="none"
       >
         <Image
           source={require('@assets/images/sprites/characters/christos.webp')}
-          style={styles.character}
+          style={[
+            styles.character,
+            {
+              width: renderedCellSize * 0.8,
+              height: renderedCellSize * 0.8,
+              left: renderedCellSize * 0.1,
+              top: renderedCellSize * 0.1,
+            },
+          ]}
           resizeMode="contain"
         />
       </View>
@@ -568,6 +601,8 @@ function GameBoard({
     cameraOffset.offsetX,
     viewport.cols,
     viewport.rows,
+    renderedCellSize,
+    zoomMultiplier,
   ])
 
   const renderMonsters = useMemo(() => {
@@ -591,10 +626,10 @@ function GameBoard({
             key={`monster-${monster.id}-${index}`}
             style={{
               position: 'absolute',
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: CELL_SIZE,
-              height: CELL_SIZE,
+              left: screenCol * renderedCellSize,
+              top: screenRow * renderedCellSize,
+              width: renderedCellSize,
+              height: renderedCellSize,
               zIndex: 3,
             }}
             pointerEvents="none"
@@ -603,6 +638,12 @@ function GameBoard({
               source={getMonsterImage(monster)}
               style={[
                 styles.character,
+                {
+                  width: renderedCellSize * 0.8,
+                  height: renderedCellSize * 0.8,
+                  left: renderedCellSize * 0.1,
+                  top: renderedCellSize * 0.1,
+                },
                 isTargeted && {
                   borderWidth: 1,
                   borderColor: 'yellow',
@@ -621,6 +662,8 @@ function GameBoard({
     cameraOffset.offsetX,
     viewport.cols,
     viewport.rows,
+    renderedCellSize,
+    zoomMultiplier,
   ])
 
   const renderGreatPowers = useMemo(() => {
@@ -648,10 +691,10 @@ function GameBoard({
             key={`greatpower-${greatPower.id}-${index}`}
             style={{
               position: 'absolute',
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: gpWidth * CELL_SIZE,
-              height: gpHeight * CELL_SIZE,
+              left: screenCol * renderedCellSize,
+              top: screenRow * renderedCellSize,
+              width: gpWidth * renderedCellSize,
+              height: gpHeight * renderedCellSize,
               zIndex: 2,
             }}
             pointerEvents="none"
@@ -668,7 +711,15 @@ function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [levelGreatPowers, cameraOffset.offsetY, cameraOffset.offsetX, viewport.cols, viewport.rows])
+  }, [
+    levelGreatPowers,
+    cameraOffset.offsetY,
+    cameraOffset.offsetX,
+    viewport.cols,
+    viewport.rows,
+    renderedCellSize,
+    zoomMultiplier,
+  ])
 
   const renderItems = useMemo(() => {
     if (items.length === 0) return []
@@ -689,10 +740,10 @@ function GameBoard({
             key={`item-${item.id}-${index}`}
             style={{
               position: 'absolute',
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: CELL_SIZE,
-              height: CELL_SIZE,
+              left: screenCol * renderedCellSize,
+              top: screenRow * renderedCellSize,
+              width: renderedCellSize,
+              height: renderedCellSize,
               zIndex: item.zIndex || 1,
             }}
             pointerEvents="none"
@@ -700,11 +751,11 @@ function GameBoard({
             <Image
               source={getItemImage(item)}
               style={{
-                width: CELL_SIZE * 0.6,
-                height: CELL_SIZE * 0.6,
+                width: renderedCellSize * 0.6,
+                height: renderedCellSize * 0.6,
                 position: 'absolute',
-                left: CELL_SIZE * 0.2,
-                top: CELL_SIZE * 0.2,
+                left: renderedCellSize * 0.2,
+                top: renderedCellSize * 0.2,
               }}
               resizeMode="contain"
             />
@@ -712,7 +763,15 @@ function GameBoard({
         )
       })
       .filter((item): item is React.ReactElement => item !== null)
-  }, [items, cameraOffset.offsetY, cameraOffset.offsetX, viewport.cols, viewport.rows])
+  }, [
+    items,
+    cameraOffset.offsetY,
+    cameraOffset.offsetX,
+    viewport.cols,
+    viewport.rows,
+    renderedCellSize,
+    zoomMultiplier,
+  ])
 
   const renderBuildings = useMemo(() => {
     if (!level || levelObjects.length === 0) return []
@@ -741,10 +800,10 @@ function GameBoard({
             key={`building-${obj.id}-${index}`}
             style={{
               position: 'absolute',
-              left: screenCol * CELL_SIZE,
-              top: screenRow * CELL_SIZE,
-              width: objWidth * CELL_SIZE,
-              height: objHeight * CELL_SIZE,
+              left: screenCol * renderedCellSize,
+              top: screenRow * renderedCellSize,
+              width: objWidth * renderedCellSize,
+              height: objHeight * renderedCellSize,
               zIndex: obj.zIndex || 0,
             }}
             pointerEvents="none"
@@ -769,6 +828,8 @@ function GameBoard({
     cameraOffset.offsetX,
     viewport.cols,
     viewport.rows,
+    renderedCellSize,
+    zoomMultiplier,
   ])
 
   const renderNonCollisionObjects = useMemo(() => {
@@ -798,10 +859,10 @@ function GameBoard({
           key={`noncollision-${obj.id}-${index}`}
           style={{
             position: 'absolute',
-            left: screenCol * CELL_SIZE,
-            top: screenRow * CELL_SIZE,
-            width: objWidth * CELL_SIZE,
-            height: objHeight * CELL_SIZE,
+            left: screenCol * renderedCellSize,
+            top: screenRow * renderedCellSize,
+            width: objWidth * renderedCellSize,
+            height: objHeight * renderedCellSize,
             zIndex: obj.zIndex || 1,
           }}
           pointerEvents="none"
@@ -830,10 +891,10 @@ function GameBoard({
               key={`collision-mask-${obj.id}-${maskIndex}`}
               style={{
                 position: 'absolute',
-                left: maskScreenCol * CELL_SIZE,
-                top: maskScreenRow * CELL_SIZE,
-                width: maskWidth * CELL_SIZE,
-                height: maskHeight * CELL_SIZE,
+                left: maskScreenCol * renderedCellSize,
+                top: maskScreenRow * renderedCellSize,
+                width: maskWidth * renderedCellSize,
+                height: maskHeight * renderedCellSize,
                 zIndex: (obj.zIndex || 1) + 1,
               }}
               pointerEvents="none"
@@ -850,6 +911,8 @@ function GameBoard({
     cameraOffset.offsetX,
     viewport.cols,
     viewport.rows,
+    renderedCellSize,
+    zoomMultiplier,
   ])
 
   // Render active projectiles
@@ -873,7 +936,7 @@ function GameBoard({
         onComplete={onProjectileComplete || (() => {})}
       />
     ))
-  }, [activeProjectiles, onProjectileComplete])
+  }, [activeProjectiles, onProjectileComplete, zoomMultiplier])
 
   // Render active teleport flashes
   const renderTeleportFlashes = useMemo(() => {
@@ -885,13 +948,20 @@ function GameBoard({
         id={flash.id}
         gridCol={flash.gridCol}
         gridRow={flash.gridRow}
-        cellSize={CELL_SIZE}
+        cellSize={renderedCellSize}
         cameraOffsetX={cameraOffset.offsetX}
         cameraOffsetY={cameraOffset.offsetY}
         onComplete={onTeleportFlashComplete || (() => {})}
       />
     ))
-  }, [activeTeleportFlashes, cameraOffset.offsetX, cameraOffset.offsetY, onTeleportFlashComplete])
+  }, [
+    activeTeleportFlashes,
+    cameraOffset.offsetX,
+    cameraOffset.offsetY,
+    onTeleportFlashComplete,
+    renderedCellSize,
+    zoomMultiplier,
+  ])
 
   // Memoized grid render
   const renderGrid = useMemo(() => {
@@ -931,26 +1001,30 @@ function GameBoard({
     renderItems,
     renderCombatMonsters,
     renderPlayer,
+    zoomMultiplier,
   ])
 
   // Tiled background
   const tiledBackground = useMemo(() => {
-    const cols = Math.ceil(viewport.width / SCALED_TILE_SIZE) + 2
-    const rows = Math.ceil(viewport.height / SCALED_TILE_SIZE) + 2
+    const scaledBackgroundTileSize = BACKGROUND_TILE_SIZE * zoomMultiplier
+    const cols = Math.ceil(viewport.width / scaledBackgroundTileSize) + 2
+    const rows = Math.ceil(viewport.height / scaledBackgroundTileSize) + 2
     const rawX =
-      (((cameraOffset.offsetX * CELL_SIZE) % SCALED_TILE_SIZE) + SCALED_TILE_SIZE) %
-      SCALED_TILE_SIZE
+      (((cameraOffset.offsetX * renderedCellSize) % scaledBackgroundTileSize) +
+        scaledBackgroundTileSize) %
+      scaledBackgroundTileSize
     const rawY =
-      (((cameraOffset.offsetY * CELL_SIZE) % SCALED_TILE_SIZE) + SCALED_TILE_SIZE) %
-      SCALED_TILE_SIZE
+      (((cameraOffset.offsetY * renderedCellSize) % scaledBackgroundTileSize) +
+        scaledBackgroundTileSize) %
+      scaledBackgroundTileSize
     const offsetX = -rawX
     const offsetY = -rawY
 
     const tiles: React.ReactNode[] = []
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const left = offsetX + c * SCALED_TILE_SIZE
-        const top = offsetY + r * SCALED_TILE_SIZE
+        const left = offsetX + c * scaledBackgroundTileSize
+        const top = offsetY + r * scaledBackgroundTileSize
         tiles.push(
           <Image
             key={`bg-${r}-${c}`}
@@ -959,8 +1033,8 @@ function GameBoard({
               position: 'absolute',
               left,
               top,
-              width: SCALED_TILE_SIZE,
-              height: SCALED_TILE_SIZE,
+              width: scaledBackgroundTileSize,
+              height: scaledBackgroundTileSize,
             }}
             resizeMode="stretch"
           />
@@ -968,7 +1042,14 @@ function GameBoard({
       }
     }
     return tiles
-  }, [cameraOffset.offsetX, cameraOffset.offsetY, viewport.height, viewport.width])
+  }, [
+    cameraOffset.offsetX,
+    cameraOffset.offsetY,
+    viewport.height,
+    viewport.width,
+    renderedCellSize,
+    zoomMultiplier,
+  ])
 
   const safeEmptyBoard = useMemo(() => {
     // If level or objects are missing, render an empty board (but DO NOT early return before hooks)

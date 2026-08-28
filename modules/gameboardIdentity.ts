@@ -1,5 +1,6 @@
 import { RAW_WORD_GRID_CONTENT } from '@/app/sub-games/_shared/word-grid/contentCatalog'
 import { RAW_TIMED_ENCOUNTER_CONTENT } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
+import { RAW_CURRENT_LOOM_CONTENT } from '@/app/sub-games/_shared/current-loom/contentCatalog'
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
 import { getSubGameDefinition } from '@config/subGames'
 import type { ContentFingerprintInput, GameboardCatalogIdentity } from '@config/types'
@@ -91,7 +92,9 @@ export function buildContentFingerprintInput(): ContentFingerprintInput[] {
           ? RAW_WORD_GRID_CONTENT[instanceId]
           : shapeId === 'timed-encounter'
             ? RAW_TIMED_ENCOUNTER_CONTENT[instanceId]
-            : serializableRegistryContent(instanceId),
+            : shapeId === 'current-loom'
+              ? RAW_CURRENT_LOOM_CONTENT[instanceId]
+              : serializableRegistryContent(instanceId),
     }))
     .sort((a, b) => a.shapeId.localeCompare(b.shapeId) || a.instanceId.localeCompare(b.instanceId))
 }

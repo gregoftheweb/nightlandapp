@@ -36,6 +36,19 @@ describe('per-instance sub-game image assets', () => {
     }
   )
 
+  test.each(['current-loom-01', 'current-loom-02'])(
+    'derives all five shared Current-Loom assets for %s',
+    (instanceId) => {
+      expect(ids(instanceId)).toEqual([
+        'current-loom-entrance',
+        'current-loom-intro',
+        'current-loom-board',
+        'current-loom-hazard',
+        'current-loom-success',
+      ])
+    }
+  )
+
   test('declares the exact Deep Silo runtime set', () => {
     expect(ids('deep-silo')).toEqual([
       'silo-screen1',

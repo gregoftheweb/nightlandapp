@@ -75,6 +75,18 @@ function makeHarness(config: SubGameLifecycleConfig) {
 }
 
 describe('sub-game lifecycle controller', () => {
+  it('routes a completed Current-Loom instance directly to its dynamic success screen', () => {
+    const instance = {
+      ...makeInstance({ ...baseConfig, revisit: 'success-screen' }),
+      instanceId: 'current-loom-01',
+      shapeId: 'current-loom' as const,
+      entryRoute: '/sub-games/current-loom/current-loom-01',
+    }
+    expect(resolveSubGameEntryRoute(instance, true)).toBe(
+      '/sub-games/current-loom/current-loom-01/success'
+    )
+  })
+
   it('coalesces repeated completion and never duplicates its reward or waypoint', async () => {
     const config = {
       ...baseConfig,

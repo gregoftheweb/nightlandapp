@@ -33,6 +33,8 @@ const encounterIds = [
   'rune-obelisk',
   'word-tile-crypt-01',
   'word-tile-crypt-02',
+  'current-loom-01',
+  'current-loom-02',
 ]
 
 function seededRandom(seed: number): () => number {

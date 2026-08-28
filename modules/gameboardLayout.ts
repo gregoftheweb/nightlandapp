@@ -1,5 +1,6 @@
 import { parsedWordGridContentResult } from '@/app/sub-games/_shared/word-grid/contentCatalog'
 import { parsedTimedEncounterContentResult } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
+import { parsedCurrentLoomContentResult } from '@/app/sub-games/_shared/current-loom/contentCatalog'
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
 import { createSubGameEntranceInstance } from '@config/levelHelpers'
 import { getSubGameDefinition } from '@config/subGames'
@@ -170,6 +171,14 @@ export const REAL_PARSED_CONTENT_CATALOGS: ParsedContentCatalogsByShape = {
       }
       const parsed = parsedTimedEncounterContentResult.value[instanceId]
       if (!parsed) throw new Error(`Unknown timed encounter '${instanceId}'`)
+      return parsed.definition
+    }
+    if (shapeId === 'current-loom') {
+      if (!parsedCurrentLoomContentResult.success) {
+        throw new Error('Parsed Current-Loom catalog is invalid')
+      }
+      const parsed = parsedCurrentLoomContentResult.value[instanceId]
+      if (!parsed) throw new Error(`Unknown Current-Loom encounter '${instanceId}'`)
       return parsed.definition
     }
     const definition = getSubGameDefinition(instanceId)

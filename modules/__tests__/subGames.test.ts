@@ -42,6 +42,17 @@ describe('sub-game navigation', () => {
     }
   )
 
+  it.each(['current-loom-01', 'current-loom-02'])(
+    'uses the adapter route for Current-Loom instance %s',
+    async (instanceId) => {
+      const resolve = deferredPreload()
+      enterSubGame(instanceId)
+      expect(router.replace).not.toHaveBeenCalled()
+      await act(async () => resolve(loaded))
+      expect(router.replace).toHaveBeenCalledWith(`/sub-games/current-loom/${instanceId}`)
+    }
+  )
+
   it('guarantees all six Jaunt Cave daemon sprites settle before encounter entry', async () => {
     const resolve = deferredPreload()
     enterSubGame('jaunt-cave')

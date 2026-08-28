@@ -63,12 +63,12 @@ export function resolveSubGameEntryRoute(
     case 'resume':
       return instance.entryRoute
     case 'success-screen':
-      return instance.shapeId === 'word-grid'
+      return instance.shapeId === 'word-grid' || instance.shapeId === 'current-loom'
         ? `${instance.entryRoute}/success`
         : `${routeDirectory(instance.entryRoute)}/success`
     case 'aftermath-screen':
       if (instance.lifecycle.aftermathRoute) return instance.lifecycle.aftermathRoute
-      return instance.shapeId === 'word-grid'
+      return instance.shapeId === 'word-grid' || instance.shapeId === 'current-loom'
         ? `${instance.entryRoute}/aftermath`
         : `${routeDirectory(instance.entryRoute)}/aftermath`
     case 'unavailable':

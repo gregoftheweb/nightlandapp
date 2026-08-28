@@ -8,7 +8,8 @@ export interface SubGameLaunch {
   instanceId: string // Stable placed-encounter identifier in the sub-game registry
 }
 
-export type SubGameShapeId = 'dialogue' | 'word-grid' | 'timed-encounter' | 'one-off'
+export type SubGameShapeId =
+  'dialogue' | 'word-grid' | 'timed-encounter' | 'current-loom' | 'one-off'
 
 export type SubGameFailurePolicy =
   | { exit: 'safe' }
