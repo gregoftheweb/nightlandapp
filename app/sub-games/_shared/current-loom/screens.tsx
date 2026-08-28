@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Animated, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useRouter } from 'expo-router'
 
 import { BackgroundImage } from '../BackgroundImage'
@@ -10,6 +10,7 @@ import type { SubGameInstanceDefinition } from '@config/subGames'
 import { useGameContext } from '@context/GameContext'
 import {
   applyCurrentLoomHazard,
+  applyCurrentLoomTickDrain,
   createCurrentLoomPuzzle,
   CURRENT_LOOM_HAZARD_OVERLAY_MS,
   CURRENT_LOOM_HOLD_TICK_MS,
@@ -19,6 +20,13 @@ import {
   type CurrentLoomPuzzleState,
 } from './puzzleState'
 import type { CurrentLoomConfig } from './types'
+import { getPlayerHealthDisplay } from '@modules/playerHealthDisplay'
+import {
+  CurrentLoomCompletionGlow,
+  CurrentLoomEdgeGlow,
+  CurrentLoomHealthBar,
+  useCurrentLoomBuzz,
+} from './feedback'
 
 type CurrentLoomScreenProps = {
   config: CurrentLoomConfig
@@ -68,12 +76,18 @@ export function CurrentLoomPuzzleScreen({ config }: CurrentLoomScreenProps) {
   const { state: gameState, dispatch } = useGameContext()
   const [puzzle, setPuzzle] = useState<CurrentLoomPuzzleState>(() => createCurrentLoomPuzzle())
   const [hazardVisible, setHazardVisible] = useState(false)
+  const [completionVisible, setCompletionVisible] = useState(false)
+  const [heldChannelCount, setHeldChannelCount] = useState(0)
   const puzzleRef = useRef(puzzle)
   const hpRef = useRef(gameState.player.currentHP)
+  const heldChannelsRef = useRef(new Set<number>())
   const intervalsRef = useRef<(ReturnType<typeof setInterval> | null)[]>(
     Array.from({ length: 5 }, () => null)
   )
   const hazardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const completionStartedRef = useRef(false)
+  const shakeX = useCurrentLoomBuzz(heldChannelCount > 0)
+  const healthDisplay = getPlayerHealthDisplay(gameState.player.currentHP, gameState.player.maxHP)
   puzzleRef.current = puzzle
 
   useEffect(() => {
@@ -84,6 +98,9 @@ export function CurrentLoomPuzzleScreen({ config }: CurrentLoomScreenProps) {
     const interval = intervalsRef.current[channelIndex]
     if (interval) clearInterval(interval)
     intervalsRef.current[channelIndex] = null
+    if (heldChannelsRef.current.delete(channelIndex)) {
+      setHeldChannelCount(heldChannelsRef.current.size)
+    }
   }, [])
 
   const stopAllChannels = useCallback(() => {
@@ -111,15 +128,34 @@ export function CurrentLoomPuzzleScreen({ config }: CurrentLoomScreenProps) {
     }, CURRENT_LOOM_HAZARD_OVERLAY_MS)
   }, [])
 
+  const showCompletion = useCallback(() => {
+    if (completionStartedRef.current) return
+    completionStartedRef.current = true
+    stopAllChannels()
+    setCompletionVisible(true)
+  }, [stopAllChannels])
+
+  const finishCompletion = useCallback(() => {
+    router.replace(config.successRoute as never)
+  }, [config.successRoute, router])
+
   const tickChannel = useCallback(
     (channelIndex: number) => {
-      if (gameState.gameOver || isCurrentLoomSolved(puzzleRef.current)) {
+      if (gameState.gameOver || hpRef.current <= 0 || isCurrentLoomSolved(puzzleRef.current)) {
         stopAllChannels()
         return
       }
       const result = tickCurrentLoom(puzzleRef.current, channelIndex)
       puzzleRef.current = result.state
       setPuzzle(result.state)
+
+      hpRef.current = applyCurrentLoomTickDrain(hpRef.current, dispatch, (route) =>
+        router.replace(route as never)
+      )
+      if (hpRef.current <= 0) {
+        stopAllChannels()
+        return
+      }
 
       if (result.hazardChannel !== null) {
         stopAllChannels()
@@ -134,19 +170,26 @@ export function CurrentLoomPuzzleScreen({ config }: CurrentLoomScreenProps) {
       }
 
       if (isCurrentLoomSolved(result.state)) {
-        stopAllChannels()
-        router.replace(config.successRoute as never)
+        showCompletion()
       }
     },
-    [config.successRoute, dispatch, gameState.gameOver, router, showHazard, stopAllChannels]
+    [dispatch, gameState.gameOver, router, showCompletion, showHazard, stopAllChannels]
   )
 
   const startChannel = useCallback(
     (channelIndex: number) => {
-      if (gameState.gameOver || hazardVisible || isCurrentLoomSolved(puzzleRef.current)) return
+      if (
+        gameState.gameOver ||
+        hazardVisible ||
+        completionStartedRef.current ||
+        isCurrentLoomSolved(puzzleRef.current)
+      )
+        return
       stopChannel(channelIndex)
+      heldChannelsRef.current.add(channelIndex)
+      setHeldChannelCount(heldChannelsRef.current.size)
       tickChannel(channelIndex)
-      if (gameState.gameOver || isCurrentLoomSolved(puzzleRef.current)) return
+      if (gameState.gameOver || hpRef.current <= 0 || isCurrentLoomSolved(puzzleRef.current)) return
       intervalsRef.current[channelIndex] = setInterval(
         () => tickChannel(channelIndex),
         CURRENT_LOOM_HOLD_TICK_MS
@@ -156,54 +199,75 @@ export function CurrentLoomPuzzleScreen({ config }: CurrentLoomScreenProps) {
   )
 
   return (
-    <BackgroundImage source={config.presentation.puzzle.boardAsset}>
-      <View style={styles.screen}>
-        <View style={styles.instructionPanel}>
-          <Text style={styles.instruction}>{config.presentation.puzzle.instructionText}</Text>
-        </View>
-        <View style={styles.channels}>
-          {puzzle.channels.map((value, index) => (
-            <View key={config.channelLabels[index]} style={styles.channelColumn}>
-              <Text style={styles.channelLabel}>{config.channelLabels[index]}</Text>
-              <View style={styles.channelTrack}>
-                <View
-                  style={[styles.channelFill, { height: `${(value / CURRENT_LOOM_MAX) * 100}%` }]}
-                />
-                <Text testID={`current-loom-value-${index}`} style={styles.channelValue}>
-                  {value}
-                </Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Raise ${config.channelLabels[index]} channel`}
-                testID={`current-loom-hold-${index}`}
-                disabled={gameState.gameOver || hazardVisible || isCurrentLoomSolved(puzzle)}
-                onPressIn={() => startChannel(index)}
-                onPressOut={() => stopChannel(index)}
-                style={({ pressed }) => [styles.holdButton, pressed && styles.holdButtonPressed]}
-              >
-                <Text style={styles.holdButtonText}>{config.presentation.puzzle.holdLabel}</Text>
-              </Pressable>
+    <View style={styles.puzzleViewport}>
+      <Animated.View
+        testID="current-loom-buzz-view"
+        style={[styles.animatedScreen, { transform: [{ translateX: shakeX }] }]}
+      >
+        <BackgroundImage source={config.presentation.puzzle.boardAsset}>
+          <View style={styles.screen}>
+            <View style={styles.instructionPanel}>
+              <Text style={styles.instruction}>{config.presentation.puzzle.instructionText}</Text>
             </View>
-          ))}
-        </View>
-        <BottomActionBar>
-          <TouchableOpacity style={styles.leaveButton} onPress={() => router.back()}>
-            <Text style={styles.buttonText}>{config.presentation.puzzle.leaveLabel}</Text>
-          </TouchableOpacity>
-        </BottomActionBar>
-        {hazardVisible ? (
-          <View pointerEvents="none" style={styles.hazardOverlay} testID="current-loom-hazard">
-            <Image
-              source={config.presentation.hazard.overlayAsset}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
+            <View style={styles.channels}>
+              {puzzle.channels.map((value, index) => (
+                <View key={config.channelLabels[index]} style={styles.channelColumn}>
+                  <Text style={styles.channelLabel}>{config.channelLabels[index]}</Text>
+                  <View style={styles.channelTrack}>
+                    <View
+                      style={[
+                        styles.channelFill,
+                        { height: `${(value / CURRENT_LOOM_MAX) * 100}%` },
+                      ]}
+                    />
+                    <Text testID={`current-loom-value-${index}`} style={styles.channelValue}>
+                      {value}
+                    </Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Raise ${config.channelLabels[index]} channel`}
+                    testID={`current-loom-hold-${index}`}
+                    disabled={gameState.gameOver || hazardVisible || isCurrentLoomSolved(puzzle)}
+                    onPressIn={() => startChannel(index)}
+                    onPressOut={() => stopChannel(index)}
+                    style={({ pressed }) => [
+                      styles.holdButton,
+                      pressed && styles.holdButtonPressed,
+                    ]}
+                  >
+                    <Text style={styles.holdButtonText}>
+                      {config.presentation.puzzle.holdLabel}
+                    </Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+            <CurrentLoomHealthBar
+              currentHP={gameState.player.currentHP}
+              maxHP={gameState.player.maxHP}
             />
-            <Text style={styles.hazardText}>{config.presentation.hazard.text}</Text>
+            <BottomActionBar>
+              <TouchableOpacity style={styles.leaveButton} onPress={() => router.back()}>
+                <Text style={styles.buttonText}>{config.presentation.puzzle.leaveLabel}</Text>
+              </TouchableOpacity>
+            </BottomActionBar>
+            <CurrentLoomEdgeGlow display={healthDisplay} />
+            {hazardVisible ? (
+              <View pointerEvents="none" style={styles.hazardOverlay} testID="current-loom-hazard">
+                <Image
+                  source={config.presentation.hazard.overlayAsset}
+                  style={StyleSheet.absoluteFill}
+                  resizeMode="cover"
+                />
+                <Text style={styles.hazardText}>{config.presentation.hazard.text}</Text>
+              </View>
+            ) : null}
+            {completionVisible ? <CurrentLoomCompletionGlow onComplete={finishCompletion} /> : null}
           </View>
-        ) : null}
-      </View>
-    </BackgroundImage>
+        </BackgroundImage>
+      </Animated.View>
+    </View>
   )
 }
 
@@ -240,6 +304,8 @@ export function CurrentLoomSuccessScreen({ config, definition }: CurrentLoomScre
 }
 
 const styles = StyleSheet.create({
+  puzzleViewport: { flex: 1, overflow: 'hidden', backgroundColor: '#01080f' },
+  animatedScreen: { flex: 1 },
   screen: { flex: 1, backgroundColor: 'transparent' },
   copyPanel: {
     margin: 24,

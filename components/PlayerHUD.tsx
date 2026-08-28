@@ -16,6 +16,7 @@ import inventoryButtonIMG from '@assets/images/ui/icons/buttonInventory.webp'
 import zapButtonIMG from '@assets/images/ui/icons/buttonZap.webp'
 import hideButtonIMG from '@assets/images/ui/icons/buttonHide.webp'
 import jauntButtonIMG from '@assets/images/ui/icons/buttonJaunt.webp'
+import { getPlayerHealthDisplay } from '@modules/playerHealthDisplay'
 
 interface PlayerHUDProps {
   currentHP: number
@@ -59,6 +60,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
   isJauntArmed = false,
 }) => {
   const insets = useSafeAreaInsets()
+  const healthDisplay = getPlayerHealthDisplay(currentHP, maxHP)
 
   const handleGearPress = (event: NativeSyntheticEvent<NativeTouchEvent>) => {
     event.stopPropagation()
@@ -108,7 +110,7 @@ const PlayerHUD: React.FC<PlayerHUDProps> = ({
           style={hideUnlocked || jauntUnlocked ? styles.statusBarExpanded : styles.statusBar}
           pointerEvents="box-none"
         >
-          <Text style={styles.hpText}>HP: {currentHP}</Text>
+          <Text style={[styles.hpText, { color: healthDisplay.color }]}>HP: {currentHP}</Text>
 
           <TouchableOpacity style={styles.gearButton} onPress={handleGearPress} activeOpacity={0.7}>
             <Image source={require('@assets/images/ui/icons/gear.webp')} style={styles.gearIcon} />
@@ -284,7 +286,6 @@ const styles = StyleSheet.create({
   },
 
   hpText: {
-    color: '#990000',
     fontSize: 14,
     fontWeight: 'bold',
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
