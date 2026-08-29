@@ -204,13 +204,49 @@ const definitions: SubGameInstanceDefinition[] = [
     title: 'Deep Silo',
     description:
       'A massive silo rises from the Night Land, its dark interior an unknown descent into the deep.',
-    introBackgroundImage: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen1.webp'),
+    introBackgroundImage: require('@assets/images/backgrounds/subgames/deep-silo/silo-entrance-approach.webp'),
     preloadAssets: [
       {
-        id: 'silo-screen1',
-        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-screen1.webp'),
-        width: 1024,
-        height: 1536,
+        id: 'silo-entrance-approach',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-entrance-approach.webp'),
+        width: 896,
+        height: 1200,
+      },
+      {
+        id: 'silo-entrance-open',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-entrance-open.webp'),
+        width: 896,
+        height: 1200,
+      },
+      {
+        id: 'silo-lever-1',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-lever-1.webp'),
+        width: 896,
+        height: 1200,
+      },
+      {
+        id: 'silo-lever-2',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-lever-2.webp'),
+        width: 896,
+        height: 1200,
+      },
+      {
+        id: 'silo-lever-3',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-lever-3.webp'),
+        width: 896,
+        height: 1200,
+      },
+      {
+        id: 'silo-lever-4',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-lever-4.webp'),
+        width: 896,
+        height: 1200,
+      },
+      {
+        id: 'silo-lever-5',
+        source: require('@assets/images/backgrounds/subgames/deep-silo/silo-lever-5.webp'),
+        width: 896,
+        height: 1200,
       },
       {
         id: 'silo-screen2',
@@ -294,7 +330,7 @@ const definitions: SubGameInstanceDefinition[] = [
       active: true,
       zIndex: 0,
       effects: [{ type: 'hide' }],
-      ctaLabel: 'Enter the silo',
+      ctaLabel: 'Approach the silo',
       requiresPlayerOnObject: true,
     },
   },

@@ -51,7 +51,13 @@ describe('per-instance sub-game image assets', () => {
 
   test('declares the exact Deep Silo runtime set', () => {
     expect(ids('deep-silo')).toEqual([
-      'silo-screen1',
+      'silo-entrance-approach',
+      'silo-entrance-open',
+      'silo-lever-1',
+      'silo-lever-2',
+      'silo-lever-3',
+      'silo-lever-4',
+      'silo-lever-5',
       'silo-screen2',
       'silo-screen3',
       'silo-screen4',

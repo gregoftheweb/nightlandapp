@@ -1,56 +1,84 @@
 // app/sub-games/deep-silo/screen1.tsx
-// Deep Silo - Surface level
-import React, { useEffect } from 'react'
+import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useGameState } from '@context/GameContext'
 import { exitSubGame } from '@modules/subGames'
 import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
-import { useSubGameLifecycle } from '../_shared/lifecycle'
+import { isDeepSiloSwitchThrown, useDeepSiloDevState } from './entranceState'
 
-const bg = require('@assets/images/backgrounds/subgames/deep-silo/silo-screen1.webp')
+export const DEEP_SILO_APPROACH_IMAGES = {
+  closed: require('@assets/images/backgrounds/subgames/deep-silo/silo-entrance-approach.webp'),
+  open: require('@assets/images/backgrounds/subgames/deep-silo/silo-entrance-open.webp'),
+} as const
 
-export default function DeepSiloScreen1() {
-  const router = useRouter()
-  const lifecycle = useSubGameLifecycle('deep-silo')
-
-  useEffect(() => {
-    if (!lifecycle.isCompleted()) return
-    const route = lifecycle.resolveEntryRoute()
-    if (route) router.replace(route as never)
-  }, [lifecycle, router])
-
-  const handleDown = () => {
-    if (__DEV__) console.log('[DeepSilo] Going deeper - screen 2')
-    router.push('/sub-games/deep-silo/screen2' as any)
-  }
-
-  const handleReturn = () => {
-    if (__DEV__) console.log('[DeepSilo] Returning to surface')
-    exitSubGame({ completed: false })
-  }
-
+export function DeepSiloApproachView({
+  open,
+  onEnter,
+  onLookCloser,
+  onReturn,
+}: {
+  open: boolean
+  onEnter: () => void
+  onLookCloser: () => void
+  onReturn: () => void
+}) {
   return (
-    <BackgroundImage source={bg}>
+    <BackgroundImage
+      source={open ? DEEP_SILO_APPROACH_IMAGES.open : DEEP_SILO_APPROACH_IMAGES.closed}
+      overlayOpacity={0.12}
+    >
       <View style={styles.container}>
         <View style={styles.contentArea} />
         <BottomActionBar>
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.button} onPress={handleReturn} activeOpacity={0.7}>
-              <Text style={styles.buttonText}>Return to the surface</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.downButton]}
-              onPress={handleDown}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.buttonText}>Down further</Text>
-            </TouchableOpacity>
+            {open ? <Action label="Enter" onPress={onEnter} primary /> : null}
+            <Action label="Look closer" onPress={onLookCloser} />
+            <Action label="Return to the Night Land" onPress={onReturn} />
           </View>
         </BottomActionBar>
       </View>
     </BackgroundImage>
+  )
+}
+
+export default function DeepSiloScreen1() {
+  const router = useRouter()
+  const state = useGameState()
+  const dev = useDeepSiloDevState()
+  const realThrown = isDeepSiloSwitchThrown(state.subGamesCompleted)
+  const open = realThrown || (__DEV__ && dev.switchThrown)
+  return (
+    <DeepSiloApproachView
+      open={open}
+      onEnter={() => {
+        if (open) router.push('/sub-games/deep-silo/screen2' as never)
+      }}
+      onLookCloser={() => router.push('/sub-games/deep-silo/entrance-panel' as never)}
+      onReturn={() => exitSubGame({ completed: false })}
+    />
+  )
+}
+
+function Action({
+  label,
+  onPress,
+  primary,
+}: {
+  label: string
+  onPress: () => void
+  primary?: boolean
+}) {
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      style={[styles.button, primary && styles.downButton]}
+      onPress={onPress}
+    >
+      <Text style={styles.buttonText}>{label}</Text>
+    </TouchableOpacity>
   )
 }
 

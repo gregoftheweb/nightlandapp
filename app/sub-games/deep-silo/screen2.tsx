@@ -18,7 +18,7 @@ export default function DeepSiloScreen2() {
   }
 
   const handleBack = () => {
-    if (__DEV__) console.log('[DeepSilo] Heading back up to screen 1')
+    if (__DEV__) console.log('[DeepSilo] Heading back to the entrance')
     router.back()
   }
 
