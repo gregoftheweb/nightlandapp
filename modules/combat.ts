@@ -51,7 +51,13 @@ export const executeAttack = (
   if (hit) {
     const damageRoll = Math.floor(Math.random() * 6) + 1
     const totalDamage = weapon
-      ? calculateWeaponDamage(damageRoll, attacker.attack, weapon, upgrade)
+      ? calculateWeaponDamage(
+          damageRoll,
+          attacker.attack,
+          weapon,
+          upgrade,
+          (attacker.strengthBoostRounds ?? 0) > 0 ? (attacker.strengthDamageMultiplier ?? 1) : 1
+        )
       : damageRoll + Math.floor(attacker.attack / 2)
 
     // Use currentHP consistently for both player and monsters
@@ -467,6 +473,7 @@ export const handleCombatTurn = (
 
   logIfDev(`\n⚔️ PROCESSING COMBAT ACTION: ${action}`)
   processCombatTurn(state, dispatch, targetId)
+  dispatch({ type: 'DECREMENT_STRENGTH_BOOST' })
   checkCombatEnd(state, dispatch)
 }
 
@@ -706,7 +713,13 @@ export const processRangedAttackImpact = (
   if (hit) {
     // Calculate damage using d6 dice roll
     const damageRoll = rollD6()
-    const totalDamage = calculateWeaponDamage(damageRoll, player.attack, equippedWeapon, upgrade)
+    const totalDamage = calculateWeaponDamage(
+      damageRoll,
+      player.attack,
+      equippedWeapon,
+      upgrade,
+      (player.strengthBoostRounds ?? 0) > 0 ? (player.strengthDamageMultiplier ?? 1) : 1
+    )
     const newHp = Math.max(0, targetMonster.currentHP - totalDamage)
 
     logIfDev(`   💥 HIT! Damage: ${damageRoll} + ${Math.floor(player.attack / 2)} = ${totalDamage}`)

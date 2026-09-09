@@ -152,4 +152,6 @@ export interface Player {
   isJauntArmed: boolean // Whether jaunt is currently armed/ready to target
   // Rune cipher knowledge (granted by rune-learning encounters)
   runeCipherLearned: boolean
+  strengthDamageMultiplier?: number
+  strengthBoostRounds?: number
 }

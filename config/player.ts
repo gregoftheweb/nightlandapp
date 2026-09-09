@@ -44,4 +44,6 @@ export const playerConfig: Player = {
   isJauntArmed: false,
   // Rune cipher knowledge (granted by rune-learning encounters)
   runeCipherLearned: false,
+  strengthDamageMultiplier: 1,
+  strengthBoostRounds: 0,
 }

@@ -168,7 +168,7 @@ function buildInitialState(
         )
       : {
           success: true as const,
-          value: { placements: [], trailNetwork: null, generatedFootsteps: [] },
+          value: { placements: [], trailNetwork: null, generatedFootsteps: [], generatedItems: [] },
         }
   if (!layoutResult.success) {
     throw new Error(
@@ -180,14 +180,15 @@ function buildInitialState(
     ...(levelConfig.objects || []),
     ...placementsToLevelObjects(encounterPlacements),
   ]
-  const runtimeLevel = { ...levelConfig, objects: runtimeObjects }
+  const runtimeItems = [...(levelConfig.items || []), ...layoutResult.value.generatedItems]
+  const runtimeLevel = { ...levelConfig, objects: runtimeObjects, items: runtimeItems }
 
   return {
     // ===== LEVEL DOMAIN =====
     level: runtimeLevel,
     currentLevelId: levelId,
     levels: { [levelId]: runtimeLevel },
-    items: levelConfig.items || [],
+    items: runtimeItems,
     objects: runtimeObjects,
     nonCollisionObjects: levelConfig.nonCollisionObjects || [],
     gridWidth: gameConfig.grid.width,

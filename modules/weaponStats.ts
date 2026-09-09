@@ -35,10 +35,13 @@ export function calculateWeaponDamage(
   d6Roll: number,
   playerAttack: number,
   weapon: Item,
-  upgrade: WeaponUpgrade = DEFAULT_WEAPON_UPGRADE
+  upgrade: WeaponUpgrade = DEFAULT_WEAPON_UPGRADE,
+  strengthMultiplier = 1
 ): number {
   return (
-    (d6Roll + Math.floor(playerAttack / 2) + (weapon.damageMod ?? 0)) * upgrade.damageMultiplier
+    (d6Roll + Math.floor(playerAttack / 2) + (weapon.damageMod ?? 0)) *
+    upgrade.damageMultiplier *
+    strengthMultiplier
   )
 }
 

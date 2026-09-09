@@ -17,6 +17,8 @@ export type Effect =
       }
       description?: string
     }
+  | { type: 'restore_jaunt'; value: number; description?: string }
+  | { type: 'strength_boost'; multiplier: number; duration: number; description?: string }
   | {
       type: 'recuperate'
       value: number
