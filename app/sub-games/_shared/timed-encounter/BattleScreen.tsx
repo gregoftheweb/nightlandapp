@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { View, StyleSheet, Animated } from 'react-native'
-import { useRouter } from 'expo-router'
-import { useIsFocused } from '@react-navigation/native'
+import { useIsFocused, useRouter } from 'expo-router'
 import { BackgroundImage } from '../BackgroundImage'
 import { BottomActionBar } from '../BottomActionBar'
 import { useGameContext } from '@context/GameContext'
