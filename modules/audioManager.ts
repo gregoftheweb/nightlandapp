@@ -1,11 +1,17 @@
-import { Audio, InterruptionModeAndroid, InterruptionModeIOS, type AVPlaybackStatus } from 'expo-av'
+import {
+  createAudioPlayer,
+  setAudioModeAsync,
+  type AudioPlayer,
+  type AudioStatus,
+} from 'expo-audio'
 import { AppState, type AppStateStatus, type NativeEventSubscription } from 'react-native'
 
 import { gameConfig } from '../config/gameConfig'
 
 export class AudioManager {
-  private backgroundSound: Audio.Sound | null = null
-  private playbackStatus: AVPlaybackStatus | null = null
+  private backgroundSound: AudioPlayer | null = null
+  private playbackStatus: AudioStatus | null = null
+  private playbackSubscription: { remove(): void } | null = null
   private isEnabled = gameConfig.audio.backgroundMusicEnabled
   private isLoading = false
   private playbackRequested = false
@@ -16,14 +22,12 @@ export class AudioManager {
 
   async initializeAudio(): Promise<void> {
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: false,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-        interruptionModeIOS: InterruptionModeIOS.DuckOthers,
-        playThroughEarpieceAndroid: false,
+      await setAudioModeAsync({
+        allowsRecording: false,
+        shouldPlayInBackground: false,
+        playsInSilentMode: true,
+        interruptionMode: 'duckOthers',
+        shouldRouteThroughEarpiece: false,
       })
 
       this.subscribeToAppState()
@@ -40,34 +44,32 @@ export class AudioManager {
     const previousSound = this.backgroundSound
     this.backgroundSound = null
     this.playbackStatus = null
+    this.playbackSubscription?.remove()
+    this.playbackSubscription = null
 
     try {
       if (previousSound) {
-        previousSound.setOnPlaybackStatusUpdate(null)
-        await previousSound.unloadAsync()
+        previousSound.remove()
       }
 
       if (generation !== this.operationGeneration) return
 
       if (__DEV__) console.log('Loading background music...')
-      const { sound, status } = await Audio.Sound.createAsync(
-        require('../assets/sounds/ambient-background.mp3'),
-        {
-          isLooping: true,
-          volume: gameConfig.audio.backgroundVolume * gameConfig.audio.masterVolume,
-          shouldPlay: false,
-        }
-      )
+      const sound = createAudioPlayer(require('../assets/sounds/ambient-background.mp3'), {
+        downloadFirst: true,
+        keepAudioSessionActive: true,
+      })
+      sound.loop = true
+      sound.volume = gameConfig.audio.backgroundVolume * gameConfig.audio.masterVolume
 
       if (generation !== this.operationGeneration) {
-        sound.setOnPlaybackStatusUpdate(null)
-        await sound.unloadAsync()
+        sound.remove()
         return
       }
 
       this.backgroundSound = sound
-      this.applyPlaybackStatus(sound, generation, status)
-      sound.setOnPlaybackStatusUpdate((nextStatus) => {
+      this.applyPlaybackStatus(sound, generation, sound.currentStatus)
+      this.playbackSubscription = sound.addListener('playbackStatusUpdate', (nextStatus) => {
         this.applyPlaybackStatus(sound, generation, nextStatus)
       })
 
@@ -110,8 +112,8 @@ export class AudioManager {
     if (!sound || !this.getIsPlaying()) return
 
     try {
-      const status = await sound.pauseAsync()
-      this.applyPlaybackStatus(sound, generation, status)
+      sound.pause()
+      this.applyPlaybackStatus(sound, generation, sound.currentStatus)
       if (__DEV__) console.log('Background music paused')
     } catch (error) {
       console.error('Failed to pause background music:', error)
@@ -125,8 +127,9 @@ export class AudioManager {
     if (!sound) return
 
     try {
-      const status = await sound.stopAsync()
-      this.applyPlaybackStatus(sound, generation, status)
+      sound.pause()
+      await sound.seekTo(0)
+      this.applyPlaybackStatus(sound, generation, sound.currentStatus)
       if (__DEV__) console.log('Background music stopped')
     } catch (error) {
       console.error('Failed to stop background music:', error)
@@ -140,8 +143,8 @@ export class AudioManager {
 
     try {
       const adjustedVolume = volume * gameConfig.audio.masterVolume
-      const status = await sound.setVolumeAsync(adjustedVolume)
-      this.applyPlaybackStatus(sound, generation, status)
+      sound.volume = adjustedVolume
+      this.applyPlaybackStatus(sound, generation, sound.currentStatus)
     } catch (error) {
       console.error('Failed to set background music volume:', error)
     }
@@ -158,7 +161,7 @@ export class AudioManager {
   }
 
   getIsPlaying(): boolean {
-    return this.playbackStatus?.isLoaded === true && this.playbackStatus.isPlaying
+    return this.playbackStatus?.isLoaded === true && this.playbackStatus.playing
   }
 
   async cleanup(): Promise<void> {
@@ -172,11 +175,12 @@ export class AudioManager {
     const sound = this.backgroundSound
     this.backgroundSound = null
     this.playbackStatus = null
+    this.playbackSubscription?.remove()
+    this.playbackSubscription = null
     if (!sound) return
 
-    sound.setOnPlaybackStatusUpdate(null)
     try {
-      await sound.unloadAsync()
+      sound.remove()
     } catch (error) {
       if (generation === this.operationGeneration) {
         console.error('Failed to clean up background music:', error)
@@ -194,17 +198,13 @@ export class AudioManager {
     })
   }
 
-  private applyPlaybackStatus(
-    sound: Audio.Sound,
-    generation: number,
-    status: AVPlaybackStatus
-  ): void {
+  private applyPlaybackStatus(sound: AudioPlayer, generation: number, status: AudioStatus): void {
     if (generation !== this.operationGeneration || sound !== this.backgroundSound) return
     this.playbackStatus = status
 
     if (
       status.isLoaded &&
-      !status.isPlaying &&
+      !status.playing &&
       this.appState === 'active' &&
       this.playbackRequested &&
       this.isEnabled
@@ -219,7 +219,7 @@ export class AudioManager {
     if (!sound || !this.playbackRequested || !this.isEnabled) return
 
     try {
-      const status = await sound.getStatusAsync()
+      const status = sound.currentStatus
       this.applyPlaybackStatus(sound, generation, status)
       if (!this.getIsPlaying()) await this.resumeRequestedPlayback()
     } catch (error) {
@@ -243,8 +243,8 @@ export class AudioManager {
 
     this.resumeInFlight = true
     try {
-      const status = await sound.playAsync()
-      this.applyPlaybackStatus(sound, generation, status)
+      sound.play()
+      this.applyPlaybackStatus(sound, generation, sound.currentStatus)
       if (__DEV__ && this.getIsPlaying()) console.log('Background music started successfully')
     } catch (error) {
       if (generation === this.operationGeneration) {
