@@ -186,7 +186,7 @@ export default function SwitchAnimation() {
 
           <Animated.View
             pointerEvents="none"
-            style={[StyleSheet.absoluteFillObject, styles.flashOverlay, { opacity: flashOpacity }]}
+            style={[StyleSheet.absoluteFill, styles.flashOverlay, { opacity: flashOpacity }]}
           />
         </Animated.View>
       )}

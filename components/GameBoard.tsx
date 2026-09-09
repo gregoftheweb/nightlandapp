@@ -1149,10 +1149,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   fillContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   gridLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(17, 17, 17, 0.3)',
     zIndex: 0,
   },

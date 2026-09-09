@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#fff', fontFamily: 'Sofia', fontSize: 16, textAlign: 'center' },
   hazardOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.35)',

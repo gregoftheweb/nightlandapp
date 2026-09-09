@@ -117,9 +117,8 @@ export default function Layout() {
     const setupNavigationBar = async () => {
       const NavigationBar = await import('expo-navigation-bar')
       await NavigationBar.setVisibilityAsync('hidden') // Hides nav buttons
-      await NavigationBar.setBehaviorAsync('overlay-swipe') // Swipe up to show
       // Log to confirm navigation bar setup
-      console.log('Navigation bar set to hidden with overlay-swipe')
+      console.log('Navigation bar set to hidden')
     }
 
     setupNavigationBar().catch((error) => {
