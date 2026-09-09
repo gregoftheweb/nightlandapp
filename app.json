@@ -7,7 +7,6 @@
     "icon": "./assets/images/icons/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },

@@ -2,20 +2,16 @@
 // Test to verify the useArenaLayout hook
 
 import { renderHook, act } from '@testing-library/react-native'
+import { Image } from 'react-native'
 import { getDaemonAnchorY, useArenaLayout } from '../_components/useArenaLayout'
 
 // Mock the background image
 const mockBackgroundImage = require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen2.webp')
 
-// Mock Image.resolveAssetSource
-jest.mock('react-native', () => ({
-  Image: {
-    resolveAssetSource: jest.fn((source) => ({
-      width: 1000,
-      height: 800,
-    })),
-  },
-}))
+// Mock Image.resolveAssetSource without replacing the rest of React Native.
+jest
+  .spyOn(Image, 'resolveAssetSource')
+  .mockReturnValue({ width: 1000, height: 800, scale: 1, uri: 'mock-background' })
 
 describe('useArenaLayout hook', () => {
   describe('initialization', () => {

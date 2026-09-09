@@ -164,7 +164,7 @@ export function BackgroundImage({
 
 const styles = StyleSheet.create({
   container: { flex: 1, position: 'relative' },
-  fill: { ...StyleSheet.absoluteFillObject },
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 10 },
+  fill: { ...StyleSheet.absoluteFill },
+  overlay: { ...StyleSheet.absoluteFill, zIndex: 10 },
   contentContainer: { flex: 1, zIndex: 20 },
 })

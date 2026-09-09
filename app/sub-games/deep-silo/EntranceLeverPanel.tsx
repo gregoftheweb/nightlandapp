@@ -194,11 +194,11 @@ function Action({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#050708' },
   completionFlash: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 10,
     backgroundColor: '#d7ffff',
   },
-  animationFrame: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  animationFrame: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   button: {
     flexGrow: 1,

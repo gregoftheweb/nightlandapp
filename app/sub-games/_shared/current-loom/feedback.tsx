@@ -135,11 +135,11 @@ export function CurrentLoomHealthBar({ currentHP, maxHP }: { currentHP: number; 
 
 const styles = StyleSheet.create({
   glowFrame: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 30,
   },
   completionGlow: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 40,
     backgroundColor: '#00ff66',
   },

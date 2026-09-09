@@ -9,6 +9,12 @@ module.exports = defineConfig([
   },
   {
     rules: {
+      // The SDK 57 preset enables React Compiler compatibility checks. The app
+      // does not enable the compiler yet, so keep these as a separate migration.
+      'react-hooks/immutability': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
       'no-restricted-imports': [
         'error',
         {
