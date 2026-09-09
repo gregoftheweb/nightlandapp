@@ -2,88 +2,73 @@ import { AppState, type AppStateStatus } from 'react-native'
 
 import { AudioManager } from '../audioManager'
 
-type StatusListener = (status: ReturnType<typeof loadedStatus>) => void
+type Status = ReturnType<typeof loadedStatus>
+type StatusListener = (status: Status) => void
 
-const mockCreateAsync = jest.fn()
+const mockCreateAudioPlayer = jest.fn()
 const mockSetAudioModeAsync = jest.fn().mockResolvedValue(undefined)
 
-jest.mock('expo-av', () => ({
-  Audio: {
-    setAudioModeAsync: (...args: unknown[]) => mockSetAudioModeAsync(...args),
-    Sound: {
-      createAsync: (...args: unknown[]) => mockCreateAsync(...args),
-    },
-  },
-  InterruptionModeAndroid: { DuckOthers: 1 },
-  InterruptionModeIOS: { DuckOthers: 1 },
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: (...args: unknown[]) => mockCreateAudioPlayer(...args),
+  setAudioModeAsync: (...args: unknown[]) => mockSetAudioModeAsync(...args),
 }))
 
-function loadedStatus(isPlaying: boolean) {
+function loadedStatus(playing: boolean) {
   return {
-    isLoaded: true as const,
-    isPlaying,
-    androidImplementation: 'SimpleExoPlayer',
-    uri: 'ambient-background.mp3',
-    progressUpdateIntervalMillis: 500,
-    durationMillis: 1000,
-    positionMillis: 0,
-    playableDurationMillis: 1000,
-    shouldPlay: isPlaying,
-    isBuffering: false,
-    rate: 1,
-    shouldCorrectPitch: false,
-    volume: 1,
-    audioPan: 0,
-    isMuted: false,
-    isLooping: true,
+    id: 'background-music',
+    currentTime: 0,
+    playbackState: playing ? 'playing' : 'readyToPlay',
+    timeControlStatus: playing ? 'playing' : 'paused',
+    reasonForWaitingToPlay: '',
+    mute: false,
+    duration: 1,
+    playing,
+    loop: true,
     didJustFinish: false,
+    isBuffering: false,
+    isLoaded: true,
+    playbackRate: 1,
+    shouldCorrectPitch: true,
+    isLive: false,
+    currentOffsetFromLive: null,
+    error: null,
   }
 }
 
-function deferred<T>() {
-  let resolve!: (value: T | PromiseLike<T>) => void
-  const promise = new Promise<T>((resolvePromise) => {
-    resolve = resolvePromise
-  })
-  return { promise, resolve }
-}
-
-function makeSound(initiallyPlaying = false) {
+function makePlayer(initiallyPlaying = false) {
   let listener: StatusListener | null = null
   let status = loadedStatus(initiallyPlaying)
 
-  const sound = {
-    setOnPlaybackStatusUpdate: jest.fn((nextListener: StatusListener | null) => {
+  const player = {
+    loop: false,
+    volume: 1,
+    get currentStatus() {
+      return status
+    },
+    addListener: jest.fn((_event: string, nextListener: StatusListener) => {
       listener = nextListener
+      return { remove: jest.fn(() => (listener = null)) }
     }),
-    getStatusAsync: jest.fn(async () => status),
-    playAsync: jest.fn(async () => {
+    play: jest.fn(() => {
       status = loadedStatus(true)
       listener?.(status)
-      return status
     }),
-    pauseAsync: jest.fn(async () => {
+    pause: jest.fn(() => {
       status = loadedStatus(false)
       listener?.(status)
-      return status
     }),
-    stopAsync: jest.fn(async () => {
-      status = loadedStatus(false)
-      listener?.(status)
-      return status
-    }),
-    setVolumeAsync: jest.fn(async () => status),
-    unloadAsync: jest.fn(async () => loadedStatus(false)),
+    seekTo: jest.fn().mockResolvedValue(undefined),
+    remove: jest.fn(),
     interrupt() {
       status = loadedStatus(false)
       listener?.(status)
     },
-    setNativePlaying(isPlaying: boolean) {
-      status = loadedStatus(isPlaying)
+    setNativePlaying(playing: boolean) {
+      status = loadedStatus(playing)
     },
   }
 
-  return sound
+  return player
 }
 
 describe('AudioManager lifecycle', () => {
@@ -105,9 +90,24 @@ describe('AudioManager lifecycle', () => {
     AppState.currentState = originalAppState
   })
 
+  it('configures and loads SDK 57 audio', async () => {
+    const player = makePlayer()
+    mockCreateAudioPlayer.mockReturnValue(player)
+    const manager = new AudioManager()
+
+    await manager.initializeAudio()
+    await manager.loadBackgroundMusic()
+
+    expect(mockSetAudioModeAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ playsInSilentMode: true, interruptionMode: 'duckOthers' })
+    )
+    expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1)
+    expect(player.loop).toBe(true)
+  })
+
   it('resumes requested music after backgrounding and returning active', async () => {
-    const sound = makeSound()
-    mockCreateAsync.mockResolvedValue({ sound, status: loadedStatus(false) })
+    const player = makePlayer()
+    mockCreateAudioPlayer.mockReturnValue(player)
     const manager = new AudioManager()
 
     await manager.initializeAudio()
@@ -116,78 +116,39 @@ describe('AudioManager lifecycle', () => {
     expect(manager.getIsPlaying()).toBe(true)
 
     appStateListener?.('background')
-    sound.setNativePlaying(false)
-    sound.interrupt()
-    expect(sound.playAsync).toHaveBeenCalledTimes(1)
-
+    player.setNativePlaying(false)
     appStateListener?.('active')
     await Promise.resolve()
-    await Promise.resolve()
 
-    expect(sound.getStatusAsync).toHaveBeenCalledTimes(1)
-    expect(sound.playAsync).toHaveBeenCalledTimes(2)
+    expect(player.play).toHaveBeenCalledTimes(2)
     expect(manager.getIsPlaying()).toBe(true)
   })
 
   it('resumes when native playback reports an interruption while active', async () => {
-    const sound = makeSound()
-    mockCreateAsync.mockResolvedValue({ sound, status: loadedStatus(false) })
+    const player = makePlayer()
+    mockCreateAudioPlayer.mockReturnValue(player)
     const manager = new AudioManager()
 
     await manager.initializeAudio()
     await manager.loadBackgroundMusic()
     await manager.playBackgroundMusic()
-    sound.interrupt()
-    await Promise.resolve()
+    player.interrupt()
     await Promise.resolve()
 
-    expect(sound.playAsync).toHaveBeenCalledTimes(2)
+    expect(player.play).toHaveBeenCalledTimes(2)
     expect(manager.getIsPlaying()).toBe(true)
   })
 
-  it('does not let an older unload completion clobber a newer load', async () => {
-    const oldSound = makeSound()
-    const newSound = makeSound()
-    const oldUnload = deferred<ReturnType<typeof loadedStatus>>()
-    oldSound.unloadAsync.mockReturnValueOnce(oldUnload.promise)
-    mockCreateAsync
-      .mockResolvedValueOnce({ sound: oldSound, status: loadedStatus(false) })
-      .mockResolvedValueOnce({ sound: newSound, status: loadedStatus(false) })
-    const manager = new AudioManager()
-
-    await manager.initializeAudio()
-    await manager.loadBackgroundMusic()
-    const olderLoad = manager.loadBackgroundMusic()
-    const newerLoad = manager.loadBackgroundMusic()
-    await newerLoad
-
-    oldUnload.resolve(loadedStatus(false))
-    await olderLoad
-    await manager.playBackgroundMusic()
-
-    expect(newSound.playAsync).toHaveBeenCalledTimes(1)
-    expect(manager.getIsPlaying()).toBe(true)
-  })
-
-  it('keeps cleanup pending until native unload completes', async () => {
-    const sound = makeSound()
-    const unload = deferred<ReturnType<typeof loadedStatus>>()
-    sound.unloadAsync.mockReturnValueOnce(unload.promise)
-    mockCreateAsync.mockResolvedValue({ sound, status: loadedStatus(false) })
+  it('releases native audio during cleanup', async () => {
+    const player = makePlayer()
+    mockCreateAudioPlayer.mockReturnValue(player)
     const manager = new AudioManager()
     await manager.initializeAudio()
     await manager.loadBackgroundMusic()
 
-    let completed = false
-    const cleanup = manager.cleanup().then(() => {
-      completed = true
-    })
-    await Promise.resolve()
-    expect(completed).toBe(false)
+    await manager.cleanup()
 
-    unload.resolve(loadedStatus(false))
-    await cleanup
-    expect(completed).toBe(true)
+    expect(player.remove).toHaveBeenCalledTimes(1)
     expect(manager.getIsPlaying()).toBe(false)
   })
 })
