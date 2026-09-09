@@ -17,7 +17,6 @@ import { GameState, GameSnapshot } from '../config/types'
 import { playerConfig } from '../config/player'
 import { weaponsCatalog } from '../config/weapons'
 import { gameConfig } from '../config/gameConfig'
-import { reducer } from '../state/reducer'
 import { logIfDev } from './utils'
 import { GAMEBOARD_MANIFEST } from '../config/gameboardManifest'
 import {
@@ -467,5 +466,3 @@ export const validateGameState = (state: GameState, actionType?: string): void =
     errors.forEach((err) => console.error(`  - ${err}`))
   }
 }
-
-export { reducer }
