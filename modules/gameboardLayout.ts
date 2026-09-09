@@ -2,7 +2,7 @@ import { parsedWordGridContentResult } from '@/app/sub-games/_shared/word-grid/c
 import { parsedTimedEncounterContentResult } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
 import { parsedCurrentLoomContentResult } from '@/app/sub-games/_shared/current-loom/contentCatalog'
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
-import { createSubGameEntranceInstance } from '@config/levelHelpers'
+import { createItemInstance, createSubGameEntranceInstance } from '@config/levelHelpers'
 import { getSubGameDefinition } from '@config/subGames'
 import type {
   EncounterPlacement,
@@ -10,6 +10,7 @@ import type {
   GameboardRegion,
   Level,
   LevelObjectInstance,
+  Item,
   Position,
   SubGameShapeId,
   ValidationError,
@@ -274,6 +275,7 @@ export function generateLayout(
   placements: EncounterPlacement[]
   trailNetwork: TrailNetwork
   generatedFootsteps: FootstepDescriptor[]
+  generatedItems: Item[]
 }> {
   const placements: EncounterPlacement[] = []
   const errors: ValidationError[] = []
@@ -402,17 +404,46 @@ export function generateLayout(
   }
 
   if (errors.length > 0) return { success: false, errors }
+  const generatedItems = generateTrailItems(trailNetwork, occupancy, random)
   return {
     success: true,
     value: {
       placements,
       trailNetwork,
+      generatedItems,
       generatedFootsteps: generateFootstepDescriptors(trailNetwork, random, {
         occupancy,
         placements,
       }),
     },
   }
+}
+
+const TRAIL_ITEM_COUNTS = {
+  healthPotion: 3,
+  jauntJuice: 2,
+  injectaGrande: 2,
+} as const
+
+function generateTrailItems(
+  trailNetwork: TrailNetwork,
+  occupancy: BoardOccupancyRegistry,
+  random: RandomSource
+): Item[] {
+  const items: Item[] = []
+  for (const [template, count] of Object.entries(TRAIL_ITEM_COUNTS)) {
+    for (let index = 0; index < count; index += 1) {
+      for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_INSTANCE; attempt += 1) {
+        const location = randomScatteredLocation(trailNetwork, random)
+        const position = trailNetwork.resolve(location)
+        if (!occupancy.isFree(position, { width: 1, height: 1 }).free) continue
+        const occupancyId = occupancy.reserve(template, position, { width: 1, height: 1 })
+        items.push(createItemInstance(template, position, { id: occupancyId }))
+        break
+      }
+    }
+  }
+  return items
 }
 
 export function placementsToLevelObjects(

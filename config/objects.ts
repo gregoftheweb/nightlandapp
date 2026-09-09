@@ -8,6 +8,8 @@ import petrifiedWillowIMG from '@assets/images/sprites/buildings/petrifiedWillow
 import maguffinRockIMG from '@assets/images/items/equipment/maguffinRock.webp'
 import shortSwordIMG from '@assets/images/items/equipment/shortSword.webp'
 import potionIMG from '@assets/images/items/consumables/potion.webp'
+import jauntJuiceIMG from '@assets/images/items/consumables/jaunt-juice.webp'
+import injectaGrandeIMG from '@assets/images/items/consumables/injecta-grande.webp'
 import sanctuaryPoolImg from '@assets/images/sprites/buildings/poolofpeace.webp'
 import generatedFootprintsBlueIMG from '@assets/images/items/quest/footprints-blue.webp'
 import generatedFootprintsGreenIMG from '@assets/images/items/quest/footprints-green.webp'
@@ -92,6 +94,28 @@ export const consumables: Record<string, GameObject> = {
         value: 25,
       },
     ],
+  },
+  jauntJuice: {
+    kind: 'object',
+    shortName: 'jauntJuice',
+    category: 'consumable',
+    name: 'Jaunt-Juice',
+    description: 'Restores the power to jaunt.',
+    type: 'consumable',
+    image: jauntJuiceIMG,
+    active: true,
+    effects: [{ type: 'restore_jaunt', value: 1 }],
+  },
+  injectaGrande: {
+    kind: 'object',
+    shortName: 'injectaGrande',
+    category: 'consumable',
+    name: 'Injecta-Grande',
+    description: 'Increases attack damage by 50% for ten combat rounds.',
+    type: 'consumable',
+    image: injectaGrandeIMG,
+    active: true,
+    effects: [{ type: 'strength_boost', multiplier: 1.5, duration: 10 }],
   },
 }
 

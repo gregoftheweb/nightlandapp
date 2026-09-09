@@ -163,7 +163,10 @@ const executeHealEffect: EffectHandler<'heal'> = (effect, context) => {
   }
 
   // Show feedback
-  const message = `Restored ${actualHealAmount} HP! (${newHp}/${maxHp})`
+  const message =
+    context.sourceType === 'item'
+      ? 'You feel healed some.'
+      : `Restored ${actualHealAmount} HP! (${newHp}/${maxHp})`
   showDialog?.(message, 3000)
 
   logIfDev(`✅ Heal effect: ${currentHp} -> ${newHp} (+${actualHealAmount})`)
@@ -601,6 +604,8 @@ const executeUnlockRuneCipherEffect: EffectHandler<'unlock_rune_cipher'> = (effe
  * Maps each effect type string to its specific Effect subtype.
  */
 type EffectByType = {
+  restore_jaunt: Extract<Effect, { type: 'restore_jaunt' }>
+  strength_boost: Extract<Effect, { type: 'strength_boost' }>
   heal: Extract<Effect, { type: 'heal' }>
   stun: Extract<Effect, { type: 'stun' }>
   poison: Extract<Effect, { type: 'poison' }>
@@ -631,6 +636,35 @@ type EffectHandler<K extends keyof EffectByType> = (
 const EFFECT_HANDLERS: {
   [K in keyof EffectByType]?: EffectHandler<K>
 } = {
+  restore_jaunt: (effect, { state, dispatch, showDialog }) => {
+    dispatch({
+      type: 'UPDATE_PLAYER',
+      payload: {
+        updates: {
+          jauntUnlocked: true,
+          jauntCrystalCharges: Math.min(5, state.player.jauntCrystalCharges + effect.value),
+          isJauntArmed: true,
+        },
+      },
+    })
+    const message = 'You feel ready to jaunt. Tap on the map to jaunt.'
+    showDialog?.(message, 4000)
+    return { success: true, message, consumeItem: true }
+  },
+  strength_boost: (effect, { dispatch, showDialog }) => {
+    dispatch({
+      type: 'UPDATE_PLAYER',
+      payload: {
+        updates: {
+          strengthDamageMultiplier: effect.multiplier,
+          strengthBoostRounds: effect.duration,
+        },
+      },
+    })
+    const message = 'A new strength swells through your limbs.'
+    showDialog?.(message, 4000)
+    return { success: true, message, consumeItem: true }
+  },
   heal: executeHealEffect,
   recuperate: executeRecuperateEffect,
   hide: executeHideEffect,
@@ -658,6 +692,14 @@ const dispatchEffect = (effect: Effect, context: EffectContext): EffectResult =>
   const effectType = effect.type
 
   switch (effect.type) {
+    case 'restore_jaunt': {
+      const handler = EFFECT_HANDLERS.restore_jaunt
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
+    case 'strength_boost': {
+      const handler = EFFECT_HANDLERS.strength_boost
+      return handler ? handler(effect, context) : unknownEffectResult(effect.type)
+    }
     case 'heal': {
       const handler = EFFECT_HANDLERS.heal
       return handler ? handler(effect, context) : unknownEffectResult(effect.type)
@@ -858,6 +900,14 @@ export const getItemEffectDescription = (item: Item): string => {
     switch (effect.type) {
       case 'heal':
         descriptions.push(`Restores ${effect.value} HP`)
+        break
+      case 'restore_jaunt':
+        descriptions.push(`Restores ${effect.value} jaunt charge`)
+        break
+      case 'strength_boost':
+        descriptions.push(
+          `Increases attack damage by ${Math.round((effect.multiplier - 1) * 100)}% for ${effect.duration} combat rounds`
+        )
         break
       default:
         descriptions.push(`${effect.type} effect`)
