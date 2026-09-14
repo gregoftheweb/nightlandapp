@@ -184,25 +184,25 @@ describe('gameboard layout integration', () => {
       height: 1,
     })
     expect(entries).toContainEqual({
-      id: 'watcher_se_380_180',
-      position: { row: 380, col: 180 },
+      id: 'watcher_se_380_199',
+      position: { row: 380, col: 199 },
       width: 6,
       height: 6,
     })
     expect(registry.isFree(level.playerSpawn, { width: 1, height: 1 }).free).toBe(false)
-    expect(registry.isFree({ row: 380, col: 180 }, { width: 1, height: 1 }).free).toBe(false)
+    expect(registry.isFree({ row: 380, col: 199 }, { width: 1, height: 1 }).free).toBe(false)
     expect(entries).toHaveLength(19)
   })
 
   test('rejects conflicts with the Watcher and a static building', () => {
     const registry = buildBoardOccupancyRegistry(levels['1'])
-    expect(registry.isFree({ row: 382, col: 182 }, { width: 1, height: 1 })).toEqual({
+    expect(registry.isFree({ row: 382, col: 201 }, { width: 1, height: 1 })).toEqual({
       free: false,
-      overlappingIds: ['watcher_se_380_180'],
+      overlappingIds: ['watcher_se_380_199'],
     })
     expect(() =>
-      registry.reserve('watcher-conflict', { row: 382, col: 182 }, { width: 1, height: 1 })
-    ).toThrow('would overlap existing object watcher_se_380_180')
+      registry.reserve('watcher-conflict', { row: 382, col: 201 }, { width: 1, height: 1 })
+    ).toThrow('would overlap existing object watcher_se_380_199')
     expect(registry.isFree({ row: 390, col: 198 }, { width: 1, height: 1 })).toEqual({
       free: false,
       overlappingIds: ['redoubt_390_198'],
@@ -214,17 +214,17 @@ describe('gameboard layout integration', () => {
 
   test('rejects a real river segment but permits empty space inside its bounding box', () => {
     const registry = buildBoardOccupancyRegistry(levels['1'])
-    const segmentPosition = { row: 370, col: 197 }
+    const segmentPosition = { row: 350, col: 197 }
     expect(registry.isFree(segmentPosition, { width: 1, height: 1 })).toEqual({
       free: false,
-      overlappingIds: ['river_370_195_0-mask-0'],
+      overlappingIds: ['river_350_195_0-mask-0'],
     })
     expect(() =>
       registry.reserve('river-conflict', segmentPosition, { width: 1, height: 1 })
-    ).toThrow('would overlap existing object river_370_195_0-mask-0')
+    ).toThrow('would overlap existing object river_350_195_0-mask-0')
 
     // The anchor is inside the 22x15 bounding rectangle but outside every real mask segment.
-    expect(registry.isFree({ row: 370, col: 195 }, { width: 1, height: 1 })).toEqual({
+    expect(registry.isFree({ row: 350, col: 195 }, { width: 1, height: 1 })).toEqual({
       free: true,
       overlappingIds: [],
     })
