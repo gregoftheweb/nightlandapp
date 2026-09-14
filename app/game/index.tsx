@@ -178,6 +178,7 @@ export default function Game() {
       activeMonsters: state.activeMonsters,
       activeProjectiles: state.activeProjectiles,
       activeTeleportFlashes: state.activeTeleportFlashes,
+      activeVictoryPopups: state.activeVictoryPopups,
       attackSlots: state.attackSlots,
       combatLog: state.combatLog,
       gameOver: state.gameOver,
@@ -195,6 +196,7 @@ export default function Game() {
       state.activeMonsters,
       state.activeProjectiles,
       state.activeTeleportFlashes,
+      state.activeVictoryPopups,
       state.attackSlots,
       state.combatLog,
       state.gameOver,
@@ -901,6 +903,20 @@ export default function Game() {
     [dispatch]
   )
 
+  const handleVictoryPopupComplete = useCallback(
+    (popupId: string) => {
+      if (__DEV__) {
+        console.log('🏆 Victory popup complete:', popupId)
+      }
+
+      dispatch({
+        type: 'REMOVE_VICTORY_POPUP',
+        payload: { id: popupId },
+      })
+    },
+    [dispatch]
+  )
+
   const handleZapPress = useCallback(() => {
     // Cancel Jaunt if armed
     if (state.player.isJauntArmed) {
@@ -1266,6 +1282,7 @@ export default function Game() {
           onDeathInfoBoxClose={handleDeathInfoBoxClose}
           onProjectileComplete={handleProjectileComplete}
           onTeleportFlashComplete={handleTeleportFlashComplete}
+          onVictoryPopupComplete={handleVictoryPopupComplete}
           onShowInfoRef={showInfoRef}
           onCloseInfoRef={closeInfoRef}
         />

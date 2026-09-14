@@ -69,3 +69,9 @@ export interface TeleportFlash {
   gridCol: number // Grid column position
   gridRow: number // Grid row position
 }
+
+export interface VictoryPopup {
+  id: string
+  monsterShortName: string
+  imageIndex: 0 | 1 | 2 // which of the 3 victory images to show, chosen at dispatch time
+}
