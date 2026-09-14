@@ -1,7 +1,13 @@
 import { Level } from './levels'
 import { Item, LevelObjectInstance, NonCollisionObject } from './itemsAndObjects'
 import { Player, Monster } from './actors'
-import { CombatParticipant, CombatLogEntry, Projectile, TeleportFlash } from './combat'
+import {
+  CombatParticipant,
+  CombatLogEntry,
+  Projectile,
+  TeleportFlash,
+  VictoryPopup,
+} from './combat'
 import type { EncounterPlacement, GameboardCatalogIdentity } from './gameboard'
 import type {
   FootstepDescriptor,
@@ -52,6 +58,7 @@ export interface GameState {
   targetedMonsterId?: string | null // ID of the currently targeted monster for ranged attack
   activeProjectiles: Projectile[] // Active projectiles being animated
   activeTeleportFlashes: TeleportFlash[] // Active teleport flash effects
+  activeVictoryPopups: VictoryPopup[] // Active melee-victory image overlays
 
   // ===== UI DOMAIN =====
   showInventory?: boolean // Show inventory modal

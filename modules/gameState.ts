@@ -219,6 +219,7 @@ function buildInitialState(
     targetedMonsterId: null,
     activeProjectiles: [],
     activeTeleportFlashes: [],
+    activeVictoryPopups: [],
 
     // ===== UI DOMAIN =====
     showInventory: false,
@@ -358,6 +359,7 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
     combatLog: [],
     activeProjectiles: [],
     activeTeleportFlashes: [],
+    activeVictoryPopups: [],
     // Keep game state flags from snapshot
     gameOver: snapshot.gameOver || false,
     inCombat: snapshot.inCombat || false,

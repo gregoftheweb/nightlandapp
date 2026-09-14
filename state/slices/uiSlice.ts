@@ -65,6 +65,24 @@ export function reduceUI(state: GameState, action: any): GameState | null {
         ),
       }
 
+    case 'ADD_VICTORY_POPUP':
+      logIfDev(
+        `🏆 ADD_VICTORY_POPUP: id=${action.payload.id}, monster=${action.payload.monsterShortName}`
+      )
+      return {
+        ...state,
+        activeVictoryPopups: [...(state.activeVictoryPopups || []), action.payload],
+      }
+
+    case 'REMOVE_VICTORY_POPUP':
+      logIfDev(`🏆 REMOVE_VICTORY_POPUP: id=${action.payload.id}`)
+      return {
+        ...state,
+        activeVictoryPopups: (state.activeVictoryPopups || []).filter(
+          (p) => p.id !== action.payload.id
+        ),
+      }
+
     default:
       return null
   }

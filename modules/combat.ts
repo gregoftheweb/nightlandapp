@@ -167,11 +167,31 @@ export const executeAttack = (
 
 // ==================== COMBAT TURN PROCESSING ====================
 
-export const processCombatTurn = (state: GameState, dispatch: any, targetId?: string): void => {
+export interface CombatTurnResult {
+  // At most one monster can die per round - only the player's own attack
+  // (below) can remove a monster, and the player only takes one turn per round.
+  meleeKilledMonsterShortName: string | null
+  // attackSlots as of the end of this round. The dispatches above keep the
+  // real store in sync via turnManager's wrapped dispatch, but the `state`
+  // object passed into this function is a plain snapshot that a caller may
+  // still be holding - returning the post-round slots lets callers (see
+  // handleCombatTurn) pass checkCombatEnd something that actually reflects
+  // a kill that just happened, instead of a stale pre-round snapshot.
+  attackSlotsAfterRound: GameState['attackSlots']
+}
+
+export const processCombatTurn = (
+  state: GameState,
+  dispatch: any,
+  targetId?: string
+): CombatTurnResult => {
   if (!state.inCombat || !state.attackSlots || state.attackSlots.length === 0) {
     logIfDev('No combat to process')
-    return
+    return { meleeKilledMonsterShortName: null, attackSlotsAfterRound: state.attackSlots ?? [] }
   }
+
+  let meleeKilledMonsterShortName: string | null = null
+  let attackSlotsAfterRound = state.attackSlots
 
   logIfDev(`\n⚔️ COMBAT ROUND STARTING (Turn ${state.moveCount + 1})`)
   logIfDev(`   Player HP: ${state.player.currentHP}/${state.player.maxHP}`)
@@ -199,7 +219,9 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
         const upgrade = meleeWeapon?.id ? getWeaponUpgrade(state, meleeWeapon.id) : undefined
         const monsterDied = executeAttack(entity, targetMonster, dispatch, meleeWeapon, upgrade)
         if (monsterDied) {
+          meleeKilledMonsterShortName = targetMonster.shortName ?? null
           const updatedAttackSlots = state.attackSlots.filter((m: any) => m.id !== targetMonster.id)
+          attackSlotsAfterRound = updatedAttackSlots
           dispatch({
             type: 'SET_COMBAT',
             payload: {
@@ -221,7 +243,7 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
       const playerDied = executeAttack(entity, state.player, dispatch)
       if (playerDied) {
         logIfDev('💀 GAME OVER - Player defeated!')
-        return
+        return { meleeKilledMonsterShortName, attackSlotsAfterRound }
       }
     }
   }
@@ -236,6 +258,8 @@ export const processCombatTurn = (state: GameState, dispatch: any, targetId?: st
       logIfDev(`   ${monster.name} HP: ${monster.currentHP}/${monster.maxHP}`)
     }
   })
+
+  return { meleeKilledMonsterShortName, attackSlotsAfterRound }
 }
 
 // ==================== COMBAT MANAGEMENT ====================
@@ -309,7 +333,11 @@ const moveWaitingMonstersToAttackSlots = (state: GameState, dispatch: any): void
   }
 }
 
-export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
+export const checkCombatEnd = (
+  state: GameState,
+  dispatch: any,
+  context?: { victoryMonsterShortName: string }
+): boolean => {
   const aliveMonsters = state.attackSlots?.filter((m: any) => m.currentHP > 0) || []
 
   if (aliveMonsters.length === 0) {
@@ -318,6 +346,16 @@ export const checkCombatEnd = (state: GameState, dispatch: any): boolean => {
       type: 'ADD_COMBAT_LOG',
       payload: { message: 'All enemies defeated!' },
     })
+    if (context?.victoryMonsterShortName) {
+      dispatch({
+        type: 'ADD_VICTORY_POPUP',
+        payload: {
+          id: `victory-popup-${Date.now()}-${Math.random()}`,
+          monsterShortName: context.victoryMonsterShortName,
+          imageIndex: Math.floor(Math.random() * 3),
+        },
+      })
+    }
     dispatch({
       type: 'SET_COMBAT',
       payload: {
@@ -472,9 +510,23 @@ export const handleCombatTurn = (
   }
 
   logIfDev(`\n⚔️ PROCESSING COMBAT ACTION: ${action}`)
-  processCombatTurn(state, dispatch, targetId)
+  const { meleeKilledMonsterShortName, attackSlotsAfterRound } = processCombatTurn(
+    state,
+    dispatch,
+    targetId
+  )
   dispatch({ type: 'DECREMENT_STRENGTH_BOOST' })
-  checkCombatEnd(state, dispatch)
+  // Pass the round's actual post-kill attackSlots, not the stale pre-round
+  // `state` snapshot - otherwise checkCombatEnd still sees the monster that
+  // just died as alive (its stale currentHP hasn't been re-read) and never
+  // fires the victory branch on the round the last monster actually dies.
+  checkCombatEnd(
+    { ...state, attackSlots: attackSlotsAfterRound },
+    dispatch,
+    meleeKilledMonsterShortName
+      ? { victoryMonsterShortName: meleeKilledMonsterShortName }
+      : undefined
+  )
 }
 
 // ==================== MONSTER MOVEMENT AND COLLISION ====================

@@ -83,6 +83,7 @@ describe('Jaunt crystal resource', () => {
       },
       activeProjectiles: [],
       activeTeleportFlashes: [],
+      activeVictoryPopups: [],
     }
   })
 

@@ -16,6 +16,8 @@ import { getItemTemplate } from '@config/objects'
 import deadChristosIMG from '@assets/images/ui/dialogs/deadChristos.webp'
 import Projectile from './Projectile'
 import TeleportFlash from './effects/TeleportFlash'
+import VictoryPopup from './effects/VictoryPopup'
+import { getVictoryImage } from '@modules/victoryImages'
 import { enterSubGame } from '@modules/subGames'
 import { GAME_CELL_SIZE, type GameViewport } from '@modules/viewport'
 import { getRenderedGameBoardTileSize } from '@modules/gameboardZoom'
@@ -33,6 +35,7 @@ export type GameBoardState = Pick<
   | 'activeMonsters'
   | 'activeProjectiles'
   | 'activeTeleportFlashes'
+  | 'activeVictoryPopups'
   | 'attackSlots'
   | 'combatLog'
   | 'gameOver'
@@ -61,6 +64,7 @@ interface GameBoardProps {
   onDeathInfoBoxClose?: () => void
   onProjectileComplete?: (projectileId: string) => void
   onTeleportFlashComplete?: (flashId: string) => void
+  onVictoryPopupComplete?: (popupId: string) => void
   onShowInfoRef?: React.MutableRefObject<
     | ((
         name: string,
@@ -90,6 +94,7 @@ function GameBoard({
   onDeathInfoBoxClose,
   onProjectileComplete,
   onTeleportFlashComplete,
+  onVictoryPopupComplete,
   onShowInfoRef,
   onCloseInfoRef,
 }: GameBoardProps) {
@@ -147,6 +152,7 @@ function GameBoard({
   const nonCollisionObjects = state.nonCollisionObjects ?? EMPTY_ARRAY
   const activeProjectiles = state.activeProjectiles ?? EMPTY_ARRAY
   const activeTeleportFlashes = state.activeTeleportFlashes ?? EMPTY_ARRAY
+  const activeVictoryPopups = state.activeVictoryPopups ?? EMPTY_ARRAY
 
   // Memoized showInfo
   const showInfo = useCallback(
@@ -963,6 +969,24 @@ function GameBoard({
     zoomMultiplier,
   ])
 
+  // Render active melee-victory popups
+  const renderVictoryPopups = useMemo(() => {
+    if (activeVictoryPopups.length === 0) return []
+
+    return activeVictoryPopups.flatMap((popup) => {
+      const image = getVictoryImage(popup.monsterShortName, popup.imageIndex)
+      if (!image) return []
+      return [
+        <VictoryPopup
+          key={popup.id}
+          id={popup.id}
+          image={image}
+          onComplete={onVictoryPopupComplete || (() => {})}
+        />,
+      ]
+    })
+  }, [activeVictoryPopups, onVictoryPopupComplete])
+
   // Memoized grid render
   const renderGrid = useMemo(() => {
     const allEntities = [
@@ -1093,6 +1117,7 @@ function GameBoard({
 
       {/* Teleport Flashes */}
       {renderTeleportFlashes}
+      {renderVictoryPopups}
 
       <InfoBox
         visible={infoVisible}
