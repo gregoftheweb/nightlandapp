@@ -2,7 +2,7 @@
 
 # Nightland — Gameplay &amp; Story Design
 
-**Purpose:** narrative, pacing, and content design decisions — separate from technical build status (see `GAMEBOARD_SYSTEM_CHECKLIST.md` for that). This doc is about *what the game is and does*, not *what's been coded*.
+**Purpose:** narrative, pacing, and content design decisions — separate from technical build status (see `GAMEBOARD_SYSTEM_CHECKLIST.md` for that). This doc is about _what the game is and does_, not _what's been coded_.
 
 **Structural note: House of Silence is a convergence point for SEVERAL storylines, not just one.** Everything below the Act One Pacing Plan — Tesseract, Persius, the Salamander, Current-Loom, Deep Silo, the Silent Ones — is **one storyline** (the Earth-Current thread) that happens to resolve at House of Silence. Other, separate storylines are expected to be designed later, each converging on the same location without necessarily touching this one. Don't assume this thread is the whole ending — it's a load-bearing piece of it, not the sum of it.
 
@@ -39,8 +39,6 @@ A real, ordered sequence — not a scattered list of ideas.
 
 **Open difficulty question — not yet resolved:** the player has zero defensive tools (no Hide, no Jaunt) for the entire stretch before Hermit Hollow. Given the established design philosophy (long, dangerous trail; "I want the player to die a lot"), a brutal unarmed opening may be intentional — dying repeatedly before earning Hide could make that unlock feel like a real turning point rather than just another item. Alternatively, this stretch or Hermit Hollow's placement may need softening so it doesn't feel unfair before the player has any tools at all. **Needs a real decision, not an assumption either way.**
 
-
-
 &nbsp;
 
 ---
@@ -49,9 +47,9 @@ A real, ordered sequence — not a scattered list of ideas.
 
 1. `word-tile-crypt-01` (Tesseract) — EXISTS. Practice puzzle, guaranteed first.
 2. `word-tile-crypt-02` (Salamander) — EXISTS. Tells of the Salamander (needs rewrite, see above).
-3. *New, needed* — tells of Deep Silo. Does double duty: reveals (with #4, via rune-lock) the Current-Loom → Deep Silo gate, AND explains the real motivation — powering up Discos to fight the Silent Ones.
-4. *New, needed* — tells of the Current Looms. The other half of the gate reveal alongside #3.
-5. *New, needed* — placed late in the game. Rewards the minimap ability.
+3. _New, needed_ — tells of Deep Silo. Does double duty: reveals (with #4, via rune-lock) the Current-Loom → Deep Silo gate, AND explains the real motivation — powering up Discos to fight the Silent Ones.
+4. _New, needed_ — tells of the Current Looms. The other half of the gate reveal alongside #3.
+5. _New, needed_ — placed late in the game. Rewards the minimap ability.
 
 ---
 
@@ -118,4 +116,4 @@ way. None yet started.
 
 ---
 
-*This doc is for story/gameplay/pacing decisions. For technical build status (what's coded, what's tested, what's deferred), see `GAMEBOARD_SYSTEM_CHECKLIST.md`.*
+_This doc is for story/gameplay/pacing decisions. For technical build status (what's coded, what's tested, what's deferred), see `GAMEBOARD_SYSTEM_CHECKLIST.md`._
