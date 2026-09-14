@@ -60,7 +60,7 @@ export const levels: Record<LevelId, Level> = {
     ],
 
     nonCollisionObjects: [
-      createNonCollisionObject('river', { row: 370, col: 195 }, 0, {
+      createNonCollisionObject('river', { row: 350, col: 195 }, 0, {
         canTap: false,
         width: 22,
         height: 15,
@@ -96,7 +96,7 @@ export const levels: Record<LevelId, Level> = {
     greatPowers: [
       createGreatPowerInstance(
         'watcher_se',
-        { row: 380, col: 180 },
+        { row: 380, col: 199 },
         {
           currentHP: 1000,
           maxHP: 1000,
