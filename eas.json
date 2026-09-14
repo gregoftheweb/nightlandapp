@@ -10,18 +10,21 @@
       "android": {
         "buildType": "apk"
       },
-      "node": "20.19.4"
+      "node": "20.19.4",
+      "pnpm": "10.18.1"
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
-      "node": "20.19.4"
+      "node": "20.19.4",
+      "pnpm": "10.18.1"
     },
     "production": {
       "autoIncrement": true,
-      "node": "20.19.4"
+      "node": "20.19.4",
+      "pnpm": "10.18.1"
     }
   },
   "submit": {
