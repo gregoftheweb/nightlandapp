@@ -61,7 +61,7 @@
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@babel/generator": "^7.29.8",
-    "@babel/traverse": "^7.29.8",
+    "@babel/traverse": "^8.0.5",
     "@expo/cli": "^57.0.22",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^30.0.0",
