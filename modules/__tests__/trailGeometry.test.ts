@@ -273,7 +273,7 @@ describe('standalone trail geometry', () => {
   })
 
   test('drops cumulative-distance footsteps with north-clockwise rotations on trunk and branch', () => {
-    expect(FOOTSTEP_INTERVAL_TILES).toBe(24)
+    expect(FOOTSTEP_INTERVAL_TILES).toBe(20)
     const network = createTrailNetwork({
       trunkWaypoints: [
         { row: 24, col: 0 },
@@ -299,11 +299,12 @@ describe('standalone trail geometry', () => {
 
     expect(trunk.map(({ position }) => position)).toEqual([
       { row: 19, col: 0 },
-      { row: 0, col: 5 },
-      { row: 5, col: 24 },
-      { row: 24, col: 19 },
+      { row: 0, col: 1 },
+      { row: 0, col: 21 },
+      { row: 17, col: 24 },
+      { row: 24, col: 11 },
     ])
-    expect(trunk.map(({ rotationDegrees }) => rotationDegrees)).toEqual([0, 90, 180, 270])
+    expect(trunk.map(({ rotationDegrees }) => rotationDegrees)).toEqual([0, 90, 90, 180, 270])
     expect(branch).toEqual([
       {
         position: { row: 5, col: 12 },
@@ -335,7 +336,7 @@ describe('standalone trail geometry', () => {
     )
     const total = descriptors.length
 
-    expect(total).toBe(1000)
+    expect(total).toBe(1200)
     expect(counts.green / total).toBeGreaterThan(0.7)
     expect(counts.green / total).toBeLessThan(0.8)
     expect(counts.blue / total).toBeGreaterThan(0.16)
@@ -437,8 +438,8 @@ describe('standalone trail geometry', () => {
 
     expect(trunk[0].position).toEqual({ row: 0, col: 13 })
     expect(branch[0].position).toEqual({ row: 20, col: 13 })
-    expect(trunk.slice(1, 4).map(({ position }) => position.col)).toEqual([37, 61, 85])
-    expect(branch.slice(1, 4).map(({ position }) => position.col)).toEqual([37, 61, 85])
+    expect(trunk.slice(1, 4).map(({ position }) => position.col)).toEqual([33, 53, 73])
+    expect(branch.slice(1, 4).map(({ position }) => position.col)).toEqual([33, 53, 73])
   })
 
   test('rejects a blocked preferred corner and selects another cleared top-edge endpoint', () => {

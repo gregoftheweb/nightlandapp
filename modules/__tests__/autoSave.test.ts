@@ -16,7 +16,7 @@ const mockedDeleteCurrentGame = jest.mocked(deleteCurrentGame)
 const mockedSaveCurrentGame = jest.mocked(saveCurrentGame)
 
 const stateAtMove = (moveCount: number) => ({
-  ...getInitialState('1'),
+  ...getInitialState('1', { skipGameboardLayout: true }),
   moveCount,
 })
 
@@ -27,7 +27,7 @@ const flushPromises = async () => {
 
 describe('autosave change detection', () => {
   test('detects the initial state and save-relevant primitive changes', () => {
-    const state = getInitialState('1')
+    const state = getInitialState('1', { skipGameboardLayout: true })
 
     expect(hasSaveRelevantChanges(null, state)).toBe(true)
     expect(hasSaveRelevantChanges(state, { ...state, moveCount: state.moveCount + 1 })).toBe(true)
@@ -43,7 +43,7 @@ describe('autosave change detection', () => {
   })
 
   test('uses fixed-cost reference checks for growing persistence maps', () => {
-    const state = getInitialState('1')
+    const state = getInitialState('1', { skipGameboardLayout: true })
 
     expect(
       hasSaveRelevantChanges(state, {
@@ -60,7 +60,7 @@ describe('autosave change detection', () => {
   })
 
   test('ignores unrelated state and equivalent position-object changes', () => {
-    const state = getInitialState('1')
+    const state = getInitialState('1', { skipGameboardLayout: true })
 
     expect(
       hasSaveRelevantChanges(state, {
