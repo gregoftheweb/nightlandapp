@@ -4,6 +4,7 @@ import { parsedCurrentLoomContentResult } from '@/app/sub-games/_shared/current-
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
 import { createItemInstance, createSubGameEntranceInstance } from '@config/levelHelpers'
 import { getSubGameDefinition } from '@config/subGames'
+import { toIntegerTilePosition } from './playerPosition'
 import type {
   EncounterPlacement,
   GameboardManifest,
@@ -363,7 +364,9 @@ export function generateLayout(
               continue
             }
           }
-          const position = trailNetwork.resolve(location)
+          // location/progressPct stay fractional (the trail itself is a continuous
+          // path), but every placed object must sit on a true grid tile.
+          const position = toIntegerTilePosition(trailNetwork.resolve(location))
           if (!withinBounds(position, footprint, level)) {
             lastReason = `candidate at (${position.row}, ${position.col}) is outside level bounds`
             continue
@@ -435,7 +438,10 @@ function generateTrailItems(
     for (let index = 0; index < count; index += 1) {
       for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_INSTANCE; attempt += 1) {
         const location = randomScatteredLocation(trailNetwork, random)
-        const position = trailNetwork.resolve(location)
+        // The trail is a continuous interpolated path, so resolve() lands on sub-tile
+        // coordinates - snap to a tile before reserving/placing, or the item renders
+        // off the grid line and can never exactly overlap the (always-integer) player.
+        const position = toIntegerTilePosition(trailNetwork.resolve(location))
         if (!occupancy.isFree(position, { width: 1, height: 1 }).free) continue
         const occupancyId = occupancy.reserve(template, position, { width: 1, height: 1 })
         items.push(createItemInstance(template, position, { id: occupancyId }))

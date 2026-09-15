@@ -323,7 +323,8 @@ export default function Game() {
           direction,
           stateRef.current.player.position,
           stateRef.current.gridWidth,
-          stateRef.current.gridHeight
+          stateRef.current.gridHeight,
+          1 // the cliff wall occupies the outermost ring, so holding stops one cell early
         )
       )
         return false

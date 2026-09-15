@@ -123,10 +123,22 @@ const doCombatTurn = (
 const doMoveTurn = (direction: string, setOverlay?: (overlay: any) => void): void => {
   logIfDev(`🚶 EXECUTING MOVE TURN: ${direction}`)
 
+  const previousPosition = currentGameState.player.position
+
   // Move Player
   const newPosition = timed('movement.position-calculation', () =>
     calculateNewPosition(currentGameState.player.position, direction, currentGameState)
   )
+
+  // calculateNewPosition refuses to step onto the cliff wall ring, leaving the
+  // position unchanged - let the player know why nothing happened.
+  if (newPosition.row === previousPosition.row && newPosition.col === previousPosition.col) {
+    gameDispatch({
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: 'The cliff face blocks the way.' },
+    })
+  }
+
   gameDispatch({ type: 'MOVE_PLAYER', payload: { position: newPosition } })
 
   const newMoveCount = currentGameState.moveCount + 1

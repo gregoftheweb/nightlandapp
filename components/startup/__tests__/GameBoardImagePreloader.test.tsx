@@ -13,12 +13,12 @@ describe('GameBoardImagePreloader', () => {
     jest.restoreAllMocks()
   })
 
-  test('covers 21 distinct gameboard image files and waits for every onLoad', () => {
+  test('covers 25 distinct gameboard image files and waits for every onLoad', () => {
     const onReady = jest.fn()
     const screen = render(<GameBoardImagePreloader onReady={onReady} />)
 
-    expect(GAMEBOARD_IMAGE_ASSETS).toHaveLength(21)
-    expect(new Set(GAMEBOARD_IMAGE_ASSETS.map(({ id }) => id)).size).toBe(21)
+    expect(GAMEBOARD_IMAGE_ASSETS).toHaveLength(25)
+    expect(new Set(GAMEBOARD_IMAGE_ASSETS.map(({ id }) => id)).size).toBe(25)
 
     GAMEBOARD_IMAGE_ASSETS.slice(0, -1).forEach(({ id }) => {
       fireEvent(
@@ -34,7 +34,7 @@ describe('GameBoardImagePreloader', () => {
       }),
       'load'
     )
-    expect(onReady).toHaveBeenCalledWith({ reason: 'loaded', loadedCount: 21, failedIds: [] })
+    expect(onReady).toHaveBeenCalledWith({ reason: 'loaded', loadedCount: 25, failedIds: [] })
   })
 
   test('a failed image settles individually instead of permanently blocking startup', () => {
@@ -56,7 +56,7 @@ describe('GameBoardImagePreloader', () => {
 
     expect(onReady).toHaveBeenCalledWith({
       reason: 'failed',
-      loadedCount: 20,
+      loadedCount: 24,
       failedIds: [failedId],
     })
   })

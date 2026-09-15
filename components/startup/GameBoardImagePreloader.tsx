@@ -100,8 +100,32 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   {
     id: 'player-christos',
     source: require('@assets/images/sprites/characters/christos.webp'),
-    width: 575,
-    height: 546,
+    width: 342,
+    height: 500,
+  },
+  {
+    id: 'player-christos-walk-1',
+    source: require('@assets/images/sprites/characters/christos-walk-1.webp'),
+    width: 342,
+    height: 500,
+  },
+  {
+    id: 'player-christos-walk-2',
+    source: require('@assets/images/sprites/characters/christos-walk-2.webp'),
+    width: 342,
+    height: 500,
+  },
+  {
+    id: 'player-christos-walk-3',
+    source: require('@assets/images/sprites/characters/christos-walk-3.webp'),
+    width: 342,
+    height: 500,
+  },
+  {
+    id: 'player-christos-walk-4',
+    source: require('@assets/images/sprites/characters/christos-walk-4.webp'),
+    width: 342,
+    height: 500,
   },
   {
     id: 'terrain-ground-tile',

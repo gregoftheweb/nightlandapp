@@ -5,6 +5,11 @@ import { logIfDev } from './utils'
 
 // ==================== PLAYER MOVEMENT ====================
 
+// The cliff wall ring occupies the board's outer row/col (see GameBoard's
+// renderBoardBorder) and is solid - it never overlaps a cell the player can stand on.
+export const isBoardEdgeCell = (pos: Position, gridWidth: number, gridHeight: number): boolean =>
+  pos.row === 0 || pos.row === gridHeight - 1 || pos.col === 0 || pos.col === gridWidth - 1
+
 export const calculateNewPosition = (
   currentPos: Position,
   direction: string,
@@ -33,6 +38,14 @@ export const calculateNewPosition = (
         console.warn(`Unhandled direction: ${direction}`)
       }
       break
+  }
+
+  // Stepping from the interior onto the cliff wall ring is refused.
+  if (
+    isBoardEdgeCell(newPosition, state.gridWidth, state.gridHeight) &&
+    !isBoardEdgeCell(currentPos, state.gridWidth, state.gridHeight)
+  ) {
+    return currentPos
   }
 
   return newPosition

@@ -23,6 +23,7 @@ import { buildSpatialGrid } from '../spacialGrid'
 import { getObjectAtPoint } from '../utils'
 import { FOOTSTEP_INTERVAL_TILES, MAX_BRANCH_LENGTH_TILES } from '../trailGeometry'
 import * as trailGeometry from '../trailGeometry'
+import { toIntegerTilePosition } from '../playerPosition'
 
 const encounterIds = [
   'jaunt-cave',
@@ -285,6 +286,25 @@ describe('gameboard layout integration', () => {
     }
   })
 
+  test('generated trail items always land on an integer tile', () => {
+    for (let run = 0; run < 25; run += 1) {
+      const result = generateLayout(
+        GAMEBOARD_MANIFEST,
+        REAL_PARSED_CONTENT_CATALOGS,
+        levels['1'],
+        new RandomSource()
+      )
+      expect(result.success).toBe(true)
+      if (!result.success) continue
+      expect(result.value.generatedItems.length).toBeGreaterThan(0)
+      result.value.generatedItems.forEach((item) => {
+        expect(item.position).toBeDefined()
+        expect(Number.isInteger(item.position!.row)).toBe(true)
+        expect(Number.isInteger(item.position!.col)).toBe(true)
+      })
+    }
+  })
+
   test.each([7, 19, 43])('seed %i resolves placements against a real winding network', (seed) => {
     const result = generateLayout(
       GAMEBOARD_MANIFEST,
@@ -336,7 +356,11 @@ describe('gameboard layout integration', () => {
       expect(intervalsFromFirst).toBeCloseTo(Math.round(intervalsFromFirst), 6)
     })
     result.value.placements.forEach((placement) => {
-      expect(placement.position).toEqual(result.value.trailNetwork.resolve(placement.location))
+      expect(placement.position).toEqual(
+        toIntegerTilePosition(result.value.trailNetwork.resolve(placement.location))
+      )
+      expect(Number.isInteger(placement.position.row)).toBe(true)
+      expect(Number.isInteger(placement.position.col)).toBe(true)
     })
   })
 

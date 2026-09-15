@@ -14,6 +14,13 @@ import { CombatDialog } from './CombatDialog'
 import { getTextContent, isPlayerOnObject } from '../modules/utils'
 import { getItemTemplate } from '@config/objects'
 import deadChristosIMG from '@assets/images/ui/dialogs/deadChristos.webp'
+import christosIdleIMG from '@assets/images/sprites/characters/christos.webp'
+import christosWalk1IMG from '@assets/images/sprites/characters/christos-walk-1.webp'
+import christosWalk2IMG from '@assets/images/sprites/characters/christos-walk-2.webp'
+import christosWalk3IMG from '@assets/images/sprites/characters/christos-walk-3.webp'
+import christosWalk4IMG from '@assets/images/sprites/characters/christos-walk-4.webp'
+import cliffWallCornerIMG from '@assets/images/backgrounds/ui_screens/cliff-wall-corner.webp'
+import cliffWallStraightIMG from '@assets/images/backgrounds/ui_screens/cliff-wall-straight.webp'
 import Projectile from './Projectile'
 import TeleportFlash from './effects/TeleportFlash'
 import VictoryPopup from './effects/VictoryPopup'
@@ -26,6 +33,14 @@ export const CELL_SIZE = GAME_CELL_SIZE
 
 // Background tile configuration
 const BACKGROUND_TILE_SIZE = 320
+// Length:thickness ratio of the source straight cliff-wall tile (565x243px), used to
+// keep the border's repeat length undistorted while its thickness is pinned to one cell.
+const CLIFF_STRAIGHT_ASPECT = 565 / 243
+
+// Player walk-cycle frames, stepped through one at a time as the player's tile
+// position changes. Reverts to the idle pose this long after the last step.
+const PLAYER_WALK_FRAMES = [christosWalk1IMG, christosWalk2IMG, christosWalk3IMG, christosWalk4IMG]
+const PLAYER_IDLE_DELAY_MS = 200
 // Keep absent collection props referentially stable across renders. Freezing the
 // singleton also prevents one consumer from mutating every fallback collection.
 const EMPTY_ARRAY = Object.freeze([])
@@ -140,6 +155,45 @@ function GameBoard({
 
   // Track gameOver transition so the death dialog does not stack
   const previousGameOver = useRef(false)
+
+  // ---- Player walk-cycle animation ----
+  // Every tile step advances the walk frame; PLAYER_IDLE_DELAY_MS after the last
+  // step with no follow-up, the player settles back to the idle pose. The source art
+  // faces right, so leftward steps mirror it rather than needing duplicate frames.
+  const [isPlayerWalking, setIsPlayerWalking] = useState(false)
+  const [playerWalkFrameIndex, setPlayerWalkFrameIndex] = useState(0)
+  const [playerFacingLeft, setPlayerFacingLeft] = useState(false)
+  const previousPlayerPosition = useRef<{ row: number; col: number } | null>(null)
+  const playerIdleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const pos = state.player?.position
+    if (!pos) return
+    const previous = previousPlayerPosition.current
+
+    if (previous && (previous.row !== pos.row || previous.col !== pos.col)) {
+      setIsPlayerWalking(true)
+      setPlayerWalkFrameIndex((index) => (index + 1) % PLAYER_WALK_FRAMES.length)
+
+      // Vertical-only steps keep whichever way the player was last facing.
+      if (pos.col !== previous.col) {
+        setPlayerFacingLeft(pos.col < previous.col)
+      }
+
+      if (playerIdleTimeout.current) clearTimeout(playerIdleTimeout.current)
+      playerIdleTimeout.current = setTimeout(() => {
+        setIsPlayerWalking(false)
+      }, PLAYER_IDLE_DELAY_MS)
+    }
+
+    previousPlayerPosition.current = pos
+  }, [state.player?.position])
+
+  useEffect(() => {
+    return () => {
+      if (playerIdleTimeout.current) clearTimeout(playerIdleTimeout.current)
+    }
+  }, [])
 
   // ---- Defensive fallbacks (NO early returns before hooks) ----
   const level = state.level
@@ -587,7 +641,7 @@ function GameBoard({
         pointerEvents="none"
       >
         <Image
-          source={require('@assets/images/sprites/characters/christos.webp')}
+          source={isPlayerWalking ? PLAYER_WALK_FRAMES[playerWalkFrameIndex] : christosIdleIMG}
           style={[
             styles.character,
             {
@@ -595,6 +649,7 @@ function GameBoard({
               height: renderedCellSize * 0.8,
               left: renderedCellSize * 0.1,
               top: renderedCellSize * 0.1,
+              transform: [{ scaleX: playerFacingLeft ? -1 : 1 }],
             },
           ]}
           resizeMode="contain"
@@ -603,6 +658,9 @@ function GameBoard({
     )
   }, [
     state.player?.position,
+    isPlayerWalking,
+    playerWalkFrameIndex,
+    playerFacingLeft,
     cameraOffset.offsetY,
     cameraOffset.offsetX,
     viewport.cols,
@@ -921,6 +979,198 @@ function GameBoard({
     zoomMultiplier,
   ])
 
+  // Cliff wall ring - sits on the outermost row/col of the playable board (row/col 0
+  // and boardSize.width-1/height-1), one cell thick. Only the strip currently
+  // intersecting the viewport is built, since boards run 400-600 cells across and the
+  // ring itself is never more than a sliver of that on screen at once.
+  const renderBoardBorder = useMemo(() => {
+    const boardWidth = level?.boardSize?.width
+    const boardHeight = level?.boardSize?.height
+    if (!boardWidth || !boardHeight) return []
+
+    const elements: React.ReactNode[] = []
+    const tileLength = renderedCellSize * CLIFF_STRAIGHT_ASPECT
+    const lastCol = boardWidth - 1
+    const lastRow = boardHeight - 1
+
+    const corners: { row: number; col: number; rotation: number }[] = [
+      { row: 0, col: 0, rotation: 0 }, // top-left
+      { row: 0, col: lastCol, rotation: 90 }, // top-right
+      { row: lastRow, col: lastCol, rotation: 180 }, // bottom-right
+      { row: lastRow, col: 0, rotation: 270 }, // bottom-left
+    ]
+
+    corners.forEach(({ row, col, rotation }) => {
+      const screenRow = row - cameraOffset.offsetY
+      const screenCol = col - cameraOffset.offsetX
+      const inView =
+        screenRow + 1 > 0 &&
+        screenRow < viewport.rows &&
+        screenCol + 1 > 0 &&
+        screenCol < viewport.cols
+      if (!inView) return
+
+      elements.push(
+        <View
+          key={`border-corner-${row}-${col}`}
+          style={{
+            position: 'absolute',
+            left: screenCol * renderedCellSize,
+            top: screenRow * renderedCellSize,
+            width: renderedCellSize,
+            height: renderedCellSize,
+            zIndex: 1,
+          }}
+          pointerEvents="none"
+        >
+          <Image
+            source={cliffWallCornerIMG}
+            style={{ width: '100%', height: '100%', transform: [{ rotate: `${rotation}deg` }] }}
+            resizeMode="stretch"
+          />
+        </View>
+      )
+    })
+
+    // Top/bottom edges: tiled along columns, thickness pinned to one cell. The fill
+    // stops short of col 0 and lastCol - those cells belong to the corner pieces.
+    const edgeStartPx = renderedCellSize
+    ;[
+      { row: 0, rotation: 0 },
+      { row: lastRow, rotation: 180 },
+    ].forEach(({ row, rotation }) => {
+      const screenRow = row - cameraOffset.offsetY
+      if (!(screenRow + 1 > 0 && screenRow < viewport.rows)) return
+
+      const visibleStartPx = cameraOffset.offsetX * renderedCellSize
+      const visibleEndPx = (cameraOffset.offsetX + viewport.cols) * renderedCellSize
+      const edgeEndPx = lastCol * renderedCellSize
+      const clipStart = Math.max(visibleStartPx, edgeStartPx)
+      const clipEnd = Math.min(visibleEndPx, edgeEndPx)
+      if (clipEnd <= clipStart) return
+
+      const startIdx = Math.floor(clipStart / tileLength)
+      const endIdx = Math.ceil(clipEnd / tileLength)
+      const fixedTopPx = screenRow * renderedCellSize
+
+      for (let idx = startIdx; idx < endIdx; idx++) {
+        const tileWorldStart = idx * tileLength
+        const renderStart = Math.max(tileWorldStart, edgeStartPx)
+        const renderEnd = Math.min(tileWorldStart + tileLength, edgeEndPx)
+        const clippedWidth = renderEnd - renderStart
+        if (clippedWidth <= 0) continue
+
+        const screenLeft = renderStart - cameraOffset.offsetX * renderedCellSize
+        const innerOffset = renderStart - tileWorldStart
+
+        elements.push(
+          <View
+            key={`border-h-${row}-${idx}`}
+            style={{
+              position: 'absolute',
+              left: screenLeft,
+              top: fixedTopPx,
+              width: clippedWidth,
+              height: renderedCellSize,
+              overflow: 'hidden',
+              zIndex: 1,
+            }}
+            pointerEvents="none"
+          >
+            <Image
+              source={cliffWallStraightIMG}
+              style={{
+                position: 'absolute',
+                left: -innerOffset,
+                top: 0,
+                width: tileLength,
+                height: renderedCellSize,
+                transform: [{ rotate: `${rotation}deg` }],
+              }}
+              resizeMode="stretch"
+            />
+          </View>
+        )
+      }
+    })
+
+    // Left/right edges: tiled along rows. The source tile is a horizontal strip, so
+    // rotating it 90/270deg swaps its footprint - the image is re-centered within its
+    // own (pre-rotation) box so the rotated result still lines up with the clipped cell.
+    // The fill stops short of row 0 and lastRow - those cells belong to the corners.
+    ;[
+      { col: 0, rotation: 270 },
+      { col: lastCol, rotation: 90 },
+    ].forEach(({ col, rotation }) => {
+      const screenCol = col - cameraOffset.offsetX
+      if (!(screenCol + 1 > 0 && screenCol < viewport.cols)) return
+
+      const visibleStartPx = cameraOffset.offsetY * renderedCellSize
+      const visibleEndPx = (cameraOffset.offsetY + viewport.rows) * renderedCellSize
+      const edgeEndPx = lastRow * renderedCellSize
+      const clipStart = Math.max(visibleStartPx, edgeStartPx)
+      const clipEnd = Math.min(visibleEndPx, edgeEndPx)
+      if (clipEnd <= clipStart) return
+
+      const startIdx = Math.floor(clipStart / tileLength)
+      const endIdx = Math.ceil(clipEnd / tileLength)
+      const fixedLeftPx = screenCol * renderedCellSize
+
+      for (let idx = startIdx; idx < endIdx; idx++) {
+        const tileWorldStart = idx * tileLength
+        const renderStart = Math.max(tileWorldStart, edgeStartPx)
+        const renderEnd = Math.min(tileWorldStart + tileLength, edgeEndPx)
+        const clippedLength = renderEnd - renderStart
+        if (clippedLength <= 0) continue
+
+        const screenTop = renderStart - cameraOffset.offsetY * renderedCellSize
+        const innerOffset = renderStart - tileWorldStart
+        const imageLeft = (renderedCellSize - tileLength) / 2
+        const imageTop = (tileLength - renderedCellSize) / 2 - innerOffset
+
+        elements.push(
+          <View
+            key={`border-v-${col}-${idx}`}
+            style={{
+              position: 'absolute',
+              left: fixedLeftPx,
+              top: screenTop,
+              width: renderedCellSize,
+              height: clippedLength,
+              overflow: 'hidden',
+              zIndex: 1,
+            }}
+            pointerEvents="none"
+          >
+            <Image
+              source={cliffWallStraightIMG}
+              style={{
+                position: 'absolute',
+                left: imageLeft,
+                top: imageTop,
+                width: tileLength,
+                height: renderedCellSize,
+                transform: [{ rotate: `${rotation}deg` }],
+              }}
+              resizeMode="stretch"
+            />
+          </View>
+        )
+      }
+    })
+
+    return elements
+  }, [
+    level?.boardSize?.width,
+    level?.boardSize?.height,
+    cameraOffset.offsetX,
+    cameraOffset.offsetY,
+    viewport.rows,
+    viewport.cols,
+    renderedCellSize,
+    zoomMultiplier,
+  ])
+
   // Render active projectiles
   const renderProjectiles = useMemo(() => {
     if (activeProjectiles.length === 0) return []
@@ -1107,6 +1357,7 @@ function GameBoard({
               {renderGridLines}
               {renderGridHighlights}
             </View>
+            {renderBoardBorder}
             {renderGrid}
           </>
         )}

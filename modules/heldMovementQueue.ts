@@ -22,13 +22,14 @@ export function heldMoveCanProgress(
   direction: HeldMoveDirection,
   position: { row: number; col: number },
   gridWidth: number,
-  gridHeight: number
+  gridHeight: number,
+  margin: number = 0
 ): boolean {
   return !(
-    (direction === 'up' && position.row === 0) ||
-    (direction === 'down' && position.row === gridHeight - 1) ||
-    (direction === 'left' && position.col === 0) ||
-    (direction === 'right' && position.col === gridWidth - 1)
+    (direction === 'up' && position.row <= margin) ||
+    (direction === 'down' && position.row >= gridHeight - 1 - margin) ||
+    (direction === 'left' && position.col <= margin) ||
+    (direction === 'right' && position.col >= gridWidth - 1 - margin)
   )
 }
 
