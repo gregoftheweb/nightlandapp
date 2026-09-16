@@ -2,7 +2,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native'
 import { useRouter } from 'expo-router'
-import { SPLASH_STRINGS } from '@assets/copy/splashscreen'
 import { useGameContext } from '@context/GameContext'
 import { clearAllSubGameSaves } from '../sub-games/_shared/persistence'
 import { invalidateAutoSaveAndDeleteCurrentGame } from '@modules/autoSave'
@@ -72,17 +71,29 @@ export default function DeathScreen() {
     >
       <SafeAreaContent style={styles.container}>
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{SPLASH_STRINGS.deathScreen.title}</Text>
-          <Text style={styles.text}>
-            {SPLASH_STRINGS.deathScreen.slainByText(killerName)}
-            {SPLASH_STRINGS.deathScreen.monstersKilledText(monstersKilled)}
-            {SPLASH_STRINGS.deathScreen.distanceTraveledText(distanceTraveled)}
+          <Text style={styles.overline}>EXPEDITION ENDED</Text>
+          <Text style={styles.title}>The Night has taken Christos.</Text>
+          <Text style={styles.killer}>Slain by {killerName}.</Text>
+          <View style={styles.rule} />
+          <View style={styles.stats}>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{distanceTraveled}</Text>
+              <Text style={styles.statLabel}>steps from safety</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{monstersKilled}</Text>
+              <Text style={styles.statLabel}>horrors slain</Text>
+            </View>
+          </View>
+          <Text style={styles.memoryText}>
+            The current expedition is lost. Any waypoint memories made before death remain at the
+            title screen.
           </Text>
         </View>
 
         <View style={styles.overlay}>
           <TouchableOpacity style={styles.button} onPress={handlePress}>
-            <Text style={styles.buttonText}>{SPLASH_STRINGS.deathScreen.buttonText}</Text>
+            <Text style={styles.buttonText}>Return to the Last Redoubt</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaContent>
@@ -99,26 +110,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'space-between',
-    padding: 20,
+    padding: 24,
   },
   textContainer: {
-    borderWidth: 2,
-    borderColor: 'red',
-    borderRadius: 8,
-    padding: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderLeftWidth: 3,
+    borderColor: '#842828',
+    padding: 22,
+    backgroundColor: 'rgba(5, 6, 8, 0.86)',
     marginBottom: 20,
+    width: '100%',
+    maxWidth: 620,
+    alignSelf: 'center',
+    marginTop: 20,
   },
+  overline: { color: '#847861', fontSize: 10, letterSpacing: 2.4, fontWeight: '700' },
   title: {
-    color: 'red',
-    fontSize: 50,
+    color: '#b84038',
+    fontSize: 38,
+    lineHeight: 45,
     fontFamily: 'Gabrielle',
-    textAlign: 'center',
+    marginTop: 8,
   },
-  text: {
-    color: 'red',
-    fontSize: 30,
-    fontFamily: 'Gabrielle',
+  killer: { color: '#b8aa8b', fontSize: 17, marginTop: 8 },
+  rule: { width: 72, height: 1, backgroundColor: '#6e2927', marginVertical: 20 },
+  stats: { flexDirection: 'row', gap: 12 },
+  stat: { flex: 1, borderTopWidth: 1, borderColor: '#44382c', paddingTop: 9 },
+  statValue: { color: '#d4c39e', fontSize: 24, fontWeight: '700' },
+  statLabel: { color: '#766d5d', fontSize: 11, marginTop: 2 },
+  memoryText: {
+    color: '#8d826e',
+    fontSize: 13,
+    fontStyle: 'italic',
+    lineHeight: 19,
+    marginTop: 22,
   },
   overlay: {
     alignItems: 'center',
@@ -126,15 +150,15 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: 'transparent',
-    borderColor: 'red',
-    borderWidth: 2,
-    borderRadius: 8,
+    borderColor: '#8f302d',
+    borderWidth: 1,
+    borderRadius: 2,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
   buttonText: {
-    color: 'red',
-    fontSize: 30,
+    color: '#d0c09a',
+    fontSize: 23,
     fontFamily: 'Gabrielle',
     textAlign: 'center',
   },

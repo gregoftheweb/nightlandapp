@@ -173,6 +173,11 @@ export default function SplashScreen() {
       style={styles.backgroundImage}
     >
       <SafeAreaContent style={styles.overlay}>
+        <View style={styles.titleBlock}>
+          <Text style={styles.overline}>THE LAST REDOUBT / THE FINAL AGE</Text>
+          <Text style={styles.gameTitle}>NIGHTLAND</Text>
+          <Text style={styles.tagline}>One light remains. Everything beyond it is hungry.</Text>
+        </View>
         {isLoading ? (
           <ActivityIndicator size="large" color="red" />
         ) : (
@@ -182,7 +187,7 @@ export default function SplashScreen() {
               onPress={handleNewGame}
               disabled={isTransitioning}
             >
-              <Text style={styles.buttonText}>New</Text>
+              <Text style={styles.buttonText}>Begin an Expedition</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -206,11 +211,14 @@ export default function SplashScreen() {
               <Text
                 style={[styles.buttonText, waypointSaves.length === 0 && styles.buttonTextDisabled]}
               >
-                Saved
+                Waypoint Memories
               </Text>
             </TouchableOpacity>
           </View>
         )}
+        <Text style={styles.memoryNote}>
+          Death consumes the current expedition. Waypoint memories endure.
+        </Text>
       </SafeAreaContent>
 
       {/* Waypoint Saves Modal */}
@@ -271,31 +279,63 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  titleBlock: {
+    alignItems: 'center',
+    marginBottom: 48,
+    paddingHorizontal: 20,
+  },
+  overline: {
+    color: '#837761',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2.5,
+  },
+  gameTitle: {
+    color: '#a82f2f',
+    fontSize: 54,
+    lineHeight: 62,
+    fontFamily: 'Gabrielle',
+    letterSpacing: 5,
+  },
+  tagline: {
+    color: '#b3a789',
+    fontSize: 14,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
   buttonsContainer: {
     gap: 20,
     alignItems: 'center',
   },
   button: {
-    backgroundColor: 'transparent',
-    borderColor: 'red',
-    borderWidth: 2,
-    borderRadius: 8,
+    backgroundColor: 'rgba(5, 5, 5, 0.78)',
+    borderColor: '#8f2929',
+    borderWidth: 1,
+    borderRadius: 2,
     paddingVertical: 12,
     paddingHorizontal: 32,
-    minWidth: 200,
+    minWidth: 250,
   },
   buttonDisabled: {
     borderColor: '#555',
     opacity: 0.5,
   },
   buttonText: {
-    color: 'red',
-    fontSize: 26,
+    color: '#d0c09a',
+    fontSize: 22,
     fontFamily: 'Gabrielle',
     textAlign: 'center',
   },
   buttonTextDisabled: {
     color: '#555',
+  },
+  memoryNote: {
+    color: '#746b5a',
+    fontSize: 11,
+    fontStyle: 'italic',
+    marginTop: 32,
+    paddingHorizontal: 20,
+    textAlign: 'center',
   },
   // Modal styles
   modalOverlay: {

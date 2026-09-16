@@ -113,6 +113,32 @@ interface InitialStateOptions {
   skipGameboardLayout?: boolean
 }
 
+const MAX_LAYOUT_GENERATION_ATTEMPTS = 12
+
+function generatePlayableLayout(levelConfig: (typeof levels)[keyof typeof levels]) {
+  let result = generateLayout(
+    GAMEBOARD_MANIFEST,
+    REAL_PARSED_CONTENT_CATALOGS,
+    levelConfig,
+    new RandomSource()
+  )
+
+  // Some valid trail networks do not leave enough separated branch space for
+  // every authored encounter. That network is a rejected run seed, not a fatal
+  // application error. Regenerate the whole expedition with a bounded budget.
+  for (let attempt = 1; !result.success && attempt < MAX_LAYOUT_GENERATION_ATTEMPTS; attempt += 1) {
+    logIfDev(`↻ Rejected unplayable expedition layout; regenerating (${attempt + 1})`)
+    result = generateLayout(
+      GAMEBOARD_MANIFEST,
+      REAL_PARSED_CONTENT_CATALOGS,
+      levelConfig,
+      new RandomSource()
+    )
+  }
+
+  return result
+}
+
 /**
  * Creates a fresh initial game state for a given level.
  * This is the single source of truth for the default/initial state.
@@ -160,12 +186,7 @@ function buildInitialState(
 ): GameState {
   const layoutResult =
     levelId === '1' && !options.skipGameboardLayout
-      ? generateLayout(
-          GAMEBOARD_MANIFEST,
-          REAL_PARSED_CONTENT_CATALOGS,
-          levelConfig,
-          new RandomSource()
-        )
+      ? generatePlayableLayout(levelConfig)
       : {
           success: true as const,
           value: { placements: [], trailNetwork: null, generatedFootsteps: [], generatedItems: [] },

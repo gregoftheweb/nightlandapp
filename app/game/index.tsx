@@ -60,6 +60,7 @@ import {
   queueHeldMove,
   type HeldMoveDirection,
 } from '../../modules/heldMovementQueue'
+import ExpeditionJournal from '../../components/ExpeditionJournal'
 
 type Direction = 'up' | 'down' | 'left' | 'right' | 'stay' | null
 
@@ -68,6 +69,7 @@ export default function Game() {
   const { dispatch, setOverlay } = useGameActions()
   const [settingsVisible, setSettingsVisible] = useState(false)
   const [inventoryVisible, setInventoryVisible] = useState(false)
+  const [journalVisible, setJournalVisible] = useState(false)
   const [targetId, setTargetId] = useState<string | undefined>()
   const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
   const [zoomLevel, setZoomLevel] = useState<GameBoardZoomLevel>(DEFAULT_GAMEBOARD_ZOOM_LEVEL)
@@ -419,8 +421,8 @@ export default function Game() {
 
   // Check if overlay is blocking interaction
   const isOverlayVisible = useMemo(
-    () => settingsVisible || inventoryVisible,
-    [settingsVisible, inventoryVisible]
+    () => settingsVisible || inventoryVisible || journalVisible,
+    [settingsVisible, inventoryVisible, journalVisible]
   )
 
   /**
@@ -1291,6 +1293,12 @@ export default function Game() {
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
+        />
+        <ExpeditionJournal
+          state={state}
+          visible={journalVisible}
+          onOpen={() => setJournalVisible(true)}
+          onClose={() => setJournalVisible(false)}
         />
         {showCoordinates && (
           <PositionDisplay position={state.player.position} level={state.level} />
