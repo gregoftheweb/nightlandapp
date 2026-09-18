@@ -100,8 +100,8 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   {
     id: 'player-christos',
     source: require('@assets/images/sprites/characters/christos.webp'),
-    width: 263,
-    height: 264,
+    width: 603,
+    height: 614,
   },
   {
     id: 'terrain-ground-tile',
