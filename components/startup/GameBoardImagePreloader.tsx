@@ -52,8 +52,8 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   {
     id: 'building-last-redoubt',
     source: require('@assets/images/sprites/buildings/redoubt2.webp'),
-    width: 197,
-    height: 160,
+    width: 908,
+    height: 928,
   },
   {
     id: 'building-pools',
