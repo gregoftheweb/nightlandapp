@@ -37,7 +37,7 @@ describe('GameBoard discrete zoom', () => {
     })
   })
 
-  it.each(['Near', 'Mid', 'Far'] as const)(
+  it.each(['Nearest', 'Near', 'Mid', 'Far'] as const)(
     'maps a screen point to the same logical tile at %s zoom',
     (level) => {
       const renderedTileSize = getRenderedGameBoardTileSize(32, GAMEBOARD_ZOOM_MULTIPLIERS[level])
@@ -54,10 +54,12 @@ describe('GameBoard discrete zoom', () => {
     }
   )
 
-  it('steps toward Near and Far without wrapping at either end', () => {
+  it('steps toward Nearest and Far without wrapping at either end', () => {
     expect(stepGameBoardZoom('Far', 'in')).toBe('Mid')
     expect(stepGameBoardZoom('Mid', 'in')).toBe('Near')
-    expect(stepGameBoardZoom('Near', 'in')).toBe('Near')
+    expect(stepGameBoardZoom('Near', 'in')).toBe('Nearest')
+    expect(stepGameBoardZoom('Nearest', 'in')).toBe('Nearest')
+    expect(stepGameBoardZoom('Nearest', 'out')).toBe('Near')
     expect(stepGameBoardZoom('Near', 'out')).toBe('Mid')
     expect(stepGameBoardZoom('Mid', 'out')).toBe('Far')
     expect(stepGameBoardZoom('Far', 'out')).toBe('Far')
