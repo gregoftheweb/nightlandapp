@@ -100,32 +100,8 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   {
     id: 'player-christos',
     source: require('@assets/images/sprites/characters/christos.webp'),
-    width: 342,
-    height: 500,
-  },
-  {
-    id: 'player-christos-walk-1',
-    source: require('@assets/images/sprites/characters/christos-walk-1.webp'),
-    width: 342,
-    height: 500,
-  },
-  {
-    id: 'player-christos-walk-2',
-    source: require('@assets/images/sprites/characters/christos-walk-2.webp'),
-    width: 342,
-    height: 500,
-  },
-  {
-    id: 'player-christos-walk-3',
-    source: require('@assets/images/sprites/characters/christos-walk-3.webp'),
-    width: 342,
-    height: 500,
-  },
-  {
-    id: 'player-christos-walk-4',
-    source: require('@assets/images/sprites/characters/christos-walk-4.webp'),
-    width: 342,
-    height: 500,
+    width: 263,
+    height: 264,
   },
   {
     id: 'terrain-ground-tile',
@@ -136,20 +112,20 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   {
     id: 'monster-abhuman',
     source: require('@assets/images/sprites/monsters/abhuman.webp'),
-    width: 40,
-    height: 40,
+    width: 263,
+    height: 264,
   },
   {
     id: 'monster-night-hound',
     source: require('@assets/images/sprites/monsters/nighthound4.webp'),
-    width: 512,
-    height: 512,
+    width: 263,
+    height: 264,
   },
   {
     id: 'monster-giant-slug',
     source: require('@assets/images/sprites/monsters/giant-slug.webp'),
-    width: 512,
-    height: 256,
+    width: 263,
+    height: 263,
   },
   {
     id: 'item-potion',
