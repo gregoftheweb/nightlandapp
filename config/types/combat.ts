@@ -62,6 +62,10 @@ export interface Projectile {
   lengthPx?: number // Optional length override for laser bolts
   thicknessPx?: number // Optional thickness override
   glow?: boolean // Optional glow effect
+  kind?: 'moving' | 'bile-beam'
+  startPosition?: Position
+  endPosition?: Position
+  stationaryFade?: boolean
 }
 
 export interface TeleportFlash {

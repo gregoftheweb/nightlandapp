@@ -6,6 +6,28 @@
 
 **Structural note: House of Silence is a convergence point for SEVERAL storylines, not just one.** Everything below the Act One Pacing Plan — Tesseract, Persius, the Salamander, Current-Loom, Deep Silo, the Silent Ones — is **one storyline** (the Earth-Current thread) that happens to resolve at House of Silence. Other, separate storylines are expected to be designed later, each converging on the same location without necessarily touching this one. Don't assume this thread is the whole ending — it's a load-bearing piece of it, not the sum of it.
 
+**Narrative voice:** narration and descriptive copy use third person, centered on Christos. They do
+not address the player as “you” or describe Christos's actions as the player's actions. Direct
+dialogue may address Christos naturally when another character is speaking to him.
+
+---
+
+## Cast & Setting
+
+The Great Pyramid of the Last Redoubt shelters the last ten million souls of mankind behind the
+Circle of the Earth Current. Christos and Persius, heirs of its aristocratic houses, have been
+friends since boyhood. Helen is Christos's betrothed and a close friend to them both.
+
+Persius spent his youth in the Redoubt's archive pursuing old accounts of the Tesseract: an
+artifact made by the Salamander, one of the last Science-Wizards, to unmake the Night Land and
+restore mankind to light. The writings suggested that both the artifact and the means to find it
+lay beyond the Circle. Helen begged Persius not to leave, but he went alone and left Christos a
+scroll commanding him not to follow. Christos nevertheless took up his Discos and crossed the
+Circle—not because he expects to prevail, but because he will not leave his oldest friend alone in
+the dark. His pilgrimage follows the trail and provisions Persius left behind, then carries
+Persius's quest onward through the Salamander's lost works toward the House of Silence. What awaits
+there remains unrevealed.
+
 ---
 
 ## Storyline 1: The Earth-Current Thread (Tesseract → Persius → Salamander → Current-Loom → Deep Silo → Silent Ones)

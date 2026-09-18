@@ -42,6 +42,28 @@ describe('Monster Creation', () => {
       expect(monster?.moveRate).toBe(2)
     })
 
+    it('creates the giant slug with its three-by-two body and bile attack', () => {
+      const monster = createMonsterFromTemplate('giant_slug', { row: 20, col: 25 })
+
+      expect(monster).toMatchObject({
+        shortName: 'giant_slug',
+        name: 'Giant Slug',
+        width: 3,
+        height: 2,
+        moveRate: 1,
+        moveEveryTurns: 2,
+        currentHP: 55,
+        maxHP: 55,
+        rangedAttack: {
+          kind: 'bile-beam',
+          range: 10,
+          minDamage: 15,
+          maxDamage: 35,
+          durationMs: 2000,
+        },
+      })
+    })
+
     it('should return null for unknown template', () => {
       const position = { row: 5, col: 5 }
       const monster = createMonsterFromTemplate('unknown_monster', position)

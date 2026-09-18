@@ -486,10 +486,12 @@ function GameBoard({
       if (!monster.position || monster.inCombatSlot) return
       const screenRow = monster.position.row - cameraOffset.offsetY
       const screenCol = monster.position.col - cameraOffset.offsetX
+      const monsterWidth = monster.width ?? 1
+      const monsterHeight = monster.height ?? 1
       if (
-        screenRow < 0 ||
+        screenRow + monsterHeight <= 0 ||
         screenRow >= viewport.rows ||
-        screenCol < 0 ||
+        screenCol + monsterWidth <= 0 ||
         screenCol >= viewport.cols
       ) {
         return
@@ -503,8 +505,8 @@ function GameBoard({
             {
               left: screenCol * renderedCellSize,
               top: screenRow * renderedCellSize,
-              width: renderedCellSize,
-              height: renderedCellSize,
+              width: renderedCellSize * monsterWidth,
+              height: renderedCellSize * monsterHeight,
             },
           ]}
         />
@@ -563,9 +565,14 @@ function GameBoard({
 
         const screenRow = monster.position.row - cameraOffset.offsetY
         const screenCol = monster.position.col - cameraOffset.offsetX
+        const monsterWidth = monster.width ?? 1
+        const monsterHeight = monster.height ?? 1
 
         const inView =
-          screenRow >= 0 && screenRow < viewport.rows && screenCol >= 0 && screenCol < viewport.cols
+          screenRow + monsterHeight > 0 &&
+          screenRow < viewport.rows &&
+          screenCol + monsterWidth > 0 &&
+          screenCol < viewport.cols
         if (!inView) return null
 
         const isTargeted = state.targetedMonsterId === monster.id
@@ -577,8 +584,8 @@ function GameBoard({
               position: 'absolute',
               left: screenCol * renderedCellSize,
               top: screenRow * renderedCellSize,
-              width: renderedCellSize,
-              height: renderedCellSize,
+              width: renderedCellSize * monsterWidth,
+              height: renderedCellSize * monsterHeight,
               zIndex: 4,
             }}
             pointerEvents="none"
@@ -588,10 +595,11 @@ function GameBoard({
               style={[
                 styles.character,
                 {
-                  width: renderedCellSize * 0.8,
-                  height: renderedCellSize * 0.8,
-                  left: renderedCellSize * 0.1,
-                  top: renderedCellSize * 0.1,
+                  width: renderedCellSize * monsterWidth * 0.9,
+                  height: renderedCellSize * monsterHeight * 0.9,
+                  left: renderedCellSize * monsterWidth * 0.05,
+                  top: renderedCellSize * monsterHeight * 0.05,
+                  transform: [{ scaleX: monster.facingLeft ? -1 : 1 }],
                 },
                 isTargeted && {
                   borderWidth: 1,
@@ -678,9 +686,14 @@ function GameBoard({
 
         const screenRow = monster.position.row - cameraOffset.offsetY
         const screenCol = monster.position.col - cameraOffset.offsetX
+        const monsterWidth = monster.width ?? 1
+        const monsterHeight = monster.height ?? 1
 
         const inView =
-          screenRow >= 0 && screenRow < viewport.rows && screenCol >= 0 && screenCol < viewport.cols
+          screenRow + monsterHeight > 0 &&
+          screenRow < viewport.rows &&
+          screenCol + monsterWidth > 0 &&
+          screenCol < viewport.cols
         if (!inView) return null
 
         const isTargeted = state.targetedMonsterId === monster.id
@@ -692,8 +705,8 @@ function GameBoard({
               position: 'absolute',
               left: screenCol * renderedCellSize,
               top: screenRow * renderedCellSize,
-              width: renderedCellSize,
-              height: renderedCellSize,
+              width: renderedCellSize * monsterWidth,
+              height: renderedCellSize * monsterHeight,
               zIndex: 3,
             }}
             pointerEvents="none"
@@ -703,10 +716,11 @@ function GameBoard({
               style={[
                 styles.character,
                 {
-                  width: renderedCellSize * 0.8,
-                  height: renderedCellSize * 0.8,
-                  left: renderedCellSize * 0.1,
-                  top: renderedCellSize * 0.1,
+                  width: renderedCellSize * monsterWidth * 0.9,
+                  height: renderedCellSize * monsterHeight * 0.9,
+                  left: renderedCellSize * monsterWidth * 0.05,
+                  top: renderedCellSize * monsterHeight * 0.05,
+                  transform: [{ scaleX: monster.facingLeft ? -1 : 1 }],
                 },
                 isTargeted && {
                   borderWidth: 1,
@@ -858,6 +872,7 @@ function GameBoard({
         if (!inView) return null
 
         const rotation = obj.rotation ?? 0
+        const isLastRedoubt = obj.shortName === 'redoubt'
 
         return (
           <View
@@ -872,6 +887,25 @@ function GameBoard({
             }}
             pointerEvents="none"
           >
+            {isLastRedoubt && (
+              <View
+                style={{
+                  position: 'absolute',
+                  left: -renderedCellSize * 0.35,
+                  top: -renderedCellSize * 0.35,
+                  width: objWidth * renderedCellSize + renderedCellSize * 0.7,
+                  height: objHeight * renderedCellSize + renderedCellSize * 0.7,
+                  borderRadius: objWidth * renderedCellSize,
+                  borderWidth: Math.max(2, renderedCellSize * 0.08),
+                  borderColor: '#29bfff',
+                  shadowColor: '#29bfff',
+                  shadowOpacity: 0.95,
+                  shadowRadius: renderedCellSize * 0.35,
+                  shadowOffset: { width: 0, height: 0 },
+                  elevation: 8,
+                }}
+              />
+            )}
             <Image
               source={obj.image as ImageSourcePropType}
               style={{
@@ -1175,24 +1209,53 @@ function GameBoard({
   const renderProjectiles = useMemo(() => {
     if (activeProjectiles.length === 0) return []
 
-    return activeProjectiles.map((projectile) => (
-      <Projectile
-        key={projectile.id}
-        id={projectile.id}
-        startX={projectile.startX}
-        startY={projectile.startY}
-        endX={projectile.endX}
-        endY={projectile.endY}
-        angleDeg={projectile.angleDeg}
-        color={projectile.color}
-        durationMs={projectile.durationMs}
-        lengthPx={projectile.lengthPx}
-        thicknessPx={projectile.thicknessPx}
-        glow={projectile.glow}
-        onComplete={onProjectileComplete || (() => {})}
-      />
-    ))
-  }, [activeProjectiles, onProjectileComplete, zoomMultiplier])
+    return activeProjectiles.map((projectile) => {
+      const isWorldBeam =
+        projectile.kind === 'bile-beam' && projectile.startPosition && projectile.endPosition
+      const startX = isWorldBeam
+        ? (projectile.startPosition!.col - cameraOffset.offsetX) * renderedCellSize
+        : projectile.startX
+      const startY = isWorldBeam
+        ? (projectile.startPosition!.row - cameraOffset.offsetY) * renderedCellSize
+        : projectile.startY
+      const endX = isWorldBeam
+        ? (projectile.endPosition!.col - cameraOffset.offsetX) * renderedCellSize
+        : projectile.endX
+      const endY = isWorldBeam
+        ? (projectile.endPosition!.row - cameraOffset.offsetY) * renderedCellSize
+        : projectile.endY
+      const deltaX = endX - startX
+      const deltaY = endY - startY
+
+      return (
+        <Projectile
+          key={projectile.id}
+          id={projectile.id}
+          startX={startX}
+          startY={startY}
+          endX={isWorldBeam ? startX : endX}
+          endY={isWorldBeam ? startY : endY}
+          angleDeg={
+            isWorldBeam ? (Math.atan2(deltaY, deltaX) * 180) / Math.PI : projectile.angleDeg
+          }
+          color={projectile.color}
+          durationMs={projectile.durationMs}
+          lengthPx={isWorldBeam ? Math.hypot(deltaX, deltaY) : projectile.lengthPx}
+          thicknessPx={isWorldBeam ? Math.max(4, renderedCellSize * 0.14) : projectile.thicknessPx}
+          glow={projectile.glow}
+          stationaryFade={projectile.stationaryFade}
+          onComplete={onProjectileComplete || (() => {})}
+        />
+      )
+    })
+  }, [
+    activeProjectiles,
+    cameraOffset.offsetX,
+    cameraOffset.offsetY,
+    onProjectileComplete,
+    renderedCellSize,
+    zoomMultiplier,
+  ])
 
   // Render active teleport flashes
   const renderTeleportFlashes = useMemo(() => {

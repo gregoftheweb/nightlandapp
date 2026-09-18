@@ -34,6 +34,15 @@ export interface MonsterTemplate extends EntityTemplate<'monster', MonsterCatego
   hitBonus?: number
   weaponType?: WeaponType
   range?: number
+  moveEveryTurns?: number
+  rangedAttack?: {
+    kind: 'bile-beam'
+    range: number
+    minDamage: number
+    maxDamage: number
+    color: string
+    durationMs: number
+  }
 }
 
 /**
@@ -49,6 +58,7 @@ export interface MonsterInstance {
   spawnZoneId?: string
   uiSlot?: number
   inCombatSlot?: boolean
+  facingLeft?: boolean
   // Instance-specific overrides
   zIndex?: number
 }
@@ -66,6 +76,7 @@ export interface Monster extends MonsterTemplate {
   spawnZoneId?: string
   uiSlot?: number
   inCombatSlot?: boolean
+  facingLeft?: boolean
 }
 
 /**

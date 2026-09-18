@@ -91,6 +91,7 @@ export function hydrateMonster(template: MonsterTemplate, instance: MonsterInsta
     spawnZoneId: instance.spawnZoneId,
     uiSlot: instance.uiSlot,
     inCombatSlot: instance.inCombatSlot,
+    facingLeft: instance.facingLeft,
     // Instance overrides take precedence
     zIndex: instance.zIndex ?? template.zIndex,
   }

@@ -92,7 +92,7 @@ function walkedDistanceToPoint(
 
 function overlapsRedoubt(position: { row: number; col: number }): boolean {
   return (
-    position.row < 398 && position.row + 2 > 390 && position.col < 206 && position.col + 2 > 198
+    position.row < 400 && position.row + 2 > 384 && position.col < 210 && position.col + 2 > 194
   )
 }
 
@@ -116,7 +116,7 @@ describe('gameboard layout integration', () => {
     const entries = registry.snapshot()
     expect(entries).toEqual(
       expect.arrayContaining([
-        { id: 'redoubt_390_198', position: { row: 390, col: 198 }, width: 8, height: 8 },
+        { id: 'redoubt_384_194', position: { row: 384, col: 194 }, width: 16, height: 16 },
         {
           id: 'healingPool_375_20',
           position: { row: 375, col: 20 },
@@ -185,44 +185,44 @@ describe('gameboard layout integration', () => {
       height: 1,
     })
     expect(entries).toContainEqual({
-      id: 'watcher_se_380_199',
-      position: { row: 380, col: 199 },
+      id: 'watcher_se_370_199',
+      position: { row: 370, col: 199 },
       width: 6,
       height: 6,
     })
     expect(registry.isFree(level.playerSpawn, { width: 1, height: 1 }).free).toBe(false)
-    expect(registry.isFree({ row: 380, col: 199 }, { width: 1, height: 1 }).free).toBe(false)
+    expect(registry.isFree({ row: 370, col: 199 }, { width: 1, height: 1 }).free).toBe(false)
     expect(entries).toHaveLength(19)
   })
 
   test('rejects conflicts with the Watcher and a static building', () => {
     const registry = buildBoardOccupancyRegistry(levels['1'])
-    expect(registry.isFree({ row: 382, col: 201 }, { width: 1, height: 1 })).toEqual({
+    expect(registry.isFree({ row: 372, col: 201 }, { width: 1, height: 1 })).toEqual({
       free: false,
-      overlappingIds: ['watcher_se_380_199'],
+      overlappingIds: ['watcher_se_370_199'],
     })
     expect(() =>
-      registry.reserve('watcher-conflict', { row: 382, col: 201 }, { width: 1, height: 1 })
-    ).toThrow('would overlap existing object watcher_se_380_199')
-    expect(registry.isFree({ row: 390, col: 198 }, { width: 1, height: 1 })).toEqual({
+      registry.reserve('watcher-conflict', { row: 372, col: 201 }, { width: 1, height: 1 })
+    ).toThrow('would overlap existing object watcher_se_370_199')
+    expect(registry.isFree({ row: 384, col: 194 }, { width: 1, height: 1 })).toEqual({
       free: false,
-      overlappingIds: ['redoubt_390_198'],
+      overlappingIds: ['redoubt_384_194'],
     })
     expect(() =>
-      registry.reserve('redoubt-conflict', { row: 390, col: 198 }, { width: 1, height: 1 })
-    ).toThrow('would overlap existing object redoubt_390_198')
+      registry.reserve('redoubt-conflict', { row: 384, col: 194 }, { width: 1, height: 1 })
+    ).toThrow('would overlap existing object redoubt_384_194')
   })
 
   test('rejects a real river segment but permits empty space inside its bounding box', () => {
     const registry = buildBoardOccupancyRegistry(levels['1'])
-    const segmentPosition = { row: 350, col: 197 }
+    const segmentPosition = { row: 340, col: 197 }
     expect(registry.isFree(segmentPosition, { width: 1, height: 1 })).toEqual({
       free: false,
-      overlappingIds: ['river_350_195_0-mask-0'],
+      overlappingIds: ['river_340_195_0-mask-0'],
     })
     expect(() =>
       registry.reserve('river-conflict', segmentPosition, { width: 1, height: 1 })
-    ).toThrow('would overlap existing object river_350_195_0-mask-0')
+    ).toThrow('would overlap existing object river_340_195_0-mask-0')
 
     // The anchor is inside the 22x15 bounding rectangle but outside every real mask segment.
     expect(registry.isFree({ row: 350, col: 195 }, { width: 1, height: 1 })).toEqual({

@@ -73,7 +73,7 @@ export default function ExpeditionJournal({
               )}
 
               <View style={styles.rule} />
-              <Text style={styles.sectionLabel}>CONDITION OF THE PILGRIM</Text>
+              <Text style={styles.sectionLabel}>CONDITION OF CHRISTOS</Text>
               <View style={styles.statRow}>
                 <View style={styles.stat}>
                   <Text style={[styles.statValue, journal.condition === 'DIRE' && styles.dire]}>
@@ -97,8 +97,8 @@ export default function ExpeditionJournal({
               <Text style={styles.sectionLabel}>THINGS LEARNED</Text>
               {journal.discoveries.length === 0 ? (
                 <Text style={styles.empty}>
-                  Nothing is known. Follow the green trace and inspect what the Night has failed to
-                  bury.
+                  Nothing is known. Christos must follow in Persius&apos; footsteps, find the way,
+                  and hide from the evil of the Night Land.
                 </Text>
               ) : (
                 journal.discoveries.map((discovery) => (

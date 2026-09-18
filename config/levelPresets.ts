@@ -103,6 +103,7 @@ export const SPAWN_TABLES: Record<SpawnTableId, SpawnConfig[]> = {
   wasteland_common: [
     { monsterShortName: 'abhuman', spawnRate: 0.04, maxInstances: 3 },
     { monsterShortName: 'night_hound', spawnRate: 0.02, maxInstances: 2 },
+    { monsterShortName: 'giant_slug', spawnRate: 0.01, maxInstances: 1 },
   ],
   wasteland_rare: [
     { monsterShortName: 'abhuman', spawnRate: 0.015, maxInstances: 1 },

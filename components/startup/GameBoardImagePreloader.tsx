@@ -146,6 +146,12 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
     height: 512,
   },
   {
+    id: 'monster-giant-slug',
+    source: require('@assets/images/sprites/monsters/giant-slug.webp'),
+    width: 512,
+    height: 256,
+  },
+  {
     id: 'item-potion',
     source: require('@assets/images/items/consumables/potion.webp'),
     width: 634,

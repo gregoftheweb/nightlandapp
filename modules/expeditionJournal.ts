@@ -37,8 +37,9 @@ function getObjective(state: GameState, loomCount: number): JournalObjective {
 
   if (!isComplete(flags, 'word-tile-crypt-01')) {
     return {
-      title: 'Follow the green trace',
-      detail: 'A deliberate trail leaves the Redoubt. Find what made it and examine every mark.',
+      title: "Christos follows Persius' footprints.",
+      detail:
+        'Christos uses his quasi-prescient true human vision to faintly trace the footprints of Persius in the dark scablands of the Night Land.',
     }
   }
   if (!isComplete(flags, 'hermit-hollow')) {
@@ -77,7 +78,7 @@ function getObjective(state: GameState, loomCount: number): JournalObjective {
   }
   return {
     title: 'Find Persius before the silence does',
-    detail: 'The Diskos carries the deep current now. Continue toward the House of Silence.',
+    detail: 'The Discos carries the deep current now. Continue toward the House of Silence.',
   }
 }
 
@@ -90,7 +91,7 @@ export function deriveExpeditionJournal(state: GameState): ExpeditionJournalMode
     discoveries.push({
       id: 'tesseract',
       title: 'The Tesseract',
-      text: 'Persius followed references to a shape that is also a passage. The earliest tablet was left to be found.',
+      text: "In the Redoubt's archive, Persius followed ancient references to a shape that is also a passage. The earliest tablet was left to be found.",
     })
   }
   if (isComplete(flags, 'hermit-hollow')) {
@@ -104,7 +105,7 @@ export function deriveExpeditionJournal(state: GameState): ExpeditionJournalMode
     discoveries.push({
       id: 'salamander',
       title: 'The Salamander',
-      text: 'A maker of weapons and Current-machines passed this way. The Diskos may be part of his unfinished design.',
+      text: 'A maker of weapons and Current-machines passed this way. The Discos may be part of his unfinished design.',
     })
   }
   if (loomCount > 0) {

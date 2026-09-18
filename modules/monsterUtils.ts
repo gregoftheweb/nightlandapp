@@ -82,7 +82,11 @@ export const checkMonsterSpawn = (
 
     // Use the spawn logic: Math.random() < spawnRate (percentage chance per turn)
     if (Math.random() < spawnConfig.spawnRate) {
-      const newMonster = createMonsterFromTemplate(spawnConfig.templateId, getSpawnPosition(state))
+      const template = getMonsterTemplate(spawnConfig.templateId)
+      const newMonster = createMonsterFromTemplate(
+        spawnConfig.templateId,
+        getSpawnPosition(state, template)
+      )
       if (!newMonster) {
         continue
       }
@@ -97,8 +101,13 @@ export const checkMonsterSpawn = (
 }
 
 // ==================== SPAWN POSITION LOGIC ====================
-export const getSpawnPosition = (state: GameState): Position => {
+export const getSpawnPosition = (
+  state: GameState,
+  footprint: { width?: number; height?: number } = {}
+): Position => {
   const { gridHeight, gridWidth, player, activeMonsters } = state
+  const width = footprint.width ?? 1
+  const height = footprint.height ?? 1
   let attempts = 0
 
   while (attempts < MAX_SPAWN_ATTEMPTS) {
@@ -108,8 +117,8 @@ export const getSpawnPosition = (state: GameState): Position => {
     let spawnRow = Math.round(state.player.position.row + Math.sin(angle) * radius)
     let spawnCol = Math.round(state.player.position.col + Math.cos(angle) * radius)
 
-    spawnRow = Math.max(0, Math.min(gridHeight - 1, spawnRow))
-    spawnCol = Math.max(0, Math.min(gridWidth - 1, spawnCol))
+    spawnRow = Math.max(0, Math.min(gridHeight - height, spawnRow))
+    spawnCol = Math.max(0, Math.min(gridWidth - width, spawnCol))
 
     const candidate: Position = { row: spawnRow, col: spawnCol }
     const rowDelta = spawnRow - player.position.row
@@ -117,9 +126,16 @@ export const getSpawnPosition = (state: GameState): Position => {
     const roundedDistance = Math.sqrt(rowDelta * rowDelta + colDelta * colDelta)
     const isWithinSpawnRange =
       roundedDistance >= MIN_SPAWN_DISTANCE && roundedDistance <= MAX_SPAWN_DISTANCE
-    const isOccupied = activeMonsters.some(
-      (m) => m.position.row === spawnRow && m.position.col === spawnCol
-    )
+    const isOccupied = activeMonsters.some((monster) => {
+      const monsterWidth = monster.width ?? 1
+      const monsterHeight = monster.height ?? 1
+      return !(
+        spawnRow + height <= monster.position.row ||
+        spawnRow >= monster.position.row + monsterHeight ||
+        spawnCol + width <= monster.position.col ||
+        spawnCol >= monster.position.col + monsterWidth
+      )
+    })
 
     if (isWithinSpawnRange && !isOccupied) return candidate
     attempts++

@@ -3,6 +3,7 @@ import { MonsterTemplate, GreatPowerTemplate } from './types'
 
 import abhumanIMG from '@assets/images/sprites/monsters/abhuman.webp'
 import night_houndIMG from '@assets/images/sprites/monsters/nighthound4.webp'
+import giantSlugIMG from '@assets/images/sprites/monsters/giant-slug.webp'
 import watcher_seIMG from '@assets/images/sprites/monsters/watcherse.webp'
 
 // -------------------- REGULAR MONSTERS --------------------
@@ -31,6 +32,30 @@ export const monsterTemplates: MonsterTemplate[] = [
     attack: 6,
     ac: 14,
     moveRate: 2,
+  },
+  {
+    kind: 'monster',
+    shortName: 'giant_slug',
+    category: 'regular',
+    name: 'Giant Slug',
+    description:
+      'A vast carrion slug whose swollen stomach churns with flesh-eating acid. It spits a searing line of bile before dragging its bulk onward through the dark.',
+    image: giantSlugIMG,
+    width: 3,
+    height: 2,
+    maxHP: 55,
+    attack: 8,
+    ac: 11,
+    moveRate: 1,
+    moveEveryTurns: 2,
+    rangedAttack: {
+      kind: 'bile-beam',
+      range: 10,
+      minDamage: 15,
+      maxDamage: 35,
+      color: '#5dff28',
+      durationMs: 2000,
+    },
   },
 ]
 

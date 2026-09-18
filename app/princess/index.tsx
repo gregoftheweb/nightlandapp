@@ -6,20 +6,20 @@ import { SafeAreaContent } from '@components/SafeAreaContent'
 const COVENANT = [
   {
     marker: 'WITHIN THE LAST REDOUBT',
-    title: 'The last human light burns behind you.',
-    text: 'For ten million souls, the Great Pyramid is the whole of the world. Beyond its electric Circle the Night has waited for ages, patient and awake.',
+    title: 'The last remnant of Mankind endures still.',
+    text: "Christos and Persius, heirs of the Pyramid's great houses, had been friends since boyhood. Helen was Christos's betrothed and dear to them both. Then Persius found word of the Tesseract in the old archive—and could speak of little else.",
     action: 'Listen',
   },
   {
-    marker: 'THE WORD OF MYRA',
-    title: '“Persius went seeking a shape that cannot exist.”',
-    text: '“He spoke of the Tesseract, of a Salamander, and of old machines beneath the earth. Now his voice comes only in dreams—and something listens when he calls.”',
+    marker: 'HELEN MOURNS YOUR FATE',
+    title: '“Christos, I beg thee—do not follow him.”',
+    text: '“Persius would not heed me. He has cast himself beyond the Circle for an old tale and a foolish bauble. Follow not his folly into the Night. Stay with me, my love. I cannot lose thee also.”',
     action: 'Take her hand',
   },
   {
-    marker: 'THE COVENANT',
-    title: 'Go into the Night. Learn its laws. Bring him home.',
-    text: 'Every step beyond the Circle gives the dark a turn of its own. Follow the green trace. Inspect the places it reaches. A saved waypoint is a memory; death ends the present expedition.',
+    marker: 'THE DEPARTURE',
+    title: 'Yet Christos takes up his Discos.',
+    text: 'He turns and leaves his betrothed. The quest is surely hopeless, and the Night will consume his everlasting soul; yet Persius is his oldest friend. He can not leave him to the dark alone. Though likely doomed, he must try—to save Persius and retrieve the Tesseract. He leaves Helen in her sorrow...',
     action: 'Cross the Circle',
   },
 ] as const
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 20,
     padding: 22,
-    backgroundColor: 'rgba(7, 8, 10, 0.84)',
+    backgroundColor: 'rgba(7, 8, 10, 0.40)',
     borderLeftWidth: 3,
     borderColor: '#842828',
   },

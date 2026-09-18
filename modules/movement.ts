@@ -2,6 +2,7 @@
 import { GameState, Position, Monster } from '../config/types'
 import { setupCombat, checkForCombatCollision } from './combat'
 import { logIfDev } from './utils'
+import { executeMonsterRangedAttack } from './monsterRangedAttacks'
 
 // ==================== PLAYER MOVEMENT ====================
 
@@ -65,13 +66,13 @@ export const moveAway = (
   if (monster.position.row < playerPos.row) {
     newPos.row = Math.max(0, monster.position.row - moveDistance)
   } else if (monster.position.row > playerPos.row) {
-    newPos.row = Math.min(gridHeight - 1, monster.position.row + moveDistance)
+    newPos.row = Math.min(gridHeight - (monster.height ?? 1), monster.position.row + moveDistance)
   }
 
   if (monster.position.col < playerPos.col) {
     newPos.col = Math.max(0, monster.position.col - moveDistance)
   } else if (monster.position.col > playerPos.col) {
-    newPos.col = Math.min(gridWidth - 1, monster.position.col + moveDistance)
+    newPos.col = Math.min(gridWidth - (monster.width ?? 1), monster.position.col + moveDistance)
   }
 
   return newPos
@@ -104,8 +105,8 @@ export const calculateMonsterMovement = (
   }
 
   // Keep within grid bounds
-  newPos.row = Math.max(0, Math.min(state.gridHeight - 1, newPos.row))
-  newPos.col = Math.max(0, Math.min(state.gridWidth - 1, newPos.col))
+  newPos.row = Math.max(0, Math.min(state.gridHeight - (monster.height ?? 1), newPos.row))
+  newPos.col = Math.max(0, Math.min(state.gridWidth - (monster.width ?? 1), newPos.col))
 
   return newPos
 }
@@ -128,6 +129,19 @@ export const moveMonsters = (
   state.activeMonsters.forEach((monster) => {
     // Skip monsters already engaged in combat
     if (isMonsterInCombat(monster, state)) {
+      return
+    }
+
+    const moveEveryTurns = Math.max(1, monster.moveEveryTurns ?? 1)
+    if ((state.moveCount ?? 0) % moveEveryTurns !== 0) {
+      return
+    }
+
+    if (
+      !state.player.isHidden &&
+      !state.player.hideActive &&
+      executeMonsterRangedAttack(state, monster, playerPos, dispatch)
+    ) {
       return
     }
 

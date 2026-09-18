@@ -92,8 +92,10 @@ export function getObjectAtPoint(
     if (
       monster.position &&
       !monster.inCombatSlot &&
-      monster.position.row === worldRow &&
-      monster.position.col === worldCol
+      worldRow >= monster.position.row &&
+      worldRow < monster.position.row + (monster.height ?? 1) &&
+      worldCol >= monster.position.col &&
+      worldCol < monster.position.col + (monster.width ?? 1)
     ) {
       return { type: 'monster', data: monster }
     }

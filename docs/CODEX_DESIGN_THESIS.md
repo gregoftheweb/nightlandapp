@@ -12,7 +12,7 @@ The genres serve that journey in different ways:
   from the dark, not ordinary save slots, so failure is severe without demanding the player
   repeat every solved revelation.
 - **RPG:** growth comes from a few transformative capabilities—Hide, Jaunt, the rune cipher,
-  and a strengthened Diskos—rather than a shower of interchangeable gear. The most important
+  and a strengthened Discos—rather than a shower of interchangeable gear. The most important
   character statistic is what Christos has learned and what risks the player is now willing to
   take.
 - **Myst-like puzzle adventure:** mechanisms and texts are physical places in the world. Puzzle

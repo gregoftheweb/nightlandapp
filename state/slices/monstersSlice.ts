@@ -9,7 +9,16 @@ export function reduceMonsters(state: GameState, action: any): GameState | null 
         ...state,
         activeMonsters: state.activeMonsters.map((monster) =>
           monster.id === action.payload.id
-            ? { ...monster, position: action.payload.position }
+            ? {
+                ...monster,
+                position: action.payload.position,
+                facingLeft:
+                  action.payload.position.col < monster.position.col
+                    ? true
+                    : action.payload.position.col > monster.position.col
+                      ? false
+                      : monster.facingLeft,
+              }
             : monster
         ),
       }

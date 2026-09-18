@@ -5,7 +5,10 @@ describe('deriveExpeditionJournal', () => {
   it('directs a fresh expedition to its first trace', () => {
     const model = deriveExpeditionJournal(getInitialState('1', { skipGameboardLayout: true }))
 
-    expect(model.objective.title).toBe('Follow the green trace')
+    expect(model.objective.title).toBe("Christos follows Persius' footprints.")
+    expect(model.objective.detail).toBe(
+      'Christos uses his quasi-prescient true human vision to faintly trace the footprints of Persius in the dark scablands of the Night Land.'
+    )
     expect(model.discoveries).toEqual([])
     expect(model.condition).toBe('STEADY')
   })

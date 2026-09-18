@@ -15,6 +15,7 @@ interface ProjectileProps {
   lengthPx?: number // Optional length for laser bolts
   thicknessPx?: number // Optional thickness
   glow?: boolean // Optional glow effect
+  stationaryFade?: boolean
 }
 
 const PROJECTILE_LENGTH = 12 // pixels
@@ -33,11 +34,22 @@ export default function Projectile({
   lengthPx,
   thicknessPx,
   glow,
+  stationaryFade,
 }: ProjectileProps) {
   const translateX = useRef(new Animated.Value(startX)).current
   const translateY = useRef(new Animated.Value(startY)).current
+  const opacity = useRef(new Animated.Value(1)).current
 
   useEffect(() => {
+    if (stationaryFade) {
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: durationMs,
+        useNativeDriver: true,
+      }).start(() => onComplete(id))
+      return
+    }
+
     // Animate the projectile from start to end
     Animated.parallel([
       Animated.timing(translateX, {
@@ -54,7 +66,19 @@ export default function Projectile({
       // Call onComplete when animation finishes
       onComplete(id)
     })
-  }, [id, startX, startY, endX, endY, durationMs, onComplete, translateX, translateY])
+  }, [
+    id,
+    startX,
+    startY,
+    endX,
+    endY,
+    durationMs,
+    onComplete,
+    opacity,
+    stationaryFade,
+    translateX,
+    translateY,
+  ])
 
   // Use provided dimensions or defaults
   const projectileLength = lengthPx ?? PROJECTILE_LENGTH
@@ -78,6 +102,7 @@ export default function Projectile({
         styles.projectile,
         {
           backgroundColor: color,
+          opacity,
           width: projectileLength,
           height: projectileWidth,
           borderRadius,

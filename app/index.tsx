@@ -174,9 +174,8 @@ export default function SplashScreen() {
     >
       <SafeAreaContent style={styles.overlay}>
         <View style={styles.titleBlock}>
-          <Text style={styles.overline}>THE LAST REDOUBT / THE FINAL AGE</Text>
-          <Text style={styles.gameTitle}>NIGHTLAND</Text>
-          <Text style={styles.tagline}>One light remains. Everything beyond it is hungry.</Text>
+          <Text style={styles.gameTitle}>The Night Land</Text>
+          <Text style={styles.tagline}>Persius and the Quest for the Tesseract</Text>
         </View>
         {isLoading ? (
           <ActivityIndicator size="large" color="red" />
@@ -216,9 +215,7 @@ export default function SplashScreen() {
             </TouchableOpacity>
           </View>
         )}
-        <Text style={styles.memoryNote}>
-          Death consumes the current expedition. Waypoint memories endure.
-        </Text>
+        <Text style={styles.memoryNote}>The Darkness will consume your ever-lasting soul...</Text>
       </SafeAreaContent>
 
       {/* Waypoint Saves Modal */}
@@ -283,12 +280,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 48,
     paddingHorizontal: 20,
-  },
-  overline: {
-    color: '#837761',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 2.5,
   },
   gameTitle: {
     color: '#a82f2f',

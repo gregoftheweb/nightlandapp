@@ -24,10 +24,6 @@ const rollD6 = (): number => {
 
 // ==================== COMBAT UTILITIES ====================
 
-const checkCollision = (pos1: Position, pos2: Position): boolean => {
-  return pos1.row === pos2.row && pos1.col === pos2.col
-}
-
 // ==================== CORE COMBAT ACTIONS ====================
 
 export const executeAttack = (
@@ -537,7 +533,12 @@ export const checkForCombatCollision = (
   newPosition: Position,
   playerPos: Position
 ): boolean => {
-  if (checkCollision(newPosition, playerPos)) {
+  const occupiesPlayerCell =
+    playerPos.row >= newPosition.row &&
+    playerPos.row < newPosition.row + (monster.height ?? 1) &&
+    playerPos.col >= newPosition.col &&
+    playerPos.col < newPosition.col + (monster.width ?? 1)
+  if (occupiesPlayerCell) {
     if (!state.player.isHidden) {
       return true // Combat should be initiated
     }

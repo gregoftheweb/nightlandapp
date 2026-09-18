@@ -40,7 +40,7 @@ procedural travel, powers, and puzzles now read as parts of one journey.
 
 - Reworked the title screen into a clear Night Land presentation with a restrained palette,
   stronger hierarchy, and explicit expedition/waypoint language.
-- Replaced the single wall of intro text with a three-beat covenant scene: the Last Redoubt, Myra's
+- Replaced the single wall of intro text with a three-beat covenant scene: the Last Redoubt, Helen's
   warning, and the rules of the expedition.
 - The final beat teaches the first objective, the step/turn relationship, and death/waypoint
   semantics before the player enters the board.
@@ -88,7 +88,7 @@ making the game unplayable.
 ## What I would do next
 
 1. Add a House of Silence vertical slice with one Silent One that is visibly invulnerable until
-   the Diskos carries the amplified Earth-Current.
+   the Discos carries the amplified Earth-Current.
 2. Make puzzle knowledge reusable on the board: rune-marked trail forks, Loom pulse patterns, and
    environmental clues whose interpretation changes after the Obelisk.
 3. Add a small threat-forecast system. Nearby monster motion should be inferable from sound or

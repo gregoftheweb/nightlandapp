@@ -53,14 +53,14 @@ export const levels: Record<LevelId, Level> = {
 
     // OBJECTS - Buildings and structures (including pools)
     objects: [
-      createObjectInstance('redoubt', { row: 390, col: 198 }),
+      createObjectInstance('redoubt', { row: 384, col: 194 }),
       createObjectInstance('healingPool', { row: 375, col: 20 }),
       createObjectInstance('poisonPool', { row: 250, col: 250 }),
       createObjectInstance('cursedTotem', { row: 385, col: 220 }),
     ],
 
     nonCollisionObjects: [
-      createNonCollisionObject('river', { row: 350, col: 195 }, 0, {
+      createNonCollisionObject('river', { row: 340, col: 195 }, 0, {
         canTap: false,
         width: 22,
         height: 15,
@@ -96,7 +96,7 @@ export const levels: Record<LevelId, Level> = {
     greatPowers: [
       createGreatPowerInstance(
         'watcher_se',
-        { row: 380, col: 199 },
+        { row: 370, col: 199 },
         {
           currentHP: 1000,
           maxHP: 1000,
