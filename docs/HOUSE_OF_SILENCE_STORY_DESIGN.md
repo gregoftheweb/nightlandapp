@@ -2,7 +2,7 @@
 
 **Status:** narrative draft, story canon — not yet built
 **Scope note:** covers the approach only, from Christos arriving broken near House of Silence
-through the pool, the vision, and the turn toward the door. What happens *inside* House of
+through the pool, the vision, and the turn toward the door. What happens _inside_ House of
 Silence is deliberately not written here — that is separate, later work, and Hodgson's own
 technique (never explain what is inside) is worth preserving for as long as possible. See
 `docs/GAMEPLAY_STORY_DESIGN.md` for how this connects to the wider Earth-Current thread, and
@@ -65,16 +65,16 @@ have looked, once, before the Redoubt took the shape of her away and left only a
 tapestries. She did not touch him. He understood, somehow, that she could not, or would not
 — that whatever this was, it kept to its own laws as strictly as the House kept to its.
 
-*You have carried a great deal alone,* she said, or did not say, the way a thought sometimes
-arrives already finished. *You should not think, because of what waits on that hill, that you
-were sent out to carry it forsaken.*
+_You have carried a great deal alone,_ she said, or did not say, the way a thought sometimes
+arrives already finished. _You should not think, because of what waits on that hill, that you
+were sent out to carry it forsaken._
 
 He tried to answer her. He could not remember afterward whether he had.
 
-*Man is not forsaken,* she said again, plainer this time, as if she meant for him to be able
+_Man is not forsaken,_ she said again, plainer this time, as if she meant for him to be able
 to repeat it later, to himself, in a place where repeating it would matter more than it did
-now. *Whatever you find in that House — whatever it costs you to find it — you did not walk
-this road alone, and you do not stand at its door alone now.*
+now. _Whatever you find in that House — whatever it costs you to find it — you did not walk
+this road alone, and you do not stand at its door alone now._
 
 Something passed into him then that he had no name for and never would. It did not feel like
 strength, the way the charge in the Discos felt like strength, and it did not feel like the
