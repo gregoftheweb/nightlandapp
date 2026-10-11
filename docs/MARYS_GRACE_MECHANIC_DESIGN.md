@@ -2,8 +2,8 @@
 
 **Status:** draft, first pass — grounded in the current codebase's existing ability patterns, not
 yet built.
-**Scope note:** covers the *grant* side (the Pool of Mary encounter, player-state changes, the
-unlock effect) in enough detail to build now, and sketches the *consumption* side (the
+**Scope note:** covers the _grant_ side (the Pool of Mary encounter, player-state changes, the
+unlock effect) in enough detail to build now, and sketches the _consumption_ side (the
 heartbeat-tap sequence inside House of Silence) as a forward-looking shape, not a committed spec —
 that piece is still genuinely open. See
 `docs/HOUSE_OF_SILENCE_STORY_DESIGN.md` for the narrative this is mechanizing, and
@@ -31,7 +31,7 @@ word-grid or Current-Loom — no second instance of this ever exists).
 - **Placement:** physically in the shadow of House of Silence, per the prose — meaning on the
   board it should sit on the final approach trail, between the last Current-Loom/Deep Silo
   content and the House of Silence entrance itself. Not reachable before that point; nothing
-  gates the player *out* of it once they arrive there (no puzzle to solve — the water simply
+  gates the player _out_ of it once they arrive there (no puzzle to solve — the water simply
   answers his approach, per the story).
 - **Gate condition:** should almost certainly require the Deep-Silo-charged Discos already in
   hand — narratively, Christos already went below and came back charged before this final leg.
@@ -71,7 +71,10 @@ New effect type, `unlock_grace_ability`, directly mirroring `executeUnlockHideAb
 `executeUnlockRuneCipherEffect` in `modules/effects.ts`:
 
 ```ts
-const executeUnlockGraceAbilityEffect: EffectHandler<'unlock_grace_ability'> = (effect, context) => {
+const executeUnlockGraceAbilityEffect: EffectHandler<'unlock_grace_ability'> = (
+  effect,
+  context
+) => {
   const { state, dispatch, showDialog } = context
 
   if (state.player.graceUnlocked) {

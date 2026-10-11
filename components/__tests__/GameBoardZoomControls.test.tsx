@@ -27,7 +27,7 @@ describe('GameBoardZoomControls', () => {
     const onZoomIn = jest.fn()
     const onZoomOut = jest.fn()
     const screen = render(
-      <GameBoardZoomControls zoomLevel="Near" onZoomIn={onZoomIn} onZoomOut={onZoomOut} />
+      <GameBoardZoomControls zoomLevel="Nearest" onZoomIn={onZoomIn} onZoomOut={onZoomOut} />
     )
 
     fireEvent.press(screen.getByTestId('gameboard-zoom-in'), { stopPropagation: jest.fn() })

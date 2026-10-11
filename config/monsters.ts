@@ -41,7 +41,7 @@ export const monsterTemplates: MonsterTemplate[] = [
     description:
       'A vast carrion slug whose swollen stomach churns with flesh-eating acid. It spits a searing line of bile before dragging its bulk onward through the dark.',
     image: giantSlugIMG,
-    width: 3,
+    width: 2,
     height: 2,
     maxHP: 55,
     attack: 8,

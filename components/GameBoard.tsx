@@ -15,10 +15,6 @@ import { getTextContent, isPlayerOnObject } from '../modules/utils'
 import { getItemTemplate } from '@config/objects'
 import deadChristosIMG from '@assets/images/ui/dialogs/deadChristos.webp'
 import christosIdleIMG from '@assets/images/sprites/characters/christos.webp'
-import christosWalk1IMG from '@assets/images/sprites/characters/christos-walk-1.webp'
-import christosWalk2IMG from '@assets/images/sprites/characters/christos-walk-2.webp'
-import christosWalk3IMG from '@assets/images/sprites/characters/christos-walk-3.webp'
-import christosWalk4IMG from '@assets/images/sprites/characters/christos-walk-4.webp'
 import cliffWallCornerIMG from '@assets/images/backgrounds/ui_screens/cliff-wall-corner.webp'
 import cliffWallStraightIMG from '@assets/images/backgrounds/ui_screens/cliff-wall-straight.webp'
 import Projectile from './Projectile'
@@ -37,10 +33,6 @@ const BACKGROUND_TILE_SIZE = 320
 // keep the border's repeat length undistorted while its thickness is pinned to one cell.
 const CLIFF_STRAIGHT_ASPECT = 565 / 243
 
-// Player walk-cycle frames, stepped through one at a time as the player's tile
-// position changes. Reverts to the idle pose this long after the last step.
-const PLAYER_WALK_FRAMES = [christosWalk1IMG, christosWalk2IMG, christosWalk3IMG, christosWalk4IMG]
-const PLAYER_IDLE_DELAY_MS = 200
 // Keep absent collection props referentially stable across renders. Freezing the
 // singleton also prevents one consumer from mutating every fallback collection.
 const EMPTY_ARRAY = Object.freeze([])
@@ -155,45 +147,6 @@ function GameBoard({
 
   // Track gameOver transition so the death dialog does not stack
   const previousGameOver = useRef(false)
-
-  // ---- Player walk-cycle animation ----
-  // Every tile step advances the walk frame; PLAYER_IDLE_DELAY_MS after the last
-  // step with no follow-up, the player settles back to the idle pose. The source art
-  // faces right, so leftward steps mirror it rather than needing duplicate frames.
-  const [isPlayerWalking, setIsPlayerWalking] = useState(false)
-  const [playerWalkFrameIndex, setPlayerWalkFrameIndex] = useState(0)
-  const [playerFacingLeft, setPlayerFacingLeft] = useState(false)
-  const previousPlayerPosition = useRef<{ row: number; col: number } | null>(null)
-  const playerIdleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    const pos = state.player?.position
-    if (!pos) return
-    const previous = previousPlayerPosition.current
-
-    if (previous && (previous.row !== pos.row || previous.col !== pos.col)) {
-      setIsPlayerWalking(true)
-      setPlayerWalkFrameIndex((index) => (index + 1) % PLAYER_WALK_FRAMES.length)
-
-      // Vertical-only steps keep whichever way the player was last facing.
-      if (pos.col !== previous.col) {
-        setPlayerFacingLeft(pos.col < previous.col)
-      }
-
-      if (playerIdleTimeout.current) clearTimeout(playerIdleTimeout.current)
-      playerIdleTimeout.current = setTimeout(() => {
-        setIsPlayerWalking(false)
-      }, PLAYER_IDLE_DELAY_MS)
-    }
-
-    previousPlayerPosition.current = pos
-  }, [state.player?.position])
-
-  useEffect(() => {
-    return () => {
-      if (playerIdleTimeout.current) clearTimeout(playerIdleTimeout.current)
-    }
-  }, [])
 
   // ---- Defensive fallbacks (NO early returns before hooks) ----
   const level = state.level
@@ -599,7 +552,6 @@ function GameBoard({
                   height: renderedCellSize * monsterHeight * 0.9,
                   left: renderedCellSize * monsterWidth * 0.05,
                   top: renderedCellSize * monsterHeight * 0.05,
-                  transform: [{ scaleX: monster.facingLeft ? -1 : 1 }],
                 },
                 isTargeted && {
                   borderWidth: 1,
@@ -649,7 +601,7 @@ function GameBoard({
         pointerEvents="none"
       >
         <Image
-          source={isPlayerWalking ? PLAYER_WALK_FRAMES[playerWalkFrameIndex] : christosIdleIMG}
+          source={christosIdleIMG}
           style={[
             styles.character,
             {
@@ -657,7 +609,6 @@ function GameBoard({
               height: renderedCellSize * 0.8,
               left: renderedCellSize * 0.1,
               top: renderedCellSize * 0.1,
-              transform: [{ scaleX: playerFacingLeft ? -1 : 1 }],
             },
           ]}
           resizeMode="contain"
@@ -666,9 +617,6 @@ function GameBoard({
     )
   }, [
     state.player?.position,
-    isPlayerWalking,
-    playerWalkFrameIndex,
-    playerFacingLeft,
     cameraOffset.offsetY,
     cameraOffset.offsetX,
     viewport.cols,
@@ -720,7 +668,6 @@ function GameBoard({
                   height: renderedCellSize * monsterHeight * 0.9,
                   left: renderedCellSize * monsterWidth * 0.05,
                   top: renderedCellSize * monsterHeight * 0.05,
-                  transform: [{ scaleX: monster.facingLeft ? -1 : 1 }],
                 },
                 isTargeted && {
                   borderWidth: 1,

@@ -1,7 +1,7 @@
 # House of Silence — Endgame Sequence Handoff
 
 **Status:** first pass, higher-level handoff — narrative and structural shape, not a build spec.
-**Scope note:** this sits *above* the two docs already written for this arc and doesn't repeat
+**Scope note:** this sits _above_ the two docs already written for this arc and doesn't repeat
 their detail — read them alongside this one:
 
 - `docs/HOUSE_OF_SILENCE_STORY_DESIGN.md` — the prose of the approach, Mary's pool, ends at the

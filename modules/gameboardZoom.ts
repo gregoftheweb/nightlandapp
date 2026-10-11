@@ -1,7 +1,8 @@
-export type GameBoardZoomLevel = 'Near' | 'Mid' | 'Far'
+export type GameBoardZoomLevel = 'Nearest' | 'Near' | 'Mid' | 'Far'
 
 export const DEFAULT_GAMEBOARD_ZOOM_LEVEL: GameBoardZoomLevel = 'Mid'
 export const GAMEBOARD_ZOOM_MULTIPLIERS: Record<GameBoardZoomLevel, number> = {
+  Nearest: 1.625,
   Near: 1.3,
   Mid: 1,
   Far: 0.5,
@@ -14,7 +15,7 @@ export function getRenderedGameBoardTileSize(
   return logicalTileSize * zoomMultiplier
 }
 
-const ZOOM_LEVELS: readonly GameBoardZoomLevel[] = ['Far', 'Mid', 'Near']
+const ZOOM_LEVELS: readonly GameBoardZoomLevel[] = ['Far', 'Mid', 'Near', 'Nearest']
 
 export function isGameBoardZoomLevel(value: unknown): value is GameBoardZoomLevel {
   return typeof value === 'string' && ZOOM_LEVELS.includes(value as GameBoardZoomLevel)
