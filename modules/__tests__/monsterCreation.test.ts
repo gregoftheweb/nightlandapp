@@ -42,13 +42,13 @@ describe('Monster Creation', () => {
       expect(monster?.moveRate).toBe(2)
     })
 
-    it('creates the giant slug with its three-by-two body and bile attack', () => {
+    it('creates the giant slug with its two-by-two body and bile attack', () => {
       const monster = createMonsterFromTemplate('giant_slug', { row: 20, col: 25 })
 
       expect(monster).toMatchObject({
         shortName: 'giant_slug',
         name: 'Giant Slug',
-        width: 3,
+        width: 2,
         height: 2,
         moveRate: 1,
         moveEveryTurns: 2,

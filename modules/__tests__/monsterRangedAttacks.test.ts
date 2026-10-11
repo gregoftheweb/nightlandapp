@@ -16,10 +16,10 @@ const slugAt = (row: number, col: number) => {
 }
 
 describe('giant slug acid stomach bile', () => {
-  it('measures range from the full three-by-two footprint', () => {
+  it('measures range from the full two-by-two footprint', () => {
     const slug = slugAt(10, 10)
 
-    expect(distanceFromMonsterFootprint(slug, { row: 10, col: 13 })).toBe(0.5)
+    expect(distanceFromMonsterFootprint(slug, { row: 10, col: 13 })).toBe(1.5)
     expect(buildBileBeamAttack(slug, { row: 10, col: 21 }, () => 0)).not.toBeNull()
     expect(buildBileBeamAttack(slug, { row: 10, col: 23 }, () => 0)).toBeNull()
   })

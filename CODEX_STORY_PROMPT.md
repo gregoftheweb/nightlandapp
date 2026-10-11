@@ -23,8 +23,8 @@ conflicting detail and a misspelling. Full story bible:
 > writings he found in the archive didn't just name it — they hinted the Salamander hid it, and
 > hid the means to find it, somewhere beyond the Circle.
 >
-> Helen begged him not to go. He went anyway, alone, leaving Christos a scroll: *return to the
-> Redoubt, do not follow, I go now in search of the Tesseract, I must.* Weeks later his trail was
+> Helen begged him not to go. He went anyway, alone, leaving Christos a scroll: _return to the
+> Redoubt, do not follow, I go now in search of the Tesseract, I must._ Weeks later his trail was
 > found leading out past the Circle. Christos took up his Discos and crossed the Circle himself —
 > not from belief he'll succeed, but because he cannot leave his friend to that dark alone.
 >
@@ -47,7 +47,7 @@ conflicting detail and a misspelling. Full story bible:
 3. **Stop explaining the Circle as "electric."** `app/princess/index.tsx`'s first covenant beat
    currently reads "Beyond its electric Circle the Night has waited..." — the Circle is powered
    by the **Earth Current**, a fictitious force that is never explained in-world and must stay
-   that way. Don't substitute one unexplained-sounding label for another that secretly *is* an
+   that way. Don't substitute one unexplained-sounding label for another that secretly _is_ an
    explanation ("electric" is a real-world mechanism). Say "the Circle" or "the Circle of the
    Earth Current" and leave it at that — no further elaboration of how or why it works.
 
@@ -63,7 +63,7 @@ conflicting detail and a misspelling. Full story bible:
 5. **`modules/expeditionJournal.ts`**, the `'tesseract'` discovery entry — currently: "Persius
    followed references to a shape that is also a passage. The earliest tablet was left to be
    found." Update it to place the discovery specifically in the Redoubt's library/archive, per the
-   bible above, so the player learns *where* Persius's obsession started, not just that it existed.
+   bible above, so the player learns _where_ Persius's obsession started, not just that it existed.
 6. **`docs/GAMEPLAY_STORY_DESIGN.md`** — add a short "Cast & Setting" section near the top (above
    "Storyline 1") capturing the story bible above in your own words, so it's the single
    authoritative reference alongside the existing Earth-Current thread material already in that
