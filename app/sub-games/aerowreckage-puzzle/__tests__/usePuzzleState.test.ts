@@ -41,7 +41,7 @@ describe('safe dial milestone persistence', () => {
   })
 
   const renderLoadedHook = async () => {
-    const hook = renderHook(() => usePuzzleState())
+    const hook = await renderHook(() => usePuzzleState())
     await act(flushPromises)
     return hook
   }
@@ -49,8 +49,8 @@ describe('safe dial milestone persistence', () => {
   test('cancels an older delayed snapshot when a tumbler locks', async () => {
     const { result, unmount } = await renderLoadedHook()
 
-    act(() => result.current.updateAngle(numberToAngle(28), 'CCW'))
-    act(() => result.current.attemptLock())
+    await act(() => result.current.updateAngle(numberToAngle(28), 'CCW'))
+    await act(() => result.current.attemptLock())
     await act(flushPromises)
     await act(async () => jest.advanceTimersByTimeAsync(250))
 
@@ -59,7 +59,7 @@ describe('safe dial milestone persistence', () => {
       'aerowreckage-puzzle',
       expect.objectContaining({ currentStepIndex: 1, stepHistory: [28] })
     )
-    unmount()
+    await unmount()
   })
 
   test('writes a milestone after an older save already in flight', async () => {
@@ -72,12 +72,12 @@ describe('safe dial milestone persistence', () => {
     )
     const { result, unmount } = await renderLoadedHook()
 
-    act(() => result.current.updateAngle(numberToAngle(1), 'CCW'))
+    await act(() => result.current.updateAngle(numberToAngle(1), 'CCW'))
     await act(async () => jest.advanceTimersByTimeAsync(250))
     expect(mockedSetSubGameSave).toHaveBeenCalledTimes(1)
 
-    act(() => result.current.updateAngle(numberToAngle(28), 'CCW'))
-    act(() => result.current.attemptLock())
+    await act(() => result.current.updateAngle(numberToAngle(28), 'CCW'))
+    await act(() => result.current.attemptLock())
     await act(flushPromises)
     expect(mockedSetSubGameSave).toHaveBeenCalledTimes(1)
 
@@ -89,18 +89,18 @@ describe('safe dial milestone persistence', () => {
       'aerowreckage-puzzle',
       expect.objectContaining({ currentStepIndex: 1, stepHistory: [28] })
     )
-    unmount()
+    await unmount()
   })
 
   test('preserves the CCW 28, CW 15, CCW 7 solution sequence', async () => {
     const { result, unmount } = await renderLoadedHook()
 
-    act(() => result.current.updateAngle(numberToAngle(28), 'CCW'))
-    act(() => result.current.attemptLock())
-    act(() => result.current.updateAngle(numberToAngle(15), 'CW'))
-    act(() => result.current.attemptLock())
-    act(() => result.current.updateAngle(numberToAngle(7), 'CCW'))
-    act(() => result.current.attemptLock())
+    await act(() => result.current.updateAngle(numberToAngle(28), 'CCW'))
+    await act(() => result.current.attemptLock())
+    await act(() => result.current.updateAngle(numberToAngle(15), 'CW'))
+    await act(() => result.current.attemptLock())
+    await act(() => result.current.updateAngle(numberToAngle(7), 'CCW'))
+    await act(() => result.current.attemptLock())
     await act(flushPromises)
 
     expect(result.current.state).toEqual(
@@ -110,6 +110,6 @@ describe('safe dial milestone persistence', () => {
         stepHistory: [28, 15, 7],
       })
     )
-    unmount()
+    await unmount()
   })
 })

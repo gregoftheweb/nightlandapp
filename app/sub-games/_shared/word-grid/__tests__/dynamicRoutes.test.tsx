@@ -31,7 +31,7 @@ const mockedParams = useLocalSearchParams as jest.Mock
 describe('dynamic word-grid routes', () => {
   it.each(['word-tile-crypt-01', 'word-tile-crypt-02'])(
     'resolves every screen for %s through the same parsed-catalog route component',
-    (instanceId) => {
+    async (instanceId) => {
       mockedParams.mockReturnValue({ instanceId })
       const screens: WordGridRouteScreenKind[] = [
         'intro',
@@ -41,20 +41,20 @@ describe('dynamic word-grid routes', () => {
         'aftermath',
       ]
 
-      screens.forEach((screen) => {
-        const view = render(<WordGridRouteScreen screen={screen} />)
+      for (const screen of screens) {
+        const view = await render(<WordGridRouteScreen screen={screen} />)
         const renderedKind = screen === 'aftermath' ? 'success' : screen
         expect(view.getByTestId('resolved-word-grid-screen').props.children).toBe(
           `${renderedKind}:${instanceId}:${instanceId}`
         )
-        view.unmount()
-      })
+        await view.unmount()
+      }
     }
   )
 
-  it('rejects an unknown dynamic instance instead of falling back to hardcoded content', () => {
+  it('rejects an unknown dynamic instance instead of falling back to hardcoded content', async () => {
     mockedParams.mockReturnValue({ instanceId: 'missing-grid' })
-    expect(() => render(<WordGridRouteScreen screen="intro" />)).toThrow(
+    await expect(render(<WordGridRouteScreen screen="intro" />)).rejects.toThrow(
       "Unknown word-grid encounter 'missing-grid'"
     )
   })

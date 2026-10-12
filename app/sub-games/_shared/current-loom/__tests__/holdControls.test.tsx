@@ -32,7 +32,7 @@ jest.mock('../../BottomActionBar', () => ({
 }))
 
 describe('Current-Loom hold controls', () => {
-  const safeInitialControl = (view: ReturnType<typeof render>) => {
+  const safeInitialControl = (view: Awaited<ReturnType<typeof render>>) => {
     const values = Array.from({ length: 5 }, (_, index) =>
       Number(view.getByTestId(`current-loom-value-${index}`).props.children)
     )
@@ -56,32 +56,32 @@ describe('Current-Loom hold controls', () => {
     jest.useRealTimers()
   })
 
-  it('starts immediately, repeats at the tunable tick rate, and clears on release/unmount', () => {
+  it('starts immediately, repeats at the tunable tick rate, and clears on release/unmount', async () => {
     const intervalSpy = jest.spyOn(globalThis, 'setInterval')
     const clearSpy = jest.spyOn(globalThis, 'clearInterval')
     const parsed = resolveParsedCurrentLoomEncounter('current-loom-01')
-    const view = render(
+    const view = await render(
       <CurrentLoomPuzzleScreen config={parsed.shapeConfig} definition={parsed.definition} />
     )
     const control = safeInitialControl(view)
 
-    fireEvent(control, 'pressIn')
+    await fireEvent(control, 'pressIn')
     expect(intervalSpy).toHaveBeenCalledWith(expect.any(Function), CURRENT_LOOM_HOLD_TICK_MS)
-    fireEvent(control, 'pressOut')
+    await fireEvent(control, 'pressOut')
     expect(clearSpy).toHaveBeenCalled()
 
-    view.unmount()
+    await view.unmount()
 
-    const secondView = render(
+    const secondView = await render(
       <CurrentLoomPuzzleScreen config={parsed.shapeConfig} definition={parsed.definition} />
     )
-    fireEvent(safeInitialControl(secondView), 'pressIn')
+    await fireEvent(safeInitialControl(secondView), 'pressIn')
     const clearsBeforeUnmount = clearSpy.mock.calls.length
-    secondView.unmount()
+    await secondView.unmount()
     expect(clearSpy.mock.calls.length).toBeGreaterThan(clearsBeforeUnmount)
   })
 
-  it('starts a whole-screen buzz on press-in and stops it immediately on release', () => {
+  it('starts a whole-screen buzz on press-in and stops it immediately on release', async () => {
     const animations: { start: jest.Mock; stop: jest.Mock }[] = []
     jest.spyOn(Animated, 'loop').mockImplementation(() => {
       const animation = { start: jest.fn(), stop: jest.fn(), reset: jest.fn() }
@@ -89,23 +89,23 @@ describe('Current-Loom hold controls', () => {
       return animation as unknown as Animated.CompositeAnimation
     })
     const parsed = resolveParsedCurrentLoomEncounter('current-loom-01')
-    const view = render(
+    const view = await render(
       <CurrentLoomPuzzleScreen config={parsed.shapeConfig} definition={parsed.definition} />
     )
     const loopsBeforeHold = animations.length
     const control = safeInitialControl(view)
 
-    fireEvent(control, 'pressIn')
+    await fireEvent(control, 'pressIn')
     expect(view.getByTestId('current-loom-buzz-view')).toBeTruthy()
     expect(animations).toHaveLength(loopsBeforeHold + 1)
     const buzz = animations.at(-1)
     expect(buzz?.start).toHaveBeenCalledTimes(1)
 
-    fireEvent(control, 'pressOut')
+    await fireEvent(control, 'pressOut')
     expect(buzz?.stop).toHaveBeenCalledTimes(1)
   })
 
-  it('layers active buzz, dire edge glow, and a red HP bar together at low health', () => {
+  it('layers active buzz, dire edge glow, and a red HP bar together at low health', async () => {
     mockPlayerHP = 9
     const animations: { start: jest.Mock; stop: jest.Mock }[] = []
     jest.spyOn(Animated, 'loop').mockImplementation(() => {
@@ -114,12 +114,12 @@ describe('Current-Loom hold controls', () => {
       return animation as unknown as Animated.CompositeAnimation
     })
     const parsed = resolveParsedCurrentLoomEncounter('current-loom-01')
-    const view = render(
+    const view = await render(
       <CurrentLoomPuzzleScreen config={parsed.shapeConfig} definition={parsed.definition} />
     )
     const loopsBeforeHold = animations.length
 
-    fireEvent(safeInitialControl(view), 'pressIn')
+    await fireEvent(safeInitialControl(view), 'pressIn')
 
     expect(animations).toHaveLength(loopsBeforeHold + 1)
     expect(animations.at(-1)?.start).toHaveBeenCalledTimes(1)
@@ -129,9 +129,9 @@ describe('Current-Loom hold controls', () => {
     expect(view.getByLabelText('Current danger: dire')).toBeTruthy()
   })
 
-  it('drains one HP immediately and every 150ms until the held control is released', () => {
+  it('drains one HP immediately and every 150ms until the held control is released', async () => {
     const parsed = resolveParsedCurrentLoomEncounter('current-loom-01')
-    const view = render(
+    const view = await render(
       <CurrentLoomPuzzleScreen config={parsed.shapeConfig} definition={parsed.definition} />
     )
     const control = safeInitialControl(view)
@@ -141,27 +141,27 @@ describe('Current-Loom hold controls', () => {
         .filter((action) => action.type === 'UPDATE_PLAYER')
         .map((action) => action.payload.updates.currentHP)
 
-    fireEvent(control, 'pressIn')
+    await fireEvent(control, 'pressIn')
     expect(drainedHP()).toEqual([29])
 
-    act(() => jest.advanceTimersByTime(CURRENT_LOOM_HOLD_TICK_MS - 1))
+    await act(() => jest.advanceTimersByTime(CURRENT_LOOM_HOLD_TICK_MS - 1))
     expect(drainedHP()).toEqual([29])
-    act(() => jest.advanceTimersByTime(1))
+    await act(() => jest.advanceTimersByTime(1))
     expect(drainedHP()).toEqual([29, 28])
 
-    fireEvent(control, 'pressOut')
-    act(() => jest.advanceTimersByTime(CURRENT_LOOM_HOLD_TICK_MS * 2))
+    await fireEvent(control, 'pressOut')
+    await act(() => jest.advanceTimersByTime(CURRENT_LOOM_HOLD_TICK_MS * 2))
     expect(drainedHP()).toEqual([29, 28])
   })
 
-  it('dispatches game over immediately when tick drain reaches zero mid-hold', () => {
+  it('dispatches game over immediately when tick drain reaches zero mid-hold', async () => {
     mockPlayerHP = 1
     const parsed = resolveParsedCurrentLoomEncounter('current-loom-01')
-    const view = render(
+    const view = await render(
       <CurrentLoomPuzzleScreen config={parsed.shapeConfig} definition={parsed.definition} />
     )
 
-    fireEvent(safeInitialControl(view), 'pressIn')
+    await fireEvent(safeInitialControl(view), 'pressIn')
 
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'UPDATE_PLAYER',
@@ -176,14 +176,14 @@ describe('Current-Loom hold controls', () => {
     expect(mockReplace).toHaveBeenCalledWith('/death')
   })
 
-  it('stacks the one-HP tick drain with the five-HP boundary penalty', () => {
+  it('stacks the one-HP tick drain with the five-HP boundary penalty', async () => {
     const parsed = resolveParsedCurrentLoomEncounter('current-loom-01')
-    const view = render(
+    const view = await render(
       <CurrentLoomPuzzleScreen config={parsed.shapeConfig} definition={parsed.definition} />
     )
 
     // Seeded state is [9, 4, 4, 4, 4], so raising channel zero crosses its boundary.
-    fireEvent(view.getByTestId('current-loom-hold-0'), 'pressIn')
+    await fireEvent(view.getByTestId('current-loom-hold-0'), 'pressIn')
 
     expect(
       mockDispatch.mock.calls
@@ -193,7 +193,7 @@ describe('Current-Loom hold controls', () => {
     ).toEqual([29, 24])
   })
 
-  it('holds the solved puzzle under a green fade before opening the success screen', () => {
+  it('holds the solved puzzle under a green fade before opening the success screen', async () => {
     let finishCompletion: Animated.EndCallback | undefined
     jest.spyOn(Animated, 'loop').mockImplementation(() => ({
       start: jest.fn(),
@@ -214,17 +214,17 @@ describe('Current-Loom hold controls', () => {
       .mockReturnValueOnce(0.5)
       .mockReturnValueOnce(0.5)
     const parsed = resolveParsedCurrentLoomEncounter('current-loom-01')
-    const view = render(
+    const view = await render(
       <CurrentLoomPuzzleScreen config={parsed.shapeConfig} definition={parsed.definition} />
     )
 
     // [5, 6, 4, 5, 5] becomes the solved [5, 5, 5, 5, 5] in one tick.
-    fireEvent(view.getByTestId('current-loom-hold-2'), 'pressIn')
+    await fireEvent(view.getByTestId('current-loom-hold-2'), 'pressIn')
 
     expect(view.getByTestId('current-loom-completion-glow')).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalledWith(parsed.shapeConfig.successRoute)
 
-    act(() => finishCompletion?.({ finished: true }))
+    await act(() => finishCompletion?.({ finished: true }))
     expect(mockReplace).toHaveBeenCalledWith(parsed.shapeConfig.successRoute)
   })
 })

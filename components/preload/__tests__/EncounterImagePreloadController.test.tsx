@@ -23,9 +23,9 @@ describe('EncounterImagePreloadController', () => {
 
   test('mounts real-size hidden images, tracks load/error, resolves, and cleans up', async () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
-    render(<EncounterImagePreloadController />)
+    await render(<EncounterImagePreloadController />)
     let resultPromise!: ReturnType<typeof requestEncounterImagePreload>
-    act(() => {
+    await act(() => {
       resultPromise = requestEncounterImagePreload(assets)
     })
     const first = screen.getByTestId('encounter-preload-one', { includeHiddenElements: true })
@@ -33,8 +33,8 @@ describe('EncounterImagePreloadController', () => {
     expect(StyleSheet.flatten(first.props.style)).toEqual(
       expect.objectContaining({ width: 100, height: 200 })
     )
-    fireEvent(first, 'load')
-    fireEvent(second, 'error')
+    await fireEvent(first, 'load')
+    await fireEvent(second, 'error')
     await expect(resultPromise).resolves.toEqual({
       reason: 'failed',
       loadedCount: 1,
@@ -47,12 +47,12 @@ describe('EncounterImagePreloadController', () => {
   })
 
   test('times out, resolves, and unmounts slow images', async () => {
-    render(<EncounterImagePreloadController />)
+    await render(<EncounterImagePreloadController />)
     let resultPromise!: ReturnType<typeof requestEncounterImagePreload>
-    act(() => {
+    await act(() => {
       resultPromise = requestEncounterImagePreload(assets)
     })
-    act(() => jest.advanceTimersByTime(ENCOUNTER_IMAGE_PRELOAD_TIMEOUT_MS))
+    await act(() => jest.advanceTimersByTime(ENCOUNTER_IMAGE_PRELOAD_TIMEOUT_MS))
     await expect(resultPromise).resolves.toEqual({
       reason: 'timeout',
       loadedCount: 0,

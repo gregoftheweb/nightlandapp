@@ -7,18 +7,18 @@ import { BlockShield, BLOCK_SHIELD_CONFIG } from '../_components/BlockShield'
 
 describe('BlockShield component', () => {
   describe('rendering', () => {
-    it('should not render when active is false', () => {
-      const { toJSON } = render(<BlockShield active={false} centerX={200} centerY={300} />)
+    it('should not render when active is false', async () => {
+      const { toJSON } = await render(<BlockShield active={false} centerX={200} centerY={300} />)
       expect(toJSON()).toBeNull()
     })
 
-    it('should render when active is true', () => {
-      const { toJSON } = render(<BlockShield active={true} centerX={200} centerY={300} />)
+    it('should render when active is true', async () => {
+      const { toJSON } = await render(<BlockShield active={true} centerX={200} centerY={300} />)
       expect(toJSON()).not.toBeNull()
     })
 
-    it('should render correct number of rings', () => {
-      const { toJSON } = render(<BlockShield active={true} centerX={200} centerY={300} />)
+    it('should render correct number of rings', async () => {
+      const { toJSON } = await render(<BlockShield active={true} centerX={200} centerY={300} />)
       const tree = toJSON()
 
       // Should render container with RING_COUNT + 1 children (rings + text)

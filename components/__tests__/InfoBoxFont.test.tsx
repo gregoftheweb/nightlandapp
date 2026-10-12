@@ -5,8 +5,8 @@ import { render } from '@testing-library/react-native'
 import { InfoBox } from '../InfoBox'
 
 describe('InfoBox message font', () => {
-  test('applies an optional font family to scrollable description text', () => {
-    const screen = render(
+  test('applies an optional font family to scrollable description text', async () => {
+    const screen = await render(
       <InfoBox
         visible
         name="Message"
