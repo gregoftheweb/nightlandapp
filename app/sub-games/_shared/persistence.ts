@@ -115,13 +115,3 @@ export async function clearAllSubGameSaves(): Promise<void> {
     }
   }
 }
-
-/**
- * Check if a save exists for a sub-game
- * @param key - Unique key for the sub-game
- * @returns True if save exists, false otherwise
- */
-export async function hasSubGameSave(key: string): Promise<boolean> {
-  const save = await getSubGameSave(key)
-  return save !== null
-}

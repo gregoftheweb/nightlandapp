@@ -7,7 +7,7 @@ import { DialDirection } from './types'
 /**
  * Normalize an angle to the range [0, 2π)
  */
-export function normalizeAngle(angle: number): number {
+function normalizeAngle(angle: number): number {
   const TWO_PI = 2 * Math.PI
   let normalized = angle % TWO_PI
   if (normalized < 0) {

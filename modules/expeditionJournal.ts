@@ -1,18 +1,18 @@
 import type { GameState } from '@config/types'
 
-export interface JournalObjective {
+interface JournalObjective {
   title: string
   detail: string
   progress?: string
 }
 
-export interface JournalDiscovery {
+interface JournalDiscovery {
   id: string
   title: string
   text: string
 }
 
-export interface ExpeditionJournalModel {
+interface ExpeditionJournalModel {
   objective: JournalObjective
   discoveries: JournalDiscovery[]
   condition: 'STEADY' | 'WOUNDED' | 'DIRE'

@@ -26,7 +26,7 @@ const rollD6 = (): number => {
 
 // ==================== CORE COMBAT ACTIONS ====================
 
-export const executeAttack = (
+const executeAttack = (
   attacker: any,
   defender: any,
   dispatch: any,
@@ -163,7 +163,7 @@ export const executeAttack = (
 
 // ==================== COMBAT TURN PROCESSING ====================
 
-export interface CombatTurnResult {
+interface CombatTurnResult {
   // At most one monster can die per round - only the player's own attack
   // (below) can remove a monster, and the player only takes one turn per round.
   meleeKilledMonsterShortName: string | null
@@ -176,7 +176,7 @@ export interface CombatTurnResult {
   attackSlotsAfterRound: GameState['attackSlots']
 }
 
-export const processCombatTurn = (
+const processCombatTurn = (
   state: GameState,
   dispatch: any,
   targetId?: string

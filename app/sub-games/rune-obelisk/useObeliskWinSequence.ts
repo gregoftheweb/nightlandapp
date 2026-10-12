@@ -3,8 +3,8 @@ import { Animated } from 'react-native'
 
 export type ObeliskWinPhase = 'playing' | 'shaking' | 'settled'
 
-export const OBELISK_SHAKE_STEP_DURATION_MS = 100
-export const OBELISK_SHAKE_STEP_COUNT = 20
+const OBELISK_SHAKE_STEP_DURATION_MS = 100
+const OBELISK_SHAKE_STEP_COUNT = 20
 export const OBELISK_SHAKE_DURATION_MS = OBELISK_SHAKE_STEP_DURATION_MS * OBELISK_SHAKE_STEP_COUNT
 
 export function getObeliskBackgroundState(phase: ObeliskWinPhase): 'plain' | 'electric' {

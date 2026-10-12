@@ -103,7 +103,7 @@ const reduceBattleView = (state: BattleViewState, action: BattleViewAction): Bat
   }
 }
 
-export interface UseBattleStateProps {
+interface UseBattleStateProps {
   initialDaemonHP?: number
   maxDaemonHP?: number
   onDaemonHit?: () => void
@@ -117,7 +117,7 @@ export interface UseBattleStateProps {
   onDaemonDeath?: () => void
 }
 
-export interface UseBattleStateReturn {
+interface UseBattleStateReturn {
   daemonState: DaemonState
   currentPosition: PositionKey
   attackDirection: 'left' | 'right'

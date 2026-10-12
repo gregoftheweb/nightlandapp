@@ -9,19 +9,7 @@
  * - Lighting value mappings
  */
 
-import { LightingPreset, BiomeId, SpawnTableId, WeatherEffect, MusicTrackId } from './levelTypes'
-
-/**
- * Numeric values for lighting presets.
- * Maps semantic names to actual ambient light values (0.0 - 1.0).
- */
-export const LIGHTING_VALUES: Record<LightingPreset, number> = {
-  pitch_black: 0.05,
-  very_dim: 0.1,
-  dim: 0.15,
-  moderate: 0.2,
-  bright: 0.3,
-}
+import { BiomeId, SpawnTableId, WeatherEffect, MusicTrackId } from './levelTypes'
 
 /**
  * Default values for optional level properties.
@@ -41,7 +29,7 @@ export const LEVEL_DEFAULTS = {
  * Biome preset configuration.
  * Bundles ambient light, weather, and music for themed areas.
  */
-export interface BiomePreset {
+interface BiomePreset {
   ambientLight: number
   weatherEffect: WeatherEffect
   defaultMusic: MusicTrackId
@@ -86,7 +74,7 @@ export const BIOME_PRESETS: Record<BiomeId, BiomePreset> = {
 /**
  * Spawn configuration for a single monster type.
  */
-export interface SpawnConfig {
+interface SpawnConfig {
   monsterShortName: string
   spawnRate: number // Probability per turn (0.0 - 1.0)
   maxInstances: number // Maximum simultaneous instances

@@ -31,12 +31,12 @@ export const RUNE_OBELISK_STOP_RUNES = 'ABCDEFGH'
   .split('')
   .map((letter) => RUNE_ALPHABET[letter as RuneAlphabetLetter])
 
-export interface RuneObeliskCategoryState {
+interface RuneObeliskCategoryState {
   arrangements: readonly string[]
   correctPosition: number
 }
 
-export interface RuneObeliskPuzzleState {
+interface RuneObeliskPuzzleState {
   activeCategory: RuneObeliskCategory
   categories: Record<RuneObeliskCategory, RuneObeliskCategoryState>
   positions: Record<RuneObeliskCategory, number>

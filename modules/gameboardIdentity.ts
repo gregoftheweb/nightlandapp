@@ -5,7 +5,7 @@ import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
 import { getSubGameDefinition } from '@config/subGames'
 import type { ContentFingerprintInput, GameboardCatalogIdentity } from '@config/types'
 
-export function stableStringify(value: unknown): string {
+function stableStringify(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value)
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
   return `{${Object.entries(value as Record<string, unknown>)
@@ -76,7 +76,7 @@ function serializableRegistryContent(instanceId: string): unknown {
   return { ...definition, entrance: serializableEntrance }
 }
 
-export function buildContentFingerprintInput(): ContentFingerprintInput[] {
+function buildContentFingerprintInput(): ContentFingerprintInput[] {
   return GAMEBOARD_MANIFEST.slots
     .flatMap((slot) =>
       (slot.kind === 'scattered-group' ? slot.instances : [slot.contentRef]).map((instanceId) => ({

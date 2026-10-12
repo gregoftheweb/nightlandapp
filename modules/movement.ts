@@ -8,7 +8,7 @@ import { executeMonsterRangedAttack } from './monsterRangedAttacks'
 
 // The cliff wall ring occupies the board's outer row/col (see GameBoard's
 // renderBoardBorder) and is solid - it never overlaps a cell the player can stand on.
-export const isBoardEdgeCell = (pos: Position, gridWidth: number, gridHeight: number): boolean =>
+const isBoardEdgeCell = (pos: Position, gridWidth: number, gridHeight: number): boolean =>
   pos.row === 0 || pos.row === gridHeight - 1 || pos.col === 0 || pos.col === gridWidth - 1
 
 export const calculateNewPosition = (
@@ -54,7 +54,7 @@ export const calculateNewPosition = (
 
 // ==================== MONSTER MOVEMENT ====================
 
-export const moveAway = (
+const moveAway = (
   monster: Monster,
   playerPos: Position,
   gridWidth: number,
@@ -78,7 +78,7 @@ export const moveAway = (
   return newPos
 }
 
-export const calculateMonsterMovement = (
+const calculateMonsterMovement = (
   monster: Monster,
   playerPos: Position,
   state: GameState
@@ -111,7 +111,7 @@ export const calculateMonsterMovement = (
   return newPos
 }
 
-export const isMonsterInCombat = (monster: Monster, state: GameState): boolean => {
+const isMonsterInCombat = (monster: Monster, state: GameState): boolean => {
   return (
     state.attackSlots?.some((slot: any) => slot.id === monster.id) ||
     state.waitingMonsters?.some((m: any) => m.id === monster.id)
@@ -161,14 +161,4 @@ export const moveMonsters = (
     })
     logIfDev(`Monster ${monster.name} moved to (${newPos.row}, ${newPos.col})`)
   })
-}
-
-// ==================== MOVEMENT UTILITIES ====================
-
-export function calculateDistance(pos1: Position, pos2: Position): number {
-  return Math.sqrt(Math.pow(pos2.row - pos1.row, 2) + Math.pow(pos2.col - pos1.col, 2))
-}
-
-export function isAdjacentToPlayer(monster: Monster, playerPosition: Position): boolean {
-  return calculateDistance(monster.position, playerPosition) <= 1.5
 }

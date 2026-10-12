@@ -11,7 +11,7 @@ import type { JauntCaveEncounterContent, TimedEncounterConfig } from './types'
 const ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const text = (value: unknown) => typeof value === 'string' && value.length > 0
 
-export function validateTimedEncounterRewardId(_id: string, kind: RewardKind): boolean {
+function validateTimedEncounterRewardId(_id: string, kind: RewardKind): boolean {
   return kind === 'jaunt-crystal-grant'
 }
 

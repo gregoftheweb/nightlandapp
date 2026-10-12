@@ -26,14 +26,14 @@ import {
   type TrailNetwork,
 } from './trailGeometry'
 
-export interface OccupancyFootprint {
+interface OccupancyFootprint {
   id: string
   position: Position
   width: number
   height: number
 }
 
-export interface FreeSpaceResult {
+interface FreeSpaceResult {
   free: boolean
   overlappingIds: string[]
 }
@@ -153,7 +153,7 @@ export class RandomSource {
   }
 }
 
-export interface ParsedContentCatalogsByShape {
+interface ParsedContentCatalogsByShape {
   resolve(shapeId: SubGameShapeId, instanceId: string): ReturnType<typeof getSubGameDefinition>
 }
 

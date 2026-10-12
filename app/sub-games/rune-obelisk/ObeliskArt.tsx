@@ -4,14 +4,14 @@ import { Image, type LayoutChangeEvent, StyleSheet, View } from 'react-native'
 const plainImage = require('@assets/images/backgrounds/subgames/rosseta/obelisk-plain.webp')
 const electricImage = require('@assets/images/backgrounds/subgames/rosseta/obelisk-electric.webp')
 
-export type ObeliskArtState = 'plain' | 'electric'
+type ObeliskArtState = 'plain' | 'electric'
 
 interface ObeliskArtProps {
   state: ObeliskArtState
   children?: (imageRect: ObeliskImageRect) => ReactNode
 }
 
-export interface ObeliskImageRect {
+interface ObeliskImageRect {
   actualWidth: number
   actualHeight: number
   offsetX: number

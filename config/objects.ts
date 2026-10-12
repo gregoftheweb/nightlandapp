@@ -16,7 +16,7 @@ import generatedFootprintsGreenIMG from '@assets/images/items/quest/footprints-g
 import generatedFootprintsRedIMG from '@assets/images/items/quest/footprints-red.webp'
 
 // WEAPONS TEMPLATES - Pure templates without position data
-export const weapons: Record<string, GameObject> = {
+const weapons: Record<string, GameObject> = {
   discos: {
     kind: 'object',
     shortName: 'discos',
@@ -78,7 +78,7 @@ export const weapons: Record<string, GameObject> = {
 }
 
 // CONSUMABLES TEMPLATES
-export const consumables: Record<string, GameObject> = {
+const consumables: Record<string, GameObject> = {
   healthPotion: {
     kind: 'object',
     shortName: 'healthPotion',
@@ -235,7 +235,7 @@ export const collectible: Record<string, GameObject> = {
   },
 }
 
-export const nonCollisionTemplates: Record<
+const nonCollisionTemplates: Record<
   string,
   Omit<NonCollisionObject, 'id' | 'position' | 'rotation'>
 > = {
@@ -305,7 +305,7 @@ export const nonCollisionTemplates: Record<
 }
 
 // BUILDINGS TEMPLATES - Pure templates without position data
-export const buildings: Record<string, GameObject> = {
+const buildings: Record<string, GameObject> = {
   redoubt: {
     kind: 'object',
     shortName: 'redoubt',
@@ -435,13 +435,4 @@ export const getItemTemplate = (shortName: string): GameObject | undefined => {
 
 export const getNonCollisionTemplate = (shortName: string) => {
   return nonCollisionTemplates[shortName]
-}
-
-// Get all templates combined (useful for lookups)
-export const getAllObjectTemplates = (): Record<string, GameObject> => {
-  return {
-    ...weapons,
-    ...consumables,
-    ...buildings,
-  }
 }

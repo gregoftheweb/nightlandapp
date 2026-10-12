@@ -43,7 +43,7 @@ export const VALID_GAMEBOARD_MANIFEST: GameboardManifest = {
   ],
 }
 
-export function cloneGameboardManifest(): Record<string, any> {
+function cloneGameboardManifest(): Record<string, any> {
   return JSON.parse(JSON.stringify(VALID_GAMEBOARD_MANIFEST))
 }
 

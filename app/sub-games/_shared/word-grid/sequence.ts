@@ -1,6 +1,6 @@
-export type WordGridSequenceOutcome = 'continue' | 'failure' | 'success'
+type WordGridSequenceOutcome = 'continue' | 'failure' | 'success'
 
-export interface WordGridSequenceResult {
+interface WordGridSequenceResult {
   sequence: string[]
   outcome: WordGridSequenceOutcome
 }

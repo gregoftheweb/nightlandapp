@@ -9,9 +9,9 @@ import {
 } from '../config/types'
 import { getRuntimeNonCollisionObjects } from './runtimeNonCollisionObjects'
 
-export const DEFAULT_SPATIAL_CELL_SIZE = 10
+const DEFAULT_SPATIAL_CELL_SIZE = 10
 
-export interface GridEntity {
+interface GridEntity {
   id: string
   position: Position
   width: number

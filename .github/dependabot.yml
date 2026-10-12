@@ -10,6 +10,29 @@ updates:
       time: '09:00'
       timezone: America/Los_Angeles
     open-pull-requests-limit: 10
+    # The Expo SDK pins these to versions its native runtime supports; bump them
+    # with `npx expo install --fix` (or an SDK upgrade), never independently.
+    ignore:
+      - dependency-name: 'react'
+      - dependency-name: 'react-dom'
+      - dependency-name: 'react-test-renderer'
+      - dependency-name: '@types/react'
+      - dependency-name: 'react-native'
+      - dependency-name: 'react-native-*'
+      - dependency-name: '@react-native-async-storage/async-storage'
+      - dependency-name: 'typescript'
+      - dependency-name: 'jest'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/jest'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'expo*'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: 'jest-expo'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: 'babel-preset-expo'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: '@babel/*'
+        update-types: ['version-update:semver-major']
     groups:
       production-dependencies:
         dependency-type: production

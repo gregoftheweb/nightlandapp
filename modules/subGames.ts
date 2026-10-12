@@ -92,13 +92,3 @@ export function resetSubGameEntryStateForTests() {
   entryAttemptGeneration += 1
   entryPreloadInFlight = false
 }
-
-/**
- * Signal the RPG to refresh/resume after returning from a sub-game
- * This is handled via the resume nonce in GameContext
- */
-export function signalRpgResume() {
-  logIfDev('▶️  Signaling RPG resume')
-  // The resume signal is managed by incrementing resumeNonce in GameContext
-  // This will be triggered by the sub-game when it exits
-}

@@ -14,7 +14,7 @@ export enum DaemonState {
 }
 
 // Sprite sources
-export const SPRITES = {
+const SPRITES = {
   resting: require('@assets/images/sprites/monsters/jaunt-deamon-1.webp'),
   prep1: require('@assets/images/sprites/monsters/jaunt-deamon-2.webp'),
   prep2: require('@assets/images/sprites/monsters/jaunt-deamon-3.webp'),

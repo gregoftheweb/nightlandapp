@@ -1,10 +1,6 @@
 import type { GridRect, WordGridConfig, WordGridTile } from './types'
 
-export function getGridLetter(
-  letters: readonly (readonly string[])[],
-  row: number,
-  col: number
-): string {
+function getGridLetter(letters: readonly (readonly string[])[], row: number, col: number): string {
   return letters[row]?.[col] ?? ''
 }
 

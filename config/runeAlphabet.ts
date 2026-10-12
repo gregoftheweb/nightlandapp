@@ -28,4 +28,3 @@ export const RUNE_ALPHABET = {
 } as const
 
 export type RuneAlphabetLetter = keyof typeof RUNE_ALPHABET
-export type RuneAlphabetCharacter = (typeof RUNE_ALPHABET)[RuneAlphabetLetter]

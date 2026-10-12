@@ -89,7 +89,7 @@ export function EntranceLeverAnimation({ onComplete }: EntranceLeverAnimationPro
   )
 }
 
-export interface DeepSiloPanelViewProps {
+interface DeepSiloPanelViewProps {
   loomCount: number
   switchThrown: boolean
   animating: boolean

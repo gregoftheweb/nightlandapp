@@ -1,16 +1,6 @@
 import { Position, MaxHP, CurrentHP } from './primitives'
 import { Effect } from './effects'
 
-export interface SaveGameMetadata {
-  version: string
-  playerName: string
-  currentLevel: string
-  playTime: number
-  lastSaved: Date
-  gameMode?: string
-  difficulty?: string
-}
-
 export interface CombatParticipant {
   id: string
   type: 'player' | 'monster' | 'npc'

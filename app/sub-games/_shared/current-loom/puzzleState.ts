@@ -1,21 +1,21 @@
 import type { GameDispatch } from '@context/GameContext'
 import { RandomSource } from '@modules/gameboardLayout'
 
-export const CURRENT_LOOM_CHANNEL_COUNT = 5
-export const CURRENT_LOOM_TOTAL = 25
-export const CURRENT_LOOM_SAFE_VALUE = 5
-export const CURRENT_LOOM_MIN = 0
+const CURRENT_LOOM_CHANNEL_COUNT = 5
+const CURRENT_LOOM_TOTAL = 25
+const CURRENT_LOOM_SAFE_VALUE = 5
+const CURRENT_LOOM_MIN = 0
 export const CURRENT_LOOM_MAX = 10
 export const CURRENT_LOOM_HOLD_TICK_MS = 150
-export const CURRENT_LOOM_TICK_DAMAGE = 1
-export const CURRENT_LOOM_HAZARD_DAMAGE = 5
+const CURRENT_LOOM_TICK_DAMAGE = 1
+const CURRENT_LOOM_HAZARD_DAMAGE = 5
 export const CURRENT_LOOM_HAZARD_OVERLAY_MS = 500
-export const CURRENT_LOOM_DEATH_MESSAGE =
+const CURRENT_LOOM_DEATH_MESSAGE =
   'The Current-Loom discharges through Christos and stills his heart.'
-export const CURRENT_LOOM_KILLER_NAME = 'The Unbound Earth Current'
-export const CURRENT_LOOM_DRAIN_DEATH_MESSAGE =
+const CURRENT_LOOM_KILLER_NAME = 'The Unbound Earth Current'
+const CURRENT_LOOM_DRAIN_DEATH_MESSAGE =
   'The Current-Loom drinks the last of Christos\u2019s life and leaves him still.'
-export const CURRENT_LOOM_DRAIN_KILLER_NAME = 'The Draining Earth Current'
+const CURRENT_LOOM_DRAIN_KILLER_NAME = 'The Draining Earth Current'
 
 export type CurrentLoomChannels = readonly [number, number, number, number, number]
 
@@ -24,7 +24,7 @@ export interface CurrentLoomPuzzleState {
   tickCount: number
 }
 
-export interface CurrentLoomTickResult {
+interface CurrentLoomTickResult {
   state: CurrentLoomPuzzleState
   hazardChannel: number | null
 }

@@ -5,13 +5,11 @@ import type {
   ValidationResult,
 } from './types/encounters'
 
-export type RawContentCatalog<TRaw> = Record<string, TRaw>
+type RawContentCatalog<TRaw> = Record<string, TRaw>
 
-export type ParsedContentCatalog<TShapeConfig> = Readonly<
-  Record<string, ParsedEncounter<TShapeConfig>>
->
+type ParsedContentCatalog<TShapeConfig> = Readonly<Record<string, ParsedEncounter<TShapeConfig>>>
 
-export interface ContentRegistration<T> {
+interface ContentRegistration<T> {
   instanceId: string
   content: T
 }
