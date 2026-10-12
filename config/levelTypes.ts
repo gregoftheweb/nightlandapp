@@ -1,15 +1,3 @@
-// config/levelTypes.ts
-/**
- * Level-specific type definitions for improved type safety and documentation.
- *
- * This module provides:
- * - Strict level ID types to prevent typos
- * - Enum-like types for biomes, weather, music, lighting
- * - Spawn table IDs for reusable encounter groups
- */
-
-import { Level } from './types'
-
 /**
  * Strict level identifier type.
  * Update this union when adding new levels.
@@ -44,15 +32,3 @@ export type MusicTrackId = 'nightland_ambient' | 'watching_grounds' | 'combat_th
  */
 export type SpawnTableId =
   'wasteland_common' | 'wasteland_rare' | 'wasteland_boss' | 'grounds_common' | 'grounds_rare'
-
-/**
- * Level configuration with stronger typing.
- * Extends base Level type with stricter ID and effect types.
- */
-export interface LevelConfig extends Omit<Level, 'id' | 'weatherEffect' | 'backgroundMusic'> {
-  id: LevelId
-  biome?: BiomeId
-  weatherEffect: WeatherEffect
-  backgroundMusic: MusicTrackId
-  lighting?: LightingPreset
-}

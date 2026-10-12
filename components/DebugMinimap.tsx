@@ -17,7 +17,7 @@ import type {
   Position,
 } from '@config/types'
 
-export const DEBUG_MINIMAP_SIZE = 250
+const DEBUG_MINIMAP_SIZE = 250
 
 interface BoardDimensions {
   width: number

@@ -18,8 +18,8 @@ import {
   GreatPower,
   GreatPowerInstance,
 } from './types'
-import { LevelId, BiomeId, SpawnTableId } from './levelTypes'
-import { BIOME_PRESETS, SPAWN_TABLES, LEVEL_DEFAULTS } from './levelPresets'
+import { SpawnTableId } from './levelTypes'
+import { SPAWN_TABLES } from './levelPresets'
 import {
   getBuildingTemplate,
   getWeaponTemplate,
@@ -30,66 +30,6 @@ import {
 import { getGreatPowerTemplate } from './monsters'
 import { getSubGameDefinition, type SubGameInstanceDefinition } from './subGames'
 import { hydrateGreatPower } from '@modules/hydration'
-
-/**
- * Create a level with smart defaults and optional biome preset.
- *
- * This factory function:
- * - Applies LEVEL_DEFAULTS for common properties
- * - Optionally applies biome preset settings
- * - Ensures required fields are present
- *
- * @param config Partial level configuration with required core fields
- * @returns Complete level configuration
- *
- * @example
- * ```typescript
- * const level = createLevel({
- *   id: "1",
- *   name: "Dark Wastes",
- *   boardSize: { width: 400, height: 400 },
- *   playerSpawn: { row: 200, col: 200 },
- *   biome: "dark_wastes",  // Auto-applies light, weather, music
- *   items: [...],
- *   monsterSpawnConfigs: loadSpawnTable("wasteland_common"),
- *   objects: [...],
- * });
- * ```
- */
-export function createLevel(
-  config: Partial<Level> & {
-    id: LevelId
-    name: string
-    boardSize: { width: number; height: number }
-    playerSpawn: Position
-    biome?: BiomeId
-  }
-): Level {
-  const biome = config.biome ? BIOME_PRESETS[config.biome] : undefined
-
-  return {
-    // Apply defaults first
-    ...LEVEL_DEFAULTS,
-
-    // Then apply provided config
-    ...config,
-
-    // Override with biome preset if specified
-    ...(biome && {
-      ambientLight: config.ambientLight ?? biome.ambientLight,
-      weatherEffect: config.weatherEffect ?? biome.weatherEffect,
-      backgroundMusic: config.backgroundMusic ?? biome.defaultMusic,
-    }),
-
-    // Ensure arrays exist (don't override if provided)
-    items: config.items || [],
-    objects: config.objects || [],
-    nonCollisionObjects: config.nonCollisionObjects,
-    greatPowers: config.greatPowers || [],
-    completionConditions: config.completionConditions,
-    spawnZones: config.spawnZones,
-  } as Level
-}
 
 /**
  * Load monster spawn configurations from a predefined spawn table.
@@ -444,20 +384,4 @@ export function createGreatPowerInstance(
     position: instance.position,
     currentHP: hydrated.currentHP,
   }
-}
-
-/**
- * Type-safe level retrieval.
- *
- * @param levels Level registry
- * @param id Level identifier
- * @returns Level configuration
- * @throws Error if level not found
- */
-export function getLevel(levels: Record<LevelId, Level>, id: LevelId): Level {
-  const level = levels[id]
-  if (!level) {
-    throw new Error(`Level ${id} not found in registry`)
-  }
-  return level
 }

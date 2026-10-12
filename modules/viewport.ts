@@ -1,6 +1,6 @@
 export const GAME_CELL_SIZE = 32
 
-export interface ViewportInsets {
+interface ViewportInsets {
   top: number
   right: number
   bottom: number

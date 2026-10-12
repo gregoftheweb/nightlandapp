@@ -11,7 +11,7 @@ import { SPAWN_CONSTANTS } from '../constants/Game'
 import { logIfDev } from './utils'
 import { reducer as gameReducer } from '../state/reducer'
 
-export const DEBUG_TURN_TIMING = true
+const DEBUG_TURN_TIMING = true
 
 function now(): number {
   return globalThis.performance?.now?.() ?? Date.now()
@@ -389,7 +389,6 @@ export const handlePassTurn = (state: GameState, dispatch: (action: any) => void
 // ==================== LEGACY EXPORTS FOR BACKWARD COMPATIBILITY ====================
 
 // Re-export combat handler for existing code
-export { handleCombatTurn } from './combat'
 
 // ==================== GAME INITIALIZATION ====================
 

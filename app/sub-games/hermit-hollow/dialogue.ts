@@ -176,13 +176,3 @@ export const HERMIT_DIALOGUE: DialogueNode[] = [
     effects: ['hermit_enters_trance', 'tesseract_lore_partial', 'location_marked_sacred_silent'],
   },
 ]
-
-export function validateHermitDialogue(nodes: DialogueNode[]) {
-  const seen = new Set<string>()
-  for (const node of nodes) {
-    if (seen.has(node.id)) {
-      console.warn(`[HERMIT_DIALOGUE] Duplicate node id: ${node.id}`)
-    }
-    seen.add(node.id)
-  }
-}

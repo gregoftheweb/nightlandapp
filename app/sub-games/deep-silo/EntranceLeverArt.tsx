@@ -7,8 +7,8 @@ import {
   View,
 } from 'react-native'
 
-export const LEVER_ART_WIDTH = 896
-export const LEVER_ART_HEIGHT = 1200
+const LEVER_ART_WIDTH = 896
+const LEVER_ART_HEIGHT = 1200
 
 export const LEVER_LIGHT_POSITIONS = [
   { x: 0.282, y: 0.187 },

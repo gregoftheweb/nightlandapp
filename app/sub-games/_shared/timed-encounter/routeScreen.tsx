@@ -9,8 +9,7 @@ import TimedEncounterDefeat from './DefeatScreen'
 import TimedEncounterAftermath from './AftermathScreen'
 import { normalizeTimedEncounterInstanceId } from './routing'
 
-export type TimedEncounterScreen =
-  'intro' | 'rockfall' | 'battle' | 'victory' | 'defeat' | 'aftermath'
+type TimedEncounterScreen = 'intro' | 'rockfall' | 'battle' | 'victory' | 'defeat' | 'aftermath'
 
 export function TimedEncounterRouteScreen({ screen }: { screen: TimedEncounterScreen }) {
   const params = useLocalSearchParams<{ instanceId?: string | string[] }>()

@@ -43,7 +43,7 @@ const ENTRANCE_EFFECT_TYPES = new Set([
 ])
 type UnknownRecord = Record<string, unknown>
 
-export interface WordGridAdapterOptions {
+interface WordGridAdapterOptions {
   assets?: WordGridAssetCatalog
   validateReward?: (id: string, kind: RewardKind) => boolean
 }
@@ -793,5 +793,3 @@ export function validateWordGridContent(
 ): ValidationResult<ParsedEncounter<WordGridConfig>> {
   return createWordGridShapeAdapter(options).parse(content)
 }
-
-export const wordGridShapeAdapter = createWordGridShapeAdapter()

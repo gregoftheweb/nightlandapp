@@ -7,8 +7,8 @@ import {
   type PlayerHealthDisplay,
 } from '@modules/playerHealthDisplay'
 
-export const CURRENT_LOOM_BUZZ_AMPLITUDE = 4
-export const CURRENT_LOOM_BUZZ_STEP_MS = 25
+const CURRENT_LOOM_BUZZ_AMPLITUDE = 4
+const CURRENT_LOOM_BUZZ_STEP_MS = 25
 export const CURRENT_LOOM_COMPLETION_FADE_MS = 2500
 
 export function useCurrentLoomBuzz(active: boolean): Animated.Value {

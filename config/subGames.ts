@@ -35,7 +35,7 @@ export interface SubGameInstanceDefinition {
   entrance?: SubGameEntranceDefinition
 }
 
-export interface SubGameRegistryReferences {
+interface SubGameRegistryReferences {
   completion?: readonly string[]
   reward?: readonly string[]
   waypoint?: readonly string[]

@@ -58,12 +58,12 @@ const POSITION_X = {
 
 const LEFT_Y_DELTA = -0.01 // previously left was 0.37 vs center/right 0.38
 
-export interface UseArenaLayoutProps {
+interface UseArenaLayoutProps {
   backgroundImage: any // require() asset
   currentPosition: PositionKey
 }
 
-export interface UseArenaLayoutReturn {
+interface UseArenaLayoutReturn {
   arenaSize: { width: number; height: number } | null
   bgRect: { offsetX: number; offsetY: number; drawW: number; drawH: number } | null
   daemonPosition: { x: number; y: number }

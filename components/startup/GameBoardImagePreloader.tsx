@@ -8,7 +8,7 @@ import {
 
 export const GAMEBOARD_IMAGE_PRELOAD_TIMEOUT_MS = 10_000
 
-export interface GameBoardImageAsset extends ImagePreloadAsset {
+interface GameBoardImageAsset extends ImagePreloadAsset {
   source: ImageSourcePropType
 }
 

@@ -45,7 +45,7 @@ function requiredText(value: unknown, path: string, errors: ValidationError[]) {
   if (!isText(value)) add(errors, 'invalid-required-text', path, `${path} must be non-empty`)
 }
 
-export function validateCurrentLoomRewardId(id: string, kind: RewardKind): boolean {
+function validateCurrentLoomRewardId(id: string, kind: RewardKind): boolean {
   return REWARD_KINDS.has(kind) && validateWordGridRewardId(id, kind)
 }
 
@@ -238,7 +238,7 @@ function assetReferences(entry: UnknownRecord): { path: string; value: unknown }
   ]
 }
 
-export interface CurrentLoomAdapterOptions {
+interface CurrentLoomAdapterOptions {
   assets?: CurrentLoomAssetCatalog
   validateReward?: (id: string, kind: RewardKind) => boolean
 }
@@ -368,5 +368,3 @@ export function validateCurrentLoomContent(
 ): ValidationResult<ParsedEncounter<CurrentLoomConfig>> {
   return createCurrentLoomShapeAdapter(options).parse(content)
 }
-
-export const currentLoomShapeAdapter = createCurrentLoomShapeAdapter()

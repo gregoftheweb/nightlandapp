@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-export const CURRENT_LOOM_IDS = [
+const CURRENT_LOOM_IDS = [
   'current-loom-01',
   'current-loom-02',
   'current-loom-03',
@@ -18,7 +18,7 @@ export function isDeepSiloSwitchThrown(completed: Record<string, boolean> | unde
   return completed?.[DEEP_SILO_SWITCH_THROWN_FLAG] === true
 }
 
-export interface DeepSiloDevState {
+interface DeepSiloDevState {
   loomOverrideCount: number
   switchThrown: boolean
 }

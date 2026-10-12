@@ -57,8 +57,4 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# compiled scripts
-scripts/**/*.js
-!scripts/reset-project.js
 
-app-example

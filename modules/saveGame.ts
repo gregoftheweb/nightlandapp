@@ -36,7 +36,7 @@ function enqueueWaypointMutation<T>(mutation: () => Promise<T>): Promise<T> {
 
 // ===== TYPES =====
 
-export interface SavedGameV1 {
+interface SavedGameV1 {
   version: 'v1'
   snapshot: GameSnapshot
   savedAt: string // ISO timestamp
@@ -53,7 +53,7 @@ export interface WaypointSaveMetadata {
   playerMaxHP?: number
 }
 
-export interface WaypointSaveRecord extends WaypointSaveMetadata {
+interface WaypointSaveRecord extends WaypointSaveMetadata {
   snapshot: GameSnapshot
 }
 
@@ -320,60 +320,6 @@ export async function listWaypointSaves(): Promise<WaypointSaveMetadata[]> {
   } catch (error) {
     console.error('[SaveGame] Failed to list waypoint saves:', error)
     return []
-  }
-}
-
-/**
- * Delete a waypoint save by ID.
- */
-export async function deleteWaypoint(id: string): Promise<void> {
-  return enqueueWaypointMutation(() => deleteWaypointTransaction(id))
-}
-
-async function deleteWaypointTransaction(id: string): Promise<void> {
-  try {
-    const index = await loadWaypointIndex(true)
-    const newIndex = index.filter((item) => item.id !== id)
-    await saveWaypointIndex(newIndex)
-
-    // Commit the index first. A failed cleanup leaves only an unreachable
-    // record instead of an index entry that points to missing data.
-    const waypointKey = WAYPOINT_ITEM_PREFIX + id
-    await AsyncStorage.removeItem(waypointKey)
-
-    if (DEBUG_PERSISTENCE) {
-      console.log('[SaveGame] Waypoint deleted:', id)
-    }
-  } catch (error) {
-    console.error('[SaveGame] Failed to delete waypoint:', error)
-  }
-}
-
-/**
- * Delete all waypoint saves.
- * Utility function, not exposed in UI.
- */
-export async function deleteAllWaypointSaves(): Promise<void> {
-  return enqueueWaypointMutation(deleteAllWaypointSavesTransaction)
-}
-
-async function deleteAllWaypointSavesTransaction(): Promise<void> {
-  try {
-    const index = await loadWaypointIndex(true)
-
-    // Make every record unreachable before best-effort cleanup.
-    await saveWaypointIndex([])
-
-    for (const item of index) {
-      const waypointKey = WAYPOINT_ITEM_PREFIX + item.id
-      await AsyncStorage.removeItem(waypointKey)
-    }
-
-    if (DEBUG_PERSISTENCE) {
-      console.log('[SaveGame] All waypoint saves deleted')
-    }
-  } catch (error) {
-    console.error('[SaveGame] Failed to delete all waypoint saves:', error)
   }
 }
 

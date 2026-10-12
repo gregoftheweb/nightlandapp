@@ -93,7 +93,7 @@ export interface EffectContext {
 /**
  * Result of an effect execution.
  */
-export interface EffectResult {
+interface EffectResult {
   success: boolean
   message: string
   consumeItem?: boolean // Should the item be consumed/removed after use?
@@ -792,31 +792,6 @@ export const applyEffect = (effect: Effect, context: EffectContext): EffectResul
   return result
 }
 
-/**
- * LEGACY COMPATIBILITY WRAPPER
- *
- * Maintains compatibility with existing item usage code.
- * Converts old EffectExecutionContext to new EffectContext.
- *
- * @deprecated Use applyEffect() directly with full EffectContext
- */
-export const executeEffect = (effect: Effect, context: any): EffectResult => {
-  console.warn('⚠️ executeEffect is deprecated, use applyEffect() instead')
-
-  // Convert legacy context to new context
-  const newContext: EffectContext = {
-    state: context.state,
-    dispatch: context.dispatch,
-    showDialog: context.showDialog,
-    item: context.item,
-    sourceType: context.item ? 'item' : 'system',
-    sourceId: context.item?.id,
-    trigger: 'onUseItem',
-  }
-
-  return applyEffect(effect, newContext)
-}
-
 // ==================== ITEM USAGE HANDLER ====================
 
 /**
@@ -887,32 +862,4 @@ export const canUseItem = (item: Item): boolean => {
   console.log('Can use result:', canUse)
 
   return canUse
-}
-
-export const getItemEffectDescription = (item: Item): string => {
-  if (!item.effects || item.effects.length === 0) {
-    return 'This item has no special effects.'
-  }
-
-  const descriptions: string[] = []
-
-  for (const effect of item.effects) {
-    switch (effect.type) {
-      case 'heal':
-        descriptions.push(`Restores ${effect.value} HP`)
-        break
-      case 'restore_jaunt':
-        descriptions.push(`Restores ${effect.value} jaunt charge`)
-        break
-      case 'strength_boost':
-        descriptions.push(
-          `Increases attack damage by ${Math.round((effect.multiplier - 1) * 100)}% for ${effect.duration} combat rounds`
-        )
-        break
-      default:
-        descriptions.push(`${effect.type} effect`)
-    }
-  }
-
-  return descriptions.join(', ')
 }

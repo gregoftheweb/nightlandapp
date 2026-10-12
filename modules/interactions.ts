@@ -318,30 +318,3 @@ const handleNonCollisionObjectEffects = (
     }
   })
 }
-
-// ==================== UTILITY FUNCTIONS ====================
-
-export const canCollectItem = (item: Item, player: any): boolean => {
-  if (!item.collectible || !item.active) return false
-
-  if (item.type === 'weapon') {
-    return player.weapons.length < player.maxWeaponsSize
-  }
-
-  return player.inventory.length < player.maxInventorySize
-}
-
-export const getItemsAtPosition = (items: Item[], position: Position): Item[] => {
-  return items.filter((item) => {
-    if (!item.active || !item.position) return false
-
-    return checkOverlap(
-      position,
-      1,
-      1,
-      item.position,
-      item.size?.width || 1,
-      item.size?.height || 1
-    )
-  })
-}

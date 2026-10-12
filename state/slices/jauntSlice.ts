@@ -7,7 +7,7 @@ import { toIntegerTilePosition } from '../../modules/playerPosition'
 // Counter to ensure unique flash IDs even with rapid successive teleports
 let flashIdCounter = 0
 
-export function grantJauntCrystalToPlayer(player: GameState['player']): GameState['player'] {
+function grantJauntCrystalToPlayer(player: GameState['player']): GameState['player'] {
   if (!player.jauntUnlocked) {
     return {
       ...player,
@@ -24,7 +24,7 @@ export function grantJauntCrystalToPlayer(player: GameState['player']): GameStat
 }
 
 /** Shared world-position update used by gameplay Jaunt and the dev-only jump menu. */
-export function teleportPlayerPosition(state: GameState, targetPosition: Position): GameState {
+function teleportPlayerPosition(state: GameState, targetPosition: Position): GameState {
   const integerPosition = toIntegerTilePosition(targetPosition)
   const clampedPosition = {
     col: Math.max(0, Math.min(integerPosition.col, state.gridWidth - 1)),

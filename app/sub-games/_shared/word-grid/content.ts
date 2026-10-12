@@ -3,8 +3,8 @@ import type { ImageSourcePropType } from 'react-native'
 import type { EncounterEntranceContent } from '@config/types/encounters'
 import type { SubGameLifecycleConfig } from '@config/types/subGames'
 
-export type WordGridCompletionTrigger = 'success-confirmed'
-export type WordGridRewardTrigger = 'success-screen-entered' | 'success-confirmed'
+type WordGridCompletionTrigger = 'success-confirmed'
+type WordGridRewardTrigger = 'success-screen-entered' | 'success-confirmed'
 
 export interface WordGridLifecycleConfig extends Omit<
   SubGameLifecycleConfig,

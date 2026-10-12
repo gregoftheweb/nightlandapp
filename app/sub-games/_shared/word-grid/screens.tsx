@@ -46,18 +46,6 @@ type WordGridScreenProps = {
 const lifecycleResolver = (definition?: SubGameInstanceDefinition) =>
   definition ? () => definition : undefined
 
-export function WordGridEntry({ config, definition }: WordGridScreenProps) {
-  const router = useRouter()
-  const lifecycle = useSubGameLifecycle(config.instanceId, lifecycleResolver(definition))
-
-  useEffect(() => {
-    const route = lifecycle.resolveEntryRoute()
-    if (route) router.replace(route as never)
-  }, [lifecycle, router])
-
-  return null
-}
-
 export function WordGridIntroScreen({ config, definition }: WordGridScreenProps) {
   const router = useRouter()
   const lifecycle = useSubGameLifecycle(config.instanceId, lifecycleResolver(definition))

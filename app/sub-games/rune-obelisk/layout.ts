@@ -1,4 +1,4 @@
-export interface NormalizedRect {
+interface NormalizedRect {
   x: number
   y: number
   width: number
@@ -17,7 +17,7 @@ export const OBELISK_CONTROL_CLUSTER_SCALE = {
   categoryButtonHeight: 0.065,
 } as const
 
-export function normalizedRectToPixels(rect: NormalizedRect, artSize: number) {
+function normalizedRectToPixels(rect: NormalizedRect, artSize: number) {
   return {
     left: rect.x * artSize,
     top: rect.y * artSize,

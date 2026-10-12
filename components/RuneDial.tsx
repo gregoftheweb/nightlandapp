@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native'
 
-export type RuneDialDirection = 'CW' | 'CCW'
+type RuneDialDirection = 'CW' | 'CCW'
 
 const NUMBER_MARKERS = 12
 const TICK_MARKS = 8
@@ -30,7 +30,7 @@ const getDialSize = (width: number, height: number) => {
   return Math.min(height * 0.6, 280)
 }
 
-export interface RuneDialProps {
+interface RuneDialProps {
   currentPosition: number
   totalPositions: number
   onPositionChange: (position: number, direction: RuneDialDirection) => void

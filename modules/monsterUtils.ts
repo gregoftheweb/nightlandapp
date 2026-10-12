@@ -172,35 +172,3 @@ export const createMonsterFromTemplate = (
   // Hydrate the template with the instance to create Monster
   return hydrateMonster(template, instance)
 }
-
-/**
- * Find the nearest living monster to a given position
- * @param position - The position to search from (typically player position)
- * @param monsters - Array of monsters to search
- * @returns The nearest monster, or null if no living monsters exist
- */
-export const findNearestMonster = (position: Position, monsters: Monster[]): Monster | null => {
-  if (!monsters || monsters.length === 0) return null
-
-  // Filter for living monsters (currentHP > 0)
-  const livingMonsters = monsters.filter((m) => m.currentHP > 0 && m.position)
-
-  if (livingMonsters.length === 0) return null
-
-  // Find the monster with the smallest Euclidean distance
-  let nearestMonster: Monster | null = null
-  let minDistance = Infinity
-
-  for (const monster of livingMonsters) {
-    const dx = monster.position.col - position.col
-    const dy = monster.position.row - position.row
-    const distance = Math.sqrt(dx * dx + dy * dy)
-
-    if (distance < minDistance) {
-      minDistance = distance
-      nearestMonster = monster
-    }
-  }
-
-  return nearestMonster
-}

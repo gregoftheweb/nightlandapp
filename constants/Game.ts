@@ -27,17 +27,6 @@ export const TIMING_CONSTANTS = {
 } as const
 
 /**
- * Combat Constants
- */
-export const COMBAT_CONSTANTS = {
-  /**
-   * Default maximum number of monsters that can attack at once
-   * Note: This is defined here for reference but the actual value is pulled from gameConfig.combat.maxAttackers in the game state
-   */
-  MAX_ATTACKERS: 4,
-} as const
-
-/**
  * Monster Spawning Constants
  */
 export const SPAWN_CONSTANTS = {

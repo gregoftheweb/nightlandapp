@@ -3,14 +3,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { GameDispatch } from '@context/GameContext'
 import { getSubGameSave, setSubGameSave } from '../_shared/persistence'
 
-export const DEEP_SILO_SAVE_KEY = 'deep-silo-power-puzzle'
-export const DEEP_SILO_SAVE_VERSION = 1
-export const GENERATOR_SURGE_DAMAGE = 10
+const DEEP_SILO_SAVE_KEY = 'deep-silo-power-puzzle'
+const DEEP_SILO_SAVE_VERSION = 1
+const GENERATOR_SURGE_DAMAGE = 10
 export const GENERATOR_DEATH_MESSAGE =
   'Christos is struck by a violent surge from the failing generator.'
 export const GENERATOR_KILLER_NAME = 'The Failing Current'
 
-export interface DeepSiloPuzzleState {
+interface DeepSiloPuzzleState {
   discosOnTable: boolean
   powerOn: boolean
   weaponCharged: boolean

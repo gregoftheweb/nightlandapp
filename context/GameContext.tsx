@@ -160,7 +160,7 @@ export const useGameActions = () => {
   return actions
 }
 
-export const useRpgResumeNonce = () => {
+const useRpgResumeNonce = () => {
   const nonce = useContext(RpgResumeContext)
   if (nonce === undefined) {
     throw new Error('useRpgResumeNonce must be used within a GameProvider')

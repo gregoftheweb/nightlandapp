@@ -73,33 +73,6 @@ async function drainPendingSave(): Promise<void> {
 }
 
 /**
- * Force an immediate autosave (bypasses throttling).
- * Use sparingly, only for critical moments like level transitions.
- *
- * @param state - The current game state
- */
-export async function forceAutoSave(state: GameState): Promise<void> {
-  // Clear any pending throttled save
-  if (saveTimeout) {
-    clearTimeout(saveTimeout)
-    saveTimeout = null
-  }
-
-  latestPendingState = state
-
-  // Preserve write ordering when a throttled save is already in flight.
-  if (activeSave !== null) await activeSave
-
-  // The completed write may have scheduled the pending state for later. A
-  // forced save consumes it now, so remove that trailing timer.
-  if (saveTimeout) {
-    clearTimeout(saveTimeout)
-    saveTimeout = null
-  }
-  await drainPendingSave()
-}
-
-/**
  * Internal function to perform the actual save.
  */
 async function performAutoSave(state: GameState): Promise<void> {

@@ -1,6 +1,6 @@
 import type { GameState, Monster, Position, Projectile } from '@config/types'
 
-export interface MonsterRangedAttackResult {
+interface MonsterRangedAttackResult {
   damage: number
   projectile: Projectile
 }

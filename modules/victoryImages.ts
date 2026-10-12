@@ -15,7 +15,7 @@ import giantSlugVictory3 from '@assets/images/sprites/victory/giant-slug-victory
 // kebab-case naming - the two don't need to match.
 // jaunt_deamon images already exist under assets/images/sprites/victory/, but have no
 // entry here yet because there is no roaming monster template for it.
-export const VICTORY_IMAGES: Record<string, readonly ImageSourcePropType[]> = {
+const VICTORY_IMAGES: Record<string, readonly ImageSourcePropType[]> = {
   abhuman: [abhumanVictory1, abhumanVictory2, abhumanVictory3],
   night_hound: [nightHoundVictory1, nightHoundVictory2, nightHoundVictory3],
   giant_slug: [giantSlugVictory1, giantSlugVictory2, giantSlugVictory3],

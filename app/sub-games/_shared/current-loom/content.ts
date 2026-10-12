@@ -3,8 +3,8 @@ import type { ImageSourcePropType } from 'react-native'
 import type { EncounterEntranceContent } from '@config/types/encounters'
 import type { SubGameLifecycleConfig } from '@config/types/subGames'
 
-export type CurrentLoomCompletionTrigger = 'success-confirmed'
-export type CurrentLoomRewardTrigger = 'success-screen-entered' | 'success-confirmed'
+type CurrentLoomCompletionTrigger = 'success-confirmed'
+type CurrentLoomRewardTrigger = 'success-screen-entered' | 'success-confirmed'
 
 export interface CurrentLoomLifecycleConfig extends Omit<
   SubGameLifecycleConfig,

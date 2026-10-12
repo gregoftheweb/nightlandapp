@@ -11,7 +11,7 @@ import {
 
 export type WordGridRouteScreenKind = 'intro' | 'puzzle' | 'failure' | 'success' | 'aftermath'
 
-export function normalizeWordGridInstanceId(value: string | string[] | undefined): string {
+function normalizeWordGridInstanceId(value: string | string[] | undefined): string {
   const instanceId = Array.isArray(value) ? value[0] : value
   if (!instanceId) throw new Error('Word-grid route requires an instanceId')
   return instanceId

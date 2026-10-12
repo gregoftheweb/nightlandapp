@@ -10,7 +10,7 @@ import {
 
 export type CurrentLoomRouteScreenKind = 'intro' | 'puzzle' | 'success'
 
-export function normalizeCurrentLoomInstanceId(value: string | string[] | undefined): string {
+function normalizeCurrentLoomInstanceId(value: string | string[] | undefined): string {
   const instanceId = Array.isArray(value) ? value[0] : value
   if (!instanceId) throw new Error('Current-Loom route requires an instanceId')
   return instanceId

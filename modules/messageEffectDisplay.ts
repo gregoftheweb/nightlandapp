@@ -2,7 +2,7 @@ import type { Effect, GameState } from '@config/types'
 import { RUNE_ALPHABET } from '@config/runeAlphabet'
 import { RandomSource } from './gameboardLayout'
 
-export type ShowMessageEffect = Extract<Effect, { type: 'showMessage' }>
+type ShowMessageEffect = Extract<Effect, { type: 'showMessage' }>
 
 export interface MessageEffectDisplay {
   text: string

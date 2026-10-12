@@ -1,6 +1,6 @@
 import type { GameState, Item, Monster, Position, WeaponUpgrade } from '@config/types'
 
-export const DEFAULT_WEAPON_UPGRADE: WeaponUpgrade = {
+const DEFAULT_WEAPON_UPGRADE: WeaponUpgrade = {
   damageMultiplier: 1,
   hitBonusAdd: 0,
 }
@@ -9,7 +9,7 @@ export function getWeaponUpgrade(state: GameState, weaponId: string): WeaponUpgr
   return state.weaponUpgrades?.[weaponId] ?? DEFAULT_WEAPON_UPGRADE
 }
 
-export function getOwnedWeapon(state: GameState, weaponId: string | null): Item | undefined {
+function getOwnedWeapon(state: GameState, weaponId: string | null): Item | undefined {
   if (!weaponId) return undefined
   return state.weapons.find((weapon) => weapon.id === weaponId)
 }
@@ -45,7 +45,7 @@ export function calculateWeaponDamage(
   )
 }
 
-export function distanceInTiles(from: Position, to: Position): number {
+function distanceInTiles(from: Position, to: Position): number {
   const colDistance = to.col - from.col
   const rowDistance = to.row - from.row
   return Math.sqrt(colDistance * colDistance + rowDistance * rowDistance)

@@ -275,7 +275,7 @@ function buildInitialState(
  * The canonical initial state. All resets should derive from getInitialState(),
  * not from this constant, to ensure fresh state generation.
  */
-export const initialState = getInitialState('1')
+const initialState = getInitialState('1')
 
 /**
  * Legacy alias for getInitialState. Deprecated - use getInitialState() directly.
@@ -428,14 +428,6 @@ export const fromSnapshot = (snapshot: GameSnapshot | null | undefined): GameSta
   logIfDev(`💾 Result subGamesCompleted:`, result.subGamesCompleted)
 
   return result
-}
-
-/**
- * Legacy serialization function. Deprecated - use toSnapshot() instead.
- * @deprecated Use toSnapshot() instead
- */
-export const serializeGameState = (state: GameState): string => {
-  return JSON.stringify(toSnapshot(state))
 }
 
 /**

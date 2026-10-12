@@ -1,17 +1,7 @@
 // ===== HP Type Aliases =====
 // Explicit type aliases for HP to standardize semantics across the codebase
 export type MaxHP = number // Maximum hit points (template/design-time value)
-export type CurrentHP = number // Current hit points at runtime (for instances)
-
-// ===== HP Helper Interfaces =====
-// Helper interfaces for composing HP-related fields
-export interface HasMaxHP {
-  maxHP: MaxHP
-}
-
-export interface HasCurrentHP {
-  currentHP: CurrentHP
-}
+export type CurrentHP = number
 
 export interface Position {
   row: number
@@ -53,4 +43,3 @@ export type ObjectCategory =
   | string
 export type MonsterCategory = 'regular' | 'elite' | 'boss' | string
 export type GreatPowerCategory = 'greatPower' | 'boss' | string
-export type ItemCategory = 'weapon' | 'consumable' | 'key' | 'collectible' | 'building' | string

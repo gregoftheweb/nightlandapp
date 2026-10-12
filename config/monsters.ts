@@ -8,7 +8,7 @@ import watcher_seIMG from '@assets/images/sprites/monsters/watcherse.webp'
 
 // -------------------- REGULAR MONSTERS --------------------
 // Base monster templates - Static definitions without runtime state
-export const monsterTemplates: MonsterTemplate[] = [
+const monsterTemplates: MonsterTemplate[] = [
   {
     kind: 'monster',
     shortName: 'abhuman',
@@ -61,7 +61,7 @@ export const monsterTemplates: MonsterTemplate[] = [
 
 // -------------------- GREAT POWERS --------------------
 // Templates - Static definitions without runtime state
-export const greatPowerTemplates: GreatPowerTemplate[] = [
+const greatPowerTemplates: GreatPowerTemplate[] = [
   {
     kind: 'greatPower',
     shortName: 'watcher_se',
@@ -93,19 +93,4 @@ export const getMonsterTemplate = (shortName: string): MonsterTemplate | undefin
 // Get great power template by shortName
 export const getGreatPowerTemplate = (shortName: string): GreatPowerTemplate | undefined => {
   return greatPowerTemplates.find((power) => power.shortName === shortName)
-}
-
-// Get all monster shortNames for validation
-export const getAvailableMonsterTypes = (): string[] => {
-  return monsterTemplates.map((monster) => monster.shortName)
-}
-
-// Get all great power shortNames for validation
-export const getAvailableGreatPowerTypes = (): string[] => {
-  return greatPowerTemplates.map((power) => power.shortName)
-}
-
-// Get monster templates as a Map for hydration
-export const getMonsterTemplateMap = (): Map<string, MonsterTemplate> => {
-  return new Map(monsterTemplates.map((template) => [template.shortName, template]))
 }
