@@ -54,9 +54,9 @@ describe('DebugMinimap coordinate mapping', () => {
     ).toBe('Branch branch-2: 75.0%')
   })
 
-  it('shows a tapped encounter name and closes from the X button', () => {
+  it('shows a tapped encounter name and closes from the X button', async () => {
     const onClose = jest.fn()
-    const view = render(
+    const view = await render(
       React.createElement(DebugMinimap, {
         visible: true,
         onClose,
@@ -70,15 +70,15 @@ describe('DebugMinimap coordinate mapping', () => {
       })
     )
 
-    fireEvent.press(view.getByLabelText('Encounter test-encounter'))
+    await fireEvent.press(view.getByLabelText('Encounter test-encounter'))
     expect(view.getByText('test-encounter\nTrunk: 50.0%')).toBeTruthy()
 
-    fireEvent.press(view.getByLabelText('Close minimap'))
+    await fireEvent.press(view.getByLabelText('Close minimap'))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
-  it('renders canonical Great Powers, static buildings, and every river mask segment', () => {
-    const view = render(
+  it('renders canonical Great Powers, static buildings, and every river mask segment', async () => {
+    const view = await render(
       React.createElement(DebugMinimap, {
         visible: true,
         onClose: jest.fn(),
@@ -143,14 +143,14 @@ describe('DebugMinimap coordinate mapping', () => {
     expect(view.getByLabelText('Generated footstep at row 75, column 80')).toBeTruthy()
   })
 
-  it('inspects every marker type and reports overlapping Watcher and encounter together', () => {
+  it('inspects every marker type and reports overlapping Watcher and encounter together', async () => {
     const overlappingEncounter = {
       ...placement,
       instanceId: 'overlap-encounter',
       position: { row: 380, col: 180 },
       footprint: { width: 6, height: 6 },
     }
-    const view = render(
+    const view = await render(
       React.createElement(DebugMinimap, {
         visible: true,
         onClose: jest.fn(),
@@ -199,20 +199,20 @@ describe('DebugMinimap coordinate mapping', () => {
       })
     )
 
-    fireEvent.press(view.getByLabelText('Footstep at row 50, column 50'))
+    await fireEvent.press(view.getByLabelText('Footstep at row 50, column 50'))
     expect(view.getByText(/Rotation: 290°/)).toBeTruthy()
 
-    fireEvent.press(view.getByLabelText('Building Last Redoubt'))
+    await fireEvent.press(view.getByLabelText('Building Last Redoubt'))
     expect(view.getByText(/Footprint: 8×8/)).toBeTruthy()
 
-    fireEvent.press(view.getByLabelText('River river'))
+    await fireEvent.press(view.getByLabelText('River river'))
     expect(view.getByText(/Anchor: \(200, 200\)/)).toBeTruthy()
     expect(view.getByText(/Footprint: 22×15/)).toBeTruthy()
 
-    fireEvent.press(view.getByLabelText('Player position'))
+    await fireEvent.press(view.getByLabelText('Player position'))
     expect(view.getByText('Player\nPosition: (395, 200)')).toBeTruthy()
 
-    fireEvent.press(view.getByLabelText('Great Power Watcher'))
+    await fireEvent.press(view.getByLabelText('Great Power Watcher'))
     expect(view.getByText(/Watcher/)).toBeTruthy()
     expect(view.queryByText(/Awakened:/)).toBeNull()
     expect(view.getByText('overlap-encounter\nTrunk: 50.0%')).toBeTruthy()

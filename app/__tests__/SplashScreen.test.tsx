@@ -55,11 +55,7 @@ describe('SplashScreen hydration navigation', () => {
 
   test('navigates only after context confirms the loaded state committed', async () => {
     const hydrationCommit = createDeferred<void>()
-    const gameNavigation = createDeferred<void>()
     const hydrateGameState = jest.fn(() => hydrationCommit.promise)
-    mockReplace.mockImplementation((route) => {
-      if (route === '/game') gameNavigation.resolve()
-    })
     mockedUseGameActions.mockReturnValue({
       dispatch: jest.fn(),
       hydrateGameState,
@@ -69,20 +65,20 @@ describe('SplashScreen hydration navigation', () => {
     mockedLoadCurrentGame.mockResolvedValue({} as never)
     mockedFromSnapshot.mockReturnValue({ moveCount: 42 } as never)
 
-    const screen = render(<SplashScreen />)
+    const screen = await render(<SplashScreen />)
     const currentButton = await screen.findByText('Current')
-    fireEvent.press(currentButton)
-    fireEvent.press(currentButton)
-
+    // fireEvent resolves with the handler's promise, which stays pending until
+    // hydration commits, so hold it rather than awaiting it here.
+    const firstPress = fireEvent.press(currentButton)
     await waitFor(() => expect(hydrateGameState).toHaveBeenCalledTimes(1))
+    await fireEvent.press(currentButton)
+
     expect(mockedLoadCurrentGame).toHaveBeenCalledTimes(1)
     expect(mockReplace).not.toHaveBeenCalledWith('/game')
 
     await act(async () => {
       hydrationCommit.resolve()
-      await gameNavigation.promise
-      // Flush handleContinue's finally block after router.replace returns.
-      await Promise.resolve()
+      await firstPress
     })
 
     expect(mockReplace).toHaveBeenCalledWith('/game')

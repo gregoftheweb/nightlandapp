@@ -18,16 +18,16 @@ describe('Current-Loom danger feedback', () => {
     [24, 'critical', '#ff8c00'],
     [10, 'critical', '#ff8c00'],
     [9, 'dire', '#ff4444'],
-  ] as const)('renders %i HP using the shared %s color', (currentHP, band, color) => {
-    const view = render(<CurrentLoomHealthBar currentHP={currentHP} maxHP={100} />)
+  ] as const)('renders %i HP using the shared %s color', async (currentHP, band, color) => {
+    const view = await render(<CurrentLoomHealthBar currentHP={currentHP} maxHP={100} />)
     const fillStyle = StyleSheet.flatten(view.getByTestId('current-loom-health-fill').props.style)
     expect(fillStyle.backgroundColor).toBe(color)
     expect(view.getByLabelText(`Health: ${band}`)).toBeTruthy()
   })
 
-  it('uses the shared dire band for the low-HP bar and edge frame simultaneously', () => {
+  it('uses the shared dire band for the low-HP bar and edge frame simultaneously', async () => {
     const display = getPlayerHealthDisplay(9, 100)
-    const view = render(
+    const view = await render(
       <>
         <CurrentLoomHealthBar currentHP={9} maxHP={100} />
         <CurrentLoomEdgeGlow display={display} />
@@ -40,7 +40,7 @@ describe('Current-Loom danger feedback', () => {
     expect(display.glow.maxOpacity).toBe(1)
   })
 
-  it('fades the completion glow from half opacity before completing', () => {
+  it('fades the completion glow from half opacity before completing', async () => {
     const onComplete = jest.fn()
     let finish: ((result: Animated.EndResult) => void) | undefined
     const stop = jest.fn()
@@ -61,14 +61,14 @@ describe('Current-Loom danger feedback', () => {
       }
     })
 
-    const view = render(<CurrentLoomCompletionGlow onComplete={onComplete} />)
+    const view = await render(<CurrentLoomCompletionGlow onComplete={onComplete} />)
     expect(view.getByTestId('current-loom-completion-glow')).toBeTruthy()
     expect(timing).toHaveBeenCalledTimes(1)
     expect(onComplete).not.toHaveBeenCalled()
 
     finish?.({ finished: true })
     expect(onComplete).toHaveBeenCalledTimes(1)
-    view.unmount()
+    await view.unmount()
     expect(stop).toHaveBeenCalledTimes(1)
   })
 })

@@ -51,14 +51,14 @@ describe('Layout audio cleanup', () => {
   it('tracks native cleanup through completion when the root unmounts', async () => {
     const cleanup = deferred()
     mockCleanup.mockReturnValueOnce(cleanup.promise)
-    const view = render(<Layout />)
+    const view = await render(<Layout />)
 
     await act(async () => {
       await Promise.resolve()
       await Promise.resolve()
     })
 
-    view.unmount()
+    await view.unmount()
     expect(mockCleanup).toHaveBeenCalledTimes(1)
 
     let completed = false

@@ -56,7 +56,7 @@ describe('Layout startup readiness', () => {
   })
 
   test('holds the splash until both fonts and decoded gameboard images are ready', async () => {
-    const screen = render(<Layout />)
+    const screen = await render(<Layout />)
     expect(screen.getByText('Nightland')).toBeTruthy()
     expect(mockHideSplash).not.toHaveBeenCalled()
 
@@ -67,7 +67,7 @@ describe('Layout startup readiness', () => {
 
     mockFontsLoaded = true
     await act(async () => {
-      screen.rerender(<Layout />)
+      await await screen.rerender(<Layout />)
       await Promise.resolve()
     })
 

@@ -34,14 +34,14 @@ jest.mock('../EntranceLeverPanel', () => {
 })
 
 describe('Deep Silo lever completion handoff', () => {
-  test('latches the thrown frame before the persistent state update is visible', () => {
-    render(<DeepSiloEntrancePanelScreen />)
+  test('latches the thrown frame before the persistent state update is visible', async () => {
+    await render(<DeepSiloEntrancePanelScreen />)
 
     const panelMock = DeepSiloPanelView as jest.MockedFunction<typeof DeepSiloPanelView>
     const initialProps = panelMock.mock.calls.at(-1)?.[0]
     expect(initialProps?.switchThrown).toBe(false)
 
-    act(() => initialProps?.onAnimationComplete())
+    await act(() => initialProps?.onAnimationComplete())
 
     const completedProps = panelMock.mock.calls.at(-1)?.[0]
     expect(completedProps?.switchThrown).toBe(true)

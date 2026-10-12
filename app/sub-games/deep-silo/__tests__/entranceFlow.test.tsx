@@ -1,6 +1,6 @@
 import React from 'react'
 import { act, fireEvent, render } from '@testing-library/react-native'
-import { Image, StyleSheet } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { DEEP_SILO_APPROACH_IMAGES, DeepSiloApproachView } from '../screen1'
 import {
   DeepSiloPanelView,
@@ -50,18 +50,18 @@ function panel(overrides: Partial<React.ComponentProps<typeof DeepSiloPanelView>
 describe('Deep Silo entrance state', () => {
   beforeEach(resetDeepSiloDevStateForTests)
 
-  test.each([0, 1, 2, 3, 4, 5])('renders %i real Loom lights bottom-to-top', (count) => {
-    const view = render(<LeverLights count={count} unlocked={count === 5} />)
+  test.each([0, 1, 2, 3, 4, 5])('renders %i real Loom lights bottom-to-top', async (count) => {
+    const view = await render(<LeverLights count={count} unlocked={count === 5} />)
     for (let index = 0; index < 5; index += 1)
       expect(view.getByTestId(`loom-light-${index}`).props.accessibilityState.selected).toBe(
         index >= 5 - count
       )
   })
 
-  test.each([0, 1, 2, 3, 4, 5])('uses dev override value %i when nonzero', (override) => {
+  test.each([0, 1, 2, 3, 4, 5])('uses dev override value %i when nonzero', async (override) => {
     const count = effectiveLoomCount(3, override)
     expect(count).toBe(override === 0 ? 3 : override)
-    const view = render(<LeverLights count={count} unlocked={count === 5} />)
+    const view = await render(<LeverLights count={count} unlocked={count === 5} />)
     expect(
       Array.from({ length: 5 }, (_, index) =>
         Boolean(view.getByTestId(`loom-light-${index}`).props.accessibilityState.selected)
@@ -69,17 +69,17 @@ describe('Deep Silo entrance state', () => {
     ).toHaveLength(count)
   })
 
-  test('switch indicator turns green and throw action appears exactly at five', () => {
-    const view = render(panel({ loomCount: 4 }))
+  test('switch indicator turns green and throw action appears exactly at five', async () => {
+    const view = await render(panel({ loomCount: 4 }))
     expect(view.queryByText('Throw the switch')).toBeNull()
-    view.rerender(panel({ loomCount: 5 }))
+    await view.rerender(panel({ loomCount: 5 }))
     expect(view.getByText('Throw the switch')).toBeTruthy()
 
-    const indicator = render(<LeverLights count={4} unlocked={false} />)
+    const indicator = await render(<LeverLights count={4} unlocked={false} />)
     expect(indicator.getByTestId('switch-indicator-light').props.accessibilityState.selected).toBe(
       false
     )
-    indicator.rerender(<LeverLights count={5} unlocked />)
+    await indicator.rerender(<LeverLights count={5} unlocked />)
     expect(indicator.getByTestId('switch-indicator-light').props.accessibilityState.selected).toBe(
       true
     )
@@ -103,9 +103,9 @@ describe('Deep Silo entrance state', () => {
     expect(gameData.subGamesCompleted[DEEP_SILO_SWITCH_THROWN_FLAG]).toBeUndefined()
   })
 
-  test('devtool is absent and inert when production gating is false', () => {
+  test('devtool is absent and inert when production gating is false', async () => {
     const onDevIncrement = jest.fn()
-    const view = render(panel({ showDevtool: false, onDevIncrement }))
+    const view = await render(panel({ showDevtool: false, onDevIncrement }))
     expect(view.queryByTestId('deep-silo-dev-increment')).toBeNull()
     expect(onDevIncrement).not.toHaveBeenCalled()
   })
@@ -123,8 +123,8 @@ describe('Deep Silo entrance state', () => {
     }
   })
 
-  test('already-thrown state offers entry instead of throw', () => {
-    const view = render(panel({ loomCount: 5, switchThrown: true }))
+  test('already-thrown state offers entry instead of throw', async () => {
+    const view = await render(panel({ loomCount: 5, switchThrown: true }))
     expect(view.getByText('Enter the Deep Silo')).toBeTruthy()
     expect(view.queryByText('Throw the switch')).toBeNull()
     expect(isDeepSiloSwitchThrown({ [DEEP_SILO_SWITCH_THROWN_FLAG]: true })).toBe(true)
@@ -134,23 +134,23 @@ describe('Deep Silo entrance state', () => {
 describe('Deep Silo exterior lever animation', () => {
   beforeEach(() => jest.useFakeTimers())
   afterEach(() => jest.useRealTimers())
-  test('plays all five frames in order', () => {
+  test('plays all five frames in order', async () => {
     const onComplete = jest.fn()
-    const view = render(<EntranceLeverAnimation onComplete={onComplete} />)
+    const view = await render(<EntranceLeverAnimation onComplete={onComplete} />)
     expect(view.getByTestId('lever-animation-frame-1')).toBeTruthy()
     expect(view.getByTestId('lever-animation-frame-1').props.resizeMode).toBe('contain')
     for (let frame = 2; frame <= 5; frame += 1) {
-      act(() => jest.advanceTimersByTime(EXTERIOR_LEVER_FRAME_MS[frame - 2]))
+      await act(() => jest.advanceTimersByTime(EXTERIOR_LEVER_FRAME_MS[frame - 2]))
       expect(view.getByTestId(`lever-animation-frame-${frame}`)).toBeTruthy()
     }
     expect(onComplete).not.toHaveBeenCalled()
-    act(() => jest.advanceTimersByTime(EXTERIOR_LEVER_FRAME_MS[4]))
+    await act(() => jest.advanceTimersByTime(EXTERIOR_LEVER_FRAME_MS[4]))
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 
-  test('keeps every Loom light and the switch indicator on during playback', () => {
-    const view = render(panel({ loomCount: 5, animating: true }))
-    fireEvent(view.getByTestId('deep-silo-lever-viewport'), 'layout', {
+  test('keeps every Loom light and the switch indicator on during playback', async () => {
+    const view = await render(panel({ loomCount: 5, animating: true }))
+    await fireEvent(view.getByTestId('deep-silo-lever-viewport'), 'layout', {
       nativeEvent: { layout: { x: 0, y: 0, width: 600, height: 900 } },
     })
 
@@ -165,13 +165,13 @@ describe('Deep Silo lever art containment', () => {
     [390, 700],
     [800, 1000],
     [1200, 700],
-  ])('keeps the full panel and overlay inside a %ix%i viewport', (width, height) => {
-    const view = render(
+  ])('keeps the full panel and overlay inside a %ix%i viewport', async (width, height) => {
+    const view = await render(
       <EntranceLeverArt source={EXTERIOR_LEVER_FRAMES[0]}>
         <LeverLights count={3} unlocked={false} />
       </EntranceLeverArt>
     )
-    fireEvent(view.getByTestId('deep-silo-lever-viewport'), 'layout', {
+    await fireEvent(view.getByTestId('deep-silo-lever-viewport'), 'layout', {
       nativeEvent: { layout: { x: 0, y: 0, width, height } },
     })
 
@@ -199,35 +199,42 @@ describe('Deep Silo lever art containment', () => {
     })
   })
 
-  test.each([1, 2, 3, 4, 5])('uses the same normalized display rectangle for frame %i', (frame) => {
-    const view = render(<EntranceLeverArt source={EXTERIOR_LEVER_FRAMES[frame - 1]} />)
-    fireEvent(view.getByTestId('deep-silo-lever-viewport'), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: 600, height: 900 } },
-    })
-    expect(view.getByTestId('deep-silo-lever-image').props.resizeMode).toBe('contain')
-    expect(StyleSheet.flatten(view.getByTestId('deep-silo-lever-image').props.style)).toMatchObject(
-      containedPortraitRect(600, 900)
-    )
-  })
+  test.each([1, 2, 3, 4, 5])(
+    'uses the same normalized display rectangle for frame %i',
+    async (frame) => {
+      const view = await render(<EntranceLeverArt source={EXTERIOR_LEVER_FRAMES[frame - 1]} />)
+      await fireEvent(view.getByTestId('deep-silo-lever-viewport'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 600, height: 900 } },
+      })
+      expect(view.getByTestId('deep-silo-lever-image').props.resizeMode).toBe('contain')
+      expect(
+        StyleSheet.flatten(view.getByTestId('deep-silo-lever-image').props.style)
+      ).toMatchObject(containedPortraitRect(600, 900))
+    }
+  )
 })
 
 describe('Deep Silo approach', () => {
-  test('closed art state has look-closer and return actions only', () => {
-    const view = render(
+  test('closed art state has look-closer and return actions only', async () => {
+    const view = await render(
       <DeepSiloApproachView open={false} onEnter={noop} onLookCloser={noop} onReturn={noop} />
     )
     expect(view.queryByText('Enter')).toBeNull()
     expect(view.getByText('Look closer')).toBeTruthy()
     expect(view.getByText('Return to the Night Land')).toBeTruthy()
-    expect(view.UNSAFE_getAllByType(Image)[1].props.source).toBe(DEEP_SILO_APPROACH_IMAGES.closed)
+    expect(view.container.queryAll((node) => node.type === 'Image')[1].props.source).toBe(
+      DEEP_SILO_APPROACH_IMAGES.closed
+    )
   })
-  test('open art state adds entry', () => {
-    const view = render(
+  test('open art state adds entry', async () => {
+    const view = await render(
       <DeepSiloApproachView open onEnter={noop} onLookCloser={noop} onReturn={noop} />
     )
     expect(view.getByText('Enter')).toBeTruthy()
     expect(view.getByText('Look closer')).toBeTruthy()
     expect(view.getByText('Return to the Night Land')).toBeTruthy()
-    expect(view.UNSAFE_getAllByType(Image)[1].props.source).toBe(DEEP_SILO_APPROACH_IMAGES.open)
+    expect(view.container.queryAll((node) => node.type === 'Image')[1].props.source).toBe(
+      DEEP_SILO_APPROACH_IMAGES.open
+    )
   })
 })

@@ -29,22 +29,22 @@ const mockedParams = useLocalSearchParams as jest.Mock
 describe('dynamic Current-Loom routes', () => {
   it.each(['current-loom-01', 'current-loom-02'])(
     'resolves every screen for %s from the parsed catalog',
-    (instanceId) => {
+    async (instanceId) => {
       mockedParams.mockReturnValue({ instanceId })
       const screens: CurrentLoomRouteScreenKind[] = ['intro', 'puzzle', 'success']
-      screens.forEach((screen) => {
-        const view = render(<CurrentLoomRouteScreen screen={screen} />)
+      for (const screen of screens) {
+        const view = await render(<CurrentLoomRouteScreen screen={screen} />)
         expect(view.getByTestId('resolved-current-loom-screen').props.children).toBe(
           `${screen}:${instanceId}:${instanceId}`
         )
-        view.unmount()
-      })
+        await view.unmount()
+      }
     }
   )
 
-  it('rejects unknown instances rather than falling back to hardcoded content', () => {
+  it('rejects unknown instances rather than falling back to hardcoded content', async () => {
     mockedParams.mockReturnValue({ instanceId: 'missing-loom' })
-    expect(() => render(<CurrentLoomRouteScreen screen="intro" />)).toThrow(
+    await expect(render(<CurrentLoomRouteScreen screen="intro" />)).rejects.toThrow(
       "Unknown Current-Loom encounter 'missing-loom'"
     )
   })

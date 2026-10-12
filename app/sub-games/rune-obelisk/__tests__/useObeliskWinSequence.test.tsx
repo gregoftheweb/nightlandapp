@@ -10,7 +10,7 @@ import {
 describe('useObeliskWinSequence', () => {
   afterEach(() => jest.restoreAllMocks())
 
-  test('shakes electric for two seconds, then settles back to plain and grants', () => {
+  test('shakes electric for two seconds, then settles back to plain and grants', async () => {
     const onSettled = jest.fn()
     let finish: ((result: { finished: boolean }) => void) | undefined
     const timing = jest.spyOn(Animated, 'timing').mockImplementation(
@@ -32,12 +32,12 @@ describe('useObeliskWinSequence', () => {
         }) as Animated.CompositeAnimation
     )
     let solved = false
-    const { result, rerender } = renderHook(() => useObeliskWinSequence(solved, onSettled))
+    const { result, rerender } = await renderHook(() => useObeliskWinSequence(solved, onSettled))
 
     expect(result.current.phase).toBe('playing')
     expect(getObeliskBackgroundState(result.current.phase)).toBe('plain')
     solved = true
-    rerender(undefined)
+    await rerender(undefined)
     expect(result.current.phase).toBe('shaking')
     expect(getObeliskBackgroundState(result.current.phase)).toBe('electric')
 
@@ -48,7 +48,7 @@ describe('useObeliskWinSequence', () => {
     expect(result.current.phase).toBe('shaking')
     expect(onSettled).not.toHaveBeenCalled()
 
-    act(() => finish?.({ finished: true }))
+    await act(() => finish?.({ finished: true }))
     expect(result.current.phase).toBe('settled')
     expect(getObeliskBackgroundState(result.current.phase)).toBe('plain')
     expect(onSettled).toHaveBeenCalledTimes(1)

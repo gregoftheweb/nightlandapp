@@ -36,8 +36,8 @@ describe('useWeapon', () => {
     })
   })
 
-  afterEach(() => {
-    act(() => {
+  afterEach(async () => {
+    await act(() => {
       jest.runOnlyPendingTimers()
     })
     jest.useRealTimers()
@@ -45,7 +45,7 @@ describe('useWeapon', () => {
     AppState.currentState = initialAppState
   })
 
-  it('uses the latest equipped weapon and hit callback when the projectile lands', () => {
+  it('uses the latest equipped weapon and hit callback when the projectile lands', async () => {
     const standardWeapon = makeWeapon(STANDARD_WEAPON_ID)
     const laserWeapon = makeWeapon(LASER_WEAPON_ID)
     const baseState = getInitialState('1')
@@ -73,14 +73,14 @@ describe('useWeapon', () => {
     })
 
     const initialProps = makeProps(STANDARD_WEAPON_ID, oldHitHandler)
-    const { result, rerender } = renderHook((props: UseWeaponProps) => useWeapon(props), {
+    const { result, rerender } = await renderHook((props: UseWeaponProps) => useWeapon(props), {
       initialProps,
     })
 
-    rerender(makeProps(LASER_WEAPON_ID, latestHitHandler))
+    await rerender(makeProps(LASER_WEAPON_ID, latestHitHandler))
     jest.spyOn(Math, 'random').mockReturnValue(0)
 
-    act(() => {
+    await act(() => {
       result.current.handleZapTargetPress('left')
       jest.advanceTimersByTime(100)
     })
@@ -89,11 +89,11 @@ describe('useWeapon', () => {
     expect(oldHitHandler).not.toHaveBeenCalled()
   })
 
-  it('invalidates an in-flight projectile when the app backgrounds', () => {
+  it('invalidates an in-flight projectile when the app backgrounds', async () => {
     const weapon = makeWeapon(STANDARD_WEAPON_ID)
     const state = getInitialState('1')
     const onDaemonHit = jest.fn()
-    const { result } = renderHook(() =>
+    const { result } = await renderHook(() =>
       useWeapon({
         gameState: {
           ...state,
@@ -115,9 +115,9 @@ describe('useWeapon', () => {
       })
     )
 
-    act(() => result.current.handleZapTargetPress('left'))
-    act(() => appStateListener?.('background'))
-    act(() => jest.advanceTimersByTime(100))
+    await act(() => result.current.handleZapTargetPress('left'))
+    await act(() => appStateListener?.('background'))
+    await act(() => jest.advanceTimersByTime(100))
 
     expect(onDaemonHit).not.toHaveBeenCalled()
     expect(result.current.hitIndicator).toBeNull()

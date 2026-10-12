@@ -15,8 +15,8 @@ jest
 
 describe('useArenaLayout hook', () => {
   describe('initialization', () => {
-    it('should initialize with null arenaSize and bgRect', () => {
-      const { result } = renderHook(() =>
+    it('should initialize with null arenaSize and bgRect', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
@@ -30,8 +30,8 @@ describe('useArenaLayout hook', () => {
       expect(result.current.daemonY).toBe(0)
     })
 
-    it('should provide handleArenaLayout function', () => {
-      const { result } = renderHook(() =>
+    it('should provide handleArenaLayout function', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
@@ -41,8 +41,8 @@ describe('useArenaLayout hook', () => {
       expect(typeof result.current.handleArenaLayout).toBe('function')
     })
 
-    it('should provide getSpawnPosition function', () => {
-      const { result } = renderHook(() =>
+    it('should provide getSpawnPosition function', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
@@ -54,15 +54,15 @@ describe('useArenaLayout hook', () => {
   })
 
   describe('arena layout handling', () => {
-    it('should update arenaSize when handleArenaLayout is called', () => {
-      const { result } = renderHook(() =>
+    it('should update arenaSize when handleArenaLayout is called', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
         })
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 500, height: 500, x: 0, y: 0 },
@@ -73,15 +73,15 @@ describe('useArenaLayout hook', () => {
       expect(result.current.arenaSize).toEqual({ width: 500, height: 500 })
     })
 
-    it('should not update arenaSize with invalid dimensions', () => {
-      const { result } = renderHook(() =>
+    it('should not update arenaSize with invalid dimensions', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
         })
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 0, height: 0, x: 0, y: 0 },
@@ -94,15 +94,15 @@ describe('useArenaLayout hook', () => {
   })
 
   describe('background rect calculation', () => {
-    it('should calculate bgRect for square arena', () => {
-      const { result } = renderHook(() =>
+    it('should calculate bgRect for square arena', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
         })
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 500, height: 500, x: 0, y: 0 },
@@ -118,15 +118,15 @@ describe('useArenaLayout hook', () => {
       expect(result.current.bgRect?.offsetY).toBe(0) // Centered vertically
     })
 
-    it('should calculate bgRect for tall portrait arena', () => {
-      const { result } = renderHook(() =>
+    it('should calculate bgRect for tall portrait arena', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
         })
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 400, height: 800, x: 0, y: 0 },
@@ -142,15 +142,15 @@ describe('useArenaLayout hook', () => {
       expect(result.current.bgRect?.offsetY).toBe(0) // No vertical offset
     })
 
-    it('should calculate bgRect for wide landscape arena', () => {
-      const { result } = renderHook(() =>
+    it('should calculate bgRect for wide landscape arena', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
         })
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 1000, height: 500, x: 0, y: 0 },
@@ -168,15 +168,15 @@ describe('useArenaLayout hook', () => {
   })
 
   describe('daemon positioning', () => {
-    it('should calculate center position correctly', () => {
-      const { result } = renderHook(() =>
+    it('should calculate center position correctly', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
         })
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 500, height: 500, x: 0, y: 0 },
@@ -195,15 +195,15 @@ describe('useArenaLayout hook', () => {
       expect(result.current.daemonPosition.y).toBeCloseTo(expectedY)
     })
 
-    it('should calculate left position correctly', () => {
-      const { result } = renderHook(() =>
+    it('should calculate left position correctly', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'left',
         })
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 500, height: 500, x: 0, y: 0 },
@@ -220,15 +220,15 @@ describe('useArenaLayout hook', () => {
       expect(result.current.daemonY).toBeCloseTo(expectedY)
     })
 
-    it('should calculate right position correctly', () => {
-      const { result } = renderHook(() =>
+    it('should calculate right position correctly', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'right',
         })
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 500, height: 500, x: 0, y: 0 },
@@ -245,8 +245,8 @@ describe('useArenaLayout hook', () => {
       expect(result.current.daemonY).toBeCloseTo(expectedY)
     })
 
-    it('should update position when currentPosition changes', () => {
-      const { result, rerender } = renderHook(
+    it('should update position when currentPosition changes', async () => {
+      const { result, rerender } = await renderHook(
         ({ currentPosition }: { currentPosition: 'left' | 'center' | 'right' }) =>
           useArenaLayout({
             backgroundImage: mockBackgroundImage,
@@ -257,7 +257,7 @@ describe('useArenaLayout hook', () => {
         }
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 500, height: 500, x: 0, y: 0 },
@@ -268,7 +268,7 @@ describe('useArenaLayout hook', () => {
       const leftX = result.current.daemonX
 
       // Change position to center
-      rerender({ currentPosition: 'center' })
+      await rerender({ currentPosition: 'center' })
 
       const centerX = result.current.daemonX
 
@@ -278,15 +278,15 @@ describe('useArenaLayout hook', () => {
   })
 
   describe('getSpawnPosition function', () => {
-    it('should return position for any given spawn point', () => {
-      const { result } = renderHook(() =>
+    it('should return position for any given spawn point', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',
         })
       )
 
-      act(() => {
+      await act(() => {
         result.current.handleArenaLayout({
           nativeEvent: {
             layout: { width: 500, height: 500, x: 0, y: 0 },
@@ -307,8 +307,8 @@ describe('useArenaLayout hook', () => {
       expect(Math.abs(centerPos.y - rightPos.y)).toBeLessThan(10)
     })
 
-    it('should return {x: 0, y: 0} when bgRect is null', () => {
-      const { result } = renderHook(() =>
+    it('should return {x: 0, y: 0} when bgRect is null', async () => {
+      const { result } = await renderHook(() =>
         useArenaLayout({
           backgroundImage: mockBackgroundImage,
           currentPosition: 'center',

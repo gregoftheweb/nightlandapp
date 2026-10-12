@@ -18,8 +18,8 @@ describe('InscriptionGrid', () => {
   test.each([
     ['english', alphabet, false],
     ['rune', toRunicInscription(alphabet), true],
-  ] as const)('renders the correct fixed rows for the %s panel', (testID, text, runic) => {
-    const screen = render(
+  ] as const)('renders the correct fixed rows for the %s panel', async (testID, text, runic) => {
+    const screen = await render(
       <InscriptionGrid text={text} fontSize={18} runic={runic} testID={testID} />
     )
     const expectedRows = splitInscriptionGrid(text)

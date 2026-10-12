@@ -32,13 +32,13 @@ function HydrationHarness() {
 
 describe('GameProvider hydration', () => {
   test('resolves hydration only with the loaded state committed to context', async () => {
-    const screen = render(
+    const screen = await render(
       <GameProvider>
         <HydrationHarness />
       </GameProvider>
     )
 
-    fireEvent.press(screen.getByLabelText('hydrate state'))
+    await fireEvent.press(screen.getByLabelText('hydrate state'))
 
     await waitFor(() => {
       expect(screen.getByTestId('move-count').props.children).toBe(42)
