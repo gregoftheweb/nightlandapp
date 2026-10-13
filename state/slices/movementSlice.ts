@@ -1,4 +1,5 @@
 // state/slices/movementSlice.ts
+import { boundaryForState, canCrossMapBoundary } from '../../modules/mapBoundary'
 import { GameState } from '../../config/types'
 import { logIfDev } from '../../modules/utils'
 import { toIntegerTilePosition } from '../../modules/playerPosition'
@@ -50,6 +51,7 @@ export function reduceMovement(state: GameState, action: any): GameState | null 
         return state
       }
       const oldPosition = toIntegerTilePosition(state.player.position)
+      if (!canCrossMapBoundary(boundaryForState(state), oldPosition, newPlayerPos)) return state
       const newState = {
         ...state,
         player: {
