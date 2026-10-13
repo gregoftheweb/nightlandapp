@@ -14,16 +14,16 @@ The preview is a standalone browser rendering of the actual boundary mask and sp
 
 ## Implementation
 
-| File, relative to `Nightland/nightlandapp` | Responsibility |
-| --- | --- |
-| `config/mapBoundary.ts` | Authored normalized outline; row increases south, column increases east. |
-| `modules/mapBoundary.ts` | Cached land/walkable masks, footprint checks, movement segment checks, directional sprite selection. |
-| `components/GameBoard.tsx` | Viewport-limited cliff and exterior rendering from the shared mask. |
-| `modules/movement.ts` | Normal and held movement stop at the new boundary. |
-| `state/slices/movementSlice.ts` | Guards direct movement actions as well as directional actions. |
-| `state/slices/jauntSlice.ts` | Rejects boundary crossings before spending charges or producing teleport effects. |
-| `app/game/index.tsx` | Shows blocked Jaunt feedback before issuing charge-depletion messages. |
-| `modules/__tests__/mapBoundary.test.ts` | Connectivity, authored access, wall coverage, movement, Jaunt, and other-level regression checks. |
+| File, relative to `Nightland/nightlandapp` | Responsibility                                                                                       |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `config/mapBoundary.ts`                    | Authored normalized outline; row increases south, column increases east.                             |
+| `modules/mapBoundary.ts`                   | Cached land/walkable masks, footprint checks, movement segment checks, directional sprite selection. |
+| `components/GameBoard.tsx`                 | Viewport-limited cliff and exterior rendering from the shared mask.                                  |
+| `modules/movement.ts`                      | Normal and held movement stop at the new boundary.                                                   |
+| `state/slices/movementSlice.ts`            | Guards direct movement actions as well as directional actions.                                       |
+| `state/slices/jauntSlice.ts`               | Rejects boundary crossings before spending charges or producing teleport effects.                    |
+| `app/game/index.tsx`                       | Shows blocked Jaunt feedback before issuing charge-depletion messages.                               |
+| `modules/__tests__/mapBoundary.test.ts`    | Connectivity, authored access, wall coverage, movement, Jaunt, and other-level regression checks.    |
 
 The player currently occupies one tile. Footprint validation also supports wider/taller footprints. Multi-cell movements use a supercover traversal: diagonal crossings check both adjacent cells, preventing corner cutting. Cliff art stays within blocked cells. Other levels retain rectangular borders.
 
