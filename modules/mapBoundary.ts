@@ -72,6 +72,29 @@ export function isBoundaryWalkable(
   return true
 }
 
+/** Continuous art/encounter footprints must clear every cell they cover. */
+export function isBoundaryFootprintWalkable(
+  boundary: Boundary,
+  position: Position,
+  width: number,
+  height: number
+): boolean {
+  if (
+    ![position.row, position.col, width, height].every(Number.isFinite) ||
+    width <= 0 ||
+    height <= 0
+  )
+    return false
+  const row = Math.floor(position.row)
+  const col = Math.floor(position.col)
+  return isBoundaryWalkable(
+    boundary,
+    { row, col },
+    Math.ceil(position.col + width) - col,
+    Math.ceil(position.row + height) - row
+  )
+}
+
 /** Supercover traversal checks both sides of a diagonal crossing. */
 export function canCrossMapBoundary(boundary: Boundary, from: Position, to: Position): boolean {
   if (![from.row, from.col, to.row, to.col].every(Number.isFinite)) return false

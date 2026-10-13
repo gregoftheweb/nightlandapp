@@ -10,7 +10,7 @@ import type { GameboardManifest } from './types/gameboard'
  * not placement concerns, and therefore are not represented by this manifest.
  */
 export const GAMEBOARD_MANIFEST = {
-  version: 2,
+  version: 3,
   slots: [
     {
       slotId: 'tesseract-note',

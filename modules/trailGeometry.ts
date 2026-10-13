@@ -1,3 +1,4 @@
+import { getMapBoundary, canCrossMapBoundary, isBoundaryFootprintWalkable } from './mapBoundary'
 import type { EncounterPlacement, Level, Position, ValidationResult } from '@config/types'
 import type { BoardOccupancyRegistry, PathPositionResolver, RandomSource } from './gameboardLayout'
 
@@ -44,6 +45,9 @@ export interface TraversalObstacles {
   width: number
   height: number
   obstacles: TraversalObstacle[]
+  boundary?: ReturnType<typeof getMapBoundary>
+  destination?: Position
+  targetLength?: number
 }
 
 export const HOUSE_OF_SILENCE_PLACEHOLDER_FOOTPRINT = { width: 8, height: 8 } as const
@@ -126,12 +130,22 @@ export function buildTraversalObstacles(level: Level): TraversalObstacles {
     })
   })
 
-  return { width: level.boardSize.width, height: level.boardSize.height, obstacles }
+  return {
+    width: level.boardSize.width,
+    height: level.boardSize.height,
+    obstacles,
+    ...(level.id === '1'
+      ? { boundary: getMapBoundary(level.boardSize.width, level.boardSize.height, level.id) }
+      : {}),
+    ...(level.trail
+      ? { destination: level.trail.destination, targetLength: level.trail.targetLength }
+      : {}),
+  }
 }
 
 /**
  * Generates persisted trail geometry without reading or changing game state.
- * The start is deliberately supplied by the caller; Stage 3 will wire in the real spawn.
+ * Start, destination and clearance are derived from the authored level.
  */
 export function generateTrailNetwork(
   obstacles: TraversalObstacles,
@@ -156,7 +170,7 @@ export function generateTrailNetwork(
     return failure(
       'trail-endpoint-unavailable',
       'trail.end',
-      'No top-edge position has clearance for the House of Silence placeholder'
+      'No valid destination has clearance for the House of Silence approach'
     )
   }
 
@@ -171,14 +185,11 @@ export function generateTrailNetwork(
     return { success: true, value: createTrailNetwork({ trunkWaypoints: trunk, branches }) }
   }
 
-  const fallbackEnd = endpoints[0]
-  console.warn(
-    `[trail-geometry] Generation retries exhausted (${completedTrunkAttempts} completed trunks); using obstacle-exempt straight-line fallback with zero branches.`
+  return failure(
+    'trail-route-unavailable',
+    'trail',
+    `No safe trail with ${branchCount} branches after ${MAX_FULL_REGENERATION_ATTEMPTS} attempts (${completedTrunkAttempts} completed trunks)`
   )
-  return {
-    success: true,
-    value: createTrailNetwork({ trunkWaypoints: [{ ...start }, { ...fallbackEnd }], branches: [] }),
-  }
 }
 
 export function createTrailNetwork(geometry: TrailNetworkGeometry): TrailNetwork {
@@ -221,6 +232,18 @@ export function createTrailNetwork(geometry: TrailNetworkGeometry): TrailNetwork
     },
     geometry: copiedGeometry,
   }
+}
+
+/** Keep the first visible breadcrumb clear while placing a shorter expedition. */
+export function firstTrunkFootstepPosition(
+  trailNetwork: TrailNetwork,
+  occupancy: BoardOccupancyRegistry
+): Position | undefined {
+  const waypoints = trailNetwork.geometry.trunkWaypoints
+  const walked = findFirstFootstepDistance(waypoints, pathMetrics(waypoints), occupancy, [])
+  return walked === undefined
+    ? undefined
+    : footstepAtDistance(waypoints, pathMetrics(waypoints), walked).position
 }
 
 export function generateFootstepDescriptors(
@@ -444,6 +467,23 @@ function endpointCandidates(
   occupancy: BoardOccupancyRegistry,
   random: RandomSource
 ): Position[] {
+  if (obstacles.destination) {
+    const destination = obstacles.destination
+    const footprint = HOUSE_OF_SILENCE_PLACEHOLDER_FOOTPRINT
+    if (
+      !pointInBounds(destination, obstacles) ||
+      (obstacles.boundary &&
+        !isBoundaryFootprintWalkable(
+          obstacles.boundary,
+          destination,
+          footprint.width,
+          footprint.height
+        )) ||
+      !occupancy.isFree(destination, footprint).free
+    )
+      return []
+    return [{ ...destination }]
+  }
   const maxCol = obstacles.width - HOUSE_OF_SILENCE_PLACEHOLDER_FOOTPRINT.width
   const maxRow = obstacles.height - HOUSE_OF_SILENCE_PLACEHOLDER_FOOTPRINT.height
   if (maxCol < 0 || maxRow < 0) return []
@@ -468,10 +508,13 @@ function generateTrunk(
   random: RandomSource
 ): Position[] | undefined {
   const directDistance = distance(start, end)
-  const targetLength = directDistance * TRAIL_LENGTH_RATIO
+  const targetLength = obstacles.targetLength ?? directDistance * TRAIL_LENGTH_RATIO
+  const edgeMargin = obstacles.destination
+    ? Math.min(TRUNK_EDGE_MARGIN, Math.abs(start.row - end.row) * 0.4)
+    : TRUNK_EDGE_MARGIN
   const waypoints: Position[] = [copyPosition(start)]
-  let lateralSign = initialLateralSign(start, obstacles, random)
-  let heading = wanderingHeading(start, start, lateralSign)
+  let lateralSign = initialLateralSign(start, obstacles, random, edgeMargin)
+  let heading = wanderingHeading(start, start, lateralSign, edgeMargin)
   let reversalTurnDirection = 0
   const maxSteps = Math.ceil(targetLength / TRUNK_STEP) * 5
 
@@ -479,6 +522,8 @@ function generateTrunk(
     const current = waypoints[waypoints.length - 1]
     const walked = pathMetrics(waypoints).length
     const toEnd = distance(current, end)
+    // Reject loops that would make the new expedition grow back to full-map length.
+    if (obstacles.targetLength && walked + toEnd > targetLength * 1.15) return undefined
     const approachingEnd = walked + toEnd >= targetLength
     const endHeading = headingToward(current, end)
     if (approachingEnd) reversalTurnDirection = 0
@@ -495,8 +540,8 @@ function generateTrunk(
 
     if (!approachingEnd) {
       const reachedLateralEdge =
-        (lateralSign < 0 && current.col <= TRUNK_EDGE_MARGIN) ||
-        (lateralSign > 0 && current.col >= obstacles.width - TRUNK_EDGE_MARGIN)
+        (lateralSign < 0 && current.col <= edgeMargin) ||
+        (lateralSign > 0 && current.col >= obstacles.width - edgeMargin)
       if (reachedLateralEdge) {
         lateralSign *= -1
         reversalTurnDirection = lateralSign
@@ -505,7 +550,7 @@ function generateTrunk(
 
     const desiredHeading = approachingEnd
       ? endHeading
-      : wanderingHeading(current, start, lateralSign)
+      : wanderingHeading(current, start, lateralSign, edgeMargin)
     let accepted = false
     for (let localAttempt = 0; localAttempt < MAX_LOCAL_REROUTE_ATTEMPTS; localAttempt += 1) {
       const desiredTurn = clamp(
@@ -514,7 +559,7 @@ function generateTrunk(
         MAX_TRUNK_TURN_RADIANS
       )
       const jitter =
-        start.row - current.row < TRUNK_EDGE_MARGIN
+        (obstacles.destination && approachingEnd) || start.row - current.row < edgeMargin
           ? 0
           : ((random.next() - 0.5) * (72 * Math.PI)) / 180
       const completingReversal =
@@ -528,7 +573,10 @@ function generateTrunk(
             : reversalTurnDirection * MAX_TRUNK_TURN_RADIANS
       const candidateHeading = normalizeAngle(heading + turn)
       const rerouteScale = 1 - (localAttempt / (MAX_LOCAL_REROUTE_ATTEMPTS - 1)) * 0.75
-      const stepLength = (approachingEnd ? Math.min(TRUNK_STEP, toEnd) : TRUNK_STEP) * rerouteScale
+      // Tighten the final turn as the destination approaches instead of orbiting it.
+      const finishingStep = obstacles.destination ? toEnd * 0.25 : toEnd
+      const stepLength =
+        (approachingEnd ? Math.min(TRUNK_STEP, finishingStep) : TRUNK_STEP) * rerouteScale
       const candidate = {
         row: current.row - Math.cos(candidateHeading) * stepLength,
         col: current.col + Math.sin(candidateHeading) * stepLength,
@@ -546,22 +594,28 @@ function generateTrunk(
   return undefined
 }
 
-function wanderingHeading(current: Position, start: Position, lateralSign: number): number {
-  const upwardRate = start.row - current.row < TRUNK_EDGE_MARGIN ? 0.45 : 0.02
+function wanderingHeading(
+  current: Position,
+  start: Position,
+  lateralSign: number,
+  edgeMargin: number
+): number {
+  const upwardRate = start.row - current.row < edgeMargin ? 0.45 : 0.02
   return lateralSign * Math.acos(upwardRate)
 }
 
 function initialLateralSign(
   start: Position,
   obstacles: TraversalObstacles,
-  random: RandomSource
+  random: RandomSource,
+  edgeMargin: number
 ): number {
   const preferred = random.next() < 0.5 ? -1 : 1
   for (const sign of [preferred, -preferred]) {
-    const heading = wanderingHeading(start, start, sign)
+    const heading = wanderingHeading(start, start, sign, edgeMargin)
     const path = [start]
     let clear = true
-    const probeSteps = Math.ceil(TRUNK_EDGE_MARGIN / TRUNK_STEP)
+    const probeSteps = Math.ceil(edgeMargin / TRUNK_STEP)
     for (let step = 0; step < probeSteps; step += 1) {
       const current = path[path.length - 1]
       const candidate = {
@@ -668,6 +722,8 @@ function canAddSegment(
   obstacles: TraversalObstacles
 ): boolean {
   const segment = { start: path[path.length - 1], end: candidate }
+  if (obstacles.boundary && !canCrossMapBoundary(obstacles.boundary, segment.start, segment.end))
+    return false
   if (
     obstacles.obstacles.some((obstacle) => {
       if (
@@ -791,7 +847,17 @@ function directionNearPoint(path: Position[], point: Position): Position {
 
 function pointInBounds(point: Position, obstacles: TraversalObstacles): boolean {
   return (
-    point.row >= 0 && point.col >= 0 && point.row < obstacles.height && point.col < obstacles.width
+    point.row >= 0 &&
+    point.col >= 0 &&
+    point.row < obstacles.height &&
+    point.col < obstacles.width &&
+    (!obstacles.boundary ||
+      isBoundaryFootprintWalkable(
+        obstacles.boundary,
+        { row: Math.round(point.row), col: Math.round(point.col) },
+        1,
+        1
+      ))
   )
 }
 

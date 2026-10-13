@@ -4,6 +4,7 @@ import { parsedCurrentLoomContentResult } from '@/app/sub-games/_shared/current-
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
 import { createItemInstance, createSubGameEntranceInstance } from '@config/levelHelpers'
 import { getSubGameDefinition } from '@config/subGames'
+import { getMapBoundary, isBoundaryFootprintWalkable } from './mapBoundary'
 import { toIntegerTilePosition } from './playerPosition'
 import type {
   EncounterPlacement,
@@ -20,6 +21,7 @@ import type {
 import {
   buildTraversalObstacles,
   generateFootstepDescriptors,
+  firstTrunkFootstepPosition,
   generateTrailNetwork,
   type FootstepDescriptor,
   type TrailLocation,
@@ -44,7 +46,10 @@ export class BoardOccupancyRegistry {
   private readonly ids = new Set<string>()
   private nextId = 1
 
-  constructor(seed: readonly OccupancyFootprint[] = []) {
+  constructor(
+    seed: readonly OccupancyFootprint[] = [],
+    private readonly boundary?: ReturnType<typeof getMapBoundary>
+  ) {
     seed.forEach((entry) => this.add(entry))
   }
 
@@ -59,6 +64,11 @@ export class BoardOccupancyRegistry {
     const overlappingIds = this.entries
       .filter((entry) => rectanglesOverlap(position, footprint, entry.position, entry))
       .map(({ id }) => id)
+    if (
+      this.boundary &&
+      !isBoundaryFootprintWalkable(this.boundary, position, footprint.width, footprint.height)
+    )
+      overlappingIds.push('map-boundary')
     return { free: overlappingIds.length === 0, overlappingIds }
   }
 
@@ -133,7 +143,12 @@ export function buildBoardOccupancyRegistry(level: Level): BoardOccupancyRegistr
     })
   })
   seed.push({ id: 'player-spawn', position: level.playerSpawn, width: 1, height: 1 })
-  return new BoardOccupancyRegistry(seed)
+  return new BoardOccupancyRegistry(
+    seed,
+    level.id === '1'
+      ? getMapBoundary(level.boardSize.width, level.boardSize.height, level.id)
+      : undefined
+  )
 }
 
 export interface PathPositionResolver {
@@ -267,7 +282,28 @@ function branchTerminusLocation(trailNetwork: TrailNetwork, random: RandomSource
   }
 }
 
+/** Retry rejected geometry/placement seeds, never replace them with an unsafe route. */
 export function generateLayout(
+  manifest: GameboardManifest,
+  catalogs: ParsedContentCatalogsByShape,
+  level: Level,
+  random: RandomSource
+): ReturnType<typeof generateLayoutAttempt> {
+  let result = generateLayoutAttempt(manifest, catalogs, level, random)
+  for (let attempt = 1; !result.success && attempt < 12; attempt++) {
+    if (
+      !result.errors.every(
+        (error) =>
+          error.code === 'layout-slot-unplaceable' || error.code === 'trail-route-unavailable'
+      )
+    )
+      break
+    result = generateLayoutAttempt(manifest, catalogs, level, random)
+  }
+  return result
+}
+
+function generateLayoutAttempt(
   manifest: GameboardManifest,
   catalogs: ParsedContentCatalogsByShape,
   level: Level,
@@ -292,6 +328,7 @@ export function generateLayout(
   )
   if (!trailResult.success) return trailResult
   const trailNetwork = trailResult.value
+  const firstFootstep = firstTrunkFootstepPosition(trailNetwork, occupancy)
   const trailEnd = trailNetwork.resolve({ type: 'trunk', progressPct: 1 })
   const straightLineReference = Math.hypot(
     level.playerSpawn.row - trailEnd.row,
@@ -371,6 +408,13 @@ export function generateLayout(
             lastReason = `candidate at (${position.row}, ${position.col}) is outside level bounds`
             continue
           }
+          if (
+            firstFootstep &&
+            rectanglesOverlap(position, footprint, firstFootstep, { width: 2, height: 2 })
+          ) {
+            lastReason = 'candidate would obscure the first trail marker'
+            continue
+          }
           const free = occupancy.isFree(position, footprint)
           if (!free.free) {
             lastReason = `would overlap existing object ${free.overlappingIds.join(', ')}`
@@ -407,7 +451,7 @@ export function generateLayout(
   }
 
   if (errors.length > 0) return { success: false, errors }
-  const generatedItems = generateTrailItems(trailNetwork, occupancy, random)
+  const generatedItems = generateTrailItems(trailNetwork, occupancy, random, firstFootstep)
   return {
     success: true,
     value: {
@@ -431,7 +475,8 @@ const TRAIL_ITEM_COUNTS = {
 function generateTrailItems(
   trailNetwork: TrailNetwork,
   occupancy: BoardOccupancyRegistry,
-  random: RandomSource
+  random: RandomSource,
+  firstFootstep: Position | undefined
 ): Item[] {
   const items: Item[] = []
   for (const [template, count] of Object.entries(TRAIL_ITEM_COUNTS)) {
@@ -442,6 +487,14 @@ function generateTrailItems(
         // coordinates - snap to a tile before reserving/placing, or the item renders
         // off the grid line and can never exactly overlap the (always-integer) player.
         const position = toIntegerTilePosition(trailNetwork.resolve(location))
+        if (
+          firstFootstep &&
+          rectanglesOverlap(position, { width: 1, height: 1 }, firstFootstep, {
+            width: 2,
+            height: 2,
+          })
+        )
+          continue
         if (!occupancy.isFree(position, { width: 1, height: 1 }).free) continue
         const occupancyId = occupancy.reserve(template, position, { width: 1, height: 1 })
         items.push(createItemInstance(template, position, { id: occupancyId }))

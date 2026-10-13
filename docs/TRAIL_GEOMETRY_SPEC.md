@@ -1,5 +1,7 @@
 # Trail Geometry & Branching — Implemented Specification (v6)
 
+> **Phase 1.5 amendment:** [Central Redoubt and boundary-aware expedition](map-redesign/PHASE_1_5_CENTRAL_REDOUBT.md) updates Level 1's start, destination, target length, boundary/footprint clearance, and layout retries. The obstacle-exempt fallback described below is superseded by a validation failure. The remaining geometry and persistence contracts still apply.
+
 **Status:** Implemented and covered by the automated test suite
 **Scope:** Current generated trail, branch, encounter-placement, and footstep behavior.
 **Depends on:** `docs/GAMEBOARD_MANIFEST_SPEC.md` §3/§4, `modules/gameboardLayout.ts`, `docs/ENCOUNTER_CONTENT_PATTERN.md`
