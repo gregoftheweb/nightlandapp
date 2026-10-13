@@ -1,5 +1,6 @@
 // config/player.ts
 import { Player } from './types'
+import { PLAYER_START_POSITION } from './worldLayout'
 import christosIMG from '@assets/images/sprites/characters/christos.webp'
 
 export const playerConfig: Player = {
@@ -12,7 +13,7 @@ export const playerConfig: Player = {
   image: christosIMG,
   currentHP: 100,
   maxHP: 100,
-  position: { row: 395, col: 200 },
+  position: PLAYER_START_POSITION,
   zIndex: 500,
   moveSpeed: 1,
   initiative: 10,

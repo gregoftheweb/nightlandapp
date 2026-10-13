@@ -41,6 +41,7 @@ export interface Level {
   description?: string
   boardSize: { width: number; height: number }
   playerSpawn: Position
+  trail?: { destination: Position; targetLength: number }
   requiredLevel?: number
   recommendedLevel?: number
   experienceReward?: number

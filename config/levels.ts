@@ -6,6 +6,12 @@
  * Uses helper functions and type-safe IDs for improved maintainability.
  */
 
+import {
+  REDOUBT_POSITION,
+  PLAYER_START_POSITION,
+  NORTHERN_TRAIL_DESTINATION,
+  EXPEDITION_TRAIL_LENGTH,
+} from './worldLayout'
 import { Level } from './types'
 import { LevelId } from './levelTypes'
 import {
@@ -33,7 +39,8 @@ export const levels: Record<LevelId, Level> = {
     boardSize: { width: 400, height: 400 },
 
     // 3. playerSpawn
-    playerSpawn: { row: 395, col: 200 },
+    playerSpawn: PLAYER_START_POSITION,
+    trail: { destination: NORTHERN_TRAIL_DESTINATION, targetLength: EXPEDITION_TRAIL_LENGTH },
 
     // 4. environment (music, lighting, weather)
     ambientLight: 0.2,
@@ -46,14 +53,14 @@ export const levels: Record<LevelId, Level> = {
     // 6. objects / items / nonCollisionObjects
     // ITEMS - Created from templates with specific positions
     items: [
-      createItemInstance('healthPotion', { row: 395, col: 195 }),
-      createItemInstance('ironSword', { row: 380, col: 200 }),
-      createItemInstance('maguffinRock', { row: 390, col: 210 }),
+      createItemInstance('healthPotion', { row: 203, col: 195 }),
+      createItemInstance('ironSword', { row: 188, col: 200 }),
+      createItemInstance('maguffinRock', { row: 198, col: 210 }),
     ],
 
     // OBJECTS - Buildings and structures (including pools)
     objects: [
-      createObjectInstance('redoubt', { row: 384, col: 194 }),
+      createObjectInstance('redoubt', REDOUBT_POSITION),
       createObjectInstance('healingPool', { row: 375, col: 20 }),
       createObjectInstance('poisonPool', { row: 250, col: 250 }),
       createObjectInstance('cursedTotem', { row: 385, col: 220 }),
@@ -113,8 +120,8 @@ export const levels: Record<LevelId, Level> = {
     completionConditions: [
       {
         type: 'reach_position',
-        position: { row: 10, col: 200 },
-        description: 'Reach the northern border',
+        position: NORTHERN_TRAIL_DESTINATION,
+        description: 'Follow the trail to the House of Silence approach',
       },
       {
         type: 'collect_item',

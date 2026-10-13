@@ -1,4 +1,10 @@
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
+import { getMapBoundary, canCrossMapBoundary, isBoundaryFootprintWalkable } from '../mapBoundary'
+import {
+  EXPEDITION_TRAIL_LENGTH,
+  REDOUBT_POSITION,
+  NORTHERN_TRAIL_DESTINATION,
+} from '@config/worldLayout'
 import { levels } from '@config/levels'
 import {
   getInitialState,
@@ -92,7 +98,10 @@ function walkedDistanceToPoint(
 
 function overlapsRedoubt(position: { row: number; col: number }): boolean {
   return (
-    position.row < 400 && position.row + 2 > 384 && position.col < 210 && position.col + 2 > 194
+    position.row < REDOUBT_POSITION.row + 16 &&
+    position.row + 2 > REDOUBT_POSITION.row &&
+    position.col < REDOUBT_POSITION.col + 16 &&
+    position.col + 2 > REDOUBT_POSITION.col
   )
 }
 
@@ -116,7 +125,7 @@ describe('gameboard layout integration', () => {
     const entries = registry.snapshot()
     expect(entries).toEqual(
       expect.arrayContaining([
-        { id: 'redoubt_384_194', position: { row: 384, col: 194 }, width: 16, height: 16 },
+        { id: 'redoubt_192_192', position: { row: 192, col: 192 }, width: 16, height: 16 },
         {
           id: 'healingPool_375_20',
           position: { row: 375, col: 20 },
@@ -204,13 +213,13 @@ describe('gameboard layout integration', () => {
     expect(() =>
       registry.reserve('watcher-conflict', { row: 372, col: 201 }, { width: 1, height: 1 })
     ).toThrow('would overlap existing object watcher_se_370_199')
-    expect(registry.isFree({ row: 384, col: 194 }, { width: 1, height: 1 })).toEqual({
+    expect(registry.isFree({ row: 192, col: 192 }, { width: 1, height: 1 })).toEqual({
       free: false,
-      overlappingIds: ['redoubt_384_194'],
+      overlappingIds: ['redoubt_192_192'],
     })
     expect(() =>
-      registry.reserve('redoubt-conflict', { row: 384, col: 194 }, { width: 1, height: 1 })
-    ).toThrow('would overlap existing object redoubt_384_194')
+      registry.reserve('redoubt-conflict', { row: 192, col: 192 }, { width: 1, height: 1 })
+    ).toThrow('would overlap existing object redoubt_192_192')
   })
 
   test('rejects a real river segment but permits empty space inside its bounding box', () => {
@@ -249,6 +258,34 @@ describe('gameboard layout integration', () => {
         encounterIds.length
       )
       expect(result.value.trailNetwork.geometry.trunkWaypoints.length).toBeGreaterThan(2)
+      const boundary = getMapBoundary(400, 400, '1')
+      const geometry = result.value.trailNetwork.geometry
+      expect(geometry.trunkWaypoints[0]).toEqual(levels['1'].playerSpawn)
+      expect(geometry.trunkWaypoints.at(-1)).toEqual(NORTHERN_TRAIL_DESTINATION)
+      expect(pathLength(geometry.trunkWaypoints)).toBeGreaterThanOrEqual(EXPEDITION_TRAIL_LENGTH)
+      expect(pathLength(geometry.trunkWaypoints)).toBeLessThanOrEqual(
+        EXPEDITION_TRAIL_LENGTH * 1.15
+      )
+      for (const points of [
+        geometry.trunkWaypoints,
+        ...geometry.branches.map((branch) => branch.waypoints),
+      ]) {
+        points
+          .slice(1)
+          .forEach((point, index) =>
+            expect(canCrossMapBoundary(boundary, points[index], point)).toBe(true)
+          )
+      }
+      result.value.placements.forEach((placement) =>
+        expect(
+          isBoundaryFootprintWalkable(
+            boundary,
+            placement.position,
+            placement.footprint.width,
+            placement.footprint.height
+          )
+        ).toBe(true)
+      )
       expect(result.value.trailNetwork.branches).toHaveLength(2)
       result.value.trailNetwork.branches.forEach((branch) => {
         expect(branch.length).toBeGreaterThan(0)

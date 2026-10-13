@@ -20,7 +20,7 @@ import {
   debugInspectCurrentSave,
 } from '@modules/saveGame'
 import { invalidateAutoSaveAndDeleteCurrentGame } from '@modules/autoSave'
-import { fromSnapshot } from '@modules/gameState'
+import { fromSnapshot, IncompatibleGameboardSaveError } from '@modules/gameState'
 import { clearAllSubGameSaves } from './sub-games/_shared/persistence'
 import { SafeAreaContent } from '@components/SafeAreaContent'
 
@@ -28,6 +28,7 @@ export default function SplashScreen() {
   const router = useRouter()
   const { dispatch, hydrateGameState } = useGameActions()
 
+  const [saveLoadError, setSaveLoadError] = React.useState<string | null>(null)
   const [hasCurrentSave, setHasCurrentSave] = React.useState(false)
   const [waypointSaves, setWaypointSaves] = React.useState<WaypointSaveMetadata[]>([])
   const [showWaypointModal, setShowWaypointModal] = React.useState(false)
@@ -39,6 +40,7 @@ export default function SplashScreen() {
     if (transitionInProgressRef.current) return false
     transitionInProgressRef.current = true
     setIsTransitioning(true)
+    setSaveLoadError(null)
     return true
   }
 
@@ -129,6 +131,10 @@ export default function SplashScreen() {
       console.log('[SplashScreen] Navigated to /game')
     } catch (error) {
       console.error('[SplashScreen] Failed to load current game:', error)
+      if (error instanceof IncompatibleGameboardSaveError)
+        setSaveLoadError(
+          'This save uses an older game layout. Begin a new expedition to use the updated map.'
+        )
     } finally {
       endTransition()
     }
@@ -156,6 +162,12 @@ export default function SplashScreen() {
       router.replace('/game')
     } catch (error) {
       console.error('[SplashScreen] Failed to load waypoint:', error)
+      if (error instanceof IncompatibleGameboardSaveError) {
+        setShowWaypointModal(false)
+        setSaveLoadError(
+          'This save uses an older game layout. Begin a new expedition to use the updated map.'
+        )
+      }
     } finally {
       endTransition()
     }
@@ -177,6 +189,11 @@ export default function SplashScreen() {
           <Text style={styles.gameTitle}>The Night Land</Text>
           <Text style={styles.tagline}>Persius and the Quest for the Tesseract</Text>
         </View>
+        {saveLoadError && (
+          <Text accessibilityRole="alert" style={styles.saveLoadError}>
+            {saveLoadError}
+          </Text>
+        )}
         {isLoading ? (
           <ActivityIndicator size="large" color="red" />
         ) : (
@@ -266,6 +283,7 @@ export default function SplashScreen() {
 }
 
 const styles = StyleSheet.create({
+  saveLoadError: { color: '#e8d8bc', textAlign: 'center', margin: 16 },
   backgroundImage: {
     flex: 1,
     width: '100%',

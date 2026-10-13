@@ -113,30 +113,13 @@ interface InitialStateOptions {
   skipGameboardLayout?: boolean
 }
 
-const MAX_LAYOUT_GENERATION_ATTEMPTS = 12
-
 function generatePlayableLayout(levelConfig: (typeof levels)[keyof typeof levels]) {
-  let result = generateLayout(
+  return generateLayout(
     GAMEBOARD_MANIFEST,
     REAL_PARSED_CONTENT_CATALOGS,
     levelConfig,
     new RandomSource()
   )
-
-  // Some valid trail networks do not leave enough separated branch space for
-  // every authored encounter. That network is a rejected run seed, not a fatal
-  // application error. Regenerate the whole expedition with a bounded budget.
-  for (let attempt = 1; !result.success && attempt < MAX_LAYOUT_GENERATION_ATTEMPTS; attempt += 1) {
-    logIfDev(`↻ Rejected unplayable expedition layout; regenerating (${attempt + 1})`)
-    result = generateLayout(
-      GAMEBOARD_MANIFEST,
-      REAL_PARSED_CONTENT_CATALOGS,
-      levelConfig,
-      new RandomSource()
-    )
-  }
-
-  return result
 }
 
 /**
@@ -212,13 +195,13 @@ function buildInitialState(
     items: runtimeItems,
     objects: runtimeObjects,
     nonCollisionObjects: levelConfig.nonCollisionObjects || [],
-    gridWidth: gameConfig.grid.width,
-    gridHeight: gameConfig.grid.height,
+    gridWidth: levelConfig.boardSize.width,
+    gridHeight: levelConfig.boardSize.height,
 
     // ===== PLAYER DOMAIN =====
     player: {
       ...playerConfig,
-      position: toIntegerTilePosition(playerConfig.position || { row: 0, col: 0 }),
+      position: toIntegerTilePosition(levelConfig.playerSpawn),
     },
     moveCount: 0,
     distanceTraveled: 0,

@@ -450,7 +450,13 @@ describe('standalone trail geometry', () => {
         ...HOUSE_OF_SILENCE_PLACEHOLDER_FOOTPRINT,
       },
     ])
-    const result = generateTrailNetwork(BOARD, occupancy, new RandomSource(() => 0.25), 0, START)
+    const result = generateTrailNetwork(
+      BOARD,
+      occupancy,
+      new RandomSource(seededRandom(37)),
+      0,
+      START
+    )
     expect(result.success).toBe(true)
     if (!result.success) return
     const end = result.value.geometry.trunkWaypoints.at(-1)!
@@ -458,8 +464,7 @@ describe('standalone trail geometry', () => {
     expect(occupancy.isFree(end, HOUSE_OF_SILENCE_PLACEHOLDER_FOOTPRINT).free).toBe(true)
   })
 
-  test('falls back to a straight trunk with zero branches when normal generation is impossible', () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+  test('returns a validation failure instead of crossing obstacles when generation is impossible', () => {
     const result = generateTrailNetwork(
       {
         ...BOARD,
@@ -470,12 +475,11 @@ describe('standalone trail geometry', () => {
       2,
       START
     )
-    expect(result.success).toBe(true)
-    if (!result.success) return
-    expect(result.value.geometry.trunkWaypoints).toHaveLength(2)
-    expect(result.value.geometry.branches).toHaveLength(0)
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('straight-line fallback'))
-    warn.mockRestore()
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(result.errors).toEqual([
+      expect.objectContaining({ code: 'trail-route-unavailable', path: 'trail' }),
+    ])
   })
 
   test('branchCount zero is a valid generated trunk-only network', () => {

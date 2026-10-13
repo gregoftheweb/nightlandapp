@@ -3,7 +3,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native'
 import SplashScreen from '../index'
 import { useGameActions } from '@context/GameContext'
 import { loadCurrentGame } from '@modules/saveGame'
-import { fromSnapshot } from '@modules/gameState'
+import { fromSnapshot, IncompatibleGameboardSaveError } from '@modules/gameState'
 
 const mockReplace = jest.fn()
 
@@ -25,6 +25,7 @@ jest.mock('@modules/saveGame', () => ({
 
 jest.mock('@modules/gameState', () => ({
   fromSnapshot: jest.fn(),
+  IncompatibleGameboardSaveError: class extends Error {},
 }))
 
 jest.mock('@modules/autoSave', () => ({
@@ -82,5 +83,27 @@ describe('SplashScreen hydration navigation', () => {
     })
 
     expect(mockReplace).toHaveBeenCalledWith('/game')
+  })
+  test('explains that an old-map save needs a new expedition without hydrating it', async () => {
+    const hydrateGameState = jest.fn()
+    mockedUseGameActions.mockReturnValue({
+      dispatch: jest.fn(),
+      hydrateGameState,
+      setOverlay: jest.fn(),
+      signalRpgResume: jest.fn(),
+    })
+    mockedLoadCurrentGame.mockResolvedValue({} as never)
+    mockedFromSnapshot.mockImplementation(() => {
+      throw new IncompatibleGameboardSaveError()
+    })
+    const screen = await render(<SplashScreen />)
+    await fireEvent.press(await screen.findByText('Current'))
+    expect(
+      await screen.findByText(
+        'This save uses an older game layout. Begin a new expedition to use the updated map.'
+      )
+    ).toBeTruthy()
+    expect(hydrateGameState).not.toHaveBeenCalled()
+    expect(mockReplace).not.toHaveBeenCalledWith('/game')
   })
 })
