@@ -3,13 +3,9 @@ import { GameState, Position, Monster } from '../config/types'
 import { setupCombat, checkForCombatCollision } from './combat'
 import { logIfDev } from './utils'
 import { executeMonsterRangedAttack } from './monsterRangedAttacks'
+import { boundaryForState, canCrossMapBoundary } from './mapBoundary'
 
 // ==================== PLAYER MOVEMENT ====================
-
-// The cliff wall ring occupies the board's outer row/col (see GameBoard's
-// renderBoardBorder) and is solid - it never overlaps a cell the player can stand on.
-const isBoardEdgeCell = (pos: Position, gridWidth: number, gridHeight: number): boolean =>
-  pos.row === 0 || pos.row === gridHeight - 1 || pos.col === 0 || pos.col === gridWidth - 1
 
 export const calculateNewPosition = (
   currentPos: Position,
@@ -41,11 +37,7 @@ export const calculateNewPosition = (
       break
   }
 
-  // Stepping from the interior onto the cliff wall ring is refused.
-  if (
-    isBoardEdgeCell(newPosition, state.gridWidth, state.gridHeight) &&
-    !isBoardEdgeCell(currentPos, state.gridWidth, state.gridHeight)
-  ) {
+  if (!canCrossMapBoundary(boundaryForState(state), currentPos, newPosition)) {
     return currentPos
   }
 

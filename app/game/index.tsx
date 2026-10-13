@@ -33,6 +33,7 @@ import {
 } from '../../modules/combat'
 import { enterSubGame } from '../../modules/subGames'
 import { jauntExecutionActions } from '../../state/slices/jauntSlice'
+import { boundaryForState, canCrossMapBoundary } from '../../modules/mapBoundary'
 import { calculateGameViewport } from '../../modules/viewport'
 import GameBoardZoomControls from '../../components/GameBoardZoomControls'
 import {
@@ -1178,10 +1179,21 @@ export default function Game() {
         })
       }
 
+      // Reject blocked targets before emitting charge-depletion messages.
+      if (
+        !canCrossMapBoundary(boundaryForState(state), state.player.position, {
+          col: tapCol,
+          row: tapRow,
+        })
+      ) {
+        dispatch({ type: 'ADD_COMBAT_LOG', payload: { message: 'The cliff face blocks the way.' } })
+        return
+      }
+
       // Execute the jaunt teleport
       jauntExecutionActions(state.player, { col: tapCol, row: tapRow }).forEach(dispatch)
     },
-    [state.player, calculateTapPosition, dispatch, isTapInViewport]
+    [state, calculateTapPosition, dispatch, isTapInViewport]
   )
 
   const handleTurnPress = useCallback(() => {

@@ -1,4 +1,5 @@
 // state/slices/jauntSlice.ts
+import { boundaryForState, canCrossMapBoundary } from '../../modules/mapBoundary'
 import { GameState } from '../../config/types'
 import { logIfDev } from '../../modules/utils'
 import { Position } from '../../config/types/primitives'
@@ -30,6 +31,9 @@ function teleportPlayerPosition(state: GameState, targetPosition: Position): Gam
     col: Math.max(0, Math.min(integerPosition.col, state.gridWidth - 1)),
     row: Math.max(0, Math.min(integerPosition.row, state.gridHeight - 1)),
   }
+
+  if (!canCrossMapBoundary(boundaryForState(state), state.player.position, clampedPosition))
+    return state
 
   return {
     ...state,
@@ -107,6 +111,7 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
       }
 
       const teleportedState = teleportPlayerPosition(state, targetPosition)
+      if (teleportedState === state) return state
       const clampedPosition = teleportedState.player.position
 
       logIfDev('[Jaunt] Teleporting to position', {

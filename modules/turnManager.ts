@@ -130,7 +130,7 @@ const doMoveTurn = (direction: string, setOverlay?: (overlay: any) => void): voi
     calculateNewPosition(currentGameState.player.position, direction, currentGameState)
   )
 
-  // calculateNewPosition refuses to step onto the cliff wall ring, leaving the
+  // calculateNewPosition refuses to cross the cliff boundary, leaving the
   // position unchanged - let the player know why nothing happened.
   if (newPosition.row === previousPosition.row && newPosition.col === previousPosition.col) {
     gameDispatch({
