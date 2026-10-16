@@ -11,8 +11,10 @@ import {
   PLAYER_START_POSITION,
   NORTHERN_TRAIL_DESTINATION,
   EXPEDITION_TRAIL_LENGTH,
+  WATCHER_POSITIONS,
 } from './worldLayout'
 import { Level } from './types'
+import { NIGHTLAND_TERRAIN } from './terrain'
 import { LevelId } from './levelTypes'
 import {
   loadSpawnTable,
@@ -40,6 +42,7 @@ export const levels: Record<LevelId, Level> = {
 
     // 3. playerSpawn
     playerSpawn: PLAYER_START_POSITION,
+    terrainRegions: NIGHTLAND_TERRAIN,
     trail: { destination: NORTHERN_TRAIL_DESTINATION, targetLength: EXPEDITION_TRAIL_LENGTH },
 
     // 4. environment (music, lighting, weather)
@@ -101,16 +104,20 @@ export const levels: Record<LevelId, Level> = {
 
     // 7. greatPowers
     greatPowers: [
-      createGreatPowerInstance(
-        'watcher_se',
-        { row: 370, col: 199 },
-        {
+      createGreatPowerInstance('watcher_nw', WATCHER_POSITIONS.watcher_nw),
+      createGreatPowerInstance('watcher_ne', WATCHER_POSITIONS.watcher_ne),
+      createGreatPowerInstance('watcher_sw', WATCHER_POSITIONS.watcher_sw),
+      createGreatPowerInstance('watcher_s', WATCHER_POSITIONS.watcher_s),
+      {
+        ...createGreatPowerInstance('watcher_se', WATCHER_POSITIONS.watcher_se, {
           currentHP: 1000,
           maxHP: 1000,
           attack: 50,
           ac: 25,
-        }
-      ),
+        }),
+        // Preserve the existing Watcher's identity when moving its authored anchor.
+        id: 'watcher_se_370_199',
+      },
     ],
 
     // 8. spawn configs (monsterSpawnConfigs)

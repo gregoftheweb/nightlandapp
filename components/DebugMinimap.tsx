@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
+  Image,
   Modal,
   Pressable,
   StyleSheet,
@@ -15,6 +16,7 @@ import type {
   LevelObjectInstance,
   NonCollisionObject,
   Position,
+  TerrainRegion,
 } from '@config/types'
 
 const DEBUG_MINIMAP_SIZE = 250
@@ -31,6 +33,7 @@ interface DebugMinimapProps {
   encounterPlacements: readonly EncounterPlacement[]
   greatPowers: readonly GreatPower[]
   levelObjects: readonly LevelObjectInstance[]
+  terrainRegions?: readonly TerrainRegion[]
   nonCollisionObjects: readonly NonCollisionObject[]
   playerPosition: Position
   mapSize?: number
@@ -114,6 +117,7 @@ export default function DebugMinimap({
   encounterPlacements,
   greatPowers,
   levelObjects,
+  terrainRegions = [],
   nonCollisionObjects,
   playerPosition,
   mapSize,
@@ -287,6 +291,51 @@ export default function DebugMinimap({
             )
           })}
 
+          {terrainRegions.map((region) => {
+            const left = (region.position.col / (boardSize.width - 1)) * actualMapSize
+            const top = (region.position.row / (boardSize.height - 1)) * actualMapSize
+            const width = (region.width / (boardSize.width - 1)) * actualMapSize
+            const height = (region.height / (boardSize.height - 1)) * actualMapSize
+            return (
+              <Pressable
+                key={region.id}
+                accessibilityLabel={`Terrain ${region.name}`}
+                onPress={() => {
+                  labelOpacity.setValue(1)
+                  setSelectedMarkers([
+                    {
+                      key: region.id,
+                      point: { x: left, y: top },
+                      info: `${region.name}\n${region.blocksMovement ? 'Blocked' : 'Walkable'}\nAnchor: (${region.position.row}, ${region.position.col})`,
+                    },
+                  ])
+                }}
+                style={{ position: 'absolute', left, top, width, height }}
+              >
+                <Image
+                  source={region.image}
+                  resizeMode="stretch"
+                  style={{ width: '100%', height: '100%' }}
+                />
+                {region.shape.map((s, i) => (
+                  <View
+                    pointerEvents="none"
+                    key={i}
+                    style={{
+                      position: 'absolute',
+                      left: (s.col / region.width) * width,
+                      top: (s.row / region.height) * height,
+                      width: (s.width / region.width) * width,
+                      height: (s.height / region.height) * height,
+                      backgroundColor: region.blocksMovement
+                        ? 'rgba(255,70,70,0.25)'
+                        : 'rgba(60,220,130,0.15)',
+                    }}
+                  />
+                ))}
+              </Pressable>
+            )
+          })}
           {rivers.flatMap((river) =>
             (river.collisionMask ?? []).map((segment, index) => {
               const point = positionToMinimapPoint(
@@ -368,8 +417,18 @@ export default function DebugMinimap({
                 accessibilityLabel={`Great Power ${greatPower.name}`}
                 onPress={() => inspectNear(markerByKey(`great-power-${greatPower.id}`))}
                 hitSlop={8}
-                style={[styles.greatPowerMarker, markerPosition(point, 11)]}
-              />
+                style={[styles.greatPowerMarker, markerPosition(point, 32)]}
+              >
+                {greatPower.image && (
+                  <Image
+                    accessibilityLabel={`${greatPower.name} artwork`}
+                    source={greatPower.image}
+                    resizeMode="contain"
+                    style={styles.greatPowerImage}
+                  />
+                )}
+                <Text style={styles.greatPowerName}>{greatPower.name || greatPower.shortName}</Text>
+              </Pressable>
             )
           })}
 
@@ -456,13 +515,28 @@ const styles = StyleSheet.create({
   },
   greatPowerMarker: {
     position: 'absolute',
-    width: 11,
-    height: 11,
-    borderRadius: 5.5,
-    backgroundColor: '#d65cff',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#32123e',
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: '#d65cff',
     zIndex: 3,
+  },
+  greatPowerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  greatPowerName: {
+    position: 'absolute',
+    top: 33,
+    left: -44,
+    width: 120,
+    color: '#edb5ff',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    textAlign: 'center',
+    fontSize: 10,
+    lineHeight: 12,
   },
   encounterMarker: {
     position: 'absolute',

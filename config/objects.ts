@@ -1,16 +1,17 @@
 // config/objects.ts
 import { GameObject, NonCollisionObject } from './types'
 
-import redoubtImg from '@assets/images/sprites/buildings/redoubt2.webp'
+import redoubtImg from '@assets/images/sprites/buildings/gameboard-buildings/redoubt.webp'
 import riverIMG from '@assets/images/sprites/buildings/river1.webp'
-import cursedTotemIMG from '@assets/images/sprites/buildings/cursedtotem.webp'
-import petrifiedWillowIMG from '@assets/images/sprites/buildings/petrifiedWillow.webp'
+import cursedTotemIMG from '@assets/images/sprites/buildings/gameboard-buildings/cursed-totem-no-rear-gear.webp'
+import petrifiedWillowIMG from '@assets/images/sprites/buildings/gameboard-buildings/petrified-willow.webp'
 import maguffinRockIMG from '@assets/images/items/equipment/maguffinRock.webp'
 import shortSwordIMG from '@assets/images/items/equipment/shortSword.webp'
 import potionIMG from '@assets/images/items/consumables/potion.webp'
 import jauntJuiceIMG from '@assets/images/items/consumables/jaunt-juice.webp'
 import injectaGrandeIMG from '@assets/images/items/consumables/injecta-grande.webp'
-import sanctuaryPoolImg from '@assets/images/sprites/buildings/poolofpeace.webp'
+import sanctuaryPoolImg from '@assets/images/sprites/buildings/gameboard-buildings/pool-of-peace.webp'
+import waterPoolImg from '@assets/images/sprites/buildings/gameboard-buildings/pool-of-water.webp'
 import generatedFootprintsBlueIMG from '@assets/images/items/quest/footprints-blue.webp'
 import generatedFootprintsGreenIMG from '@assets/images/items/quest/footprints-green.webp'
 import generatedFootprintsRedIMG from '@assets/images/items/quest/footprints-red.webp'
@@ -400,7 +401,7 @@ const buildings: Record<string, GameObject> = {
     description: 'A bubbling pool of toxic sludge.',
     width: 2,
     height: 2,
-    image: sanctuaryPoolImg,
+    image: waterPoolImg,
     active: true,
     zIndex: 0,
     effects: [

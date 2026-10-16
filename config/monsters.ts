@@ -4,7 +4,12 @@ import { MonsterTemplate, GreatPowerTemplate } from './types'
 import abhumanIMG from '@assets/images/sprites/monsters/abhuman.webp'
 import night_houndIMG from '@assets/images/sprites/monsters/nighthound4.webp'
 import giantSlugIMG from '@assets/images/sprites/monsters/giant-slug.webp'
-import watcher_seIMG from '@assets/images/sprites/monsters/watcherse.webp'
+// Source filenames select art by direction; existing board instances keep their IDs and positions.
+import watcher_seIMG from '@assets/images/sprites/great-powers/watcher-south-east-circle.webp'
+import watcher_nwIMG from '@assets/images/sprites/great-powers/watcher-north-west.webp'
+import watcher_neIMG from '@assets/images/sprites/great-powers/watcher-north-east.webp'
+import watcher_swIMG from '@assets/images/sprites/great-powers/watcher-south-west.webp'
+import watcher_sIMG from '@assets/images/sprites/great-powers/watcher-south.webp'
 
 // -------------------- REGULAR MONSTERS --------------------
 // Base monster templates - Static definitions without runtime state
@@ -61,25 +66,57 @@ const monsterTemplates: MonsterTemplate[] = [
 
 // -------------------- GREAT POWERS --------------------
 // Templates - Static definitions without runtime state
+const southEastWatcher: GreatPowerTemplate = {
+  kind: 'greatPower',
+  shortName: 'watcher_se',
+  category: 'greatPower',
+  name: 'Watcher of the South East',
+  description:
+    'An ancient guardian with mystical powers that watches over the southeastern wastes.',
+  image: watcher_seIMG,
+  width: 6,
+  height: 6,
+  maxHP: 150,
+  attack: 15,
+  ac: 16,
+  effects: [
+    {
+      type: 'soulsuck',
+    },
+  ],
+}
+
+// Directional templates share the existing Watcher footprint and default behavior.
+// Level 1 placements are authored in worldLayout.ts and levels.ts.
 const greatPowerTemplates: GreatPowerTemplate[] = [
+  southEastWatcher,
   {
-    kind: 'greatPower',
-    shortName: 'watcher_se',
-    category: 'greatPower',
-    name: 'Watcher of the South East',
-    description:
-      'An ancient guardian with mystical powers that watches over the southeastern wastes.',
-    image: watcher_seIMG,
-    width: 6,
-    height: 6,
-    maxHP: 150,
-    attack: 15,
-    ac: 16,
-    effects: [
-      {
-        type: 'soulsuck',
-      },
-    ],
+    ...southEastWatcher,
+    shortName: 'watcher_nw',
+    name: 'Watcher of the North-West',
+    description: 'An ancient guardian that watches over the northwestern wastes.',
+    image: watcher_nwIMG,
+  },
+  {
+    ...southEastWatcher,
+    shortName: 'watcher_ne',
+    name: 'Watcher of the North-East',
+    description: 'An ancient guardian that watches over the northeastern wastes.',
+    image: watcher_neIMG,
+  },
+  {
+    ...southEastWatcher,
+    shortName: 'watcher_sw',
+    name: 'Watcher of the South-West',
+    description: 'An ancient guardian that watches over the southwestern wastes.',
+    image: watcher_swIMG,
+  },
+  {
+    ...southEastWatcher,
+    shortName: 'watcher_s',
+    name: 'Watcher of the South',
+    description: 'An ancient guardian that watches over the southern wastes.',
+    image: watcher_sIMG,
   },
 ]
 

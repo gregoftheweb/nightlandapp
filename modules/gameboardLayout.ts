@@ -103,6 +103,18 @@ function rectanglesOverlap(
 
 export function buildBoardOccupancyRegistry(level: Level): BoardOccupancyRegistry {
   const seed: OccupancyFootprint[] = []
+  level.terrainRegions
+    ?.filter((r) => r.blocksMovement)
+    .forEach((r) =>
+      r.shape.forEach((s, i) =>
+        seed.push({
+          id: `${r.id}-terrain-${i}`,
+          position: { row: r.position.row + s.row, col: r.position.col + s.col },
+          width: s.width,
+          height: s.height,
+        })
+      )
+    )
   level.objects.forEach((object) => {
     if (!object.position) return
     seed.push({

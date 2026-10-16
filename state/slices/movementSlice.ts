@@ -1,11 +1,13 @@
 // state/slices/movementSlice.ts
-import { boundaryForState, canCrossMapBoundary } from '../../modules/mapBoundary'
+import { canTraverseTerrain } from '../../modules/terrain'
 import { GameState } from '../../config/types'
 import { logIfDev } from '../../modules/utils'
 import { toIntegerTilePosition } from '../../modules/playerPosition'
 
 export function reduceMovement(state: GameState, action: any): GameState | null {
   switch (action.type) {
+    case 'SET_TERRAIN_INTERACTION_POSITION':
+      return { ...state, lastTerrainInteractionPosition: action.payload.position }
     case 'MOVE_PLAYER':
       if (state.inCombat) {
         logIfDev('Player cannot move while in combat')
@@ -51,7 +53,7 @@ export function reduceMovement(state: GameState, action: any): GameState | null 
         return state
       }
       const oldPosition = toIntegerTilePosition(state.player.position)
-      if (!canCrossMapBoundary(boundaryForState(state), oldPosition, newPlayerPos)) return state
+      if (!canTraverseTerrain(state, oldPosition, newPlayerPos)) return state
       const newState = {
         ...state,
         player: {

@@ -1,4 +1,5 @@
 //config/types/levels.ts
+import type { TerrainRegion } from './terrain'
 import { Position, Area } from './primitives'
 import { Item, LevelObjectInstance, NonCollisionObject, ObjectInstance } from './itemsAndObjects'
 import { MonsterInstance, GreatPowerInstance, GreatPower } from './actors'
@@ -51,6 +52,7 @@ export interface Level {
   turnsPerHitPoint?: number // Number of turns needed to heal 1 HP (e.g., 5 = heal 1 HP every 5 turns)
   items: Item[]
   objects: LevelObjectInstance[]
+  terrainRegions?: TerrainRegion[]
   nonCollisionObjects?: NonCollisionObject[]
   greatPowers?: GreatPower[]
   bossEncounter?: BossEncounter

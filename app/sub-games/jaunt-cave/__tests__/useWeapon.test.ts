@@ -48,7 +48,7 @@ describe('useWeapon', () => {
   it('uses the latest equipped weapon and hit callback when the projectile lands', async () => {
     const standardWeapon = makeWeapon(STANDARD_WEAPON_ID)
     const laserWeapon = makeWeapon(LASER_WEAPON_ID)
-    const baseState = getInitialState('1')
+    const baseState = getInitialState('1', { skipGameboardLayout: true })
     const oldHitHandler = jest.fn()
     const latestHitHandler = jest.fn()
 
@@ -91,7 +91,7 @@ describe('useWeapon', () => {
 
   it('invalidates an in-flight projectile when the app backgrounds', async () => {
     const weapon = makeWeapon(STANDARD_WEAPON_ID)
-    const state = getInitialState('1')
+    const state = getInitialState('1', { skipGameboardLayout: true })
     const onDaemonHit = jest.fn()
     const { result } = await renderHook(() =>
       useWeapon({

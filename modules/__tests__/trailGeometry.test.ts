@@ -102,7 +102,7 @@ const BOARD = { width: 600, height: 600, obstacles: [] }
 const START = { row: 580, col: 300 }
 
 describe('standalone trail geometry', () => {
-  test('buildTraversalObstacles uses real building, river-mask, and Great Power shapes only', () => {
+  test('buildTraversalObstacles excludes the walkable river and footsteps', () => {
     const level = {
       id: 'fixture',
       name: 'fixture',
@@ -176,7 +176,6 @@ describe('standalone trail geometry', () => {
       height: 80,
       obstacles: [
         { id: 'building', position: { row: 20, col: 30 }, width: 5, height: 7 },
-        { id: 'river-mask-0', position: { row: 7, col: 9 }, width: 4, height: 5 },
         { id: 'watcher', position: { row: 40, col: 50 }, width: 6, height: 8 },
       ],
     })

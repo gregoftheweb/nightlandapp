@@ -1,10 +1,23 @@
 // state/slices/monstersSlice.ts
 import { GameState } from '../../config/types'
+import { canTraverseTerrain, isTerrainWalkable } from '../../modules/terrain'
 import { logIfDev } from '../../modules/utils'
 
 export function reduceMonsters(state: GameState, action: any): GameState | null {
   switch (action.type) {
-    case 'MOVE_MONSTER':
+    case 'MOVE_MONSTER': {
+      const monster = state.activeMonsters.find((m) => m.id === action.payload.id)
+      if (
+        !monster ||
+        !canTraverseTerrain(
+          state,
+          monster.position,
+          action.payload.position,
+          monster.width ?? 1,
+          monster.height ?? 1
+        )
+      )
+        return state
       return {
         ...state,
         activeMonsters: state.activeMonsters.map((monster) =>
@@ -22,9 +35,18 @@ export function reduceMonsters(state: GameState, action: any): GameState | null 
             : monster
         ),
       }
-
+    }
     case 'SPAWN_MONSTER':
       const newMonster = action.payload.monster
+      if (
+        !isTerrainWalkable(
+          state,
+          newMonster.position,
+          newMonster.width ?? 1,
+          newMonster.height ?? 1
+        )
+      )
+        return state
       logIfDev('Spawning monster:', newMonster.name)
       return {
         ...state,
@@ -32,7 +54,14 @@ export function reduceMonsters(state: GameState, action: any): GameState | null 
       }
 
     case 'UPDATE_ACTIVE_MONSTERS':
-      return { ...state, activeMonsters: action.payload.activeMonsters }
+      return {
+        ...state,
+        activeMonsters: action.payload.activeMonsters.filter(
+          (m: GameState['activeMonsters'][number]) =>
+            state.activeMonsters.some((old) => old.id === m.id) ||
+            isTerrainWalkable(state, m.position, m.width ?? 1, m.height ?? 1)
+        ),
+      }
 
     case 'UPDATE_WAITING_MONSTERS':
       return { ...state, waitingMonsters: action.payload.waitingMonsters }

@@ -88,6 +88,7 @@ describe('DebugMinimap coordinate mapping', () => {
           {
             id: 'watcher',
             name: 'Watcher',
+            image: { uri: 'watcher.webp' },
             position: { row: 380, col: 180 },
             width: 6,
             height: 6,
@@ -135,6 +136,10 @@ describe('DebugMinimap coordinate mapping', () => {
     )
 
     expect(view.getByLabelText('Great Power Watcher')).toBeTruthy()
+    expect(view.getByLabelText('Watcher artwork').props.source).toEqual({
+      uri: 'watcher.webp',
+    })
+    expect(view.getByText('Watcher')).toBeTruthy()
     expect(view.getByLabelText('Building Last Redoubt')).toBeTruthy()
     expect(view.queryByLabelText('Building Tesseract')).toBeNull()
     expect(view.getAllByLabelText(/River segment/)).toHaveLength(2)
@@ -213,7 +218,7 @@ describe('DebugMinimap coordinate mapping', () => {
     expect(view.getByText('Player\nPosition: (395, 200)')).toBeTruthy()
 
     await fireEvent.press(view.getByLabelText('Great Power Watcher'))
-    expect(view.getByText(/Watcher/)).toBeTruthy()
+    expect(view.getByText('Watcher\nPosition: (380, 180)\nFootprint: 6×6')).toBeTruthy()
     expect(view.queryByText(/Awakened:/)).toBeNull()
     expect(view.getByText('overlap-encounter\nTrunk: 50.0%')).toBeTruthy()
   })
