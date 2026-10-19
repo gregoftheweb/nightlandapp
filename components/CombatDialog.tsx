@@ -97,7 +97,7 @@ export const CombatDialog: React.FC<CombatDialogProps> = ({ visible, messages, o
   }
 
   return (
-    <Animated.View style={[styles.combatDialog, { opacity }]}>
+    <Animated.View pointerEvents="none" style={[styles.combatDialog, { opacity }]}>
       {displayedMessages.map((msg, index) => (
         <Text
           key={index}

@@ -73,6 +73,7 @@ export default function Game() {
   const [journalVisible, setJournalVisible] = useState(false)
   const [targetId, setTargetId] = useState<string | undefined>()
   const [showCoordinates, setShowCoordinates] = useState(settingsManager.getShowCoordinates())
+  const [monstersDisabled, setMonstersDisabled] = useState(settingsManager.getMonstersDisabled())
   const [zoomLevel, setZoomLevel] = useState<GameBoardZoomLevel>(DEFAULT_GAMEBOARD_ZOOM_LEVEL)
   const router = useRouter()
   const { width: windowWidth, height: windowHeight } = useWindowDimensions()
@@ -827,7 +828,35 @@ export default function Game() {
   const handleCloseSettings = useCallback(() => {
     setSettingsVisible(false)
     setShowCoordinates(settingsManager.getShowCoordinates())
+    setMonstersDisabled(settingsManager.getMonstersDisabled())
   }, [])
+
+  const handleToggleMonstersDisabled = useCallback(
+    (disabled: boolean) => {
+      if (!__DEV__) return
+      setMonstersDisabled(disabled)
+      void settingsManager.setMonstersDisabled(disabled)
+
+      // Clear out anything already on the board/in combat so flipping this on
+      // mid-playthrough gives a genuinely clean, encounter-free walkthrough
+      // immediately, not just from the next spawn onward.
+      if (disabled) {
+        dispatch({ type: 'UPDATE_ACTIVE_MONSTERS', payload: { activeMonsters: [] } })
+        dispatch({
+          type: 'SET_COMBAT',
+          payload: {
+            inCombat: false,
+            attackSlots: [],
+            waitingMonsters: [],
+            turnOrder: [state.player],
+            combatTurn: state.player,
+            combatLog: [],
+          },
+        })
+      }
+    },
+    [dispatch, state.player]
+  )
 
   const changeZoom = useCallback((direction: 'in' | 'out') => {
     setZoomLevel((current) => {
@@ -1362,6 +1391,8 @@ export default function Game() {
           nonCollisionObjects={runtimeNonCollisionObjects}
           playerPosition={state.player.position}
           onDebugJump={handleDebugJump}
+          monstersDisabled={monstersDisabled}
+          onToggleMonstersDisabled={handleToggleMonstersDisabled}
         />
         <Inventory
           visible={inventoryVisible}

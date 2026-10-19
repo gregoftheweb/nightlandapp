@@ -160,6 +160,10 @@ I am called the Salamander, one of the last of the Science-Wizards of the old wo
 
 It is complete. I have only to find the place where the Earth Current is strong enough to harness. I go now in search of such a place.
 
+There is a second thing I made, long before the Tesseract, that few now remember came from my hand: the Discos, the small bright blade every boy of the Pyramid is given on his naming day. I bound it to the Earth Current itself, so faithfully that it has outlived my own name. It does not fail its bearer easily. But it was built for a brighter age than this one, and alone it is a poor match for what now walks beyond the Circle.
+
+I have raised Current-Looms at certain old stations — regulators of the Earth Current, the same vein that quickens every Discos. A bearer who restores enough of them, and stands with his blade in a place where the Current runs strong, may yet feel it answer him as it never has before. I cannot say how many. I did not live to find out.
+
 The Watchers know what I made. They circle closer with each turn of the world's slow dying.
 
 If I fall, seek what I have hidden. The cure is real. The escape is real. Carry it forward, and let this be a blessing upon you, and upon all who still draw breath in the Night Land.

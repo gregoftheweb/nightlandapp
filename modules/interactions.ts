@@ -111,6 +111,15 @@ const handleWeaponCollection = (item: Item, state: GameState, dispatch: (action:
     payload: { weapon: inventoryItem },
   })
 
+  // Short, non-blocking "picked up X" notice. Reuses the same combat-log ->
+  // CombatDialog pipeline the "terrain blocks the way" message already uses
+  // outside combat: CombatDialog auto-dismisses after 2s and has no touch
+  // handlers, so tap-to-move keeps working while it's showing.
+  dispatch({
+    type: 'ADD_COMBAT_LOG',
+    payload: { message: `Picked up: ${item.name}` },
+  })
+
   console.log(`📦 Weapon added: ${inventoryItem.name}`)
 }
 
@@ -128,6 +137,12 @@ const handleConsumableCollection = (
   dispatch({
     type: 'ADD_TO_INVENTORY',
     payload: { item: inventoryItem },
+  })
+
+  // See the matching comment in handleWeaponCollection above.
+  dispatch({
+    type: 'ADD_COMBAT_LOG',
+    payload: { message: `Picked up: ${item.name}` },
   })
 
   console.log(`📦 Consumable added: ${item.name} (ID: ${inventoryItem.id})`)

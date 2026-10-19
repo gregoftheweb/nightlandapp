@@ -136,10 +136,10 @@ Jaunt Cave does **not** use the main-loop d20/AC formula. It has its own hit mec
 
 ## 7. Known related open items (not part of this system, found incidentally)
 
-These were discovered while investigating hide mechanics and are logged separately, not fixed:
+These were discovered while investigating hide mechanics, logged separately at the time, and both fixed in a later refinement pass (see `REVIEW.md`):
 
-- `modules/combat.ts`'s direct collision guard checks only `isHidden`, not `hideActive` — an existing inconsistency between how the two hide systems are treated by different code paths.
-- `DECREMENT_CLOAKING_TURNS` (environmental `isHidden`/`hideTurns` timed expiration) is fully implemented in the reducer but never actually dispatched anywhere — cloaking's documented turn-based expiration currently doesn't run in real gameplay.
+- `modules/combat.ts`'s direct collision guard now checks both `isHidden` and `hideActive`, matching how monster movement already treats the two hide states.
+- `DECREMENT_CLOAKING_TURNS` (environmental `isHidden`/`hideTurns` timed expiration) is now actually dispatched each turn (`hideTurns > 0`), so cloaking's documented turn-based expiration runs in real gameplay.
 
 See the gameboard system checklist for full tracking of these and other unrelated known issues.
 

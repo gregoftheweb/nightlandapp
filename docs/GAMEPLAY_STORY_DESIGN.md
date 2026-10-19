@@ -55,9 +55,9 @@ A real, ordered sequence — not a scattered list of ideas.
 
 **Real to-dos this sequence surfaces (content updates to already-shipped material, not brand-new content):**
 
-- [ ] Check/update Hermit Hollow's dialogue to introduce the Salamander
-- [ ] Rewrite the Salamander's Letter to reveal Discos's true origin and the Current-Loom connection
-- [ ] Audit the rune obelisk's completion flow for any explicit "translation unlocked" messaging and remove it
+- [x] Check/update Hermit Hollow's dialogue to introduce the Salamander — already done via the `tesseract_partial_history` node; verified during the refinement pass (see `REVIEW.md`), no change needed.
+- [x] Rewrite the Salamander's Letter to reveal Discos's true origin and the Current-Loom connection — done; see `REVIEW.md`.
+- [x] Audit the rune obelisk's completion flow for any explicit "translation unlocked" messaging and remove it — done; `unlock_rune_cipher` no longer announces the mechanic, see `REVIEW.md`.
 
 **Open difficulty question — not yet resolved:** the player has zero defensive tools (no Hide, no Jaunt) for the entire stretch before Hermit Hollow. Given the established design philosophy (long, dangerous trail; "I want the player to die a lot"), a brutal unarmed opening may be intentional — dying repeatedly before earning Hide could make that unlock feel like a real turning point rather than just another item. Alternatively, this stretch or Hermit Hollow's placement may need softening so it doesn't feel unfair before the player has any tools at all. **Needs a real decision, not an assumption either way.**
 

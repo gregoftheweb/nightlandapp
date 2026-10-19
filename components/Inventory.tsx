@@ -157,14 +157,42 @@ function Inventory({
     [equippedRangedWeaponId, handleEquipRangedWeapon]
   )
 
-  const renderInventoryItem = useCallback(
-    (item: Item, index: number) => {
+  // Group identical stackable items ("2 X Healing Potion") instead of one row
+  // per pickup. Each item instance keeps its own id in the underlying array -
+  // this only changes what's displayed. drop/use still act on a single real
+  // item instance (the group's first one); the group shrinks on its own as
+  // instances are removed, since it's derived straight from `inventory`.
+  interface InventoryGroup {
+    key: string
+    name: string
+    count: number
+    representative: Item
+  }
+
+  const groupedInventory = useMemo<InventoryGroup[]>(() => {
+    const groups = new Map<string, InventoryGroup>()
+    for (const item of inventory) {
+      const key = item.shortName || item.name
+      const existing = groups.get(key)
+      if (existing) {
+        existing.count += 1
+      } else {
+        groups.set(key, { key, name: item.name, count: 1, representative: item })
+      }
+    }
+    return Array.from(groups.values())
+  }, [inventory])
+
+  const renderInventoryGroup = useCallback(
+    (group: InventoryGroup) => {
+      const item = group.representative
       const isWeapon = item.type === 'weapon'
       const isUsable = canUseItem(item)
+      const label = group.count > 1 ? `${group.count} X ${group.name}` : group.name
 
       return (
-        <View key={`${item.id || item.shortName}_${index}`} style={styles.inventoryItem}>
-          <Text style={styles.itemName}>{item.name}</Text>
+        <View key={group.key} style={styles.inventoryItem}>
+          <Text style={styles.itemName}>{label}</Text>
           <View style={styles.actionButtons}>
             <TouchableOpacity
               style={styles.actionButton}
@@ -250,7 +278,7 @@ function Inventory({
                 inventory.length === 0 ? (
                   <Text style={styles.emptyInventoryText}>Your inventory is empty</Text>
                 ) : (
-                  inventory.map(renderInventoryItem)
+                  groupedInventory.map(renderInventoryGroup)
                 )
               ) : rangedWeapons.length === 0 ? (
                 <Text style={styles.emptyInventoryText}>No ranged weapons in inventory</Text>

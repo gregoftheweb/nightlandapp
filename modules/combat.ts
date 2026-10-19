@@ -2,6 +2,7 @@
 import { GameState, Position, Monster, Item, WeaponUpgrade } from '../config/types'
 import { getTextContent, logIfDev } from './utils'
 import { COMBAT_STRINGS } from '@assets/copy/combat'
+import { settingsManager } from './settingsManager'
 import {
   calculateWeaponAttackTotal,
   calculateWeaponDamage,
@@ -533,13 +534,23 @@ export const checkForCombatCollision = (
   newPosition: Position,
   playerPos: Position
 ): boolean => {
+  // Debug "walkthrough mode" toggle: never trigger combat from a direct
+  // collision while monsters are disabled.
+  if (settingsManager.getMonstersDisabled()) {
+    return false
+  }
+
   const occupiesPlayerCell =
     playerPos.row >= newPosition.row &&
     playerPos.row < newPosition.row + (monster.height ?? 1) &&
     playerPos.col >= newPosition.col &&
     playerPos.col < newPosition.col + (monster.width ?? 1)
   if (occupiesPlayerCell) {
-    if (!state.player.isHidden) {
+    // A player hidden by either the earned Hide ability or an environmental
+    // effect should be equally safe from a direct collision triggering combat -
+    // monster movement already treats both states as "player is evading"
+    // (see calculateMonsterMovement in movement.ts), so this guard must match.
+    if (!state.player.isHidden && !state.player.hideActive) {
       return true // Combat should be initiated
     }
   }

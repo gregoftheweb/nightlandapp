@@ -1,6 +1,7 @@
 // components/GameBoard.tsx
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { View, Image, StyleSheet, ImageSourcePropType } from 'react-native'
+import { View, Image, StyleSheet, ImageSourcePropType, Animated } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import type {
   Monster,
   LevelObjectInstance,
@@ -144,6 +145,35 @@ function GameBoard({
 
   // Track gameOver transition so the death dialog does not stack
   const previousGameOver = useRef(false)
+
+  // ---- Player-hit feedback (haptic buzz + brief red vignette) ----
+  // Pure "tighter feel" polish: the overworld combat log already reports
+  // damage numbers, but nothing *physically* registers a hit on the player.
+  // This mirrors the kind of hit feedback Jaunt Cave already has locally,
+  // without touching any combat math or adding a new system.
+  const prevPlayerHPRef = useRef(state.player.currentHP)
+  const damageFlashOpacity = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    const prevHP = prevPlayerHPRef.current
+    const currentHP = state.player.currentHP
+    if (currentHP < prevHP) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {})
+      Animated.sequence([
+        Animated.timing(damageFlashOpacity, {
+          toValue: 0.35,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(damageFlashOpacity, {
+          toValue: 0,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }
+    prevPlayerHPRef.current = currentHP
+  }, [state.player.currentHP, damageFlashOpacity])
 
   // ---- Defensive fallbacks (NO early returns before hooks) ----
   const level = state.level
@@ -1262,6 +1292,11 @@ function GameBoard({
       {renderTeleportFlashes}
       {renderVictoryPopups}
 
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.damageFlash, { opacity: damageFlashOpacity }]}
+      />
+
       <InfoBox
         visible={infoVisible}
         name={infoData.name}
@@ -1318,6 +1353,11 @@ const styles = StyleSheet.create({
   gridContainer: {
     position: 'absolute',
     overflow: 'hidden',
+  },
+  damageFlash: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: '#8a0000',
+    zIndex: 999,
   },
   fillContainer: {
     ...StyleSheet.absoluteFill,
