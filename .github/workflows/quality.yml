@@ -14,7 +14,19 @@ permissions:
 
 jobs:
   check:
-    name: Format, lint, types, and tests
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Formatting
+            command: format:check
+          - name: Lint
+            command: lint
+          - name: TypeScript
+            command: typecheck
+          - name: Tests
+            command: test:ci
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -32,21 +44,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        id: dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check formatting
-        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
-        run: pnpm format:check
-
-      - name: Lint
-        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
-        run: pnpm lint
-
-      - name: Check TypeScript
-        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
-        run: pnpm typecheck
-
-      - name: Run tests
-        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
-        run: pnpm test:ci
+      - name: ${{ matrix.name }}
+        run: pnpm ${{ matrix.command }}
