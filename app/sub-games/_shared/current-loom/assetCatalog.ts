@@ -52,7 +52,7 @@ export function createCurrentLoomAssetCatalog(
 const realAssetsResult = createCurrentLoomAssetCatalog([
   {
     assetId: 'current-loom-entrance',
-    image: require('@assets/images/sprites/buildings/gameboard-buildings/loom-entrance-no-rear-gear.webp'),
+    image: require('@assets/images/sprites/buildings/gameboard-buildings/loom-entrance.webp'),
     intrinsicSize: { width: 1254, height: 1254 },
   },
   {

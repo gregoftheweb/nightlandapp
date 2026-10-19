@@ -3,7 +3,7 @@ import { GameObject, NonCollisionObject } from './types'
 
 import redoubtImg from '@assets/images/sprites/buildings/gameboard-buildings/redoubt.webp'
 import riverIMG from '@assets/images/sprites/buildings/river1.webp'
-import cursedTotemIMG from '@assets/images/sprites/buildings/gameboard-buildings/cursed-totem-no-rear-gear.webp'
+import cursedTotemIMG from '@assets/images/sprites/buildings/gameboard-buildings/cursed-totem.webp'
 import petrifiedWillowIMG from '@assets/images/sprites/buildings/gameboard-buildings/petrified-willow.webp'
 import maguffinRockIMG from '@assets/images/items/equipment/maguffinRock.webp'
 import shortSwordIMG from '@assets/images/items/equipment/shortSword.webp'

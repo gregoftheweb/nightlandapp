@@ -1,7 +1,7 @@
 import type { ImageSourcePropType } from 'react-native'
 
 export const TIMED_ENCOUNTER_ASSETS: Readonly<Record<string, ImageSourcePropType>> = Object.freeze({
-  'jaunt-cave-entrance': require('@assets/images/sprites/buildings/gameboard-buildings/jaunt-cave-no-rear-gear.webp'),
+  'jaunt-cave-entrance': require('@assets/images/sprites/buildings/gameboard-buildings/jaunt-cave.webp'),
   'jaunt-cave-intro': require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen1.webp'),
   'jaunt-cave-battle': require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen2.webp'),
   'jaunt-cave-victory': require('@assets/images/backgrounds/subgames/jaunt-cave/jaunt-cave-screen3.webp'),
