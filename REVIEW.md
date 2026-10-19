@@ -14,15 +14,17 @@ problems from scratch.
 ## Changes made
 
 ### 1. Bug fix — Hide ability didn't actually protect against a direct collision
+
 `modules/combat.ts: checkForCombatCollision` only checked `player.isHidden` (the environmental/safe-zone
 flag), not `player.hideActive` (the ability the player earns from the Hermit and spends charges on).
-Monster *movement* already treats the two flags as equivalent evasion states (`modules/movement.ts`
+Monster _movement_ already treats the two flags as equivalent evasion states (`modules/movement.ts`
 checks both everywhere), so a monster would flee from a hidden-via-ability player — but if terrain or
 timing still put a monster on the player's tile, combat would trigger anyway, silently defeating the
 ability players had just earned. Fixed to check both flags, matching movement's existing behavior.
 This was a documented known inconsistency (`COMBAT_SYSTEM_REFERENCE.md` §7, `GAMEBOARD_SYSTEM_CHECKLIST.md`).
 
 ### 2. Bug fix — timed Cloaking never expired
+
 `DECREMENT_CLOAKING_TURNS` was fully implemented in `state/slices/hideSlice.ts` but never dispatched
 anywhere in the turn loop (also a documented known issue). Practically, this meant the `cloaking` effect
 (timed invisibility, distinct from the Hermit's charge-based Hide) never actually timed out once granted —
@@ -32,6 +34,7 @@ with the separate, charge-based `hideActive` ability or with indefinite environm
 sets `hideTurns`).
 
 ### 3. Content — Salamander's Letter now pays off Hermit Hollow's foreshadowing
+
 `docs/GAMEPLAY_STORY_DESIGN.md` explicitly flagged this as unwritten: the letter needed to reveal that the
 Salamander invented Discos, and that the Current-Looms are how it can be strengthened. Rewrote
 `SALAMANDER_LETTER_TEXT` in `config/objects.ts` to add both reveals, in the Salamander's voice, consistent
@@ -41,6 +44,7 @@ Tesseract and Salamander puzzles, Hermit Hollow's dialogue, and the Current-Loom
 legible thread instead of four disconnected curiosities.
 
 ### 4. Content — removed an explicit "ability unlocked" announcement that breaks the intended reveal
+
 The design doc was explicit: learning to read runes should be discovered organically (revisiting an old
 note and simply noticing it's now readable), never announced as "you can now read runes!" The rune cipher
 effect handler (`modules/effects.ts`) was doing exactly the announcement the doc said not to do. Replaced it
@@ -48,7 +52,8 @@ with an in-fiction line about the obelisk itself falling silent — atmosphere w
 reveal.
 
 ### 5. Feel — player getting hit now actually registers
-Overworld combat had rich text feedback (combat log, varied hit/miss/kill messages) but zero *physical*
+
+Overworld combat had rich text feedback (combat log, varied hit/miss/kill messages) but zero _physical_
 feedback when the player took damage — no haptic, no visual. Jaunt Cave already has local hit-feedback
 patterns (`HitIndicator`, `BlockShield`); the main loop had nothing equivalent. Added a short haptic buzz
 (`expo-haptics`, already a dependency, previously unused anywhere in the app) and a brief red vignette flash
@@ -57,6 +62,7 @@ single `useEffect` + one `Animated.View` overlay, no changes to combat math, no 
 subsystems need to know about.
 
 ## Verified
+
 - `npx tsc --noEmit` — clean.
 - `npx eslint` on every touched file — 0 errors (only pre-existing unrelated warnings).
 - `pnpm run test` — 510 passed / 134 failed across 82 suites. **All 33 failing suites fail with the same
@@ -68,6 +74,7 @@ subsystems need to know about.
   a dedicated fix but is out of scope for a gameplay-feel pass.
 
 ## Looked at, deliberately left alone
+
 - **Early-game difficulty before Hermit Hollow** (`GAMEPLAY_STORY_DESIGN.md` flags this as an open design
   question — zero defensive tools for the whole opening stretch, possibly intentional per "I want the player
   to die a lot"). This is a real design call, not a bug, and reversing it without the designer's steer would
@@ -81,6 +88,7 @@ subsystems need to know about.
   "don't rebuild systems" instruction.
 
 ## Suggested next pass (not done here, flagged for follow-up)
+
 - A dedicated `combat-feel` pass: brief monster-flash-on-hit, a subtler "near miss" distinction in the
   combat log copy (currently miss is flat — "X missed" — with no texture), and audio cues if
   `modules/audioManager.ts` has hooks for them.
@@ -88,13 +96,14 @@ subsystems need to know about.
   for ~40% of the component suite.
 - The two still-unwritten word-grid notes from the design doc's Act One Pacing Plan (Deep Silo reveal,
   Current-Loom reveal) — real content work, flagged but not started, consistent with "don't add new
-  systems" but is new *writing*, which felt like a bigger lift than this pass's budget.
+  systems" but is new _writing_, which felt like a bigger lift than this pass's budget.
 
 ---
 
 ## Follow-up pass — pickup feedback, inventory grouping, non-blocking victory popup
 
 ### 1. Item pickup now shows a short, non-blocking toast
+
 `modules/interactions.ts`'s `handleWeaponCollection`/`handleConsumableCollection` dispatch an
 `ADD_COMBAT_LOG` message ("Picked up: X") right after a successful collection. This reuses the
 already-shipped `CombatDialog` pipeline — `GameBoard.tsx`'s combat-dialog orchestration effect already
@@ -104,6 +113,7 @@ component, no new state. Also added `pointerEvents="none"` to `CombatDialog`'s r
 it can never swallow a tap-to-move even if a future layout change puts it over the touch target.
 
 ### 2. Inventory groups identical items instead of one row per pickup
+
 `components/Inventory.tsx` now derives a `groupedInventory` list (keyed by `shortName`/`name`) from the
 flat `inventory` array for display only — the underlying array is untouched, so drop/use still act on one
 real `Item` instance (the group's first). A group of 2+ renders as `"2 X Healing Potion"`; a singleton
@@ -111,6 +121,7 @@ renders as before. Weapons tab intentionally left ungrouped (equip state is per-
 rare there).
 
 ### 3. Melee-victory popup no longer blocks tap-to-move
+
 `components/effects/VictoryPopup.tsx` was wrapped in a transparent RN `<Modal>`. A transparent `Modal`
 still owns its own native touch layer and swallows all taps underneath for its full 2.5s on-screen time —
 that's why tap-to-move stalled after every melee kill that ended combat. Replaced it with the same
@@ -145,7 +156,7 @@ existing minimap/jump-to-location tools.
 - Enforcement is three small, independent guards (defense in depth, not one mega-switch) so each call site
   stays simple and the system degrades safely if one is ever bypassed:
   - `modules/turnManager.ts: doMonsterMovement` — skips `handleMoveMonsters` entirely (covers monster
-    advance *and* ranged attacks, since both live inside that call).
+    advance _and_ ranged attacks, since both live inside that call).
   - `modules/turnManager.ts: initializeStartingMonsters` — new games don't seed any monsters while active.
   - `modules/combat.ts: checkForCombatCollision` — a direct overlap never triggers combat.
   - `modules/effects.ts: executeSwarmEffect` — totems/dark-ritual spawns no-op with flavor text instead of
