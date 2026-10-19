@@ -195,23 +195,23 @@ describe('gameboard layout integration', () => {
     })
     expect(entries).toContainEqual({
       id: 'watcher_se_370_199',
-      position: { row: 370, col: 199 },
+      position: { row: 265, col: 255 },
       width: 6,
       height: 6,
     })
     expect(registry.isFree(level.playerSpawn, { width: 1, height: 1 }).free).toBe(false)
-    expect(registry.isFree({ row: 370, col: 199 }, { width: 1, height: 1 }).free).toBe(false)
-    expect(entries).toHaveLength(19)
+    expect(registry.isFree({ row: 265, col: 255 }, { width: 1, height: 1 }).free).toBe(false)
+    expect(entries.filter((entry) => !entry.id.includes('-terrain-'))).toHaveLength(23)
   })
 
   test('rejects conflicts with the Watcher and a static building', () => {
     const registry = buildBoardOccupancyRegistry(levels['1'])
-    expect(registry.isFree({ row: 372, col: 201 }, { width: 1, height: 1 })).toEqual({
+    expect(registry.isFree({ row: 267, col: 257 }, { width: 1, height: 1 })).toEqual({
       free: false,
       overlappingIds: ['watcher_se_370_199'],
     })
     expect(() =>
-      registry.reserve('watcher-conflict', { row: 372, col: 201 }, { width: 1, height: 1 })
+      registry.reserve('watcher-conflict', { row: 267, col: 257 }, { width: 1, height: 1 })
     ).toThrow('would overlap existing object watcher_se_370_199')
     expect(registry.isFree({ row: 192, col: 192 }, { width: 1, height: 1 })).toEqual({
       free: false,

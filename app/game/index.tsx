@@ -33,7 +33,7 @@ import {
 } from '../../modules/combat'
 import { enterSubGame } from '../../modules/subGames'
 import { jauntExecutionActions } from '../../state/slices/jauntSlice'
-import { boundaryForState, canCrossMapBoundary } from '../../modules/mapBoundary'
+import { canTraverseTerrain, getTerrainAtPoint } from '../../modules/terrain'
 import { calculateGameViewport } from '../../modules/viewport'
 import GameBoardZoomControls from '../../components/GameBoardZoomControls'
 import {
@@ -503,14 +503,11 @@ export default function Game() {
   const showGreatPowerInfo = useCallback((greatPower: GreatPower) => {
     if (!showInfoRef.current) return
     const greatPowerImage =
-      greatPower.image || require('@assets/images/sprites/monsters/watcherse.webp')
+      greatPower.image ||
+      require('@assets/images/sprites/great-powers/watcher-south-east-circle.webp')
     showInfoRef.current(
       greatPower.name || greatPower.shortName || 'Great Power',
-      `${
-        greatPower.description || 'An ancient entity of immense power.'
-      }\n\nHP: ${greatPower.currentHP}/${
-        greatPower.maxHP
-      }\nAC: ${greatPower.ac}\nAttack: ${greatPower.attack}`,
+      greatPower.description || 'An ancient entity of immense power.',
       greatPowerImage
     )
   }, [])
@@ -730,6 +727,20 @@ export default function Game() {
         ...state,
         nonCollisionObjects: runtimeNonCollisionObjects,
       })
+
+      // Foreground entities keep priority; only solid terrain cells are inspectable.
+      const terrain = !objectAtPoint
+        ? getTerrainAtPoint(state.level, { row: tapRow, col: tapCol })
+        : undefined
+      if (terrain) {
+        didLongPress.current = true
+        showInfoRef.current?.(
+          terrain.name,
+          terrain.description || 'A region of the Night Land.',
+          terrain.image
+        )
+        return
+      }
 
       if (objectAtPoint) {
         // Long press on object - set flag and show InfoBox
@@ -1181,12 +1192,12 @@ export default function Game() {
 
       // Reject blocked targets before emitting charge-depletion messages.
       if (
-        !canCrossMapBoundary(boundaryForState(state), state.player.position, {
+        !canTraverseTerrain(state, state.player.position, {
           col: tapCol,
           row: tapRow,
         })
       ) {
-        dispatch({ type: 'ADD_COMBAT_LOG', payload: { message: 'The cliff face blocks the way.' } })
+        dispatch({ type: 'ADD_COMBAT_LOG', payload: { message: 'The terrain blocks the way.' } })
         return
       }
 
@@ -1347,6 +1358,7 @@ export default function Game() {
           levelObjects={state.level.objects}
           lastRedoubtPosition={state.level.playerSpawn}
           boardSize={state.level.boardSize}
+          terrainRegions={state.level.terrainRegions}
           nonCollisionObjects={runtimeNonCollisionObjects}
           playerPosition={state.player.position}
           onDebugJump={handleDebugJump}

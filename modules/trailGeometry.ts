@@ -84,6 +84,18 @@ interface PathMetrics {
 export function buildTraversalObstacles(level: Level): TraversalObstacles {
   const obstacles: TraversalObstacle[] = []
 
+  level.terrainRegions
+    ?.filter((r) => r.blocksMovement)
+    .forEach((r) =>
+      r.shape.forEach((s, i) =>
+        obstacles.push({
+          id: `${r.id}-terrain-${i}`,
+          position: { row: r.position.row + s.row, col: r.position.col + s.col },
+          width: s.width,
+          height: s.height,
+        })
+      )
+    )
   level.objects.forEach((object) => {
     if (!object.position) return
     obstacles.push({
@@ -91,33 +103,6 @@ export function buildTraversalObstacles(level: Level): TraversalObstacles {
       position: { ...object.position },
       width: object.size?.width ?? object.width ?? 1,
       height: object.size?.height ?? object.height ?? 1,
-    })
-  })
-
-  level.nonCollisionObjects?.forEach((object) => {
-    // The river-only gate structurally excludes both authored footsteps and decorations.
-    if (object.type !== 'river' || object.shortName.startsWith('generated-footsteps-')) {
-      return
-    }
-    if (object.collisionMask?.length) {
-      object.collisionMask.forEach((segment, index) => {
-        obstacles.push({
-          id: `${object.id}-mask-${index}`,
-          position: {
-            row: object.position.row + segment.row,
-            col: object.position.col + segment.col,
-          },
-          width: segment.width ?? 1,
-          height: segment.height ?? 1,
-        })
-      })
-      return
-    }
-    obstacles.push({
-      id: object.id,
-      position: { ...object.position },
-      width: object.width || 1,
-      height: object.height || 1,
     })
   })
 

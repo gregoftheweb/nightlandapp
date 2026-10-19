@@ -3,7 +3,7 @@ import { GameState, Position, Monster } from '../config/types'
 import { setupCombat, checkForCombatCollision } from './combat'
 import { logIfDev } from './utils'
 import { executeMonsterRangedAttack } from './monsterRangedAttacks'
-import { boundaryForState, canCrossMapBoundary } from './mapBoundary'
+import { canTraverseTerrain, buildTerrainDistances } from './terrain'
 
 // ==================== PLAYER MOVEMENT ====================
 
@@ -37,7 +37,7 @@ export const calculateNewPosition = (
       break
   }
 
-  if (!canCrossMapBoundary(boundaryForState(state), currentPos, newPosition)) {
+  if (!canTraverseTerrain(state, currentPos, newPosition)) {
     return currentPos
   }
 
@@ -118,6 +118,7 @@ export const moveMonsters = (
 ): void => {
   const playerPos = playerPosOverride || state.player.position
 
+  const fields = new Map<string, Int32Array>()
   state.activeMonsters.forEach((monster) => {
     // Skip monsters already engaged in combat
     if (isMonsterInCombat(monster, state)) {
@@ -138,7 +139,46 @@ export const moveMonsters = (
     }
 
     // Calculate monster's new position
-    const newPos = calculateMonsterMovement(monster, playerPos, state)
+    let newPos = calculateMonsterMovement(monster, playerPos, state)
+    const width = monster.width ?? 1,
+      height = monster.height ?? 1
+    if (!canTraverseTerrain(state, monster.position, newPos, width, height)) {
+      const fleeing = state.player.isHidden || state.player.hideActive
+      const key = `${width}:${height}`
+      if (!fields.has(key)) fields.set(key, buildTerrainDistances(state, playerPos, width, height))
+      const distances = fields.get(key)!
+      newPos = { ...monster.position }
+      for (let step = 0; step < Math.max(1, Math.floor(monster.moveRate || 1)); step++) {
+        const candidates: Position[] = []
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dy && !dx) continue
+            const p = { row: newPos.row + dy, col: newPos.col + dx }
+            if (
+              canTraverseTerrain(state, newPos, p, width, height) &&
+              canTraverseTerrain(state, monster.position, p, width, height)
+            )
+              candidates.push(p)
+          }
+        const score = (p: Position) =>
+          fleeing
+            ? Math.hypot(p.row - playerPos.row, p.col - playerPos.col)
+            : -distances[p.row * state.gridWidth + p.col]
+        const reachable = candidates.filter(
+          (p) => fleeing || distances[p.row * state.gridWidth + p.col] >= 0
+        )
+        reachable.sort((a, b) => score(b) - score(a))
+        const next = reachable[0]
+        if (
+          !next ||
+          (!fleeing &&
+            distances[newPos.row * state.gridWidth + newPos.col] >= 0 &&
+            score(next) <= score(newPos))
+        )
+          break
+        newPos = next
+      }
+    }
 
     // Check for combat collision before moving
     if (checkForCombatCollision(state, monster, newPos, playerPos)) {

@@ -62,8 +62,8 @@ const realAssetsResult = createWordGridAssetCatalog([
   },
   {
     assetId: 'tesseract-entrance',
-    image: require('@assets/images/sprites/buildings/tesseract-puzzle1.webp'),
-    intrinsicSize: { width: 256, height: 384 },
+    image: require('@assets/images/sprites/buildings/gameboard-buildings/tesseract-puzzle.webp'),
+    intrinsicSize: { width: 1254, height: 1254 },
   },
   {
     assetId: 'tesseract-intro',

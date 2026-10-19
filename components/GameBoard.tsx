@@ -9,6 +9,7 @@ import type {
   GreatPower,
   NonCollisionObject,
 } from '@config/types'
+import { TerrainLayer } from './TerrainLayer'
 import { InfoBox } from './InfoBox'
 import { CombatDialog } from './CombatDialog'
 import { getTextContent, isPlayerOnObject } from '../modules/utils'
@@ -324,11 +325,7 @@ function GameBoard({
       if (__DEV__) console.log('handleGreatPowerTap called, greatPower:', greatPower)
       showInfo(
         greatPower.name || greatPower.shortName || 'Great Power',
-        `${
-          greatPower.description || 'An ancient entity of immense power.'
-        }\n\nHP: ${greatPower.currentHP}/${greatPower.maxHP}\nAC: ${
-          greatPower.ac
-        }\nAttack: ${greatPower.attack}`,
+        greatPower.description || 'An ancient entity of immense power.',
         getGreatPowerImage(greatPower)
       )
       onGreatPowerTap?.(greatPower)
@@ -700,11 +697,18 @@ function GameBoard({
         const gpWidth = greatPower.width || 1
         const gpHeight = greatPower.height || 1
 
+        // Enlarge Watcher artwork around its existing gameplay footprint center.
+        const displayScale = greatPower.shortName.startsWith('watcher_') ? 2 : 1
+        const displayWidth = gpWidth * displayScale
+        const displayHeight = gpHeight * displayScale
+        const displayRow = screenRow - (displayHeight - gpHeight) / 2
+        const displayCol = screenCol - (displayWidth - gpWidth) / 2
+
         const inView =
-          screenRow + gpHeight > 0 &&
-          screenRow < viewport.rows &&
-          screenCol + gpWidth > 0 &&
-          screenCol < viewport.cols
+          displayRow + displayHeight > 0 &&
+          displayRow < viewport.rows &&
+          displayCol + displayWidth > 0 &&
+          displayCol < viewport.cols
         if (!inView) return null
 
         return (
@@ -712,10 +716,10 @@ function GameBoard({
             key={`greatpower-${greatPower.id}-${index}`}
             style={{
               position: 'absolute',
-              left: screenCol * renderedCellSize,
-              top: screenRow * renderedCellSize,
-              width: gpWidth * renderedCellSize,
-              height: gpHeight * renderedCellSize,
+              left: displayCol * renderedCellSize,
+              top: displayRow * renderedCellSize,
+              width: displayWidth * renderedCellSize,
+              height: displayHeight * renderedCellSize,
               zIndex: 2,
             }}
             pointerEvents="none"
@@ -1117,6 +1121,13 @@ function GameBoard({
   // Memoized grid render
   const renderGrid = useMemo(() => {
     const allEntities = [
+      <TerrainLayer
+        key="terrain"
+        regions={state.level.terrainRegions ?? EMPTY_ARRAY}
+        cameraOffset={cameraOffset}
+        viewport={viewport}
+        cellSize={renderedCellSize}
+      />,
       ...renderNonCollisionObjects,
       ...renderBuildings,
       ...renderMonsters,
@@ -1145,6 +1156,10 @@ function GameBoard({
 
     return allEntities
   }, [
+    state.level.terrainRegions,
+    cameraOffset,
+    viewport,
+    renderedCellSize,
     renderNonCollisionObjects,
     renderBuildings,
     renderMonsters,
@@ -1287,7 +1302,10 @@ const getMonsterImage = (monster: Monster) => {
 }
 
 const getGreatPowerImage = (greatPower: GreatPower) => {
-  return greatPower.image || require('@assets/images/sprites/monsters/watcherse.webp')
+  return (
+    greatPower.image ||
+    require('@assets/images/sprites/great-powers/watcher-south-east-circle.webp')
+  )
 }
 
 const getItemImage = (item: Item) => {

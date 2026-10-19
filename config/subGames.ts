@@ -7,9 +7,9 @@ import type {
 } from './types/subGames'
 import type { ImagePreloadAsset } from './types/imagePreload'
 
-import aeroWreckageIMG from '@assets/images/sprites/buildings/aero-wreckage.webp'
+import aeroWreckageIMG from '@assets/images/sprites/buildings/gameboard-buildings/aero-wreckage.webp'
 import hermitIMG from '@assets/images/backgrounds/subgames/hermit/hermit-save2.webp'
-import deepSiloIMG from '@assets/images/sprites/buildings/silo.webp'
+import deepSiloIMG from '@assets/images/sprites/buildings/gameboard-buildings/silo.webp'
 import { parsedTimedEncounterContentResult } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
 
 export type SubGameInstanceId = string

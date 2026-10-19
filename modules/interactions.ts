@@ -4,6 +4,7 @@ import { createItemInstance } from '../config/levelHelpers'
 import { COMBAT_STRINGS } from '@assets/copy/combat'
 import { buildSpatialGrid, checkOverlap, SpatialGrid } from './spacialGrid'
 import { applyEffect } from './effects'
+import { effectRegions, terrainContains } from './terrain'
 
 // ==================== ITEM INTERACTIONS ====================
 
@@ -190,11 +191,35 @@ export const checkObjectInteractions = (
   if (collidingNonCollisionObject) {
     // Get the parent object from the entity data
     const obj = collidingNonCollisionObject.data as NonCollisionObject
-    handleNonCollisionObjectEffects(obj, state, dispatch, playerPos)
+    if (obj.type !== 'river') handleNonCollisionObjectEffects(obj, state, dispatch, playerPos)
   }
 
+  const regions = effectRegions(state).filter((r) => terrainContains(r, playerPos))
+  for (const region of regions) {
+    // Entry-only effects use the previous checked position; repeated effects preserve river behavior.
+    if (
+      region.effectTiming === 'onEnter' &&
+      terrainContains(region, state.lastTerrainInteractionPosition ?? { row: -1, col: -1 })
+    )
+      continue
+    for (const effect of region.effects ?? [])
+      applyEffect(effect, {
+        state,
+        dispatch,
+        sourceType: 'object',
+        sourceId: region.id,
+        trigger: 'onEnterTile',
+        position: playerPos,
+      })
+  }
+  if (effectRegions(state).some((r) => r.effectTiming === 'onEnter'))
+    dispatch({ type: 'SET_TERRAIN_INTERACTION_POSITION', payload: { position: { ...playerPos } } })
   // Only clear hide if player is not on any object with hide effects
-  if (!collidingObject && !collidingNonCollisionObject) {
+  if (
+    !collidingObject &&
+    !collidingNonCollisionObject &&
+    !regions.some((r) => r.effects?.some((e) => e.type === 'hide'))
+  ) {
     dispatch({ type: 'CLEAR_HIDE' })
   }
 }

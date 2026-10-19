@@ -2,6 +2,7 @@
 // This file re-exports all types from domain-specific files
 // All external imports from '@config/types' continue to work unchanged
 
+export * from './types/terrain'
 export * from './types/primitives'
 export * from './types/subGames'
 export * from './types/entitiesBase'

@@ -3,6 +3,7 @@ import { GameState, Monster, Position, MonsterInstance } from '../config/types'
 import { getMonsterTemplate } from '../config/monsters'
 import { hydrateMonster } from './hydration'
 import { moveMonsters } from './movement'
+import { isTerrainWalkable } from './terrain'
 
 // ==================== CONSTANTS ====================
 const MIN_SPAWN_DISTANCE = 5
@@ -83,10 +84,9 @@ export const checkMonsterSpawn = (
     // Use the spawn logic: Math.random() < spawnRate (percentage chance per turn)
     if (Math.random() < spawnConfig.spawnRate) {
       const template = getMonsterTemplate(spawnConfig.templateId)
-      const newMonster = createMonsterFromTemplate(
-        spawnConfig.templateId,
-        getSpawnPosition(state, template)
-      )
+      const position = getSpawnPosition(state, template)
+      if (!position) continue
+      const newMonster = createMonsterFromTemplate(spawnConfig.templateId, position)
       if (!newMonster) {
         continue
       }
@@ -104,7 +104,7 @@ export const checkMonsterSpawn = (
 export const getSpawnPosition = (
   state: GameState,
   footprint: { width?: number; height?: number } = {}
-): Position => {
+): Position | null => {
   const { gridHeight, gridWidth, player, activeMonsters } = state
   const width = footprint.width ?? 1
   const height = footprint.height ?? 1
@@ -137,12 +137,13 @@ export const getSpawnPosition = (
       )
     })
 
-    if (isWithinSpawnRange && !isOccupied) return candidate
+    if (isWithinSpawnRange && !isOccupied && isTerrainWalkable(state, candidate, width, height))
+      return candidate
     attempts++
   }
 
   logIfDev(`Could not find valid spawn position after ${MAX_SPAWN_ATTEMPTS} attempts`)
-  return { row: Math.floor(gridHeight / 2), col: Math.floor(gridWidth / 2) }
+  return null
 }
 
 // ==================== MONSTER CREATION UTILITIES ====================

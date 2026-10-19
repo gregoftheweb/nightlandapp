@@ -159,6 +159,7 @@ describe('Monster Spawning', () => {
   describe('getSpawnPosition', () => {
     it('should spawn monsters within min/max distance from player', () => {
       const state: GameState = {
+        level: getLevel('1'),
         gridWidth: 400,
         gridHeight: 400,
         player: {
@@ -170,6 +171,7 @@ describe('Monster Spawning', () => {
       // Test multiple spawns
       for (let i = 0; i < 20; i++) {
         const position = getSpawnPosition(state)
+        if (!position) throw new Error('Expected a valid spawn')
 
         // Calculate distance from player
         const dx = position.col - 200
@@ -190,6 +192,7 @@ describe('Monster Spawning', () => {
 
     it('should avoid spawning on occupied positions', () => {
       const state: GameState = {
+        level: getLevel('1'),
         gridWidth: 400,
         gridHeight: 400,
         player: {
@@ -202,6 +205,7 @@ describe('Monster Spawning', () => {
       } as any
 
       const position = getSpawnPosition(state)
+      if (!position) throw new Error('Expected a valid spawn')
 
       // Verify position is not occupied by existing monsters
       const isOccupied = state.activeMonsters.some(

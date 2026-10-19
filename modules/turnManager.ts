@@ -135,7 +135,7 @@ const doMoveTurn = (direction: string, setOverlay?: (overlay: any) => void): voi
   if (newPosition.row === previousPosition.row && newPosition.col === previousPosition.col) {
     gameDispatch({
       type: 'ADD_COMBAT_LOG',
-      payload: { message: 'The cliff face blocks the way.' },
+      payload: { message: 'The terrain blocks the way.' },
     })
   }
 

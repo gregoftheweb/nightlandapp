@@ -1,5 +1,5 @@
 // state/slices/jauntSlice.ts
-import { boundaryForState, canCrossMapBoundary } from '../../modules/mapBoundary'
+import { canTraverseTerrain } from '../../modules/terrain'
 import { GameState } from '../../config/types'
 import { logIfDev } from '../../modules/utils'
 import { Position } from '../../config/types/primitives'
@@ -32,8 +32,7 @@ function teleportPlayerPosition(state: GameState, targetPosition: Position): Gam
     row: Math.max(0, Math.min(integerPosition.row, state.gridHeight - 1)),
   }
 
-  if (!canCrossMapBoundary(boundaryForState(state), state.player.position, clampedPosition))
-    return state
+  if (!canTraverseTerrain(state, state.player.position, clampedPosition)) return state
 
   return {
     ...state,

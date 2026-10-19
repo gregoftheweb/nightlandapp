@@ -28,6 +28,7 @@ interface SettingsProps {
   levelObjects: GameState['level']['objects']
   lastRedoubtPosition: GameState['level']['playerSpawn']
   boardSize: GameState['level']['boardSize']
+  terrainRegions?: GameState['level']['terrainRegions']
   nonCollisionObjects: NonNullable<GameState['nonCollisionObjects']>
   playerPosition: GameState['player']['position']
   onDebugJump: (position: GameState['player']['position']) => void
@@ -93,6 +94,7 @@ function Settings({
   levelObjects,
   lastRedoubtPosition,
   boardSize,
+  terrainRegions,
   nonCollisionObjects,
   playerPosition,
   onDebugJump,
@@ -247,6 +249,7 @@ function Settings({
                     encounterPlacements={encounterPlacements}
                     greatPowers={greatPowers}
                     levelObjects={levelObjects}
+                    terrainRegions={terrainRegions}
                     nonCollisionObjects={nonCollisionObjects}
                     playerPosition={playerPosition}
                   />
@@ -305,6 +308,7 @@ export default React.memo(Settings, (previous, next) => {
     previous.levelObjects === next.levelObjects &&
     previous.lastRedoubtPosition === next.lastRedoubtPosition &&
     previous.boardSize === next.boardSize &&
+    previous.terrainRegions === next.terrainRegions &&
     previous.nonCollisionObjects === next.nonCollisionObjects &&
     previous.playerPosition === next.playerPosition
   )

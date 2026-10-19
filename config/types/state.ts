@@ -32,6 +32,7 @@ export interface GameState {
   levels: Record<string, Level> // All loaded level configurations
   items: Item[] // Items available in current level
   objects: LevelObjectInstance[] // Interactive objects in current level
+  lastTerrainInteractionPosition?: { row: number; col: number }
   nonCollisionObjects?: NonCollisionObject[] // Decorative/non-collision objects
   gridWidth: number // Game grid width
   gridHeight: number // Game grid height
