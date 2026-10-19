@@ -52,6 +52,7 @@
 import { GameState, Item, Effect, Monster, Position } from '../config/types'
 import { createMonsterFromTemplate } from './monsterUtils'
 import { logIfDev } from './utils'
+import { settingsManager } from './settingsManager'
 import { resolveMessageEffectDisplay } from './messageEffectDisplay'
 
 // ==================== EFFECT EXECUTION INTERFACE ====================
@@ -334,6 +335,18 @@ const executeSwarmEffect: EffectHandler<'swarm'> = (effect, context) => {
 
   logIfDev('🐝 Executing swarm effect:', effect)
 
+  // Debug "walkthrough mode" toggle: totems/rituals still "fire" narratively
+  // (the trigger object still consumes its cooldown etc.), they just never
+  // actually add monsters to the board while this is on.
+  if (settingsManager.getMonstersDisabled()) {
+    logIfDev('🐝 Swarm spawn skipped (debug: monsters disabled)')
+    return {
+      success: true,
+      message: 'The dark ritual fizzles - nothing stirs.',
+      consumeItem: false,
+    }
+  }
+
   const spawnRange = effect.range
   const spawnPosition = position || state.player.position
   const newMonsters: Monster[] = []
@@ -585,10 +598,14 @@ const executeUnlockRuneCipherEffect: EffectHandler<'unlock_rune_cipher'> = (effe
     },
   })
 
-  const message = 'You have learned the rune cipher!'
+  // Deliberately no "you can now read runes!" dialog here - the design intent
+  // (docs/GAMEPLAY_STORY_DESIGN.md) is for this to be discovered organically,
+  // by the player revisiting an old rune-locked note and simply noticing it
+  // now reads in plain script. An explicit mechanical announcement would spoil that.
+  const message = 'The obelisk falls still, its runes settling into silence.'
   showDialog?.(message, 3000)
 
-  logIfDev('\u2705 Rune cipher learned')
+  logIfDev('\u2705 Rune cipher learned (silently)')
 
   return {
     success: true,

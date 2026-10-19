@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "format:fix": "prettier . --write",
     "format:check": "prettier . --check",
+    "format:markdown:fix": "prettier \"**/*.{md,mdx,markdown}\" --write",
+    "format:markdown:check": "prettier \"**/*.{md,mdx,markdown}\" --check",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:all": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:all:strict": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings=0",

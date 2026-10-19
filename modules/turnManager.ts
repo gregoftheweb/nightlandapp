@@ -9,6 +9,7 @@ import { checkItemInteractions, checkObjectInteractions } from './interactions'
 import { buildSpatialGrid } from './spacialGrid'
 import { SPAWN_CONSTANTS } from '../constants/Game'
 import { logIfDev } from './utils'
+import { settingsManager } from './settingsManager'
 import { reducer as gameReducer } from '../state/reducer'
 
 const DEBUG_TURN_TIMING = true
@@ -178,6 +179,13 @@ const doNonMoveTurn = (): void => {
 // ==================== MONSTER MOVEMENT AND COMBAT SETUP ====================
 
 const doMonsterMovement = (): void => {
+  // Debug "walkthrough mode" toggle (Settings > Debug): skip monster
+  // movement and ranged attacks entirely while enabled.
+  if (settingsManager.getMonstersDisabled()) {
+    logIfDev(`👹 SKIPPING MONSTER MOVEMENT (debug: monsters disabled)`)
+    return
+  }
+
   logIfDev(`👹 PROCESSING MONSTER MOVEMENT`)
 
   // Move monsters - preserves specific UI slotting relative to Christos
@@ -206,6 +214,14 @@ const doTurnCleanup = (): void => {
   // Update hidden status if needed
   if (currentGameState.player.isHidden) {
     logIfDev('Christos is hidden')
+
+    // Timed cloaking (hideTurns > 0) must actually count down each turn, or a
+    // cloaking effect never expires. Environmental `isHidden` granted without
+    // hideTurns (e.g. a safe-zone effect) is unaffected - hideTurns stays 0
+    // and DECREMENT_CLOAKING_TURNS is a no-op for it either way.
+    if (currentGameState.player.hideTurns > 0) {
+      gameDispatch({ type: 'DECREMENT_CLOAKING_TURNS' })
+    }
   }
 
   // Update hide ability state (charge consumption and recharge)
@@ -396,6 +412,13 @@ export const initializeStartingMonsters = (
   state: GameState,
   dispatch: (action: any) => void
 ): void => {
+  // Debug "walkthrough mode" toggle: don't seed the board with monsters at
+  // new-game creation either.
+  if (settingsManager.getMonstersDisabled()) {
+    logIfDev('🎯 SKIPPING initial monster spawn (debug: monsters disabled)')
+    return
+  }
+
   const abhumanTemplate = getMonsterTemplate('abhuman')
   if (abhumanTemplate) {
     const timestamp = Date.now() // Ensure uniqueness across restarts/game overs

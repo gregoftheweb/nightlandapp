@@ -3,7 +3,7 @@ import { GameObject, NonCollisionObject } from './types'
 
 import redoubtImg from '@assets/images/sprites/buildings/gameboard-buildings/redoubt.webp'
 import riverIMG from '@assets/images/sprites/buildings/river1.webp'
-import cursedTotemIMG from '@assets/images/sprites/buildings/gameboard-buildings/cursed-totem-no-rear-gear.webp'
+import cursedTotemIMG from '@assets/images/sprites/buildings/gameboard-buildings/cursed-totem.webp'
 import petrifiedWillowIMG from '@assets/images/sprites/buildings/gameboard-buildings/petrified-willow.webp'
 import maguffinRockIMG from '@assets/images/items/equipment/maguffinRock.webp'
 import shortSwordIMG from '@assets/images/items/equipment/shortSword.webp'
@@ -159,6 +159,10 @@ export const SALAMANDER_LETTER_TEXT = `To whoever finds this,
 I am called the Salamander, one of the last of the Science-Wizards of the old world. It was I who wrought the Tesseract — the golden orb — in the age before the dark swallowed the sun. I made it as the catalyst, the one true means by which mankind might yet be delivered from the Night Land.
 
 It is complete. I have only to find the place where the Earth Current is strong enough to harness. I go now in search of such a place.
+
+There is a second thing I made, long before the Tesseract, that few now remember came from my hand: the Discos, the small bright blade every boy of the Pyramid is given on his naming day. I bound it to the Earth Current itself, so faithfully that it has outlived my own name. It does not fail its bearer easily. But it was built for a brighter age than this one, and alone it is a poor match for what now walks beyond the Circle.
+
+I have raised Current-Looms at certain old stations — regulators of the Earth Current, the same vein that quickens every Discos. A bearer who restores enough of them, and stands with his blade in a place where the Current runs strong, may yet feel it answer him as it never has before. I cannot say how many. I did not live to find out.
 
 The Watchers know what I made. They circle closer with each turn of the world's slow dying.
 

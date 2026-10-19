@@ -1,7 +1,6 @@
 // components/effects/VictoryPopup.tsx
 import React, { useEffect, useRef } from 'react'
-import { Animated, ImageSourcePropType, Modal, StyleSheet } from 'react-native'
-import { SafeAreaContent } from '../SafeAreaContent'
+import { Animated, ImageSourcePropType, StyleSheet } from 'react-native'
 
 const FADE_MS = 300
 const HOLD_MS = 1900
@@ -18,10 +17,12 @@ interface VictoryPopupProps {
  * melee kill that ends combat. Purely decorative: fades in, holds, fades
  * out, then calls onComplete so the caller can remove it from state.
  *
- * Modeled on TeleportFlash's timer + onComplete self-dismiss idiom, but as a
- * full-screen centered overlay (like InfoBox's wrapper) instead of a
- * grid-positioned sprite. Not InfoBox itself - this has no header, close
- * button, or CTA, and never waits for a tap.
+ * Deliberately NOT a <Modal> - a transparent RN Modal still captures all
+ * touch input on its own native layer, which silently blocked tap-to-move
+ * for the whole 2.5s this was on screen. This is a plain, non-interactive
+ * (`pointerEvents="none"`) absolute overlay instead, same idiom as
+ * TeleportFlash/CombatDialog elsewhere in GameBoard, so movement taps pass
+ * straight through to the board underneath while it plays.
  */
 export default function VictoryPopup({ id, image, onComplete }: VictoryPopupProps) {
   const opacity = useRef(new Animated.Value(0)).current
@@ -37,17 +38,15 @@ export default function VictoryPopup({ id, image, onComplete }: VictoryPopupProp
   }, [id, opacity, onComplete])
 
   return (
-    <Modal transparent visible animationType="none">
-      <SafeAreaContent style={styles.overlay}>
-        <Animated.Image source={image} resizeMode="contain" style={[styles.image, { opacity }]} />
-      </SafeAreaContent>
-    </Modal>
+    <Animated.View pointerEvents="none" style={[styles.overlay, { opacity }]}>
+      <Animated.Image source={image} resizeMode="contain" style={styles.image} />
+    </Animated.View>
   )
 }
 
 const styles = StyleSheet.create({
   overlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.35)',

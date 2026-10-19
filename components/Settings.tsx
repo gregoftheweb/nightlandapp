@@ -32,6 +32,8 @@ interface SettingsProps {
   nonCollisionObjects: NonNullable<GameState['nonCollisionObjects']>
   playerPosition: GameState['player']['position']
   onDebugJump: (position: GameState['player']['position']) => void
+  monstersDisabled: boolean
+  onToggleMonstersDisabled: (disabled: boolean) => void
 }
 
 interface ToggleProps {
@@ -98,6 +100,8 @@ function Settings({
   nonCollisionObjects,
   playerPosition,
   onDebugJump,
+  monstersDisabled,
+  onToggleMonstersDisabled,
 }: SettingsProps) {
   const { width, height } = useWindowDimensions()
   const [backgroundMusicEnabled, setBackgroundMusicEnabled] = useState(audioManager.getIsEnabled())
@@ -258,6 +262,15 @@ function Settings({
                     contentContainerStyle={styles.scrollViewContent}
                     showsVerticalScrollIndicator={true}
                   >
+                    <Text style={styles.sectionTitle}>Encounters</Text>
+                    <View style={styles.section}>
+                      <ModernToggle
+                        value={monstersDisabled}
+                        onToggle={onToggleMonstersDisabled}
+                        label="Disable Monsters (walkthrough mode)"
+                      />
+                    </View>
+
                     <Text style={styles.sectionTitle}>Jump to location</Text>
                     <TouchableOpacity
                       style={styles.debugActionRow}
@@ -310,7 +323,9 @@ export default React.memo(Settings, (previous, next) => {
     previous.boardSize === next.boardSize &&
     previous.terrainRegions === next.terrainRegions &&
     previous.nonCollisionObjects === next.nonCollisionObjects &&
-    previous.playerPosition === next.playerPosition
+    previous.playerPosition === next.playerPosition &&
+    previous.monstersDisabled === next.monstersDisabled &&
+    previous.onToggleMonstersDisabled === next.onToggleMonstersDisabled
   )
 })
 

@@ -52,7 +52,7 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
 
   {
     id: 'encounter-jaunt-cave',
-    source: require('@assets/images/sprites/buildings/gameboard-buildings/jaunt-cave-no-rear-gear.webp'),
+    source: require('@assets/images/sprites/buildings/gameboard-buildings/jaunt-cave.webp'),
     width: 1254,
     height: 1254,
   },
@@ -100,7 +100,7 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   },
   {
     id: 'building-cursed-totem',
-    source: require('@assets/images/sprites/buildings/gameboard-buildings/cursed-totem-no-rear-gear.webp'),
+    source: require('@assets/images/sprites/buildings/gameboard-buildings/cursed-totem.webp'),
     width: 1254,
     height: 1254,
   },
@@ -118,7 +118,7 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   },
   {
     id: 'encounter-current-loom',
-    source: require('@assets/images/sprites/buildings/gameboard-buildings/loom-entrance-no-rear-gear.webp'),
+    source: require('@assets/images/sprites/buildings/gameboard-buildings/loom-entrance.webp'),
     width: 1254,
     height: 1254,
   },
