@@ -25,7 +25,7 @@ function HydrationHarness() {
     <View>
       <Text testID="move-count">{state.moveCount}</Text>
       <Text testID="hydration-status">{hydrationResolved ? 'resolved' : 'pending'}</Text>
-      <TouchableOpacity accessibilityLabel="hydrate state" onPress={hydrate} />
+      <TouchableOpacity accessibilityLabel="hydrate state" onPress={() => void hydrate()} />
     </View>
   )
 }
