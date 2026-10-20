@@ -64,7 +64,7 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   },
   {
     id: 'encounter-rune-obelisk',
-    source: require('@assets/images/backgrounds/subgames/rosseta/obelisk-entrance.webp'),
+    source: require('@assets/images/sprites/buildings/gameboard-buildings/rune-obelisk.webp'),
     width: 1408,
     height: 768,
   },
@@ -82,7 +82,7 @@ export const GAMEBOARD_IMAGE_ASSETS: readonly GameBoardImageAsset[] = Object.fre
   },
   {
     id: 'encounter-hermit-hollow',
-    source: require('@assets/images/backgrounds/subgames/hermit/hermit-save2.webp'),
+    source: require('@assets/images/sprites/buildings/gameboard-buildings/hermit-hollow.webp'),
     width: 256,
     height: 256,
   },

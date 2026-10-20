@@ -8,8 +8,9 @@ import type {
 import type { ImagePreloadAsset } from './types/imagePreload'
 
 import aeroWreckageIMG from '@assets/images/sprites/buildings/gameboard-buildings/aero-wreckage.webp'
-import hermitIMG from '@assets/images/backgrounds/subgames/hermit/hermit-save2.webp'
+import hermitIMG from '@assets/images/sprites/buildings/gameboard-buildings/hermit-hollow.webp'
 import deepSiloIMG from '@assets/images/sprites/buildings/gameboard-buildings/silo.webp'
+import runeObeliskIMG from '@assets/images/sprites/buildings/gameboard-buildings/rune-obelisk.webp'
 import { parsedTimedEncounterContentResult } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
 
 export type SubGameInstanceId = string
@@ -390,7 +391,7 @@ const definitions: SubGameInstanceDefinition[] = [
       category: 'building',
       width: 4,
       height: 4,
-      image: require('@assets/images/backgrounds/subgames/rosseta/obelisk-entrance.webp'),
+      image: runeObeliskIMG,
       active: true,
       zIndex: 0,
       effects: [{ type: 'hide' }],
