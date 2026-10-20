@@ -10,6 +10,7 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { usePuzzleState } from './hooks/usePuzzleState'
 import { THEME } from './theme'
+import { isDebugToolsEnabled } from '@modules/debugTools'
 
 const SUB_GAME_ID = 'aerowreckage-puzzle'
 const definition = getSubGameDefinition(SUB_GAME_ID)
@@ -70,7 +71,7 @@ export default function AeroWreckageEntry() {
         </View>
 
         <BottomActionBar>
-          {__DEV__ && (
+          {isDebugToolsEnabled() && (
             <TouchableOpacity
               style={styles.resetButton}
               onPress={handleResetPuzzle}

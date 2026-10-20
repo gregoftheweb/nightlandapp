@@ -11,6 +11,7 @@ import {
   setDevSwitchThrown,
   useDeepSiloDevState,
 } from './entranceState'
+import { isDebugToolsEnabled } from '../../../modules/debugTools'
 
 export default function DeepSiloEntrancePanelScreen() {
   const router = useRouter()
@@ -23,14 +24,14 @@ export default function DeepSiloEntrancePanelScreen() {
   const realCount = countCompletedCurrentLooms(state.subGamesCompleted)
   const loomCount = effectiveLoomCount(realCount, dev.loomOverrideCount)
   const realThrown = isDeepSiloSwitchThrown(state.subGamesCompleted)
-  const switchThrown = realThrown || locallyThrown || (__DEV__ && dev.switchThrown)
+  const switchThrown = realThrown || locallyThrown || (isDebugToolsEnabled() && dev.switchThrown)
 
   const finishThrow = () => {
     // Keep the final frame visible while the persistent game-state update commits.
     // Without this local handoff, removing the animation can briefly reveal frame 1.
     setLocallyThrown(true)
     setCompletionFlashNonce((nonce) => nonce + 1)
-    if (__DEV__ && dev.loomOverrideCount > 0) setDevSwitchThrown()
+    if (isDebugToolsEnabled() && dev.loomOverrideCount > 0) setDevSwitchThrown()
     else if (realCount === 5)
       dispatch({
         type: 'SET_SUB_GAME_COMPLETED',
@@ -50,12 +51,12 @@ export default function DeepSiloEntrancePanelScreen() {
       }}
       onAnimationComplete={finishThrow}
       onEnter={() => {
-        if (realThrown || (__DEV__ && dev.switchThrown))
+        if (realThrown || (isDebugToolsEnabled() && dev.switchThrown))
           router.push('/sub-games/deep-silo/screen2' as never)
       }}
       onBack={() => router.back()}
       onDevIncrement={incrementDevLoomOverride}
-      showDevtool={__DEV__}
+      showDevtool={isDebugToolsEnabled()}
     />
   )
 }

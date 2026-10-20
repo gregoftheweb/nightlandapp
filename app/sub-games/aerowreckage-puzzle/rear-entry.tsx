@@ -8,6 +8,7 @@ import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { usePuzzleState } from './hooks/usePuzzleState'
 import { THEME } from './theme'
+import { isDebugToolsEnabled } from '@modules/debugTools'
 
 const bgIntro = require('@assets/images/backgrounds/subgames/aerowreckage/aerowreck-safe1.webp')
 
@@ -48,7 +49,7 @@ export default function AeroWreckageRearEntry() {
         </View>
 
         <BottomActionBar>
-          {__DEV__ && (
+          {isDebugToolsEnabled() && (
             <TouchableOpacity
               style={styles.resetButton}
               onPress={handleResetPuzzle}

@@ -4,6 +4,7 @@ import { GameState } from '../../config/types'
 import { logIfDev } from '../../modules/utils'
 import { Position } from '../../config/types/primitives'
 import { toIntegerTilePosition } from '../../modules/playerPosition'
+import { isDebugToolsEnabled } from '../../modules/debugTools'
 
 // Counter to ensure unique flash IDs even with rapid successive teleports
 let flashIdCounter = 0
@@ -158,7 +159,7 @@ export function reduceJaunt(state: GameState, action: any): GameState | null {
     }
 
     case 'DEBUG_TELEPORT_PLAYER': {
-      if (!__DEV__) return state
+      if (!isDebugToolsEnabled()) return state
       const { targetPosition } = action.payload as { targetPosition: Position }
       return teleportPlayerPosition(state, targetPosition)
     }

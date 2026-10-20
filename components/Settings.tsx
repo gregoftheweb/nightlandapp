@@ -13,6 +13,7 @@ import {
 } from 'react-native'
 import { audioManager } from '../modules/audioManager'
 import { settingsManager } from '../modules/settingsManager'
+import { isDebugToolsEnabled } from '../modules/debugTools'
 import type { GameState } from '@config/types'
 import { SafeAreaContent } from './SafeAreaContent'
 import DebugMinimap from './DebugMinimap'
@@ -192,7 +193,7 @@ function Settings({
               </Text>
             </TouchableOpacity>
 
-            {__DEV__ && (
+            {isDebugToolsEnabled() && (
               <TouchableOpacity
                 style={[styles.tab, activeTab === 'debug' && styles.activeTab]}
                 onPress={() => setActiveTab('debug')}
@@ -244,7 +245,7 @@ function Settings({
                 )}
               </ScrollView>
             ) : (
-              __DEV__ && (
+              isDebugToolsEnabled() && (
                 <>
                   <DebugMinimap
                     visible={showMinimap}
