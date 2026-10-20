@@ -8,7 +8,7 @@ The codebase was already in excellent shape going in — deep design docs (`docs
 
 ### 1. Bug fix — Hide ability didn't actually protect against a direct collision
 
-`modules/combat.ts: checkForCombatCollision` only checked `player.isHidden` (the environmental/safe-zone flag), not `player.hideActive` (the ability the player earns from the Hermit and spends charges on). Monster *movement* already treats the two flags as equivalent evasion states (`modules/movement.ts` checks both everywhere), so a monster would flee from a hidden-via-ability player — but if terrain or timing still put a monster on the player's tile, combat would trigger anyway, silently defeating the ability players had just earned. Fixed to check both flags, matching movement's existing behavior. This was a documented known inconsistency (`COMBAT_SYSTEM_REFERENCE.md` §7, `GAMEBOARD_SYSTEM_CHECKLIST.md`).
+`modules/combat.ts: checkForCombatCollision` only checked `player.isHidden` (the environmental/safe-zone flag), not `player.hideActive` (the ability the player earns from the Hermit and spends charges on). Monster _movement_ already treats the two flags as equivalent evasion states (`modules/movement.ts` checks both everywhere), so a monster would flee from a hidden-via-ability player — but if terrain or timing still put a monster on the player's tile, combat would trigger anyway, silently defeating the ability players had just earned. Fixed to check both flags, matching movement's existing behavior. This was a documented known inconsistency (`COMBAT_SYSTEM_REFERENCE.md` §7, `GAMEBOARD_SYSTEM_CHECKLIST.md`).
 
 ### 2. Bug fix — timed Cloaking never expired
 
@@ -24,7 +24,7 @@ The design doc was explicit: learning to read runes should be discovered organic
 
 ### 5. Feel — player getting hit now actually registers
 
-Overworld combat had rich text feedback (combat log, varied hit/miss/kill messages) but zero *physical* feedback when the player took damage — no haptic, no visual. Jaunt Cave already has local hit-feedback patterns (`HitIndicator`, `BlockShield`); the main loop had nothing equivalent. Added a short haptic buzz (`expo-haptics`, already a dependency, previously unused anywhere in the app) and a brief red vignette flash on `GameBoard` whenever `player.currentHP` decreases. This is intentionally small and self-contained — a single `useEffect` + one `Animated.View` overlay, no changes to combat math, no new state, nothing other subsystems need to know about.
+Overworld combat had rich text feedback (combat log, varied hit/miss/kill messages) but zero _physical_ feedback when the player took damage — no haptic, no visual. Jaunt Cave already has local hit-feedback patterns (`HitIndicator`, `BlockShield`); the main loop had nothing equivalent. Added a short haptic buzz (`expo-haptics`, already a dependency, previously unused anywhere in the app) and a brief red vignette flash on `GameBoard` whenever `player.currentHP` decreases. This is intentionally small and self-contained — a single `useEffect` + one `Animated.View` overlay, no changes to combat math, no new state, nothing other subsystems need to know about.
 
 ## Verified
 
@@ -43,7 +43,7 @@ Overworld combat had rich text feedback (combat log, varied hit/miss/kill messag
 
 - A dedicated `combat-feel` pass: brief monster-flash-on-hit, a subtler "near miss" distinction in the combat log copy (currently miss is flat — "X missed" — with no texture), and audio cues if `modules/audioManager.ts` has hooks for them.
 - Fix the `@testing-library/react-native` `act` incompatibility — it's silently hiding real test coverage for \~40% of the component suite.
-- The two still-unwritten word-grid notes from the design doc's Act One Pacing Plan (Deep Silo reveal, Current-Loom reveal) — real content work, flagged but not started, consistent with "don't add new systems" but is new *writing*, which felt like a bigger lift than this pass's budget.
+- The two still-unwritten word-grid notes from the design doc's Act One Pacing Plan (Deep Silo reveal, Current-Loom reveal) — real content work, flagged but not started, consistent with "don't add new systems" but is new _writing_, which felt like a bigger lift than this pass's budget.
 
 ---
 
@@ -75,7 +75,7 @@ Added a `__DEV__`-only toggle in Settings &gt; Debug: **"Disable Monsters (walkt
 
 - `modules/settingsManager.ts` gained a second persisted flag, `monstersDisabled`, read synchronously via `settingsManager.getMonstersDisabled()`. Its `AsyncStorage` import was made **lazy** (dynamic `import()` inside `initialize()`/`persist()` instead of a static top-level import) specifically because several combat/movement/effects module tests don't mock `@react-native-async-storage` and would otherwise fail to load the moment those modules pulled in this file. Verified via a full `pnpm run test` run before and after: identical 33 pre-existing failing suites, 510 passed both times.
 - Enforcement is three small, independent guards (defense in depth, not one mega-switch) so each call site stays simple and the system degrades safely if one is ever bypassed:
-  - `modules/turnManager.ts: doMonsterMovement` — skips `handleMoveMonsters` entirely (covers monster advance *and* ranged attacks, since both live inside that call).
+  - `modules/turnManager.ts: doMonsterMovement` — skips `handleMoveMonsters` entirely (covers monster advance _and_ ranged attacks, since both live inside that call).
   - `modules/turnManager.ts: initializeStartingMonsters` — new games don't seed any monsters while active.
   - `modules/combat.ts: checkForCombatCollision` — a direct overlap never triggers combat.
   - `modules/effects.ts: executeSwarmEffect` — totems/dark-ritual spawns no-op with flavor text instead of adding monsters (so those objects don't need their own special-case).
