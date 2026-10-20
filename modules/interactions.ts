@@ -70,14 +70,22 @@ export const checkItemInteractions = (
     })
   }
 
-  // Handle collection
-  if (item.type === 'weapon') {
-    handleWeaponCollection(item, state, dispatch)
-  } else {
-    handleConsumableCollection(item, state, dispatch)
+  // Handle collection. Both handlers report whether the item was actually
+  // collected so a full inventory doesn't silently delete the item from the
+  // board (see the matching note at the call site below).
+  const collected =
+    item.type === 'weapon'
+      ? handleWeaponCollection(item, state, dispatch)
+      : handleConsumableCollection(item, state, dispatch)
+
+  if (!collected) {
+    console.log(`⏭️ Leaving ${item.name} on the board (collection did not succeed)`)
+    return
   }
 
-  // Remove from gameboard
+  // Remove from gameboard. Only reached when collection actually succeeded -
+  // otherwise the item would vanish from the board without ever reaching the
+  // player's inventory.
   dispatch({
     type: 'REMOVE_ITEM_FROM_GAMEBOARD',
     payload: {
@@ -91,19 +99,27 @@ export const checkItemInteractions = (
 
 // ==================== WEAPON COLLECTION ====================
 
-const handleWeaponCollection = (item: Item, state: GameState, dispatch: (action: any) => void) => {
+const handleWeaponCollection = (
+  item: Item,
+  state: GameState,
+  dispatch: (action: any) => void
+): boolean => {
   console.log(`⚔️ Attempting to collect weapon: ${item.name}`)
 
   if (state.player.weapons.length >= state.player.maxWeaponsSize) {
     console.log(`❌ Weapon inventory full - cannot collect ${item.name}`)
-    return
+    dispatch({
+      type: 'ADD_COMBAT_LOG',
+      payload: { message: 'Weapon inventory is full.' },
+    })
+    return false
   }
 
   const inventoryItem = createItemInstance(item.shortName, state.player.position)
 
   if (!inventoryItem) {
     console.warn('❌ Failed to create weapon instance:', item.shortName)
-    return
+    return false
   }
 
   dispatch({
@@ -121,6 +137,7 @@ const handleWeaponCollection = (item: Item, state: GameState, dispatch: (action:
   })
 
   console.log(`📦 Weapon added: ${inventoryItem.name}`)
+  return true
 }
 
 // ==================== CONSUMABLE COLLECTION ====================
@@ -129,10 +146,15 @@ const handleConsumableCollection = (
   item: Item,
   state: GameState,
   dispatch: (action: any) => void
-) => {
+): boolean => {
   console.log(`🧪 Attempting to collect consumable: ${item.name}`)
 
   const inventoryItem = createItemInstance(item.shortName, state.player.position)
+
+  if (!inventoryItem) {
+    console.warn('❌ Failed to create consumable instance:', item.shortName)
+    return false
+  }
 
   dispatch({
     type: 'ADD_TO_INVENTORY',
@@ -146,6 +168,7 @@ const handleConsumableCollection = (
   })
 
   console.log(`📦 Consumable added: ${item.name} (ID: ${inventoryItem.id})`)
+  return true
 }
 
 // ==================== OBJECT INTERACTIONS ====================

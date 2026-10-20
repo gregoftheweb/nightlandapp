@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import { Text, TouchableOpacity, View } from 'react-native'
-import { getInitialState } from '../../modules/gameState'
 import { GameProvider, useGameActions, useGameState } from '../GameContext'
 
 jest.mock('../../modules/autoSave', () => ({
@@ -16,7 +15,13 @@ function HydrationHarness() {
   const [hydrationResolved, setHydrationResolved] = useState(false)
 
   const hydrate = async () => {
-    const loadedState = { ...getInitialState('1'), moveCount: 42 }
+    // Reuse the state GameProvider already built on mount rather than paying
+    // for a second full procedural getInitialState() generation just to
+    // flip one field - this test only exercises the hydration/commit
+    // contract, not level generation, and the extra generation pass was
+    // real, variable-latency work that made this test's timing CI-load
+    // sensitive.
+    const loadedState = { ...state, moveCount: 42 }
     await hydrateGameState(loadedState)
     setHydrationResolved(true)
   }
