@@ -1,4 +1,5 @@
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
+import type { GameboardManifest } from '@config/types'
 import { getMapBoundary, canCrossMapBoundary, isBoundaryFootprintWalkable } from '../mapBoundary'
 import {
   EXPEDITION_TRAIL_LENGTH,
@@ -320,6 +321,42 @@ describe('gameboard layout integration', () => {
       )
       expect(result.success).toBe(true)
       if (result.success) expect(result.value.placements).toHaveLength(encounterIds.length)
+    }
+  })
+
+  test('world-object slots place a plain building template on the trail, not a sub-game', () => {
+    const worldObjectManifest: GameboardManifest = {
+      version: 1,
+      slots: [
+        {
+          slotId: 'poison-pool-range',
+          shapeId: 'world-object',
+          kind: 'range',
+          placement: { minPct: 0.3, maxPct: 0.4 },
+          contentRef: 'poisonPool',
+        },
+      ],
+    }
+
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const result = generateLayout(
+        worldObjectManifest,
+        REAL_PARSED_CONTENT_CATALOGS,
+        levels['1'],
+        new RandomSource(seededRandom(seed))
+      )
+      expect(result.success).toBe(true)
+      if (!result.success) continue
+      expect(result.value.placements).toHaveLength(1)
+      const [placement] = result.value.placements
+      expect(placement.shapeId).toBe('world-object')
+      expect(placement.instanceId).toBe('poisonPool')
+      // poisonPool's template declares a 2x2 footprint (config/objects.ts) — confirms the
+      // generator read it straight off the building template, not a sub-game entrance.
+      expect(placement.footprint).toEqual({ width: 2, height: 2 })
+
+      const independentOccupancy = buildBoardOccupancyRegistry(levels['1'])
+      expect(independentOccupancy.isFree(placement.position, placement.footprint).free).toBe(true)
     }
   })
 
