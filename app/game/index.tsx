@@ -25,6 +25,7 @@ import {
 } from '@config/types'
 import { audioManager } from '../../modules/audioManager'
 import { settingsManager } from '../../modules/settingsManager'
+import { isDebugToolsEnabled } from '../../modules/debugTools'
 import { UI_CONSTANTS, TIMING_CONSTANTS } from '../../constants/Game'
 import {
   executeRangedAttack,
@@ -833,7 +834,7 @@ export default function Game() {
 
   const handleToggleMonstersDisabled = useCallback(
     (disabled: boolean) => {
-      if (!__DEV__) return
+      if (!isDebugToolsEnabled()) return
       setMonstersDisabled(disabled)
       void settingsManager.setMonstersDisabled(disabled)
 
@@ -871,7 +872,7 @@ export default function Game() {
 
   const handleDebugJump = useCallback(
     (position: Position) => {
-      if (!__DEV__) return
+      if (!isDebugToolsEnabled()) return
       dispatch({ type: 'DEBUG_TELEPORT_PLAYER', payload: { targetPosition: position } })
       setSettingsVisible(false)
     },

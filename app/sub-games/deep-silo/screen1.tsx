@@ -8,6 +8,7 @@ import { BackgroundImage } from '../_shared/BackgroundImage'
 import { BottomActionBar } from '../_shared/BottomActionBar'
 import { subGameTheme } from '../_shared/subGameTheme'
 import { isDeepSiloSwitchThrown, useDeepSiloDevState } from './entranceState'
+import { isDebugToolsEnabled } from '../../../modules/debugTools'
 
 export const DEEP_SILO_APPROACH_IMAGES = {
   closed: require('@assets/images/backgrounds/subgames/deep-silo/silo-entrance-approach.webp'),
@@ -49,7 +50,7 @@ export default function DeepSiloScreen1() {
   const state = useGameState()
   const dev = useDeepSiloDevState()
   const realThrown = isDeepSiloSwitchThrown(state.subGamesCompleted)
-  const open = realThrown || (__DEV__ && dev.switchThrown)
+  const open = realThrown || (isDebugToolsEnabled() && dev.switchThrown)
   return (
     <DeepSiloApproachView
       open={open}

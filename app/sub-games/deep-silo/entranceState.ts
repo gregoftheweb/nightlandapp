@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { isDebugToolsEnabled } from '../../../modules/debugTools'
 
 const CURRENT_LOOM_IDS = [
   'current-loom-01',
@@ -28,22 +29,22 @@ let devState = INITIAL_DEV_STATE
 const listeners = new Set<() => void>()
 
 function emitDevState(next: DeepSiloDevState) {
-  if (!__DEV__) return
+  if (!isDebugToolsEnabled()) return
   devState = next
   listeners.forEach((listener) => listener())
 }
 
 export function getDeepSiloDevState(): DeepSiloDevState {
-  return __DEV__ ? devState : INITIAL_DEV_STATE
+  return isDebugToolsEnabled() ? devState : INITIAL_DEV_STATE
 }
 
 export function incrementDevLoomOverride(): void {
-  if (!__DEV__ || devState.loomOverrideCount >= CURRENT_LOOM_IDS.length) return
+  if (!isDebugToolsEnabled() || devState.loomOverrideCount >= CURRENT_LOOM_IDS.length) return
   emitDevState({ ...devState, loomOverrideCount: devState.loomOverrideCount + 1 })
 }
 
 export function setDevSwitchThrown(): void {
-  if (!__DEV__ || devState.loomOverrideCount < CURRENT_LOOM_IDS.length) return
+  if (!isDebugToolsEnabled() || devState.loomOverrideCount < CURRENT_LOOM_IDS.length) return
   emitDevState({ ...devState, switchThrown: true })
 }
 
@@ -55,7 +56,7 @@ export function resetDeepSiloDevStateForTests(): void {
 export function useDeepSiloDevState(): DeepSiloDevState {
   return useSyncExternalStore(
     (listener) => {
-      if (!__DEV__) return () => undefined
+      if (!isDebugToolsEnabled()) return () => undefined
       listeners.add(listener)
       return () => listeners.delete(listener)
     },
@@ -65,5 +66,5 @@ export function useDeepSiloDevState(): DeepSiloDevState {
 }
 
 export function effectiveLoomCount(realCount: number, overrideCount: number): number {
-  return __DEV__ && overrideCount > 0 ? overrideCount : realCount
+  return isDebugToolsEnabled() && overrideCount > 0 ? overrideCount : realCount
 }
