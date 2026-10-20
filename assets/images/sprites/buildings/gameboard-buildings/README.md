@@ -1,28 +1,54 @@
 # Building asset replacements
 
-Source: `/mnt/devplex/Nightland/assets/images/gameboard-buildings-NEW/`. All 16 images were converted to WebP at quality 90, encoding method 6. Original dimensions and alpha channels were verified unchanged. Originals remain in the source folder.
+**Current set (as of 2026-10-20):** realistic/detailed illustrations, sourced from
+`/mnt/devplex/Nightland/Docs/assets/buildings-real/`. These replaced an earlier
+stylized-circular-badge set (ornate ring frame, in-image text label) that lived in this
+directory before. The badge set is not preserved anywhere in this repo; if it's ever
+wanted again it would need to be re-sourced.
 
-| Source file                      | WebP file in this directory     | Existing logical use                                                   |
-| -------------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
-| `aero-wreckage.png`              | `aero-wreckage.webp`            | aerowreckage-puzzle entrance                                           |
-| `archive/cursed-totem.jpg`       | `archive/cursed-totem.webp`     | Archived alternative; not selected at runtime                          |
-| `archive/cursed-totem.png`       | `archive/cursed-totem-png.webp` | Archived alternative; not selected at runtime                          |
-| `archive/jaunt-cave.png`         | `archive/jaunt-cave.webp`       | Archived alternative; not selected at runtime                          |
-| `archive/last-redoubt.png`       | `archive/last-redoubt.webp`     | Archived alternative; not selected at runtime                          |
-| `archive/loom-entrance.png`      | `archive/loom-entrance.webp`    | Archived alternative; not selected at runtime                          |
-| `cursed-totem-no-rear-gear.png`  | `cursed-totem.webp`             | cursedTotem                                                            |
-| `jaunt-cave-no-rear-gear.png`    | `jaunt-cave.webp`               | jaunt-cave-entrance / both Jaunt Cave instances                        |
-| `loom-entrance-no-rear-gear.png` | `loom-entrance.webp`            | current-loom-entrance / all Current-Loom instances                     |
-| `petrified-willow.png`           | `petrified-willow.webp`         | petrifiedWillow                                                        |
-| `pool-of-peace.png`              | `pool-of-peace.webp`            | healingPool                                                            |
-| `pool-of-water.png`              | `pool-of-water.webp`            | poisonPool visual; existing poison effects unchanged                   |
-| `redoubt.png`                    | `redoubt.webp`                  | redoubt (Last Redoubt)                                                 |
-| `ruins.png`                      | `ruins.webp`                    | Included for future use; no existing matching building ID or placement |
-| `silo.png`                       | `silo.webp`                     | deep-silo entrance                                                     |
-| `tesseract-puzzle.png`           | `tesseract-puzzle.webp`         | tesseract-entrance / existing word-grid entrances                      |
+| File                    | Logical use                                                            |
+| ----------------------- | ---------------------------------------------------------------------- |
+| `aero-wreckage.webp`    | aerowreckage-puzzle entrance                                           |
+| `cursed-totem.webp`     | cursedTotem                                                            |
+| `hermit-hollow.webp`    | hermit-hollow entrance (same art already used by the sub-game itself)  |
+| `jaunt-cave.webp`       | jaunt-cave-entrance / both Jaunt Cave instances                        |
+| `loom-entrance.webp`    | current-loom-entrance / all Current-Loom instances                     |
+| `petrified-willow.webp` | petrifiedWillow                                                        |
+| `pool-of-peace.webp`    | healingPool                                                            |
+| `pool-of-water.webp`    | poisonPool visual; existing poison effects unchanged                   |
+| `redoubt.webp`          | redoubt (Last Redoubt)                                                 |
+| `ruins.webp`            | Included for future use; no existing matching building ID or placement |
+| `rune-obelisk.webp`     | rune-obelisk entrance (centralized copy; see note below)               |
+| `silo.webp`             | deep-silo entrance                                                     |
+| `tesseract-puzzle.webp` | tesseract-entrance / existing word-grid entrances                      |
 
-The archived PNG/JPG pair shares the name `cursed-totem`. The JPG keeps `archive/cursed-totem.webp`; the PNG is named `archive/cursed-totem-png.webp` so neither variant overwrites the other. Prompt text files are not images and were not converted.
+These images are **not uniform dimensions** (unlike the old 1254x1254 badge set) - they
+vary per asset. The gameboard renders every building with `resizeMode="contain"`
+(`components/GameBoard.tsx`), so non-square/differently-sized source images display
+correctly without distortion. Declared `width`/`height` values in preload asset lists
+(`GameBoardImagePreloader.tsx`, word-grid/current-loom/timed-encounter asset catalogs)
+are only used to size tiny hidden decode-trigger views and do not need to match each
+image's real aspect ratio.
 
-The root cave, loom, and totem files are the active images. Their app filenames omit the original source files’ variant suffix. The river, Hermit Hollow, and Rune Obelisk have no matching replacement in the source folder and retain their existing artwork. `ruins.webp` is available without inventing a new entity or changing the map.
+## Centralization note (2026-10-20)
 
-References were updated in `config/objects.ts`, `config/subGames.ts`, the word-grid/current-loom/timed-encounter asset catalogs, and `components/startup/GameBoardImagePreloader.tsx`. Loader pixel dimensions reflect the new 1254×1254 active images; world footprints, IDs, positions, effects, and pathfinding remain unchanged.
+Every sub-game's overworld/gameboard building icon should import from this directory -
+no sub-game should source its own gameboard entrance image from its own background
+folder (`assets/images/backgrounds/subgames/<name>/...`). Two had drifted from that
+rule and were fixed:
+
+- **hermit-hollow** - `config/subGames.ts` previously imported the entrance icon from
+  `assets/images/backgrounds/subgames/hermit/hermit-save2.webp` (a byte-identical
+  duplicate of this directory's `hermit-hollow.webp`). Re-pointed the import here; the
+  duplicate file was deleted.
+- **rune-obelisk** - `config/subGames.ts` previously imported the entrance icon from
+  `assets/images/backgrounds/subgames/rosseta/obelisk-entrance.webp`. That file is also
+  legitimately used as the sub-game's own intro-screen background and stays there for
+  that purpose; a copy was added here as `rune-obelisk.webp` specifically for the
+  gameboard icon reference, and only the gameboard reference (in `config/subGames.ts`
+  and `GameBoardImagePreloader.tsx`) now points at it.
+
+Historical note: an earlier asset-replacement pass (see git history) sourced from files
+named with a `-no-rear-gear` suffix (e.g. `cursed-totem-no-rear-gear.png`). No file or
+code reference with that suffix remains in the repo; it only ever existed in the
+original (external) source folder's filenames, not here.
