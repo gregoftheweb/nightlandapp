@@ -1,6 +1,7 @@
 import { parsedWordGridContentResult } from '@/app/sub-games/_shared/word-grid/contentCatalog'
 import { parsedCurrentLoomContentResult } from '@/app/sub-games/_shared/current-loom/contentCatalog'
 import { getSubGameDefinition, isRegisteredSubGameInstance, SUB_GAME_SHAPES } from './subGames'
+import { getBuildingTemplate } from './objects'
 import type { GameboardManifest } from './types/gameboard'
 import type { SubGameInstanceDefinition } from './subGames'
 import type { ValidationError, ValidationResult } from './types/encounters'
@@ -124,6 +125,18 @@ export function validateGameboardManifest(manifest: unknown): ValidationResult<G
       seenInstanceIds.set(contentRef, slotId)
     }
 
+    if (shapeId === 'world-object') {
+      if (!getBuildingTemplate(contentRef)) {
+        addError(
+          errors,
+          'unknown-content-ref',
+          path,
+          `World-object content '${contentRef}' does not resolve to a building template`
+        )
+      }
+      return
+    }
+
     const definition = resolveContent(shapeId, contentRef)
     if (!definition) {
       addError(
@@ -149,7 +162,7 @@ export function validateGameboardManifest(manifest: unknown): ValidationResult<G
     const basePath = `slots[${index}]`
     const slotId = typeof slot.slotId === 'string' ? slot.slotId : ''
     const shapeId = typeof slot.shapeId === 'string' ? slot.shapeId : ''
-    const shapeRegistered = SUB_GAME_SHAPES.has(shapeId as never)
+    const shapeRegistered = SUB_GAME_SHAPES.has(shapeId as never) || shapeId === 'world-object'
     if (!shapeRegistered) {
       addError(
         errors,

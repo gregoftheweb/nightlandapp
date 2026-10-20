@@ -50,4 +50,36 @@ describe('gameboard manifest validator', () => {
       ])
     )
   })
+
+  it('accepts a world-object slot referencing a real building template', () => {
+    const manifest = JSON.parse(JSON.stringify(VALID_GAMEBOARD_MANIFEST))
+    manifest.slots.push({
+      slotId: 'poison-pool-range',
+      shapeId: 'world-object',
+      kind: 'range',
+      placement: { minPct: 0.1, maxPct: 0.2 },
+      contentRef: 'poisonPool',
+    })
+
+    const result = validateGameboardManifest(manifest)
+
+    expect(result).toEqual({ success: true, value: manifest })
+  })
+
+  it('rejects a world-object slot referencing an unknown template', () => {
+    const manifest = JSON.parse(JSON.stringify(VALID_GAMEBOARD_MANIFEST))
+    manifest.slots.push({
+      slotId: 'bogus-pool-range',
+      shapeId: 'world-object',
+      kind: 'range',
+      placement: { minPct: 0.1, maxPct: 0.2 },
+      contentRef: 'not-a-real-template',
+    })
+
+    const result = validateGameboardManifest(manifest)
+
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(result.errors.map(({ code }) => code)).toContain('unknown-content-ref')
+  })
 })

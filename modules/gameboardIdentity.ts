@@ -3,7 +3,12 @@ import { RAW_TIMED_ENCOUNTER_CONTENT } from '@/app/sub-games/_shared/timed-encou
 import { RAW_CURRENT_LOOM_CONTENT } from '@/app/sub-games/_shared/current-loom/contentCatalog'
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
 import { getSubGameDefinition } from '@config/subGames'
-import type { ContentFingerprintInput, GameboardCatalogIdentity } from '@config/types'
+import { getBuildingTemplate } from '@config/objects'
+import type {
+  ContentFingerprintInput,
+  GameboardCatalogIdentity,
+  GameboardShapeId,
+} from '@config/types'
 
 function stableStringify(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value)
@@ -79,10 +84,12 @@ function serializableRegistryContent(instanceId: string): unknown {
 function buildContentFingerprintInput(): ContentFingerprintInput[] {
   return GAMEBOARD_MANIFEST.slots
     .flatMap((slot) =>
-      (slot.kind === 'scattered-group' ? slot.instances : [slot.contentRef]).map((instanceId) => ({
-        shapeId: slot.shapeId,
-        instanceId,
-      }))
+      (slot.kind === 'scattered-group' ? slot.instances : [slot.contentRef]).map(
+        (instanceId): { shapeId: GameboardShapeId; instanceId: string } => ({
+          shapeId: slot.shapeId,
+          instanceId,
+        })
+      )
     )
     .map(({ shapeId, instanceId }) => ({
       shapeId,
@@ -94,7 +101,9 @@ function buildContentFingerprintInput(): ContentFingerprintInput[] {
             ? RAW_TIMED_ENCOUNTER_CONTENT[instanceId]
             : shapeId === 'current-loom'
               ? RAW_CURRENT_LOOM_CONTENT[instanceId]
-              : serializableRegistryContent(instanceId),
+              : shapeId === 'world-object'
+                ? getBuildingTemplate(instanceId)
+                : serializableRegistryContent(instanceId),
     }))
     .sort((a, b) => a.shapeId.localeCompare(b.shapeId) || a.instanceId.localeCompare(b.instanceId))
 }

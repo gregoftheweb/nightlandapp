@@ -2,14 +2,20 @@ import { parsedWordGridContentResult } from '@/app/sub-games/_shared/word-grid/c
 import { parsedTimedEncounterContentResult } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
 import { parsedCurrentLoomContentResult } from '@/app/sub-games/_shared/current-loom/contentCatalog'
 import { GAMEBOARD_MANIFEST } from '@config/gameboardManifest'
-import { createItemInstance, createSubGameEntranceInstance } from '@config/levelHelpers'
+import {
+  createItemInstance,
+  createObjectInstance,
+  createSubGameEntranceInstance,
+} from '@config/levelHelpers'
 import { getSubGameDefinition } from '@config/subGames'
+import { getBuildingTemplate } from '@config/objects'
 import { getMapBoundary, isBoundaryFootprintWalkable } from './mapBoundary'
 import { toIntegerTilePosition } from './playerPosition'
 import type {
   EncounterPlacement,
   GameboardManifest,
   GameboardRegion,
+  GameboardSlot,
   Level,
   LevelObjectInstance,
   Item,
@@ -264,6 +270,10 @@ function countEligibleScatteredInstances(
   for (const slot of manifest.slots) {
     if (slot.kind !== 'scattered-group') continue
     for (const instanceId of slot.instances) {
+      if (slot.shapeId === 'world-object') {
+        if (getBuildingTemplate(instanceId)) count += 1
+        continue
+      }
       try {
         if (catalogs.resolve(slot.shapeId, instanceId).entrance) count += 1
       } catch {
@@ -351,26 +361,40 @@ function generateLayoutAttempt(
   for (const slot of manifest.slots) {
     const instanceIds = slot.kind === 'scattered-group' ? slot.instances : [slot.contentRef]
     for (const instanceId of instanceIds) {
-      let definition: ReturnType<typeof getSubGameDefinition>
-      try {
-        definition = catalogs.resolve(slot.shapeId, instanceId)
-      } catch (error) {
-        errors.push({
-          code: 'unresolved-layout-content',
-          path: slot.slotId,
-          message: String(error),
-        })
-        continue
+      let footprint: { width: number; height: number }
+      if (slot.shapeId === 'world-object') {
+        const template = getBuildingTemplate(instanceId)
+        if (!template) {
+          errors.push({
+            code: 'unresolved-layout-content',
+            path: slot.slotId,
+            message: `Unknown world-object template '${instanceId}'`,
+          })
+          continue
+        }
+        footprint = { width: template.width ?? 1, height: template.height ?? 1 }
+      } else {
+        let definition: ReturnType<typeof getSubGameDefinition>
+        try {
+          definition = catalogs.resolve(slot.shapeId, instanceId)
+        } catch (error) {
+          errors.push({
+            code: 'unresolved-layout-content',
+            path: slot.slotId,
+            message: String(error),
+          })
+          continue
+        }
+        if (!definition.entrance) {
+          errors.push({
+            code: 'missing-entrance-contract',
+            path: slot.slotId,
+            message: `Encounter '${instanceId}' has no entrance contract`,
+          })
+          continue
+        }
+        footprint = { width: definition.entrance.width, height: definition.entrance.height }
       }
-      if (!definition.entrance) {
-        errors.push({
-          code: 'missing-entrance-contract',
-          path: slot.slotId,
-          message: `Encounter '${instanceId}' has no entrance contract`,
-        })
-        continue
-      }
-      const footprint = { width: definition.entrance.width, height: definition.entrance.height }
       let lastReason = 'no candidate was attempted'
       let accepted: EncounterPlacement | undefined
       const attempts = slot.kind === 'end' ? 1 : MAX_ATTEMPTS_PER_INSTANCE
@@ -521,12 +545,17 @@ export function placementsToLevelObjects(
   placements: readonly EncounterPlacement[]
 ): LevelObjectInstance[] {
   return placements.map((placement) => {
-    const slot = GAMEBOARD_MANIFEST.slots.find((candidate) =>
+    const slot: GameboardSlot | undefined = GAMEBOARD_MANIFEST.slots.find((candidate) =>
       candidate.kind === 'scattered-group'
         ? candidate.instances.includes(placement.instanceId)
         : candidate.contentRef === placement.instanceId
     )
     if (!slot) throw new Error(`No manifest slot found for '${placement.instanceId}'`)
+    if (slot.shapeId === 'world-object') {
+      return createObjectInstance(placement.instanceId, placement.position, {
+        id: placement.occupancyId,
+      })
+    }
     const definition = REAL_PARSED_CONTENT_CATALOGS.resolve(slot.shapeId, placement.instanceId)
     return createSubGameEntranceInstance(
       placement.instanceId,
