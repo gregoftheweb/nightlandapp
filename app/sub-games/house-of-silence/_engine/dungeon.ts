@@ -7,7 +7,14 @@ export interface DungeonFixture {
   rows: string[]
   spawn: Camera
   sprites?: DungeonSprite[]
+  columns?: DungeonColumn[]
   ceilingRegions?: { x: number; y: number; width: number; height: number; ceilingHeight: number }[]
+}
+export interface DungeonColumn {
+  id: string
+  x: number
+  y: number
+  radius: number
 }
 export interface DungeonSprite {
   id: string
@@ -20,7 +27,9 @@ export interface DungeonSprite {
 export interface RayHit {
   distance: number
   u: number
-  material: 'wall' | 'door'
+  material: 'wall' | 'door' | 'column'
+  light?: number
+  textureScale?: number
   side: number
   x: number
   y: number
@@ -51,6 +60,12 @@ export const TEST_DUNGEON: DungeonFixture = {
   ],
   spawn: { x: 3.5, y: 9.5, angle: -Math.PI / 2 },
   ceilingRegions: [{ x: 7, y: 1, width: 7, height: 6, ceilingHeight: 2 }],
+  columns: [
+    { id: 'column-north-west', x: 8.5, y: 2.5, radius: 0.32 },
+    { id: 'column-north-east', x: 11.5, y: 2.5, radius: 0.32 },
+    { id: 'column-south-west', x: 8.5, y: 5.5, radius: 0.32 },
+    { id: 'column-south-east', x: 11.5, y: 5.5, radius: 0.32 },
+  ],
   sprites: [
     { id: 'silent-one-room', texture: 'silentOne', x: 9.5, y: 6.5, width: 0.66, height: 0.98 },
   ],
@@ -81,6 +96,11 @@ export function createDungeon(fixture: DungeonFixture) {
   }
 
   function canStand(x: number, y: number) {
+    for (const column of fixture.columns ?? []) {
+      const dx = x - column.x
+      const dy = y - column.y
+      if (dx * dx + dy * dy < (radius + column.radius) ** 2) return false
+    }
     for (let cy = Math.floor(y - radius); cy <= Math.floor(y + radius); cy++) {
       for (let cx = Math.floor(x - radius); cx <= Math.floor(x + radius); cx++) {
         if (!solid(cx, cy)) continue
@@ -94,6 +114,37 @@ export function createDungeon(fixture: DungeonFixture) {
 
   function trace(dx: number, dy: number, maxDistance = 40): RaySpan[] {
     if (!Number.isFinite(dx) || !Number.isFinite(dy) || (!dx && !dy) || maxDistance <= 0) return []
+    // Cylinder intersections use the ray's original length, preserving camera-space depth.
+    let columnHit: RayHit | null = null
+    const rayLengthSquared = dx * dx + dy * dy
+    for (const column of fixture.columns ?? []) {
+      const offsetX = camera.x - column.x
+      const offsetY = camera.y - column.y
+      const dot = offsetX * dx + offsetY * dy
+      const discriminant =
+        dot * dot -
+        rayLengthSquared * (offsetX * offsetX + offsetY * offsetY - column.radius * column.radius)
+      if (discriminant < 0) continue
+      const distance = (-dot - Math.sqrt(discriminant)) / rayLengthSquared
+      if (
+        distance <= 0.001 ||
+        distance > maxDistance ||
+        (columnHit && distance >= columnHit.distance)
+      )
+        continue
+      const normalX = (camera.x + distance * dx - column.x) / column.radius
+      const normalY = (camera.y + distance * dy - column.y) / column.radius
+      columnHit = {
+        distance,
+        u: (Math.atan2(normalY, normalX) + Math.PI) / (Math.PI * 2),
+        material: 'column',
+        side: 0,
+        x: column.x,
+        y: column.y,
+        light: 0.62 + 0.38 * Math.max(0, -0.6 * normalX - 0.8 * normalY),
+        textureScale: Math.PI * 2 * column.radius,
+      }
+    }
     let x = Math.floor(camera.x)
     let y = Math.floor(camera.y)
     const spans: RaySpan[] = []
@@ -118,6 +169,17 @@ export function createDungeon(fixture: DungeonFixture) {
         nextY += deltaY
         y += stepY
         side = 1
+      }
+      if (columnHit && columnHit.distance <= Math.min(distance, maxDistance)) {
+        spans.push({
+          start,
+          end: columnHit.distance,
+          ceiling,
+          nextCeiling: ceiling,
+          boundary: columnHit,
+          solid: true,
+        })
+        return spans
       }
       if (distance > maxDistance) {
         spans.push({
@@ -177,6 +239,14 @@ export function createDungeon(fixture: DungeonFixture) {
     for (let distance = 0; distance <= 1.65; distance += 0.025) {
       const x = Math.floor(camera.x + Math.cos(camera.angle) * distance)
       const y = Math.floor(camera.y + Math.sin(camera.angle) * distance)
+      const pointX = camera.x + Math.cos(camera.angle) * distance
+      const pointY = camera.y + Math.sin(camera.angle) * distance
+      if (
+        fixture.columns?.some(
+          (column) => (pointX - column.x) ** 2 + (pointY - column.y) ** 2 <= column.radius ** 2
+        )
+      )
+        break
       if (tile(x, y) === 'D') return { x, y, open: !!doors[key(x, y)] }
       if (tile(x, y) === '#') break
     }

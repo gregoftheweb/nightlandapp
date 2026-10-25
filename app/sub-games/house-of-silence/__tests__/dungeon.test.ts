@@ -7,6 +7,100 @@ const room = {
 }
 
 describe('House of Silence raycaster and movement', () => {
+  const columnFixture = {
+    rows: ['#########', '#.......#', '#.......#', '#.......#', '#########'],
+    spawn: { x: 1.5, y: 2.5, angle: 0 },
+    columns: [{ id: 'test-column', x: 4.5, y: 2.5, radius: 0.32 }],
+  }
+
+  it('intersects a round column at its real surface, including non-unit projection rays', () => {
+    const engine = createDungeon(columnFixture)
+    const hit = engine.cast(1, 0)!
+    expect(hit.material).toBe('column')
+    expect(hit.distance).toBeCloseTo(2.68)
+    expect(hit.light).toBeGreaterThan(0.6)
+    expect(engine.cast(2, 0)?.distance).toBeCloseTo(1.34)
+    expect(engine.cast(1, 0.2)?.material).toBe('wall')
+    expect(engine.cast(1, 0, 2)).toBeNull()
+  })
+
+  it('blocks movement with a circular footprint and player clearance, allowing movement around it', () => {
+    const engine = createDungeon(columnFixture)
+    expect(engine.canStand(4.5, 2.5)).toBe(false)
+    expect(engine.canStand(4, 2.5)).toBe(false)
+    expect(engine.canStand(4.5, 3.1)).toBe(true)
+    for (let i = 0; i < 100; i++) engine.move(1, 0, 0.05)
+    expect(engine.getCamera().x).toBeLessThanOrEqual(3.99)
+    expect(engine.canStand(engine.getCamera().x, engine.getCamera().y)).toBe(true)
+  })
+
+  it('respects nearer walls and prevents reaching a door through a column', () => {
+    const engine = createDungeon({
+      ...columnFixture,
+      rows: ['#########', '#.......#', '#..#....#', '#.......#', '#########'],
+    })
+    expect(engine.cast(1, 0)?.material).toBe('wall')
+    const blockedDoor = createDungeon({
+      rows: ['########', '#..D...#', '########'],
+      spawn: { x: 1.5, y: 1.5, angle: 0 },
+      columns: [{ id: 'door-column', x: 2.5, y: 1.5, radius: 0.25 }],
+    })
+    expect(blockedDoor.cast(1, 0)?.material).toBe('column')
+    expect(blockedDoor.nearbyDoor()).toBeNull()
+    expect(blockedDoor.interact()).toBe('No door within reach.')
+  })
+
+  it('clips the Silent One behind a column and keeps the high-room ceiling on the column span', () => {
+    const engine = createDungeon({
+      ...columnFixture,
+      ceilingRegions: [{ x: 3, y: 1, width: 5, height: 3, ceilingHeight: 2 }],
+    })
+    const spans = engine.trace(1, 0)
+    expect(spans).toHaveLength(2)
+    expect(spans[1]).toMatchObject({ ceiling: 2, solid: true })
+    expect(spans[1].boundary?.material).toBe('column')
+    const figure = {
+      id: 'hidden',
+      texture: 'silentOne' as const,
+      x: 6.5,
+      y: 2.5,
+      width: 0.66,
+      height: 0.98,
+    }
+    expect(engine.cast(1, 0)!.distance).toBeLessThan(engine.projectSprite(figure, 400, 700)!.depth)
+  })
+
+  it('leaves connected walking routes around all four encounter-room columns', () => {
+    const engine = createDungeon(TEST_DUNGEON)
+    expect(TEST_DUNGEON.columns).toHaveLength(4)
+    const queue = [[2, 22]]
+    const seen = new Set<string>()
+    while (queue.length) {
+      const [x, y] = queue.shift()!
+      const id = `${x},${y}`
+      if (
+        seen.has(id) ||
+        x < 0 ||
+        x > 28 ||
+        y < 0 ||
+        y > 24 ||
+        !engine.canStand(7 + x / 4, 1 + y / 4)
+      )
+        continue
+      seen.add(id)
+      queue.push([x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1])
+    }
+    for (const column of TEST_DUNGEON.columns!) {
+      for (const [dx, dy] of [
+        [0.75, 0],
+        [-0.75, 0],
+        [0, 0.75],
+        [0, -0.75],
+      ]) {
+        expect(seen.has(`${(column.x + dx - 7) * 4},${(column.y + dy - 1) * 4}`)).toBe(true)
+      }
+    }
+  })
   const heightFixture = {
     rows: ['########', '#..D...#', '########'],
     spawn: { x: 2.5, y: 1.5, angle: 0 },

@@ -11,6 +11,7 @@ On START, choose **Test House of Silence**. This opens a fresh local test sessio
 - **Reset test** restores the camera and closes the door. It does not touch expedition state.
 - A single tall Silent One stands motionless in the room beyond the wooden door. It is a transparent pencil sprite, scaled with perspective and occluded by walls and the closed door. It has no interaction, collision, AI, or combat behavior.
 - The room beyond the door has a two-unit ceiling; the corridor and wooden doorway remain one unit high. Camera eye height, floor level, and the Silent One's size stay the same.
+- Four round stone columns stand in two pairs inside the chamber. They reach the ceiling and block both movement and the view of the Silent One. There is a clear entrance and space to walk around every column.
 
 ## Implementation
 
@@ -20,7 +21,9 @@ Expo Router uses `routes/` in this app. The two House route wrappers there expor
 
 The renderer is our own DDA grid raycaster with perspective floor/ceiling sampling. A canvas runs in the existing React Native WebView on iOS/Android and in a sandboxed iframe on web. This replaces the planning document's tentative `expo-gl` backend with a small shared software renderer for the MVP. No third-party game engine is used.
 
-`ceilingRegions` supplies the encounter chamber's height. Rays continue through height transitions and return ordered spans: each span projects its own ceiling plane, while nearer ceilings clip the view beyond. Looking from the tall room into the corridor renders a wall lintel above the opening. A closed door stays one unit tall with masonry above it. Taller walls repeat the pencil material at its original world scale instead of stretching it. This pass adds a flat double-height ceiling; vault ribs, curved ceiling geometry, columns, and an altar are subsequent work.
+`ceilingRegions` supplies the encounter chamber's height. Rays continue through height transitions and return ordered spans: each span projects its own ceiling plane, while nearer ceilings clip the view beyond. Looking from the tall room into the corridor renders a wall lintel above the opening. A closed door stays one unit tall with masonry above it. Taller walls repeat the pencil material at its original world scale instead of stretching it. This pass adds a flat double-height ceiling; vault ribs, curved ceiling geometry, and an altar are subsequent work.
+
+`columns` supplies four world-space circular footprints (radius 0.32). Ray/cylinder intersection joins the existing ordered height spans, so columns occlude sprites and are themselves occluded by nearer walls or doors. Movement adds the player's radius to each column's radius; the floor tiles around a column remain walkable. The existing stone texture wraps around the cylinders with directional pencil shading, vertical grooves, and capital/base bands. No new bitmap assets are required. Columns follow the surrounding ceiling height. Vault detailing and an altar remain future work.
 
 Four surface WebPs plus `silent-one-standing-pencil-01.webp` are statically referenced from `assets/images/sub-games/HouseOfSilence/insidePOV/`. Native uses `expo-asset` and the SDK-compatible `expo-file-system` to embed downloaded/bundled assets as data URIs. Web fetches the Metro asset URLs and embeds them too. The canvas document needs no network/file permissions or storage access. Surface textures are sampled at 256 × 256; the transparent portrait sprite is sampled at 512 pixels tall with its aspect ratio preserved. Source files are unchanged.
 
@@ -39,6 +42,8 @@ Before adding those screens, introduce explicit session modes such as `crawl`, `
 That future session owner must bridge the renderer's local state into an explicit snapshot/restore API; the current fixture does not pretend to implement encounter transitions. Keep internal transitions separate from lifecycle completion and RPG exit. Seeded layout generation, Grace/heartbeat survival, Silent Ones, and final story resolution are also future work.
 
 ## Verification
+
+The columns update passed 25 House tests, TypeScript, changed-file lint/formatting, and iOS/Android/web exports. Tests cover ray/cylinder depth with non-unit rays, circular movement clearance, nearer-wall occlusion, blocked door reach, sprite occlusion, high-ceiling spans, and connected routes around all four columns. The production browser walkthrough passed entry, room traversal, reset, pause/resume, and exit with no runtime errors or localStorage changes. A preview is saved as `Nightland/Docs/assets/HouseOfSilence/insidePOV/columns-room-preview.png`.
 
 The room-height update passed 20 House tests, TypeScript, changed-file lint/formatting, and production exports for iOS, Android, and web. The production web walkthrough at 430 × 900 verified entering the tall room, looking north at its higher ceiling, looking back through the normal-height doorway, and the existing walk/reset/pause/exit flow. There were no browser runtime exceptions or localStorage changes. Preview screenshots are saved in `Nightland/Docs/assets/HouseOfSilence/insidePOV/` with the `double-height-room-` prefix. Native-device visual review remains outstanding.
 

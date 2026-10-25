@@ -156,8 +156,16 @@ export function bootDungeon(
         clipTop = Math.max(clipTop, Math.ceil(ceilingEnd - 0.5))
         const hit = span.boundary
         if (!hit) continue
-        const shade = Math.max(0.2, (hit.side ? 0.86 : 1) / (1 + hit.distance * 0.095))
-        function drawWall(bottom: number, top: number, material: 'wall' | 'door') {
+        const shade = Math.max(
+          0.2,
+          (hit.light ?? (hit.side ? 0.86 : 1)) / (1 + hit.distance * 0.095)
+        )
+        function drawWall(bottom: number, top: number, material: 'wall' | 'door' | 'column') {
+          const isColumn = material === 'column'
+          const u = isColumn ? hit!.u * (hit!.textureScale ?? 1) : Math.min(0.99999, hit!.u)
+          const grooveShade = isColumn
+            ? 1 - 0.16 * (0.5 + 0.5 * Math.cos(hit!.u * Math.PI * 24)) ** 8
+            : 1
           const start = Math.max(
             0,
             clipTop,
@@ -169,7 +177,20 @@ export function bootDungeon(
           )
           for (let y = start; y < end; y++) {
             const z = 0.5 + ((horizon - y - 0.5) * hit!.distance) / projection
-            sample(textures[material], Math.min(0.99999, hit!.u), 1 - z, (y * width + x) * 4, shade)
+            let faceShade = shade * grooveShade
+            if (isColumn) {
+              // Pencil grooves and narrow capital/base bands follow the actual cylinder.
+              if (z < 0.14 || z > span.ceiling - 0.14) faceShade *= 0.86
+              if (Math.abs(z - 0.14) < 0.012 || Math.abs(z - (span.ceiling - 0.14)) < 0.012)
+                faceShade *= 0.65
+            }
+            sample(
+              textures[material === 'column' ? 'wall' : material],
+              u,
+              1 - z,
+              (y * width + x) * 4,
+              faceShade
+            )
           }
         }
         if (span.solid) {
