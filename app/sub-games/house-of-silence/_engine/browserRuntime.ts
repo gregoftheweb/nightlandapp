@@ -22,6 +22,7 @@ export function bootDungeon(
   let frame = 0
   let image: ImageData
   let wallDepths: Float64Array
+  let objectDepths: Float32Array
   let hintUntil = 0
   let fpsTime = 0
   let frames = 0
@@ -33,6 +34,7 @@ export function bootDungeon(
     canvas.height = Math.max(160, Math.round((canvas.width * box.height) / Math.max(1, box.width)))
     image = ctx.createImageData(canvas.width, canvas.height)
     wallDepths = new Float64Array(canvas.width)
+    objectDepths = new Float32Array(canvas.width * canvas.height)
   }
 
   function clearInputs() {
@@ -94,6 +96,7 @@ export function bootDungeon(
     const py = dx * plane
     const projection = width / (2 * plane)
     const data = image.data
+    objectDepths.fill(Infinity)
     const size = 256
     function sample(texture: ImageData, u: number, v: number, at: number, shade: number) {
       const tx = ((Math.floor(u * size) % size) + size) % size
@@ -209,7 +212,56 @@ export function bootDungeon(
         }
       }
     }
-    // Static camera-facing figures: floor anchored, alpha blended, and hidden by nearer walls/doors.
+    // Low stone furniture leaves the upper part of the room visible. Keep depth per pixel
+    // so figures behind an altar can remain visible above its slab.
+    for (let x = 0; x < width; x++) {
+      const screen = (2 * (x + 0.5)) / width - 1
+      const rayX = dx + px * screen
+      const rayY = dy + py * screen
+      for (const hit of dungeon.traceBlocks(rayX, rayY)) {
+        const block = hit.block
+        function drawBlockPixel(y: number, depth: number, u: number, v: number, shade: number) {
+          const index = y * width + x
+          if (depth >= wallDepths[x] || depth >= objectDepths[index]) return
+          sample(textures.wall, u, v, index * 4, shade)
+          objectDepths[index] = depth
+        }
+        const frontTop = horizon + ((0.5 - block.height) * projection) / hit.near
+        const frontBottom = horizon + (0.5 * projection) / hit.near
+        for (
+          let y = Math.max(0, Math.ceil(frontTop - 0.5));
+          y < Math.min(height, Math.ceil(frontBottom - 0.5));
+          y++
+        ) {
+          const z = 0.5 + ((horizon - y - 0.5) * hit.near) / projection
+          let shade = (hit.side ? 0.78 : 0.86) / (1 + hit.near * 0.095)
+          if (z > block.height - 0.05 || z < 0.04) shade *= 0.75
+          drawBlockPixel(y, hit.near, hit.u, 1 - z, Math.max(0.16, shade))
+        }
+        if (block.height < 0.5) {
+          const topScale = (0.5 - block.height) * projection
+          const topFar = horizon + topScale / hit.far
+          for (
+            let y = Math.max(0, Math.ceil(topFar - 0.5));
+            y < Math.min(height, Math.ceil(frontTop - 0.5));
+            y++
+          ) {
+            const depth = topScale / (y + 0.5 - horizon)
+            const wx = camera.x + depth * rayX
+            const wy = camera.y + depth * rayY
+            const edge = Math.min(
+              wx - block.x,
+              block.x + block.width - wx,
+              wy - block.y,
+              block.y + block.depth - wy
+            )
+            const shade = (edge < 0.035 ? 0.62 : 0.95) / (1 + depth * 0.095)
+            drawBlockPixel(y, depth, wx, wy, shade)
+          }
+        }
+      }
+    }
+    // Static camera-facing figures: floor anchored, alpha blended, and hidden by nearer surfaces.
     const sprites = (fixture.sprites ?? [])
       .map((sprite) => ({
         sprite,
@@ -234,6 +286,7 @@ export function bootDungeon(
           )
         )
         for (let y = startY; y < endY; y++) {
+          if (view.depth >= objectDepths[y * width + x]) continue
           const ty = Math.max(
             0,
             Math.min(

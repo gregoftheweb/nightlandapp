@@ -7,6 +7,40 @@ const room = {
 }
 
 describe('House of Silence raycaster and movement', () => {
+  const altarFixture = {
+    rows: ['#########', '#.......#', '#.......#', '#.......#', '#########'],
+    spawn: { x: 1.5, y: 2.5, angle: 0 },
+    blocks: [{ id: 'altar', x: 3, y: 2, width: 1, depth: 1, height: 0.36 }],
+  }
+
+  it('traces the near and far edges of low furniture without cutting off the wall above it', () => {
+    const engine = createDungeon(altarFixture)
+    expect(engine.traceBlocks(1, 0)[0]).toMatchObject({ near: 1.5, far: 2.5, side: 0, u: 0.5 })
+    expect(engine.traceBlocks(2, 0)[0]).toMatchObject({ near: 0.75, far: 1.25 })
+    expect(engine.cast(1, 0)).toMatchObject({ material: 'wall', distance: 6.5 })
+    expect(engine.traceBlocks(-1, 0)).toEqual([])
+    expect(engine.traceBlocks(0, 1)).toEqual([])
+    expect(engine.traceBlocks(1, 0, 1)).toEqual([])
+    expect(engine.traceBlocks(0, 0)).toEqual([])
+    const fromNorth = createDungeon({
+      ...altarFixture,
+      spawn: { x: 3.5, y: 3.5, angle: -Math.PI / 2 },
+    })
+    expect(fromNorth.traceBlocks(0, -1)[0]).toMatchObject({ near: 0.5, far: 1.5, side: 1, u: 0.5 })
+    const fromEast = createDungeon({ ...altarFixture, spawn: { x: 4.5, y: 2.5, angle: Math.PI } })
+    expect(fromEast.traceBlocks(-1, 0)[0]).toMatchObject({ near: 0.5, far: 1.5, side: 0, u: 0.5 })
+  })
+
+  it('blocks walking through an altar with rounded player clearance at its corners', () => {
+    const engine = createDungeon(altarFixture)
+    expect(engine.canStand(3.5, 2.5)).toBe(false)
+    expect(engine.canStand(2.9, 1.9)).toBe(false)
+    expect(engine.canStand(2.84, 1.84)).toBe(true)
+    for (let i = 0; i < 100; i++) engine.move(1, 0, 0.05)
+    expect(engine.getCamera().x).toBeLessThanOrEqual(2.81)
+    engine.reset()
+    expect(engine.getCamera()).toEqual(altarFixture.spawn)
+  })
   const columnFixture = {
     rows: ['#########', '#.......#', '#.......#', '#.......#', '#########'],
     spawn: { x: 1.5, y: 2.5, angle: 0 },
@@ -99,6 +133,15 @@ describe('House of Silence raycaster and movement', () => {
       ]) {
         expect(seen.has(`${(column.x + dx - 7) * 4},${(column.y + dy - 1) * 4}`)).toBe(true)
       }
+    }
+    // The altar is reachable on every side, including the gap behind it.
+    for (const [x, y] of [
+      [9, 2],
+      [11, 2],
+      [10, 1.25],
+      [10, 2.5],
+    ]) {
+      expect(seen.has(`${(x - 7) * 4},${(y - 1) * 4}`)).toBe(true)
     }
   })
   const heightFixture = {

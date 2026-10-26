@@ -8,7 +8,23 @@ export interface DungeonFixture {
   spawn: Camera
   sprites?: DungeonSprite[]
   columns?: DungeonColumn[]
+  blocks?: DungeonBlock[]
   ceilingRegions?: { x: number; y: number; width: number; height: number; ceilingHeight: number }[]
+}
+export interface DungeonBlock {
+  id: string
+  x: number
+  y: number
+  width: number
+  depth: number
+  height: number
+}
+export interface BlockHit {
+  block: DungeonBlock
+  near: number
+  far: number
+  side: number
+  u: number
 }
 export interface DungeonColumn {
   id: string
@@ -66,6 +82,7 @@ export const TEST_DUNGEON: DungeonFixture = {
     { id: 'column-south-west', x: 8.5, y: 5.5, radius: 0.32 },
     { id: 'column-south-east', x: 11.5, y: 5.5, radius: 0.32 },
   ],
+  blocks: [{ id: 'stone-altar', x: 9.3, y: 1.6, width: 1.4, depth: 0.6, height: 0.36 }],
   sprites: [
     { id: 'silent-one-room', texture: 'silentOne', x: 9.5, y: 6.5, width: 0.66, height: 0.98 },
   ],
@@ -96,6 +113,11 @@ export function createDungeon(fixture: DungeonFixture) {
   }
 
   function canStand(x: number, y: number) {
+    for (const block of fixture.blocks ?? []) {
+      const dx = x - Math.max(block.x, Math.min(x, block.x + block.width))
+      const dy = y - Math.max(block.y, Math.min(y, block.y + block.depth))
+      if (dx * dx + dy * dy < radius * radius) return false
+    }
     for (const column of fixture.columns ?? []) {
       const dx = x - column.x
       const dy = y - column.y
@@ -110,6 +132,32 @@ export function createDungeon(fixture: DungeonFixture) {
       }
     }
     return true
+  }
+
+  /** Low furniture has finite vertical faces, so it cannot terminate the whole wall ray. */
+  function traceBlocks(dx: number, dy: number, maxDistance = 40): BlockHit[] {
+    if (!Number.isFinite(dx) || !Number.isFinite(dy) || (!dx && !dy) || maxDistance <= 0) return []
+    const hits: BlockHit[] = []
+    for (const block of fixture.blocks ?? []) {
+      if (
+        (!dx && (camera.x < block.x || camera.x > block.x + block.width)) ||
+        (!dy && (camera.y < block.y || camera.y > block.y + block.depth))
+      )
+        continue
+      const x1 = dx ? (block.x - camera.x) / dx : -Infinity
+      const x2 = dx ? (block.x + block.width - camera.x) / dx : Infinity
+      const y1 = dy ? (block.y - camera.y) / dy : -Infinity
+      const y2 = dy ? (block.y + block.depth - camera.y) / dy : Infinity
+      const enterX = Math.min(x1, x2)
+      const enterY = Math.min(y1, y2)
+      const near = Math.max(enterX, enterY, 0.001)
+      const far = Math.min(Math.max(x1, x2), Math.max(y1, y2), maxDistance)
+      if (near >= far) continue
+      const side = enterX > enterY ? 0 : 1
+      const u = side === 0 ? camera.y + near * dy - block.y : camera.x + near * dx - block.x
+      hits.push({ block, near, far, side, u })
+    }
+    return hits.sort((a, b) => b.near - a.near)
   }
 
   function trace(dx: number, dy: number, maxDistance = 40): RaySpan[] {
@@ -294,6 +342,7 @@ export function createDungeon(fixture: DungeonFixture) {
     getCamera: () => ({ x: camera.x, y: camera.y, angle: camera.angle }),
     cast,
     trace,
+    traceBlocks,
     ceilingAt,
     move,
     canStand,
