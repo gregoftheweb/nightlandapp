@@ -23,6 +23,7 @@ import { invalidateAutoSaveAndDeleteCurrentGame } from '@modules/autoSave'
 import { fromSnapshot, IncompatibleGameboardSaveError } from '@modules/gameState'
 import { clearAllSubGameSaves } from './sub-games/_shared/persistence'
 import { SafeAreaContent } from '@components/SafeAreaContent'
+import { HOUSE_TEST_ROUTE } from './sub-games/house-of-silence/_config/lifecycleConfig'
 
 export default function SplashScreen() {
   const router = useRouter()
@@ -198,6 +199,17 @@ export default function SplashScreen() {
           <ActivityIndicator size="large" color="red" />
         ) : (
           <View style={styles.buttonsContainer}>
+            <TouchableOpacity
+              style={[styles.button, isTransitioning && styles.buttonDisabled]}
+              disabled={isTransitioning}
+              accessibilityRole="button"
+              onPress={() => {
+                if (!beginTransition()) return
+                router.replace(HOUSE_TEST_ROUTE as never)
+              }}
+            >
+              <Text style={styles.buttonText}>Test House of Silence</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, isTransitioning && styles.buttonDisabled]}
               onPress={handleNewGame}

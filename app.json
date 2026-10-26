@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nightland",
     "slug": "nightlandapp",
-    "version": "1.0.0",
+    "version": "0.4.0",
     "orientation": "portrait",
     "icon": "./assets/images/icons/icon.png",
     "scheme": "myapp",

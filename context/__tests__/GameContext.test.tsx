@@ -9,18 +9,25 @@ jest.mock('../../modules/autoSave', () => ({
   requestAutoSave: jest.fn(),
 }))
 
+jest.mock('../../modules/gameState', () => ({
+  ...jest.requireActual('../../modules/gameState'),
+  // Hydration needs context state, not a procedural expedition. Keep the fields
+  // read by GameProvider and the real hydration reducer deterministic and cheap.
+  createInitialGameState: jest.fn(() => ({
+    moveCount: 0,
+    gameOver: false,
+    player: { position: { row: 203, col: 200 } },
+  })),
+}))
+
 function HydrationHarness() {
   const state = useGameState()
   const { hydrateGameState } = useGameActions()
   const [hydrationResolved, setHydrationResolved] = useState(false)
 
   const hydrate = async () => {
-    // Reuse the state GameProvider already built on mount rather than paying
-    // for a second full procedural getInitialState() generation just to
-    // flip one field - this test only exercises the hydration/commit
-    // contract, not level generation, and the extra generation pass was
-    // real, variable-latency work that made this test's timing CI-load
-    // sensitive.
+    // Hydrate a distinct state object through the real provider/reducer, then
+    // verify that the promise resolves only after React commits that object.
     const loadedState = { ...state, moveCount: 42 }
     await hydrateGameState(loadedState)
     setHydrationResolved(true)

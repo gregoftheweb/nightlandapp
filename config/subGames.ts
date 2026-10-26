@@ -12,6 +12,7 @@ import hermitIMG from '@assets/images/sprites/buildings/gameboard-buildings/herm
 import deepSiloIMG from '@assets/images/sprites/buildings/gameboard-buildings/silo.webp'
 import runeObeliskIMG from '@assets/images/sprites/buildings/gameboard-buildings/rune-obelisk.webp'
 import { parsedTimedEncounterContentResult } from '@/app/sub-games/_shared/timed-encounter/contentCatalog'
+import { HOUSE_TEXTURES } from '@/app/sub-games/house-of-silence/_config/assets'
 
 export type SubGameInstanceId = string
 
@@ -74,6 +75,32 @@ export function createSubGameRegistry(
 const returnsNormally = { signalRpgResume: true, exitSubGame: true } as const
 
 const definitions: SubGameInstanceDefinition[] = [
+  {
+    instanceId: 'house-of-silence',
+    shapeId: 'one-off',
+    entryRoute: '/sub-games/house-of-silence/interior',
+    title: 'House of Silence',
+    description: 'The door has never closed. Beyond it, the House waits.',
+    introBackgroundImage: HOUSE_TEXTURES.wall,
+    preloadAssets: Object.entries(HOUSE_TEXTURES).map(([id, source]) => ({
+      id: `house-of-silence-${id}`,
+      source,
+      width: id === 'silentOne' ? 703 : 1024,
+      height: 1024,
+    })),
+    lifecycle: {
+      completion: {
+        event: 'Reserved for final story resolution; corridor prototype cannot complete',
+        idempotent: true,
+      },
+      failure: { exit: 'safe' },
+      waypoint: { createsWaypoint: false },
+      revisit: 'restart',
+      progress: { mode: 'local-only' },
+      reward: { kind: 'none' },
+      returnToRpg: returnsNormally,
+    },
+  },
   {
     instanceId: 'aerowreckage-puzzle',
     shapeId: 'one-off',
