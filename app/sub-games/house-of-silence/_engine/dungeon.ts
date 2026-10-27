@@ -39,6 +39,11 @@ export interface DungeonSprite {
   y: number
   width: number
   height: number
+  collisionRadius?: number
+}
+export interface DungeonEvent {
+  type: 'door-open' | 'door-close'
+  automatic: boolean
 }
 export interface RayHit {
   distance: number
@@ -84,7 +89,15 @@ export const TEST_DUNGEON: DungeonFixture = {
   ],
   blocks: [{ id: 'stone-altar', x: 9.3, y: 1.6, width: 1.4, depth: 0.6, height: 0.36 }],
   sprites: [
-    { id: 'silent-one-room', texture: 'silentOne', x: 9.5, y: 6.5, width: 0.66, height: 0.98 },
+    {
+      id: 'silent-one-room',
+      texture: 'silentOne',
+      x: 9.5,
+      y: 6.5,
+      width: 0.66,
+      height: 0.98,
+      collisionRadius: 0.26,
+    },
   ],
 }
 
@@ -95,6 +108,8 @@ export function createDungeon(fixture: DungeonFixture) {
   const spawnCamera = () => ({ x: fixture.spawn.x, y: fixture.spawn.y, angle: fixture.spawn.angle })
   let camera = spawnCamera()
   const doors: Record<string, boolean> = {}
+  const crossings: Record<string, { x: number; y: number; side: string }> = {}
+  const events: DungeonEvent[] = []
   const key = (x: number, y: number) => `${x},${y}`
   const tile = (x: number, y: number) => rows[y]?.[x] ?? '#'
   const ceilingAt = (x: number, y: number) => {
@@ -113,6 +128,13 @@ export function createDungeon(fixture: DungeonFixture) {
   }
 
   function canStand(x: number, y: number) {
+    for (const sprite of fixture.sprites ?? []) {
+      if (
+        sprite.collisionRadius &&
+        (x - sprite.x) ** 2 + (y - sprite.y) ** 2 < (radius + sprite.collisionRadius) ** 2
+      )
+        return false
+    }
     for (const block of fixture.blocks ?? []) {
       const dx = x - Math.max(block.x, Math.min(x, block.x + block.width))
       const dy = y - Math.max(block.y, Math.min(y, block.y + block.depth))
@@ -269,16 +291,67 @@ export function createDungeon(fixture: DungeonFixture) {
     return last?.solid ? last.boundary : null
   }
 
-  function move(forward: number, turn: number, seconds: number) {
+  function overlapsDoor(x: number, y: number) {
+    return (
+      camera.x + radius > x &&
+      camera.x - radius < x + 1 &&
+      camera.y + radius > y &&
+      camera.y - radius < y + 1
+    )
+  }
+
+  function sideOfDoor(x: number, y: number, px: number, py: number) {
+    if (px < x) return 'west'
+    if (px >= x + 1) return 'east'
+    if (py < y) return 'north'
+    if (py >= y + 1) return 'south'
+    return ''
+  }
+
+  function updateCrossings(previousX: number, previousY: number) {
+    const x = Math.floor(camera.x)
+    const y = Math.floor(camera.y)
+    const id = key(x, y)
+    if (tile(x, y) === 'D' && doors[id] && !crossings[id]) {
+      const side = sideOfDoor(x, y, previousX, previousY)
+      if (side) crossings[id] = { x, y, side }
+    }
+    const opposite: Record<string, string> = {
+      west: 'east',
+      east: 'west',
+      north: 'south',
+      south: 'north',
+    }
+    for (const id of Object.keys(crossings)) {
+      const passage = crossings[id]
+      if (overlapsDoor(passage.x, passage.y)) continue
+      if (
+        sideOfDoor(passage.x, passage.y, camera.x, camera.y) === opposite[passage.side] &&
+        doors[id]
+      ) {
+        doors[id] = false
+        events.push({ type: 'door-close', automatic: true })
+      }
+      delete crossings[id]
+    }
+  }
+
+  function move(forward: number, turn: number, seconds: number, strafe = 0) {
     const dt = Math.max(0, Math.min(seconds, 0.05))
     camera.angle = (camera.angle + turn * dt * 1.65) % (Math.PI * 2)
-    const travel = forward * dt * 1.65
-    const steps = Math.max(1, Math.ceil(Math.abs(travel) / 0.06))
-    const dx = (Math.cos(camera.angle) * travel) / steps
-    const dy = (Math.sin(camera.angle) * travel) / steps
+    const normalizer = Math.max(1, Math.hypot(forward, strafe))
+    const travel = (dt * 1.65) / normalizer
+    const totalX = (Math.cos(camera.angle) * forward - Math.sin(camera.angle) * strafe) * travel
+    const totalY = (Math.sin(camera.angle) * forward + Math.cos(camera.angle) * strafe) * travel
+    const steps = Math.max(1, Math.ceil(Math.hypot(totalX, totalY) / 0.06))
+    const dx = totalX / steps
+    const dy = totalY / steps
     for (let i = 0; i < steps; i++) {
+      const previousX = camera.x
+      const previousY = camera.y
       if (canStand(camera.x + dx, camera.y)) camera.x += dx
       if (canStand(camera.x, camera.y + dy)) camera.y += dy
+      updateCrossings(previousX, previousY)
     }
   }
 
@@ -304,15 +377,10 @@ export function createDungeon(fixture: DungeonFixture) {
   function interact() {
     const door = nearbyDoor()
     if (!door) return 'No door within reach.'
-    if (
-      door.open &&
-      camera.x + radius > door.x &&
-      camera.x - radius < door.x + 1 &&
-      camera.y + radius > door.y &&
-      camera.y - radius < door.y + 1
-    )
-      return 'Christos is in the doorway.'
+    if (door.open && overlapsDoor(door.x, door.y)) return 'Christos is in the doorway.'
     doors[key(door.x, door.y)] = !door.open
+    delete crossings[key(door.x, door.y)]
+    events.push({ type: door.open ? 'door-close' : 'door-open', automatic: false })
     return door.open ? 'The door closes.' : 'The door opens.'
   }
 
@@ -349,9 +417,12 @@ export function createDungeon(fixture: DungeonFixture) {
     nearbyDoor,
     interact,
     projectSprite,
+    drainEvents: () => events.splice(0),
     reset: () => {
       camera = spawnCamera()
       Object.keys(doors).forEach((id) => delete doors[id])
+      Object.keys(crossings).forEach((id) => delete crossings[id])
+      events.length = 0
     },
   }
 }

@@ -224,7 +224,7 @@ describe('House of Silence raycaster and movement', () => {
     expect(engine.projectSprite({ ...figure, x: 1.5 }, 400, 700)).toBeNull()
   })
 
-  it('places exactly one display-only figure beyond the closed room door', () => {
+  it('places exactly one stationary solid figure beyond the closed room door', () => {
     const fixture = { ...TEST_DUNGEON, spawn: { x: 5.5, y: 6.5, angle: 0 } }
     const engine = createDungeon(fixture)
     expect(fixture.sprites).toHaveLength(1)
@@ -234,7 +234,7 @@ describe('House of Silence raycaster and movement', () => {
     expect(engine.cast(1, 0)!.distance).toBeLessThan(projected.depth)
     engine.interact()
     expect(engine.cast(1, 0)!.distance).toBeGreaterThan(projected.depth)
-    expect(engine.canStand(figure.x, figure.y)).toBe(true)
+    expect(engine.canStand(figure.x, figure.y)).toBe(false)
     engine.move(1, 0, 0.05)
     engine.reset()
     expect(fixture.sprites).toEqual(TEST_DUNGEON.sprites)

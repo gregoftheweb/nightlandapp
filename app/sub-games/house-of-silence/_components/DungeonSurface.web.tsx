@@ -15,6 +15,7 @@ export default function DungeonSurface({ html, active, onError }: DungeonSurface
     title: 'House of Silence dungeon test',
     srcDoc: html,
     sandbox: 'allow-scripts',
+    allow: 'autoplay',
     onLoad: syncActive,
     onError,
     style: { border: 0, width: '100%', height: '100%', flex: 1, background: '#242320' },

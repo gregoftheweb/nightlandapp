@@ -4,15 +4,16 @@ On START, choose **Test House of Silence**. This opens a fresh local test sessio
 
 ## First test
 
-- Hold the up/down buttons to walk and the curved arrows to turn. Forward and turning can be held together.
-- On desktop, click inside the viewport to focus it, then use WASD or arrow keys. E/Space interacts with a nearby door; R resets the fixture.
+- Hold the up/down buttons to walk, the straight sideways arrows to strafe, and the curved arrows to turn. Movement and turning can be held together.
+- On desktop, click inside the viewport to focus it, then use WASD or arrow keys. Z/C strafe left/right without turning; combined forward/sideways movement keeps the same maximum speed. E/Space interacts with a nearby door; R resets the fixture.
 - Walk north from the initial position into the junction. The wooden door is down the passage to the east. The room beyond is actual walkable space.
-- **Open door** becomes available within reach while facing the door; it changes to **Close door** after opening. A door cannot close onto Christos.
+- **Open door** becomes available within reach while facing the door; it changes to **Close door** after opening. A door closes automatically after a full crossing once Christos's body clears it. Peeking and retreating leaves it open. It can be reopened from either side and cannot close onto Christos.
 - **Reset test** restores the camera and closes the door. It does not touch expedition state.
-- A single tall Silent One stands motionless in the room beyond the wooden door. It is a transparent pencil sprite, scaled with perspective and occluded by walls and the closed door. It has no interaction, collision, AI, or combat behavior.
+- A single tall Silent One stands motionless in the room beyond the wooden door. It is a transparent pencil sprite, scaled with perspective and occluded by walls and the closed door. Its circular body blocks walking, so Christos must go around it. It has no AI, attack, or combat interaction yet.
 - The room beyond the door has a two-unit ceiling; the corridor and wooden doorway remain one unit high. Camera eye height, floor level, and the Silent One's size stay the same.
 - Four round stone columns stand in two pairs inside the chamber. They reach the ceiling and block both movement and the view of the Silent One. There is a clear entrance and space to walk around every column.
 - A low stone altar stands between the northern columns, with clearance on every side. It blocks walking, has a visible slab top, and hides only the lower portions of figures behind it. It has no interaction or reward.
+- Door opening plays a wooden hinge creak; manual or automatic closing plays a shorter creak and latch/thud. **Sound on/off** mutes these effects. Reset, pause, blur, and exit stop active sounds. Background ambience is intentionally left for a later asset selection.
 
 ## Implementation
 
@@ -35,6 +36,8 @@ The Silent One's original PNG, optimized WebP, and generation prompt are retaine
 The pure engine owns camera and door state; the rendering document owns its animation loop, keyboard/pointer input, and texture buffers. Frame deltas are clamped, radius collision is substepped, and blur/suspend clears inputs. Route focus and app state pause the host. Unmount destroys the document and its resources. Test reset is entirely inside that document.
 
 The embedded engine and browser runtime are generated as static strings so native Hermes release builds never depend on `Function.toString()`. After editing `_engine/dungeon.ts` or `_engine/browserRuntime.ts`, run `node scripts/build-house-runtime.cjs`. A test checks that the generated source stays synchronized.
+
+`doorAudio.ts` is also embedded by that generator. It lazily creates a Web Audio context from a user gesture and generates two short cached PCM effects locally, with no network request or additional audio library. The samples are first-pass procedural effects, designed to be replaceable with recorded door assets later. Engine door-transition events drive playback once per actual state change, including automatic closing; failed interactions and reset emit no door sounds. Unsupported audio contexts degrade to silent operation. This follows the [Web Audio user-gesture guidance](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices#autoplay_policy). Native-device listening still needs a phone check.
 
 ## Future encounter transitions
 

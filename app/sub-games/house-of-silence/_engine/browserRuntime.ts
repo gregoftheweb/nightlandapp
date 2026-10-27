@@ -1,13 +1,16 @@
 import type { createDungeon, DungeonFixture } from './dungeon'
 import type { TextureSources } from '../_config/assets'
+import type { createDoorAudio } from './doorAudio'
 
 /** Runs in an isolated browser document on both web and native; no app state or storage. */
 export function bootDungeon(
   factory: typeof createDungeon,
   fixture: DungeonFixture,
-  sources: TextureSources
+  sources: TextureSources,
+  audioFactory?: typeof createDoorAudio
 ) {
   const dungeon = factory(fixture)
+  const audio = audioFactory?.()
   const canvas = document.querySelector('canvas')!
   const ctx = canvas.getContext('2d', { alpha: false })!
   const status = document.getElementById('status')!
@@ -49,6 +52,7 @@ export function bootDungeon(
     last = 0
     cancelAnimationFrame(frame)
     if (active && ready) frame = requestAnimationFrame(tick)
+    if (!active) audio?.pause()
   }
 
   function hint(message: string) {
@@ -59,11 +63,22 @@ export function bootDungeon(
   function reset() {
     clearInputs()
     dungeon.reset()
+    audio?.stop()
     hint('Christos stands at the threshold again.')
   }
 
   function interact() {
+    if (!active || !ready) return
+    audio?.unlock()
     hint(dungeon.interact())
+    playDoorEvents()
+  }
+
+  function playDoorEvents() {
+    for (const event of dungeon.drainEvents()) {
+      audio?.play(event.type)
+      if (event.automatic) hint('The door closes behind Christos.')
+    }
   }
 
   function receive(event: MessageEvent) {
@@ -318,8 +333,10 @@ export function bootDungeon(
     dungeon.move(
       Number(held.has('forward')) - Number(held.has('back')),
       Number(held.has('right')) - Number(held.has('left')),
-      delta
+      delta,
+      Number(held.has('strafeRight')) - Number(held.has('strafeLeft'))
     )
+    playDoorEvents()
     render()
     if (now > hintUntil)
       status.textContent = dungeon.nearbyDoor()
@@ -347,9 +364,14 @@ export function bootDungeon(
     ArrowRight: 'right',
     d: 'right',
     D: 'right',
+    z: 'strafeLeft',
+    Z: 'strafeLeft',
+    c: 'strafeRight',
+    C: 'strafeRight',
   }
   window.addEventListener('keydown', (event) => {
     if (!active || !ready) return
+    audio?.unlock()
     if (keyMap[event.key]) {
       event.preventDefault()
       held.add(keyMap[event.key])
@@ -370,6 +392,7 @@ export function bootDungeon(
   document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
     button.addEventListener('pointerdown', (event) => {
       if (!active || !ready) return
+      audio?.unlock()
       event.preventDefault()
       button.setPointerCapture(event.pointerId)
       const action = button.dataset.action!
@@ -389,7 +412,20 @@ export function bootDungeon(
   })
   doorButton.addEventListener('click', interact)
   document.getElementById('reset')!.addEventListener('click', reset)
-  window.addEventListener('blur', clearInputs)
+  const soundButton = document.getElementById('sound') as HTMLButtonElement | null
+  if (soundButton) {
+    soundButton.disabled = !audio?.available
+    if (!audio?.available) soundButton.textContent = 'Sound unavailable'
+    soundButton.addEventListener('click', () => {
+      const enabled = audio?.toggle()
+      soundButton.textContent = enabled ? 'Sound on' : 'Sound off'
+      soundButton.setAttribute('aria-pressed', String(!!enabled))
+    })
+  }
+  window.addEventListener('blur', () => {
+    clearInputs()
+    audio?.pause()
+  })
   document.addEventListener('visibilitychange', () => setActive(hostActive && !document.hidden))
   window.addEventListener('message', receive)
   document.addEventListener('message', receive as EventListener)
@@ -397,6 +433,7 @@ export function bootDungeon(
   window.addEventListener('pagehide', () => {
     ready = false
     setActive(false)
+    audio?.dispose()
   })
   resize()
 
