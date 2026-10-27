@@ -1,13 +1,16 @@
 import type { createDungeon, DungeonFixture } from './dungeon'
 import type { TextureSources } from '../_config/assets'
+import type { createDoorAudio } from './doorAudio'
 
 /** Runs in an isolated browser document on both web and native; no app state or storage. */
 export function bootDungeon(
   factory: typeof createDungeon,
   fixture: DungeonFixture,
-  sources: TextureSources
+  sources: TextureSources,
+  audioFactory?: typeof createDoorAudio
 ) {
   const dungeon = factory(fixture)
+  const audio = audioFactory?.()
   const canvas = document.querySelector('canvas')!
   const ctx = canvas.getContext('2d', { alpha: false })!
   const status = document.getElementById('status')!
@@ -22,6 +25,7 @@ export function bootDungeon(
   let frame = 0
   let image: ImageData
   let wallDepths: Float64Array
+  let objectDepths: Float32Array
   let hintUntil = 0
   let fpsTime = 0
   let frames = 0
@@ -33,6 +37,7 @@ export function bootDungeon(
     canvas.height = Math.max(160, Math.round((canvas.width * box.height) / Math.max(1, box.width)))
     image = ctx.createImageData(canvas.width, canvas.height)
     wallDepths = new Float64Array(canvas.width)
+    objectDepths = new Float32Array(canvas.width * canvas.height)
   }
 
   function clearInputs() {
@@ -47,6 +52,7 @@ export function bootDungeon(
     last = 0
     cancelAnimationFrame(frame)
     if (active && ready) frame = requestAnimationFrame(tick)
+    if (!active) audio?.pause()
   }
 
   function hint(message: string) {
@@ -57,11 +63,22 @@ export function bootDungeon(
   function reset() {
     clearInputs()
     dungeon.reset()
+    audio?.stop()
     hint('Christos stands at the threshold again.')
   }
 
   function interact() {
+    if (!active || !ready) return
+    audio?.unlock()
     hint(dungeon.interact())
+    playDoorEvents()
+  }
+
+  function playDoorEvents() {
+    for (const event of dungeon.drainEvents()) {
+      audio?.play(event.type)
+      if (event.automatic) hint('The door closes behind Christos.')
+    }
   }
 
   function receive(event: MessageEvent) {
@@ -94,6 +111,7 @@ export function bootDungeon(
     const py = dx * plane
     const projection = width / (2 * plane)
     const data = image.data
+    objectDepths.fill(Infinity)
     const size = 256
     function sample(texture: ImageData, u: number, v: number, at: number, shade: number) {
       const tx = ((Math.floor(u * size) % size) + size) % size
@@ -209,7 +227,56 @@ export function bootDungeon(
         }
       }
     }
-    // Static camera-facing figures: floor anchored, alpha blended, and hidden by nearer walls/doors.
+    // Low stone furniture leaves the upper part of the room visible. Keep depth per pixel
+    // so figures behind an altar can remain visible above its slab.
+    for (let x = 0; x < width; x++) {
+      const screen = (2 * (x + 0.5)) / width - 1
+      const rayX = dx + px * screen
+      const rayY = dy + py * screen
+      for (const hit of dungeon.traceBlocks(rayX, rayY)) {
+        const block = hit.block
+        function drawBlockPixel(y: number, depth: number, u: number, v: number, shade: number) {
+          const index = y * width + x
+          if (depth >= wallDepths[x] || depth >= objectDepths[index]) return
+          sample(textures.wall, u, v, index * 4, shade)
+          objectDepths[index] = depth
+        }
+        const frontTop = horizon + ((0.5 - block.height) * projection) / hit.near
+        const frontBottom = horizon + (0.5 * projection) / hit.near
+        for (
+          let y = Math.max(0, Math.ceil(frontTop - 0.5));
+          y < Math.min(height, Math.ceil(frontBottom - 0.5));
+          y++
+        ) {
+          const z = 0.5 + ((horizon - y - 0.5) * hit.near) / projection
+          let shade = (hit.side ? 0.78 : 0.86) / (1 + hit.near * 0.095)
+          if (z > block.height - 0.05 || z < 0.04) shade *= 0.75
+          drawBlockPixel(y, hit.near, hit.u, 1 - z, Math.max(0.16, shade))
+        }
+        if (block.height < 0.5) {
+          const topScale = (0.5 - block.height) * projection
+          const topFar = horizon + topScale / hit.far
+          for (
+            let y = Math.max(0, Math.ceil(topFar - 0.5));
+            y < Math.min(height, Math.ceil(frontTop - 0.5));
+            y++
+          ) {
+            const depth = topScale / (y + 0.5 - horizon)
+            const wx = camera.x + depth * rayX
+            const wy = camera.y + depth * rayY
+            const edge = Math.min(
+              wx - block.x,
+              block.x + block.width - wx,
+              wy - block.y,
+              block.y + block.depth - wy
+            )
+            const shade = (edge < 0.035 ? 0.62 : 0.95) / (1 + depth * 0.095)
+            drawBlockPixel(y, depth, wx, wy, shade)
+          }
+        }
+      }
+    }
+    // Static camera-facing figures: floor anchored, alpha blended, and hidden by nearer surfaces.
     const sprites = (fixture.sprites ?? [])
       .map((sprite) => ({
         sprite,
@@ -234,6 +301,7 @@ export function bootDungeon(
           )
         )
         for (let y = startY; y < endY; y++) {
+          if (view.depth >= objectDepths[y * width + x]) continue
           const ty = Math.max(
             0,
             Math.min(
@@ -265,8 +333,10 @@ export function bootDungeon(
     dungeon.move(
       Number(held.has('forward')) - Number(held.has('back')),
       Number(held.has('right')) - Number(held.has('left')),
-      delta
+      delta,
+      Number(held.has('strafeRight')) - Number(held.has('strafeLeft'))
     )
+    playDoorEvents()
     render()
     if (now > hintUntil)
       status.textContent = dungeon.nearbyDoor()
@@ -294,9 +364,14 @@ export function bootDungeon(
     ArrowRight: 'right',
     d: 'right',
     D: 'right',
+    z: 'strafeLeft',
+    Z: 'strafeLeft',
+    c: 'strafeRight',
+    C: 'strafeRight',
   }
   window.addEventListener('keydown', (event) => {
     if (!active || !ready) return
+    audio?.unlock()
     if (keyMap[event.key]) {
       event.preventDefault()
       held.add(keyMap[event.key])
@@ -317,6 +392,7 @@ export function bootDungeon(
   document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
     button.addEventListener('pointerdown', (event) => {
       if (!active || !ready) return
+      audio?.unlock()
       event.preventDefault()
       button.setPointerCapture(event.pointerId)
       const action = button.dataset.action!
@@ -336,7 +412,20 @@ export function bootDungeon(
   })
   doorButton.addEventListener('click', interact)
   document.getElementById('reset')!.addEventListener('click', reset)
-  window.addEventListener('blur', clearInputs)
+  const soundButton = document.getElementById('sound') as HTMLButtonElement | null
+  if (soundButton) {
+    soundButton.disabled = !audio?.available
+    if (!audio?.available) soundButton.textContent = 'Sound unavailable'
+    soundButton.addEventListener('click', () => {
+      const enabled = audio?.toggle()
+      soundButton.textContent = enabled ? 'Sound on' : 'Sound off'
+      soundButton.setAttribute('aria-pressed', String(!!enabled))
+    })
+  }
+  window.addEventListener('blur', () => {
+    clearInputs()
+    audio?.pause()
+  })
   document.addEventListener('visibilitychange', () => setActive(hostActive && !document.hidden))
   window.addEventListener('message', receive)
   document.addEventListener('message', receive as EventListener)
@@ -344,6 +433,7 @@ export function bootDungeon(
   window.addEventListener('pagehide', () => {
     ready = false
     setActive(false)
+    audio?.dispose()
   })
   resize()
 

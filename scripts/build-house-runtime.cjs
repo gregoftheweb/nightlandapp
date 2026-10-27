@@ -22,6 +22,7 @@ const output = [
   '// Static strings work on Hermes; do not replace with runtime Function.toString().',
   `export const HOUSE_ENGINE_SOURCE =\n  ${JSON.stringify(source('dungeon.ts', 'createDungeon'))}`,
   `export const HOUSE_RUNTIME_SOURCE =\n  ${JSON.stringify(source('browserRuntime.ts', 'bootDungeon'))}`,
+  `export const HOUSE_AUDIO_SOURCE =\n  ${JSON.stringify(source('doorAudio.ts', 'createDoorAudio'))}`,
   '',
 ].join('\n')
 const destination = path.join(engineRoot, 'runtimeSource.ts')
