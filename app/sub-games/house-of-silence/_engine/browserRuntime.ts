@@ -276,8 +276,9 @@ export function bootDungeon(
         }
       }
     }
-    // Static camera-facing figures: floor anchored, alpha blended, and hidden by nearer surfaces.
-    const sprites = (fixture.sprites ?? [])
+    // Camera-facing figures: floor anchored, alpha blended, and hidden by nearer surfaces.
+    const sprites = dungeon
+      .getSprites()
       .map((sprite) => ({
         sprite,
         view: dungeon.projectSprite(sprite, width, height),
@@ -336,6 +337,7 @@ export function bootDungeon(
       delta,
       Number(held.has('strafeRight')) - Number(held.has('strafeLeft'))
     )
+    dungeon.updateActors(delta)
     playDoorEvents()
     render()
     if (now > hintUntil)

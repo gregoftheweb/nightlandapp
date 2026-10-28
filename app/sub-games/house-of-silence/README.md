@@ -9,7 +9,7 @@ On START, choose **Test House of Silence**. This opens a fresh local test sessio
 - Walk north from the initial position into the junction. The wooden door is down the passage to the east. The room beyond is actual walkable space.
 - **Open door** becomes available within reach while facing the door; it changes to **Close door** after opening. A door closes automatically after a full crossing once Christos's body clears it. Peeking and retreating leaves it open. It can be reopened from either side and cannot close onto Christos.
 - **Reset test** restores the camera and closes the door. It does not touch expedition state.
-- A single tall Silent One stands motionless in the room beyond the wooden door. It is a transparent pencil sprite, scaled with perspective and occluded by walls and the closed door. Its circular body blocks walking, so Christos must go around it. It has no AI, attack, or combat interaction yet.
+- A single tall Silent One waits in the room beyond the wooden door. It is a transparent pencil sprite, scaled with perspective and occluded by walls and the closed door. Its circular body blocks walking, so Christos must go around it. Once Christos fully enters the chamber, it slowly approaches at 0.55 units/second, routing around walls, columns, and the altar. It stops about 0.75 units away. Leaving the chamber stops pursuit; reentering resumes it. It has no attack, damage, or combat interaction yet.
 - The room beyond the door has a two-unit ceiling; the corridor and wooden doorway remain one unit high. Camera eye height, floor level, and the Silent One's size stay the same.
 - Four round stone columns stand in two pairs inside the chamber. They reach the ceiling and block both movement and the view of the Silent One. There is a clear entrance and space to walk around every column.
 - A low stone altar stands between the northern columns, with clearance on every side. It blocks walking, has a visible slab top, and hides only the lower portions of figures behind it. It has no interaction or reward.
@@ -39,6 +39,12 @@ The embedded engine and browser runtime are generated as static strings so nativ
 
 `doorAudio.ts` is also embedded by that generator. It lazily creates a Web Audio context from a user gesture and generates two short cached PCM effects locally, with no network request or additional audio library. The samples are first-pass procedural effects, designed to be replaceable with recorded door assets later. Engine door-transition events drive playback once per actual state change, including automatic closing; failed interactions and reset emit no door sounds. Unsupported audio contexts degrade to silent operation. This follows the [Web Audio user-gesture guidance](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices#autoplay_policy). Native-device listening still needs a phone check.
 
+## Silent One movement
+
+The engine owns a per-session copy of sprite positions. `updateActors` advances pursuit from the existing active animation loop, so pause/background handling freezes both player and actor movement. Reset restores the original positions and clears routes. The renderer and player collision both use the live positions.
+
+Each pursuing sprite declares its encounter-room bounds. A direct clear approach takes priority; otherwise a 0.25-unit navigation lattice finds a route using the actor's circular footprint and sampled segments, including diagonal corners. Routes refresh every 0.5 seconds and movement rechecks current collision at each step. The actor stays inside its chamber, never opens doors, and cannot push or overlap Christos. Long frame deltas are capped. The existing standing illustration remains the movement sprite; walking and reaching animation are future art work.
+
 ## Future encounter transitions
 
 The intended expansion includes side corridors, encounter rooms and battles, plus occasional psychedelic passages of white and gray streaks. The psychedelic puzzle mechanic remains undecided.
@@ -48,6 +54,8 @@ Before adding those screens, introduce explicit session modes such as `crawl`, `
 That future session owner must bridge the renderer's local state into an explicit snapshot/restore API; the current fixture does not pretend to implement encounter transitions. Keep internal transitions separate from lifecycle completion and RPG exit. Seeded layout generation, Grace/heartbeat survival, Silent Ones, and final story resolution are also future work.
 
 ## Verification
+
+The pursuit update passed repository formatting, lint (existing warnings), TypeScript, all 88 suites / 694 tests, and iOS/Android/web exports (two Metro workers). Its 47 House tests cover slow approach, obstacle detours (columns, altar, walls), closed doors, chamber entry/exit, player retargeting, collision, reset, and frame clamping. A headless browser walkthrough of the generated production dungeon document verified live rendered approach, stopping distance, pause/resume, chamber containment, and reset with no runtime exceptions. The preview is `Nightland/Docs/assets/HouseOfSilence/insidePOV/silent-one-pursuit-preview.png`. Native-device movement and performance review remain outstanding.
 
 The altar update passed 30 House tests, TypeScript, changed-file lint/formatting, generated-runtime verification, and iOS/Android/web exports. Geometry tests cover cardinal and non-unit box rays, collision clearance, and connected paths to all four sides of the altar. Rendered-pixel tests verify that a figure's feet are hidden behind the slab while its upper body remains visible, a nearer figure renders in front, and nearer walls hide both. The production browser walkthrough verified room entry, approaching the altar through the central aisle, reset, pause/resume, exit, and unchanged localStorage. Previews are saved as `Nightland/Docs/assets/HouseOfSilence/insidePOV/altar-room-preview.png` and `altar-closeup-preview.png`. Native-device visual review remains outstanding.
 

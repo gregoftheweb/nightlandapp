@@ -40,6 +40,7 @@ export interface DungeonSprite {
   width: number
   height: number
   collisionRadius?: number
+  approach?: { x: number; y: number; width: number; height: number }
 }
 export interface DungeonEvent {
   type: 'door-open' | 'door-close'
@@ -97,6 +98,7 @@ export const TEST_DUNGEON: DungeonFixture = {
       width: 0.66,
       height: 0.98,
       collisionRadius: 0.26,
+      approach: { x: 7, y: 1, width: 7, height: 6 },
     },
   ],
 }
@@ -107,6 +109,8 @@ export function createDungeon(fixture: DungeonFixture) {
   const radius = 0.19
   const spawnCamera = () => ({ x: fixture.spawn.x, y: fixture.spawn.y, angle: fixture.spawn.angle })
   let camera = spawnCamera()
+  const sprites = (fixture.sprites ?? []).map((sprite) => ({ ...sprite }))
+  const pursuit = new Map<string, { remaining: number; path: { x: number; y: number }[] }>()
   const doors: Record<string, boolean> = {}
   const crossings: Record<string, { x: number; y: number; side: string }> = {}
   const events: DungeonEvent[] = []
@@ -127,33 +131,200 @@ export function createDungeon(fixture: DungeonFixture) {
     return cell === '#' || (cell === 'D' && !doors[key(x, y)])
   }
 
-  function canStand(x: number, y: number) {
-    for (const sprite of fixture.sprites ?? []) {
+  function clearAt(x: number, y: number, bodyRadius: number, ignore?: DungeonSprite) {
+    for (const sprite of sprites) {
       if (
+        sprite !== ignore &&
         sprite.collisionRadius &&
-        (x - sprite.x) ** 2 + (y - sprite.y) ** 2 < (radius + sprite.collisionRadius) ** 2
+        (x - sprite.x) ** 2 + (y - sprite.y) ** 2 < (bodyRadius + sprite.collisionRadius) ** 2
       )
         return false
     }
     for (const block of fixture.blocks ?? []) {
       const dx = x - Math.max(block.x, Math.min(x, block.x + block.width))
       const dy = y - Math.max(block.y, Math.min(y, block.y + block.depth))
-      if (dx * dx + dy * dy < radius * radius) return false
+      if (dx * dx + dy * dy < bodyRadius * bodyRadius) return false
     }
     for (const column of fixture.columns ?? []) {
       const dx = x - column.x
       const dy = y - column.y
-      if (dx * dx + dy * dy < (radius + column.radius) ** 2) return false
+      if (dx * dx + dy * dy < (bodyRadius + column.radius) ** 2) return false
     }
-    for (let cy = Math.floor(y - radius); cy <= Math.floor(y + radius); cy++) {
-      for (let cx = Math.floor(x - radius); cx <= Math.floor(x + radius); cx++) {
+    for (let cy = Math.floor(y - bodyRadius); cy <= Math.floor(y + bodyRadius); cy++) {
+      for (let cx = Math.floor(x - bodyRadius); cx <= Math.floor(x + bodyRadius); cx++) {
         if (!solid(cx, cy)) continue
         const dx = x - Math.max(cx, Math.min(x, cx + 1))
         const dy = y - Math.max(cy, Math.min(y, cy + 1))
-        if (dx * dx + dy * dy < radius * radius) return false
+        if (dx * dx + dy * dy < bodyRadius * bodyRadius) return false
       }
     }
     return true
+  }
+
+  function canStand(x: number, y: number) {
+    return clearAt(x, y, radius)
+  }
+
+  function actorCanStand(sprite: DungeonSprite, x: number, y: number) {
+    const body = sprite.collisionRadius ?? 0.26
+    const room = sprite.approach!
+    return (
+      x - body >= room.x &&
+      x + body <= room.x + room.width &&
+      y - body >= room.y &&
+      y + body <= room.y + room.height &&
+      Math.hypot(x - camera.x, y - camera.y) >= body + radius + 0.02 &&
+      clearAt(x, y, body, sprite)
+    )
+  }
+
+  // Check whole segments, including diagonal corners and the actor's circular footprint.
+  function actorSegment(
+    sprite: DungeonSprite,
+    from: { x: number; y: number },
+    to: { x: number; y: number }
+  ) {
+    const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 0.06))
+    for (let i = 1; i <= steps; i++) {
+      if (
+        !actorCanStand(
+          sprite,
+          from.x + ((to.x - from.x) * i) / steps,
+          from.y + ((to.y - from.y) * i) / steps
+        )
+      )
+        return false
+    }
+    return true
+  }
+
+  // A small, radius-aware navigation lattice routes around columns and low furniture.
+  // Rebuild at most twice per second; keep all state local to this dungeon session.
+  function approachPath(sprite: DungeonSprite) {
+    const distance = Math.hypot(sprite.x - camera.x, sprite.y - camera.y)
+    const target = {
+      x: camera.x + ((sprite.x - camera.x) * 0.74) / distance,
+      y: camera.y + ((sprite.y - camera.y) * 0.74) / distance,
+    }
+    if (actorSegment(sprite, sprite, target)) return [target]
+    const spacing = 0.25
+    const room = sprite.approach!
+    const startX = Math.round(sprite.x / spacing)
+    const startY = Math.round(sprite.y / spacing)
+    const candidates: { x: number; y: number }[] = []
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const point = { x: (startX + dx) * spacing, y: (startY + dy) * spacing }
+        if (actorSegment(sprite, sprite, point)) candidates.push(point)
+      }
+    }
+    candidates.sort(
+      (a, b) =>
+        Math.hypot(a.x - sprite.x, a.y - sprite.y) - Math.hypot(b.x - sprite.x, b.y - sprite.y)
+    )
+    const start = candidates[0]
+    if (!start) return []
+    const nodes = [{ ...start, parent: -1 }]
+    const visited = new Set([key(Math.round(start.x / spacing), Math.round(start.y / spacing))])
+    let best = 0
+    let bestDistance = Math.hypot(start.x - camera.x, start.y - camera.y)
+    for (let index = 0; index < nodes.length; index++) {
+      const node = nodes[index]
+      const distance = Math.hypot(node.x - camera.x, node.y - camera.y)
+      if (distance < bestDistance) {
+        best = index
+        bestDistance = distance
+      }
+      if (distance <= 0.75) {
+        best = index
+        break
+      }
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+        [1, 1],
+        [1, -1],
+        [-1, 1],
+        [-1, -1],
+      ]) {
+        const nx = Math.round(node.x / spacing) + dx
+        const ny = Math.round(node.y / spacing) + dy
+        const id = key(nx, ny)
+        const next = { x: nx * spacing, y: ny * spacing }
+        if (
+          visited.has(id) ||
+          next.x < room.x ||
+          next.x > room.x + room.width ||
+          next.y < room.y ||
+          next.y > room.y + room.height
+        )
+          continue
+        if (!actorSegment(sprite, node, next)) continue
+        visited.add(id)
+        nodes.push({ ...next, parent: index })
+      }
+    }
+    const path: { x: number; y: number }[] = []
+    for (let index = best; index !== -1; index = nodes[index].parent)
+      path.push({ x: nodes[index].x, y: nodes[index].y })
+    path.reverse()
+    // Avoid stepping back to a rounded lattice point on each refresh.
+    if (path.length > 1 && actorSegment(sprite, sprite, path[1])) path.shift()
+    return path
+  }
+
+  function updateActors(seconds: number) {
+    const dt = Number.isFinite(seconds) ? Math.max(0, Math.min(seconds, 0.05)) : 0
+    if (!dt) return
+    for (const sprite of sprites) {
+      const room = sprite.approach
+      if (!room) continue
+      // Stay in the encounter chamber; crossing back into the corridor suspends pursuit.
+      if (
+        camera.x - radius < room.x ||
+        camera.x + radius > room.x + room.width ||
+        camera.y - radius < room.y ||
+        camera.y + radius > room.y + room.height
+      ) {
+        pursuit.delete(sprite.id)
+        continue
+      }
+      if (Math.hypot(sprite.x - camera.x, sprite.y - camera.y) <= 0.75) {
+        pursuit.delete(sprite.id)
+        continue
+      }
+      let state = pursuit.get(sprite.id)
+      if (!state || state.remaining <= 0) {
+        state = { remaining: 0.5, path: approachPath(sprite) }
+        pursuit.set(sprite.id, state)
+      }
+      state.remaining -= dt
+      let travel = dt * 0.55
+      while (travel > 0 && state.path.length) {
+        const next = state.path[0]
+        const distance = Math.hypot(next.x - sprite.x, next.y - sprite.y)
+        if (distance < 0.001) {
+          state.path.shift()
+          continue
+        }
+        const step = Math.min(travel, distance)
+        const target = {
+          x: sprite.x + ((next.x - sprite.x) * step) / distance,
+          y: sprite.y + ((next.y - sprite.y) * step) / distance,
+        }
+        if (!actorSegment(sprite, sprite, target)) {
+          state.remaining = 0
+          break
+        }
+        sprite.x = target.x
+        sprite.y = target.y
+        travel -= step
+        if (step === distance) state.path.shift()
+        if (Math.hypot(sprite.x - camera.x, sprite.y - camera.y) <= 0.75) break
+      }
+    }
   }
 
   /** Low furniture has finite vertical faces, so it cannot terminate the whole wall ray. */
@@ -413,6 +584,8 @@ export function createDungeon(fixture: DungeonFixture) {
     traceBlocks,
     ceilingAt,
     move,
+    updateActors,
+    getSprites: () => sprites.map((sprite) => ({ ...sprite })),
     canStand,
     nearbyDoor,
     interact,
@@ -420,6 +593,8 @@ export function createDungeon(fixture: DungeonFixture) {
     drainEvents: () => events.splice(0),
     reset: () => {
       camera = spawnCamera()
+      sprites.forEach((sprite, index) => Object.assign(sprite, fixture.sprites![index]))
+      pursuit.clear()
       Object.keys(doors).forEach((id) => delete doors[id])
       Object.keys(crossings).forEach((id) => delete crossings[id])
       events.length = 0
